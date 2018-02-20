@@ -1,0 +1,15 @@
+r1 -> r2 -> r3
+r1 cipher for r3
+r1 said to r2 to send to r3
+r2 receive r1
+r2 send to r3 encrypted data
+
+r1 -> r2 -> r3 -> r4
+only r1 know the whole path
+- r1 encrypt data with r4 pk
+- r1 say to r2 "r2 -> r3 -> r4"
+- r2 say to r3 "r3 -> r4"
+- r3 receive r2 data but didn't know that r1 is the first relay point
+
+through Tor network :
+r1 -> tor -> r2 -> tor -> r3

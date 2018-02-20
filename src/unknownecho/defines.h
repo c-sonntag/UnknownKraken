@@ -1,0 +1,7 @@
+#ifndef UNKNOWNECHO_DEFINES_H
+#define UNKNOWNECHO_DEFINES_H
+
+#define UNKNOWNECHO_LIB_NAME    "LibUnknownEcho"
+#define UNKNOWNECHO_LiB_VERSION "0.1"
+
+#endif

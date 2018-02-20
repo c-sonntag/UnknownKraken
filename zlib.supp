@@ -1,0 +1,24 @@
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   ...
+#   obj:/lib/x86_64-linux-gnu/libz*
+    obj:*/libz.so.*
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   ...
+#   obj:/lib/x86_64-linux-gnu/libz*
+    obj:*/libz.so.*
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   ...
+#   obj:/lib/x86_64-linux-gnu/libz*
+    obj:*/libz.so.*
+}
+

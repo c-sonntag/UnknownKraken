@@ -1,0 +1,22 @@
+At the top of a file :
+/*!
+ *  \brief     
+ *  \author
+ *  \version
+ *  \date          
+ *  \copyright GNU Public License.
+ */
+
+Before function definition :
+/*!
+ *  \brief      
+ *  \param   
+ *  \return  
+ *  \see     
+ */
+
+Optionals :
+ * \details 
+ * \pre     
+ * \bug     
+ * \warning 

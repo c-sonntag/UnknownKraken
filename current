@@ -1,0 +1,12 @@
+https://github.com/openssl/openssl/tree/master/crypto/pkcs12
+https://github.com/openssl/openssl/blob/master/crypto/pkcs12/p12_kiss.c
+https://github.com/openssl/openssl/blob/master/crypto/pkcs12/p12_crt.c
+https://stackoverflow.com/questions/44585486/manage-multiple-rsa-keys-certs-in-a-pkcs12-structure
+https://github.com/openssl/openssl/tree/master/apps
+https://github.com/openssl/openssl/blob/master/apps/apps.h
+https://github.com/openssl/openssl/blob/master/apps/apps.c
+https://github.com/openssl/openssl/blob/master/apps/pkcs12.c
+
+openssl pkcs12 -in file.p12
+
+openssl pkcs12 -export -inkey res/tls3/key.pem -in res/tls3/ca.pem -certfile res/bundle.pem -name "name" -out file.p12

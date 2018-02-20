@@ -1,0 +1,28 @@
+#ifndef UNKNOWNECHO_ASYM_KEY_H
+#define UNKNOWNECHO_ASYM_KEY_H
+
+#include <unknownecho/crypto/api/key/public_key.h>
+#include <unknownecho/crypto/api/key/private_key.h>
+#include <unknownecho/bool.h>
+
+typedef struct ue_asym_key ue_asym_key;
+
+ue_asym_key *ue_asym_key_create();
+
+void ue_asym_key_destroy(ue_asym_key *akey);
+
+void ue_asym_key_destroy_all(ue_asym_key *akey);
+
+bool ue_asym_key_is_valid(ue_asym_key *akey);
+
+int ue_asym_key_size(ue_asym_key *akey);
+
+ue_public_key *ue_asym_key_get_public_key(ue_asym_key *akey);
+
+bool ue_asym_key_set_public_key(ue_asym_key *akey, ue_public_key *pk);
+
+ue_private_key *ue_asym_key_get_private_key(ue_asym_key *akey);
+
+bool ue_asym_key_set_private_key(ue_asym_key *akey, ue_private_key *sk);
+
+#endif

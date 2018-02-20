@@ -1,0 +1,105 @@
+#include <unknownecho/crypto/api/key/asym_key.h>
+#include <unknownecho/crypto/api/key/public_key.h>
+#include <unknownecho/crypto/api/key/private_key.h>
+#include <unknownecho/system/alloc.h>
+#include <unknownecho/errorHandling/check_parameter.h>
+
+#include <openssl/bn.h>
+
+typedef enum {
+	RSA_ASYM_KEY
+} ue_asym_key_type;
+
+struct ue_asym_key {
+	ue_asym_key_type type;
+	ue_public_key *pk;
+	ue_private_key *sk;
+	int bits;
+};
+
+ue_asym_key *ue_asym_key_create() {
+	ue_asym_key *key;
+
+	ue_safe_alloc(key, ue_asym_key, 1);
+	key->pk = NULL;
+	key->sk = NULL;
+
+	return key;
+}
+
+void ue_asym_key_destroy(ue_asym_key *akey) {
+	ue_safe_free(akey);
+}
+
+void ue_asym_key_destroy_all(ue_asym_key *akey) {
+	if (akey) {
+		ue_public_key_destroy(akey->pk);
+		ue_private_key_destroy(akey->sk);
+		ue_safe_free(akey);
+	}
+}
+
+bool ue_asym_key_is_valid(ue_asym_key *akey) {
+	bool ok;
+
+	ok = false;
+
+	if (!akey) {
+		return false;
+	}
+
+	if (!akey->pk && !akey->sk) {
+		return false;
+	}
+
+	if (akey->pk) {
+		ok = ue_public_key_is_valid(akey->pk);
+		if (!ok) {
+			return false;
+		}
+	}
+
+	if (akey->sk) {
+		ok = ue_private_key_is_valid(akey->sk);
+		if (!ok) {
+			return false;
+		}
+	}
+
+	if (akey->pk && akey->sk) {
+		ok = ue_public_key_size(akey->pk) == ue_private_key_size(akey->sk);
+		if (!ok) {
+			return false;
+		}
+		ok = BN_cmp((BIGNUM *)ue_public_key_get_n_impl(akey->pk), (BIGNUM *)ue_private_key_get_n_impl(akey->sk)) == 0;
+		if (!ok) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+int ue_asym_key_size(ue_asym_key *akey) {
+	return akey->bits;
+}
+
+ue_public_key *ue_asym_key_get_public_key(ue_asym_key *akey) {
+	return akey->pk;
+}
+
+bool ue_asym_key_set_public_key(ue_asym_key *akey, ue_public_key *pk) {
+	ue_check_parameter_or_return(pk);
+	akey->pk = pk;
+	return true;
+}
+
+ue_private_key *ue_asym_key_get_private_key(ue_asym_key *akey) {
+	return akey->sk;
+}
+
+bool ue_asym_key_set_private_key(ue_asym_key *akey, ue_private_key *sk) {
+	ue_check_parameter_or_return(sk);
+	akey->sk = sk;
+	return true;
+}

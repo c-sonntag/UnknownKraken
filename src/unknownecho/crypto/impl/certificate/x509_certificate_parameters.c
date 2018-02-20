@@ -1,0 +1,140 @@
+#include <unknownecho/crypto/api/certificate/x509_certificate_parameters.h>
+#include <unknownecho/system/alloc.h>
+#include <unknownecho/string/string_utility.h>
+
+struct ue_x509_certificate_parameters {
+    int serial;
+    int bits;
+    int days;
+    char *C;
+    char *CN;
+    char *OU;
+    char *O;
+    char *basic_constraint;
+    char *subject_key_identifier;
+    char *cert_type;
+    bool self_signed;
+};
+
+ue_x509_certificate_parameters *ue_x509_certificate_parameters_create() {
+    ue_x509_certificate_parameters *parameters;
+
+    ue_safe_alloc(parameters, ue_x509_certificate_parameters, 1);
+    parameters->serial = 123456789; //@todo generate random
+    parameters->bits = 2048;
+    parameters->days = 365;
+    parameters->C = NULL;
+    parameters->CN = NULL;
+    parameters->basic_constraint = NULL;
+    parameters->subject_key_identifier = NULL;
+    parameters->cert_type = NULL;
+    parameters->self_signed = false;
+
+    return parameters;
+}
+
+void ue_x509_certificate_parameters_destroy(ue_x509_certificate_parameters *parameters) {
+    if (parameters) {
+        ue_safe_free(parameters->C);
+        ue_safe_free(parameters->CN);
+        ue_safe_free(parameters->basic_constraint);
+        ue_safe_free(parameters->subject_key_identifier);
+        ue_safe_free(parameters->cert_type);
+        ue_safe_free(parameters);
+    }
+}
+
+bool ue_x509_certificate_parameters_set_serial(ue_x509_certificate_parameters *parameters, int serial) {
+    parameters->serial = serial;
+    return true;
+}
+
+int ue_x509_certificate_parameters_get_serial(ue_x509_certificate_parameters *parameters) {
+    return parameters->serial;
+}
+
+bool ue_x509_certificate_parameters_set_bits(ue_x509_certificate_parameters *parameters, int bits) {
+    parameters->bits = bits;
+    return true;
+}
+
+int ue_x509_certificate_parameters_get_bits(ue_x509_certificate_parameters *parameters) {
+    return parameters->bits;
+}
+
+bool ue_x509_certificate_parameters_set_days(ue_x509_certificate_parameters *parameters, int days) {
+    parameters->days = days;
+    return true;
+}
+
+int ue_x509_certificate_parameters_get_days(ue_x509_certificate_parameters *parameters) {
+    return parameters->days;
+}
+
+bool ue_x509_certificate_parameters_set_country(ue_x509_certificate_parameters *parameters, char *country) {
+    parameters->C = ue_string_create_from(country);
+    return true;
+}
+
+char *ue_x509_certificate_parameters_get_country(ue_x509_certificate_parameters *parameters) {
+    return parameters->C;
+}
+
+bool ue_x509_certificate_parameters_set_common_name(ue_x509_certificate_parameters *parameters, char *common_name) {
+    parameters->CN = ue_string_create_from(common_name);
+    return true;
+}
+
+char *ue_x509_certificate_parameters_get_common_name(ue_x509_certificate_parameters *parameters) {
+    return parameters->CN;
+}
+
+bool ue_x509_certificate_parameters_set_organizational_unit(ue_x509_certificate_parameters *parameters, char *organizational_unit) {
+    parameters->OU = ue_string_create_from(organizational_unit);
+    return true;
+}
+
+char *ue_x509_certificate_parameters_get_oranizational_unit(ue_x509_certificate_parameters *parameters) {
+    return parameters->OU;
+}
+
+bool ue_x509_certificate_parameters_set_organization(ue_x509_certificate_parameters *parameters, char *organization) {
+    parameters->O = ue_string_create_from(organization);
+    return true;
+}
+
+char *ue_x509_certificate_parameters_get_oranization(ue_x509_certificate_parameters *parameters) {
+    return parameters->O;
+}
+
+bool ue_x509_certificate_parameters_set_ca_type(ue_x509_certificate_parameters *parameters) {
+    parameters->basic_constraint = ue_string_create_from("CA:TRUE");
+    parameters->cert_type = ue_string_create_from("sslCA");
+    return true;
+}
+
+char *ue_x509_certificate_parameters_get_constraint(ue_x509_certificate_parameters *parameters) {
+    return parameters->basic_constraint;
+}
+
+char *ue_x509_certificate_parameters_get_cert_type(ue_x509_certificate_parameters *parameters) {
+    return parameters->cert_type;
+}
+
+bool ue_x509_certificate_parameters_set_subject_key_identifier_as_hash(ue_x509_certificate_parameters *parameters) {
+    parameters->subject_key_identifier = ue_string_create_from("hash");
+    return true;
+}
+
+char *ue_x509_certificate_parameters_get_subject_key_identifier(ue_x509_certificate_parameters *parameters) {
+    return parameters->subject_key_identifier;
+}
+
+bool ue_x509_certificate_parameters_set_self_signed(ue_x509_certificate_parameters *parameters) {
+    parameters->self_signed = true;
+    return true;
+}
+
+bool ue_x509_certificate_parameters_is_self_signed(ue_x509_certificate_parameters *parameters) {
+    return parameters->self_signed;
+}
