@@ -7,6 +7,7 @@
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/network/api/socket/socket_client.h>
 #include <unknownecho/network/api/tls/tls_method.h>
+#include <unknownecho/network/api/tls/tls_keystore.h>
 #include <unknownecho/string/string_builder.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/string/string_split.h>
@@ -14,8 +15,8 @@
 #include <unknownecho/thread/thread_id_struct.h>
 #include <unknownecho/thread/thread_mutex.h>
 #include <unknownecho/thread/thread_cond.h>
-#include <unknownecho/model/manager/pgp_keystore_manager.h>
-#include <unknownecho/model/manager/tls_keystore_manager.h>
+#include <unknownecho/crypto/api/keystore/pkcs12_keystore.h>
+#include <unknownecho/crypto/factory/pkcs12_keystore_factory.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -36,8 +37,7 @@ typedef struct {
 	int fd;
 	int child_pid;
 	char *nickname;
-	ue_pgp_keystore_manager *pgp_ks_manager;
-	ue_tls_keystore_manager *tls_ks_manager;
+	ue_tls_keystore *tls_keystore;
 	ue_socket_client_connection *connection;
 	ue_thread_id *read_thread, *write_thread;
 	ue_thread_mutex *mutex;
@@ -46,7 +46,6 @@ typedef struct {
 	bool running;
 	int fds[2];
 	ue_string_builder *new_message;
-    ue_tls_method *method;
 } ue_socket_client_manager;
 
 ue_socket_client_manager *instance = NULL;
@@ -285,9 +284,7 @@ bool ue_socket_client_manager_create_and_start(const char *host, unsigned short 
     instance->nickname = NULL;
     instance->read_thread = NULL;
     instance->write_thread = NULL;
-    instance->pgp_ks_manager = NULL;
-    instance->tls_ks_manager = NULL;
-    instance->method = ue_tls_method_create_v1_client();
+    instance->tls_keystore = NULL;
 
     if (pipe(instance->fds) == -1) {
         abort();
@@ -323,19 +320,23 @@ bool ue_socket_client_manager_create_and_start(const char *host, unsigned short 
 	    handle_signal(SIGPIPE, SIG_IGN, SA_RESTART);
 
         //if (!(instance->tls_ks_manager = ue_tls_keystore_manager_init("res/tls2/ca.crt", "res/tls2/ssl_client.crt", "res/tls2/ssl_client.key", instance->method, "passphraseclient", NULL))) {
-		if (!(instance->tls_ks_manager = ue_tls_keystore_manager_init("res/tls3/ca.pem", "res/tls3/ssl_client1.crt", "res/tls3/ssl_client1.key", instance->method, "passphraseclient", NULL))) {
-            ue_stacktrace_push_msg("Failed to init tls keystore manager");
-            goto end;
-        }
 
-	    if (!(instance->pgp_ks_manager = ue_pgp_keystore_manager_init("res/pem/c2_pgp_pub.pem", "res/pem/c2_pgp_priv.pem", "res/pem/server_pgp_pub.pem", NULL))) {
-            ue_stacktrace_push_msg("Failed to init pgp keystore manager");
-            goto end;
-        }
+		ue_pkcs12_keystore *keystore;
+
+		keystore = ue_pkcs12_keystore_create_random("CLIENT_1", "name");
+
+	    if (!ue_pkcs12_keystore_write(keystore, "res/keystore.p12", "password", "password")) {
+	        ue_stacktrace_push_msg("Failed to write keystore to 'res/keystore.p12'");
+	        goto end;
+	    }
+
+		ue_pkcs12_keystore_destroy(keystore);
+
+		instance->tls_keystore = ue_tls_keystore_create("res/keystore.p12", "password", "password", ue_tls_method_create_v1_client());
 
 	    instance->fd = ue_socket_open_tcp();
 
-        if (!(instance->connection = ue_socket_connect(instance->fd, AF_INET, host, port, instance->tls_ks_manager))) {
+        if (!(instance->connection = ue_socket_connect(instance->fd, AF_INET, host, port, instance->tls_keystore))) {
             ue_stacktrace_push_msg("Failed to connect socket to server");
             goto end;
         }
@@ -371,11 +372,8 @@ void ue_socket_client_manager_destroy() {
 		ue_thread_mutex_destroy(instance->mutex);
 		ue_thread_cond_destroy(instance->cond);
 	}
-	if (instance->tls_ks_manager) {
-		ue_tls_keystore_manager_uninit(instance->tls_ks_manager);
-	}
-	if (instance->pgp_ks_manager) {
-		ue_pgp_keystore_manager_uninit(instance->pgp_ks_manager);
+	if (instance->tls_keystore) {
+		ue_tls_keystore_destroy(instance->tls_keystore);
 	}
 	close(instance->fds[1]);
 	ue_string_builder_destroy(instance->new_message);
@@ -386,7 +384,6 @@ void ue_socket_client_manager_destroy() {
 	else {
 		ue_socket_close(instance->fd);
 	}
-    ue_tls_method_destroy(instance->method);
 	ue_safe_free(instance)
 }
 

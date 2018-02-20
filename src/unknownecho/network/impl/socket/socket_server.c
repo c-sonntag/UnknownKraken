@@ -7,7 +7,6 @@
 #include <unknownecho/system/alloc.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/string/string_utility.h>
-#include <unknownecho/model/manager/tls_keystore_manager.h>
 #include <unknownecho/crypto/api/errorHandling/crypto_error_handling.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
 
@@ -49,7 +48,7 @@ void init_select(ue_socket_server *server, int *max_fd, fd_set *read_set, fd_set
 ue_socket_server *ue_socket_server_create(unsigned short int port,
     bool (*read_consumer)(ue_socket_client_connection *connection),
     bool (*write_consumer)(ue_socket_client_connection *connection),
-	ue_tls_keystore_manager *tls_ks_manager) {
+	ue_tls_keystore *tls_keystore) {
 
     ue_socket_server *server;
     int i;
@@ -58,7 +57,7 @@ ue_socket_server *ue_socket_server_create(unsigned short int port,
 
     ue_safe_alloc_or_goto(server, ue_socket_server, 1, clean_up);
 
-    server->tls_ks_manager = tls_ks_manager;
+    server->tls_keystore = tls_keystore;
     if ((server->ue_socket_fd = ue_socket_open_tcp()) == -1) {
         ue_stacktrace_push_msg("Failed to create main socket context");
         goto clean_up;
@@ -173,7 +172,6 @@ bool ue_socket_server_accept(ue_socket_server *server) {
     struct sockaddr_in sa;
     int new_socket, i;
     bool established;
-    ue_tls_keystore *tls_ks;
     ue_tls_connection *peer_tls;
     ue_x509_certificate *certificate;
 
@@ -186,9 +184,8 @@ bool ue_socket_server_accept(ue_socket_server *server) {
         return false;
     }
 
-    if (server->tls_ks_manager) {
-    	tls_ks = ue_tls_keystore_manager_get_keystore(server->tls_ks_manager);
-        peer_tls = ue_tls_connection_create(tls_ks->ctx);
+    if (server->tls_keystore) {
+        peer_tls = ue_tls_connection_create(server->tls_keystore->ctx);
 		if (!peer_tls) {
 			ue_stacktrace_push_msg("Failed to create TLS peer connection");
 			return false;
@@ -205,7 +202,7 @@ bool ue_socket_server_accept(ue_socket_server *server) {
             return false;
         }
 
-		if (tls_ks->verify_peer) {
+		if (server->tls_keystore->verify_peer) {
             if (!ue_tls_connection_verify_peer_certificate(peer_tls)) {
 				ue_stacktrace_push_msg("Client certificate verification failed");
                 ue_tls_connection_destroy(peer_tls);
@@ -234,7 +231,7 @@ bool ue_socket_server_accept(ue_socket_server *server) {
                 ue_stacktrace_push_msg("Failed to established connection");
                 return false;
             }
-			if (server->tls_ks_manager) {
+			if (server->tls_keystore) {
 				if (server->connections[i]->tls) {
                     ue_tls_connection_destroy(server->connections[i]->tls);
 				}

@@ -6,7 +6,6 @@
 #include <unknownecho/system/alloc.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/model/manager/tls_keystore_manager.h>
 #include <unknownecho/crypto/api/errorHandling/crypto_error_handling.h>
 
 #include <string.h>
@@ -27,13 +26,11 @@
     #error "OS not supported"
 #endif
 
-ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *host, unsigned short int port, ue_tls_keystore_manager *keystore_manager) {
+ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *host, unsigned short int port, ue_tls_keystore *tls_keystore) {
     struct sockaddr_in serv_addr;
     ue_socket_client_connection *connection;
-    ue_tls_keystore *keystore;
     ue_tls_connection *tls;
 
-    keystore = NULL;
     tls = NULL;
 
     if (ue_socket_is_valid(fd) <= 0) {
@@ -65,13 +62,11 @@ ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *h
         #error "OS not supported"
     #endif
 
-    if (keystore_manager) {
+    if (tls_keystore) {
         ue_logger_info("Keystore manager isn't null, so it will create a TLS connection");
 
-        keystore = ue_tls_keystore_manager_get_keystore(keystore_manager);
-
         ue_logger_debug("Creating TLS connection...");
-        tls = ue_tls_connection_create(keystore->ctx);
+        tls = ue_tls_connection_create(tls_keystore->ctx);
     	if (!tls) {
             ue_logger_error("Failed to create TLS connection");
             ue_stacktrace_push_msg("Failed to create tls connection");
@@ -96,12 +91,12 @@ ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *h
         }
         ue_logger_debug("TLS connection established");
 
-        if (keystore->verify_peer && !ue_tls_connection_verify_peer_certificate(tls)) {
+        if (tls_keystore->verify_peer && !ue_tls_connection_verify_peer_certificate(tls)) {
             ue_logger_error("Verify peer is enable but peer certificate isn't valid");
             ue_stacktrace_push_msg("Peer certificate verification failed");
             ue_tls_connection_destroy(tls);
             return NULL;
-        } else if (keystore->verify_peer) {
+        } else if (tls_keystore->verify_peer) {
             ue_logger_debug("Verify peer is enable and peer certificate is valid");
         }
     } else {
@@ -121,10 +116,10 @@ ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *h
         return NULL;
     }
 
-    if (keystore_manager) {
+    if (tls_keystore) {
         connection->tls = tls;
-        keystore->tls = tls;
-        if (keystore->verify_peer) {
+        tls_keystore->tls = tls;
+        if (tls_keystore->verify_peer) {
             connection->peer_certificate = ue_tls_connection_get_peer_certificate(connection->tls);
         }
     }
@@ -134,10 +129,10 @@ ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *h
     return connection;
 }
 
-ue_socket_client_connection *ue_socket_connect_s(int fd, const char *domain, const char *host, const char *port, ue_tls_keystore_manager *keystore_manager) {
+ue_socket_client_connection *ue_socket_connect_s(int fd, const char *domain, const char *host, const char *port, ue_tls_keystore *tls_keystore) {
 	ue_socket_client_connection *connection;
 
-    if ((connection = ue_socket_connect(fd, atoi(domain), host, atoi(port), keystore_manager)) == NULL) {
+    if ((connection = ue_socket_connect(fd, atoi(domain), host, atoi(port), tls_keystore)) == NULL) {
         ue_stacktrace_push_msg("Failed to connect socket from str parameters");
         return NULL;
     }

@@ -47,7 +47,40 @@ void ue_tls_context_destroy(ue_tls_context *context) {
 	}
 }
 
-bool ue_tls_context_load_certificates(ue_tls_context *context, char *passphrase, char *ca_pk_path, char *pk_path, char *sk_path) {
+bool ue_tls_context_load_certificates(ue_tls_context *context, ue_pkcs12_keystore *keystore) {
+	char *error_buffer;
+
+    error_buffer = NULL;
+
+	if (SSL_CTX_use_certificate(context->impl, ue_x509_certificate_get_impl(keystore->certificate)) <= 0) {
+        ue_openssl_error_handling(error_buffer, "Load keystore certificate into to context");
+        return false;
+    }
+
+	if (SSL_CTX_use_PrivateKey(context->impl, ue_private_key_get_impl(keystore->private_key)) <= 0) {
+		ue_openssl_error_handling(error_buffer, "Load keystore private key into context");
+        return false;
+	}
+
+	if (SSL_CTX_check_private_key(context->impl) != 1) {
+        ue_openssl_error_handling(error_buffer, "Private key and certificate are not matching");
+        return false;
+    }
+
+	/*if (ca_pk_path) {
+        if (!SSL_CTX_load_verify_locations(context->impl, ca_pk_path, NULL)) {
+            ue_openssl_error_handling(error_buffer, "verify locations of RSA CA certificate file");
+            return false;
+        }
+
+        SSL_CTX_set_verify(context->impl, SSL_VERIFY_PEER, NULL);
+        SSL_CTX_set_verify_depth(context->impl, 1);
+    }*/
+
+	return true;
+}
+
+bool ue_tls_context_load_certificates_from_path(ue_tls_context *context, char *passphrase, char *ca_pk_path, char *pk_path, char *sk_path) {
 	char *error_buffer;
 
     error_buffer = NULL;

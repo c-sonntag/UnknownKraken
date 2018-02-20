@@ -85,20 +85,20 @@ ue_x509_certificate *ue_tls_connection_get_peer_certificate(ue_tls_connection *c
 
     peer_tls_certificate = SSL_get_peer_certificate(connection->impl);
     if (!peer_tls_certificate) {
-        ue_stacktrace_push_msg("There is no peer certificate");
+		ue_logger_warn("There is no peer certificate in this TLS connection, in order to verify user certificate");
         return NULL;
     }
 
     verify_result = SSL_get_verify_result(connection->impl);
     if (verify_result != X509_V_OK) {
-        ue_stacktrace_push_msg("Peer certificate verify failed with result %ld", verify_result);
+		ue_logger_warn("Peer certificate verification failed with result %ld", verify_result);
         X509_free(peer_tls_certificate);
         return NULL;
     }
 
 	peer_certificate = ue_x509_certificate_create_empty();
 	if (!ue_x509_certificate_set_impl(peer_certificate, peer_tls_certificate)) {
-		ue_stacktrace_push_msg("This implementation of x509 isn't valid");
+		ue_logger_warn("This implementation of x509 isn't valid");
 		return NULL;
 	}
 

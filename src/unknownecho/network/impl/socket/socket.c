@@ -280,7 +280,9 @@ int ue_socket_open_tcp() {
 
 bool ue_socket_close(int fd) {
     int error_code;
-    char *error_buffer;
+    #if defined(_WIN32) || defined(_WIN64)
+        char *error_buffer;
+    #endif
 
     if (fd == -1) {
         return true;
@@ -291,9 +293,7 @@ bool ue_socket_close(int fd) {
             if (errno == 0) {
                 ue_logger_warn("Failed to close socket fd with error code %d, but errno is set to 0. Maybe it's already closed.", error_code);
             } else {
-                error_buffer = strerror(errno);
-                ue_logger_warn("Failed to close file descriptor with error code : %d and with error message '%s'. Maybe it's already closed.", error_code, error_buffer);
-                ue_safe_free(error_buffer);
+                ue_logger_warn("Failed to close file descriptor with error code : %d and with error message '%s'. Maybe it's already closed.", error_code, strerror(errno));
             }
         }
     #elif defined(_WIN32) || defined(_WIN64)

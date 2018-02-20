@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
     ue_pkcs12_keystore *keystore;
 
     if (argc != 4) {
-        fprintf(stderr, "[ERROR] ./%s <file_path> <pass_phrase> <pem_pass_phrase>\n", argv[0]);
+        fprintf(stderr, "[ERROR] ./%s <file_path> <passphrase> <pem_passphrase>\n", argv[0]);
     }
 
     ue_init();

@@ -3,6 +3,7 @@
 #include <unknownecho/network/api/socket/socket_client_connection.h>
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/network/api/tls/tls_context.h>
+#include <unknownecho/network/api/tls/tls_keystore.h>
 #include <unknownecho/string/string_builder.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/string/string_split.h>
@@ -14,17 +15,17 @@
 #include <unknownecho/bool.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/model/manager/pgp_keystore_manager.h>
-#include <unknownecho/model/manager/tls_keystore_manager.h>
 #include <unknownecho/crypto/api/key/public_key.h>
 #include <unknownecho/crypto/api/key/private_key.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate_sign.h>
 #include <unknownecho/crypto/api/certificate/x509_csr.h>
 #include <unknownecho/crypto/api/cipher/data_cipher.h>
+#include <unknownecho/crypto/api/keystore/pkcs12_keystore.h>
 #include <unknownecho/crypto/api/encryption/sym_encrypter.h>
 #include <unknownecho/crypto/factory/sym_key_factory.h>
 #include <unknownecho/crypto/factory/sym_encrypter_factory.h>
+#include <unknownecho/crypto/factory/pkcs12_keystore_factory.h>
 #include <unknownecho/byte/byte_utility.h>
 #include <unknownecho/byte/byte_writer.h>
 #include <unknownecho/byte/byte_reader.h>
@@ -164,8 +165,7 @@ typedef struct {
 	ue_thread_mutex *csr_server_mutex, *tls_server_mutex;
 	ue_thread_cond *csr_server_cond, *tls_server_cond;
 	request_processing_state csr_server_processing_state, tls_server_processing_state;
-	ue_pgp_keystore_manager *pgp_ks_manager;
-	ue_tls_keystore_manager *tls_ks_manager;
+	ue_tls_keystore *tls_keystore;
     channel **channels;
     int channels_number;
     ue_thread_id *csr_server_thread, *tls_server_thread;
@@ -730,23 +730,16 @@ bool tls_server_write_consumer(ue_socket_client_connection *connection) {
 }
 
 bool socket_server_manager_create(unsigned short int csr_server_port, unsigned short int tls_server_port) {
-    ue_tls_method *method;
     int i;
 
     ue_safe_alloc(instance, socket_server_manager, 1)
     instance->csr_server = NULL;
     instance->tls_server = NULL;
-    instance->tls_ks_manager = NULL;
-    instance->pgp_ks_manager = NULL;
+    instance->tls_keystore = NULL;
     ue_safe_alloc(instance->channels, channel *, CHANNELS_NUMBER);
     instance->channels_number = CHANNELS_NUMBER;
     for (i = 0; i < instance->channels_number; i++) {
         instance->channels[i] = channel_create(NULL, NULL);
-    }
-
-    if (!(method = ue_tls_method_create_v1_server())) {
-        ue_stacktrace_push_msg("Failed to create tls server method");
-        return false;
     }
 
     if (!(instance->csr_server = ue_socket_server_create(csr_server_port, csr_server_read_consumer, csr_server_write_consumer, NULL))) {
@@ -757,19 +750,22 @@ bool socket_server_manager_create(unsigned short int csr_server_port, unsigned s
     ue_logger_info("CSR server waiting on port %d", csr_server_port);
 
     //instance->tls_ks_manager = ue_tls_keystore_manager_init("res/tls2/ca.crt", "res/tls2/ssl_server.crt", "res/tls2/ssl_server.key", method, "passphraseserver", NULL);
-    instance->tls_ks_manager = ue_tls_keystore_manager_init("res/tls3/ca.pem", "res/tls3/ssl_server.crt", "res/tls3/ssl_server.key", method, "", NULL);
-    ue_tls_method_destroy(method);
-    if (!instance->tls_ks_manager) {
-        ue_stacktrace_push_msg("Failed to init tls keystore manager")
+
+    ue_pkcs12_keystore *keystore;
+
+    keystore = ue_pkcs12_keystore_create_random("SERVER", "name");
+
+    if (!ue_pkcs12_keystore_write(keystore, "res/server_keystore.p12", "password", "password")) {
+        ue_stacktrace_push_msg("Failed to write keystore to 'res/keystore.p12'");
+        ue_pkcs12_keystore_destroy(keystore);
         return false;
     }
 
-    /*if (!(instance->pgp_ks_manager = ue_pgp_keystore_manager_init("res/pem/c1_pgp_pub.pem", "res/pem/c1_pgp_priv.pem", "res/pem/server_pgp_pub.pem", NULL))) {
-        ue_stacktrace_push_msg("Failed to init pgp keystore manager")
-        return false;
-    }*/
+    ue_pkcs12_keystore_destroy(keystore);
 
-    if (!(instance->tls_server = ue_socket_server_create(tls_server_port, tls_server_read_consumer, tls_server_write_consumer, instance->tls_ks_manager))) {
+    instance->tls_keystore = ue_tls_keystore_create("res/server_keystore.p12", "password", "password", ue_tls_method_create_v1_server());
+
+    if (!(instance->tls_server = ue_socket_server_create(tls_server_port, tls_server_read_consumer, tls_server_write_consumer, instance->tls_keystore))) {
         ue_stacktrace_push_msg("Failed to tls start server on port %d", tls_server_port);
         return false;
     }
@@ -797,8 +793,7 @@ void socket_server_manager_destroy() {
         ue_thread_cond_destroy(instance->csr_server_cond);
 	    ue_socket_server_destroy(instance->tls_server);
         ue_socket_server_destroy(instance->csr_server);
-	    ue_tls_keystore_manager_uninit(instance->tls_ks_manager);
-	    ue_pgp_keystore_manager_uninit(instance->pgp_ks_manager);
+	    ue_tls_keystore_destroy(instance->tls_keystore);
         for (i = 0; i < instance->channels_number; i++) {
             channel_destroy(instance->channels[i]);
         }
@@ -816,7 +811,7 @@ int main() {
 
     ue_logger_set_level(ue_logger_manager_get_logger(), LOG_DEBUG);
 
-    socket_server_manager_create(5001, 5002);
+    socket_server_manager_create(5002, 5001);
 
     _Pragma("GCC diagnostic push")
     _Pragma("GCC diagnostic ignored \"-Wpedantic\"")

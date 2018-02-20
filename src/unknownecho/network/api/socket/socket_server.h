@@ -2,7 +2,7 @@
 #define UNKNOWNECHO_SOCKET_SERVER_H
 
 #include <unknownecho/network/api/socket/socket_client_connection.h>
-#include <unknownecho/model/manager/tls_keystore_manager_struct.h>
+#include <unknownecho/network/api/tls/tls_keystore.h>
 #include <unknownecho/bool.h>
 
 typedef struct {
@@ -12,13 +12,13 @@ typedef struct {
 	bool (*read_consumer)(ue_socket_client_connection *connection);
 	bool (*write_consumer)(ue_socket_client_connection *connection);
 	bool running;
-	ue_tls_keystore_manager *tls_ks_manager;
+	ue_tls_keystore *tls_keystore;
 } ue_socket_server;
 
 ue_socket_server *ue_socket_server_create(unsigned short int port,
 	bool (*read_consumer)(ue_socket_client_connection *connection),
 	bool (*write_consumer)(ue_socket_client_connection *connection),
-	ue_tls_keystore_manager *keystore_manager);
+	ue_tls_keystore *tls_keystore);
 
 bool ue_socket_server_is_valid(ue_socket_server *server);
 

@@ -3,6 +3,7 @@
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate_generation.h>
 #include <unknownecho/crypto/api/key/private_key.h>
+#include <unknownecho/crypto/factory/x509_certificate_factory.h>
 
 #include <stdio.h>
 
