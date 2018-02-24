@@ -1,3 +1,22 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of UnknownEchoLib.                                        *
+ *                                                                             *
+ *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
 #include <unknownecho/network/api/socket/socket_client.h>
 #include <unknownecho/network/api/socket/socket_client_connection.h>
 #include <unknownecho/network/api/socket/socket.h>
@@ -26,7 +45,7 @@
     #error "OS not supported"
 #endif
 
-ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *host, unsigned short int port, ue_tls_keystore *tls_keystore) {
+ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *host, unsigned short int port, ue_tls_session *tls_session) {
     struct sockaddr_in serv_addr;
     ue_socket_client_connection *connection;
     ue_tls_connection *tls;
@@ -62,11 +81,11 @@ ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *h
         #error "OS not supported"
     #endif
 
-    if (tls_keystore) {
+    if (tls_session) {
         ue_logger_info("Keystore manager isn't null, so it will create a TLS connection");
 
         ue_logger_debug("Creating TLS connection...");
-        tls = ue_tls_connection_create(tls_keystore->ctx);
+        tls = ue_tls_connection_create(tls_session->ctx);
     	if (!tls) {
             ue_logger_error("Failed to create TLS connection");
             ue_stacktrace_push_msg("Failed to create tls connection");
@@ -91,12 +110,12 @@ ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *h
         }
         ue_logger_debug("TLS connection established");
 
-        if (tls_keystore->verify_peer && !ue_tls_connection_verify_peer_certificate(tls)) {
+        if (tls_session->verify_peer && !ue_tls_connection_verify_peer_certificate(tls)) {
             ue_logger_error("Verify peer is enable but peer certificate isn't valid");
             ue_stacktrace_push_msg("Peer certificate verification failed");
             ue_tls_connection_destroy(tls);
             return NULL;
-        } else if (tls_keystore->verify_peer) {
+        } else if (tls_session->verify_peer) {
             ue_logger_debug("Verify peer is enable and peer certificate is valid");
         }
     } else {
@@ -116,10 +135,10 @@ ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *h
         return NULL;
     }
 
-    if (tls_keystore) {
+    if (tls_session) {
         connection->tls = tls;
-        tls_keystore->tls = tls;
-        if (tls_keystore->verify_peer) {
+        tls_session->tls = tls;
+        if (tls_session->verify_peer) {
             connection->peer_certificate = ue_tls_connection_get_peer_certificate(connection->tls);
         }
     }
@@ -129,10 +148,10 @@ ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *h
     return connection;
 }
 
-ue_socket_client_connection *ue_socket_connect_s(int fd, const char *domain, const char *host, const char *port, ue_tls_keystore *tls_keystore) {
+ue_socket_client_connection *ue_socket_connect_s(int fd, const char *domain, const char *host, const char *port, ue_tls_session *tls_session) {
 	ue_socket_client_connection *connection;
 
-    if ((connection = ue_socket_connect(fd, atoi(domain), host, atoi(port), tls_keystore)) == NULL) {
+    if ((connection = ue_socket_connect(fd, ue_socket_str_to_domain(domain), host, atoi(port), tls_session)) == NULL) {
         ue_stacktrace_push_msg("Failed to connect socket from str parameters");
         return NULL;
     }

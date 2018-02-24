@@ -1,3 +1,22 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of UnknownEchoLib.                                        *
+ *                                                                             *
+ *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
 #include <unknownecho/network/api/socket/socket_server.h>
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/network/api/socket/socket_client_connection.h>
@@ -48,7 +67,7 @@ void init_select(ue_socket_server *server, int *max_fd, fd_set *read_set, fd_set
 ue_socket_server *ue_socket_server_create(unsigned short int port,
     bool (*read_consumer)(ue_socket_client_connection *connection),
     bool (*write_consumer)(ue_socket_client_connection *connection),
-	ue_tls_keystore *tls_keystore) {
+	ue_tls_session *tls_session) {
 
     ue_socket_server *server;
     int i;
@@ -57,7 +76,7 @@ ue_socket_server *ue_socket_server_create(unsigned short int port,
 
     ue_safe_alloc_or_goto(server, ue_socket_server, 1, clean_up);
 
-    server->tls_keystore = tls_keystore;
+    server->tls_session = tls_session;
     if ((server->ue_socket_fd = ue_socket_open_tcp()) == -1) {
         ue_stacktrace_push_msg("Failed to create main socket context");
         goto clean_up;
@@ -184,8 +203,8 @@ bool ue_socket_server_accept(ue_socket_server *server) {
         return false;
     }
 
-    if (server->tls_keystore) {
-        peer_tls = ue_tls_connection_create(server->tls_keystore->ctx);
+    if (server->tls_session) {
+        peer_tls = ue_tls_connection_create(server->tls_session->ctx);
 		if (!peer_tls) {
 			ue_stacktrace_push_msg("Failed to create TLS peer connection");
 			return false;
@@ -202,7 +221,7 @@ bool ue_socket_server_accept(ue_socket_server *server) {
             return false;
         }
 
-		if (server->tls_keystore->verify_peer) {
+		if (server->tls_session->verify_peer) {
             if (!ue_tls_connection_verify_peer_certificate(peer_tls)) {
 				ue_stacktrace_push_msg("Client certificate verification failed");
                 ue_tls_connection_destroy(peer_tls);
@@ -231,7 +250,7 @@ bool ue_socket_server_accept(ue_socket_server *server) {
                 ue_stacktrace_push_msg("Failed to established connection");
                 return false;
             }
-			if (server->tls_keystore) {
+			if (server->tls_session) {
 				if (server->connections[i]->tls) {
                     ue_tls_connection_destroy(server->connections[i]->tls);
 				}

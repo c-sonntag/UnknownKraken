@@ -1,8 +1,28 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of UnknownEchoLib.                                        *
+ *                                                                             *
+ *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
 #include <unknownecho/crypto/api/keystore/pkcs12_keystore.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/system/alloc.h>
 #include <unknownecho/fileSystem/file_utility.h>
 #include <unknownecho/errorHandling/stacktrace.h>
+#include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/string/string_utility.h>
 
@@ -208,6 +228,8 @@ bool ue_pkcs12_keystore_write(ue_pkcs12_keystore *keystore, const char *file_nam
     error_buffer = NULL;
     p12 = NULL;
     fd = NULL;
+
+    ue_check_parameter_or_return(keystore);
 
     for (i = 0; i < keystore->other_certificates_number; i++) {
         if (!sk_X509_push(other_certificates, ue_x509_certificate_get_impl(keystore->other_certificates[i]))) {

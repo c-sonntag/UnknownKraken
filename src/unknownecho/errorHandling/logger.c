@@ -1,3 +1,22 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of UnknownEchoLib.                                        *
+ *                                                                             *
+ *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
 /*
  * Inspired by log.c of rxi on Github : https://github.com/rxi/log.c
  *
@@ -89,7 +108,8 @@ bool ue_logger_record(ue_logger *log, int level, const char *file, int line, con
     date_time = asctime(timeinfo);
     date_time[strlen(date_time) - 1] = '\0';
 
-    padding = LEVEL_NAME_MAX_SIZE - strlen(level_names[level]);
+    //padding = LEVEL_NAME_MAX_SIZE - strlen(level_names[level]);
+    padding = 0;
 
     /* Log to log->fp */
     if (!log->quiet) {
@@ -125,6 +145,8 @@ bool ue_logger_record(ue_logger *log, int level, const char *file, int line, con
             fprintf(log->fp, "\n");
         }
     }
+
+    fflush(log->fp);
 
     /* Release lock */
     ue_thread_mutex_unlock(log->mutex);

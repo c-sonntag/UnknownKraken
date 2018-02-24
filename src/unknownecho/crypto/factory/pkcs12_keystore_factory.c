@@ -1,3 +1,22 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of UnknownEchoLib.                                        *
+ *                                                                             *
+ *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
 #include <unknownecho/crypto/factory/pkcs12_keystore_factory.h>
 #include <unknownecho/crypto/factory/x509_certificate_factory.h>
 #include <unknownecho/crypto/api/key/private_key.h>
@@ -71,12 +90,12 @@ ue_pkcs12_keystore *ue_pkcs12_keystore_create_random(char *CN, char *friendly_na
     return keystore;
 }
 
-ue_pkcs12_keystore *ue_pkcs12_keystore_create_from_files(char *certificate_path, char *private_key_path, char *friendly_name) {
+ue_pkcs12_keystore *ue_pkcs12_keystore_create_from_files(char *certificate_path, char *private_key_path, const char *private_key_password, char *friendly_name) {
     ue_x509_certificate *certificate;
     ue_private_key *private_key;
     ue_pkcs12_keystore *keystore;
 
-    if (!ue_x509_certificate_load_from_files(certificate_path, private_key_path, &certificate, &private_key)) {
+    if (!ue_x509_certificate_load_from_files(certificate_path, private_key_path, private_key_password, &certificate, &private_key)) {
         ue_stacktrace_push_msg("Failed to load certificate and private key from '%s' and '%s' files", certificate_path, private_key_path);
         return NULL;
     }

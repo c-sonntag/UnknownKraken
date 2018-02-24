@@ -1,3 +1,22 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of UnknownEchoLib.                                        *
+ *                                                                             *
+ *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
 #include <unknownecho/crypto/api/certificate/x509_certificate_generation.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/errorHandling/stacktrace.h>
@@ -125,8 +144,10 @@ bool ue_x509_certificate_generate(ue_x509_certificate_parameters *parameters, ue
 	}
 
 	/* Add various extensions: standard extensions */
-	//add_ext(x, NID_basic_constraints, "critical, CA:TRUE");
+	//add_ext(x, NID_basic_constraints, "critical, CA:FALSE");
 	//add_ext(x, NID_key_usage, "critical, keyCertSign, cRLSign");
+
+	//add_ext(x, NID_ext_key_usage, "critical, keyCertSign, cRLSign, digitalSignature, keyEncipherment");
 
 	if (ue_x509_certificate_parameters_get_constraint(parameters)) {
 		add_ext(x, NID_basic_constraints, ue_x509_certificate_parameters_get_constraint(parameters));
@@ -136,6 +157,7 @@ bool ue_x509_certificate_generate(ue_x509_certificate_parameters *parameters, ue
 
 	/* Some Netscape specific extensions */
 	add_ext(x, NID_netscape_cert_type, ue_x509_certificate_parameters_get_cert_type(parameters));
+	//add_ext(x, NID_netscape_cert_type, "sslCA");
 
 	//add_ext(x, NID_netscape_comment, "example comment extension");
 

@@ -1,3 +1,29 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of UnknownEchoLib.                                        *
+ *                                                                             *
+ *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
+/**
+ *  @file      socket_client_connection.h
+ *  @brief     Represent the socket connection of the client.
+ *  @author    Charly Lamothe
+ *  @copyright GNU Public License.
+ */
+
 #ifndef UNKNOWNECHO_SOCKET_CLIENT_UNKNOWNECHO_CONNECTION_H
 #define UNKNOWNECHO_SOCKET_CLIENT_UNKNOWNECHO_CONNECTION_H
 
@@ -5,6 +31,7 @@
 #include <unknownecho/string/string_builder.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/container/string_vector.h>
+#include <unknownecho/container/byte_vector.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
 #include <unknownecho/network/api/tls/tls_connection.h>
@@ -17,10 +44,12 @@ typedef enum {
 
 typedef struct {
 	int fd;
-	ue_string_builder *received_message, *message_to_send;
+	//ue_string_builder *received_message, *message_to_send;
+	ue_byte_stream *received_message, *message_to_send;
 	ue_connection_state state;
 	char *nickname;
-	ue_string_vector *split_message, *all_messages, *tmp_message, *current_message;
+	//ue_string_vector *split_message, *all_messages, *tmp_message, *current_message;
+	ue_byte_vector *split_message, *all_messages, *tmp_message, *current_message;
 	ue_tls_connection *tls;
 	ue_x509_certificate *peer_certificate;
 	ue_byte_stream *received_message_stream;

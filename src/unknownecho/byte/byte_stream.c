@@ -1,26 +1,48 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of UnknownEchoLib.                                        *
+ *                                                                             *
+ *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/system/alloc.h>
 #include <unknownecho/errorHandling/check_parameter.h>
+#include <unknownecho/errorHandling/logger.h>
 
 #include <string.h>
 
 ue_byte_stream *ue_byte_stream_create() {
-	return ue_byte_stream_create_limit(700);
+	/* @todo fix default size */
+	return ue_byte_stream_create_size(1024);
 }
 
-ue_byte_stream *ue_byte_stream_create_limit(size_t limit) {
+ue_byte_stream *ue_byte_stream_create_size(size_t size) {
 	ue_byte_stream *stream;
 
-    ue_check_parameter_or_return(limit > 0);
+    ue_check_parameter_or_return(size > 0);
 
     ue_safe_alloc(stream, ue_byte_stream, 1);
 
-    ue_safe_alloc_or_goto(stream->bytes, unsigned char, limit + 1, clean_up);
+    ue_safe_alloc_or_goto(stream->bytes, unsigned char, size, clean_up);
 
-    memset(stream->bytes, 0, limit);
-    stream->limit = limit;
+    memset(stream->bytes, 0, size);
+	/* @todo fix default limit */
+    stream->limit = 10000;
     stream->position = 0;
-    stream->size = 0;
+    stream->size = size;
 
     return stream;
 
@@ -38,9 +60,8 @@ void ue_byte_stream_clean_up(ue_byte_stream *stream) {
         return;
     }
 
-    memset(stream->bytes, 0, stream->limit);
+    memset(stream->bytes, 0, stream->size);
     stream->position = 0;
-    stream->size = 0;
 }
 
 void ue_byte_stream_destroy(ue_byte_stream *stream) {
@@ -89,15 +110,15 @@ size_t ue_byte_stream_get_size(ue_byte_stream *stream) {
         return -1;
     }
 
-    return stream->size;
+    return stream->position;
 }
 
-void ue_byte_stream_print(ue_byte_stream *stream) {
+void ue_byte_stream_print(ue_byte_stream *stream, FILE *fd) {
     size_t i;
 
-    printf("0x");
+    fprintf(fd, "0x");
     for (i = 0; i < stream->size; i++) {
-        printf("%02x", stream->bytes[i]);
+        fprintf(fd, "%02x", stream->bytes[i]);
     }
-    printf("\n");
+    fprintf(fd, "\n");
 }

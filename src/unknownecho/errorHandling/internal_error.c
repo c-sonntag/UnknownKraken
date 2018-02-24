@@ -1,3 +1,22 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of UnknownEchoLib.                                        *
+ *                                                                             *
+ *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
 #include <unknownecho/errorHandling/internal_error.h>
 
 #include <stdlib.h>
@@ -73,11 +92,11 @@ char *ue_internal_error_to_string(ue_error *e) {
 
 	error_buffer = (char *)malloc((size + 1) * sizeof(char));
 	sprintf(
-		error_buffer, 
+		error_buffer,
 		"%s   at %s (%s:%d)",
 		prefix,
 		e->func_name,
-		e->file_name, 
+		e->file_name,
 		e->line_number
 	);
 
@@ -90,7 +109,7 @@ void ue_internal_error_print(ue_error *e, FILE *out) {
 	char *error_buffer;
 
 	error_buffer = ue_internal_error_to_string(e);
-	
+
 	fprintf(out, "%s\n", error_buffer);
 
 	free((void*)error_buffer);

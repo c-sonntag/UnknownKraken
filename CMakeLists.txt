@@ -1,6 +1,6 @@
 #
 ## @brief LibUnknownEcho
-## @author SwaxxxIV
+## @author Charly Lamothe
 #
 
 # --- PROJECT ---
@@ -130,6 +130,6 @@ foreach (filePath ${files} )
 		target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/libcrypto.so.1.1" -ldl)
 	endif ()
 	target_link_libraries(${executableName} ${PROJECT_NAME})
-	target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/asmlib/libaelf64.a")
+	#target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/asmlib/libaelf64.a")
 	set_target_properties(${executableName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${EXAMPLES_OUTPUT_PATH})
 endforeach ()

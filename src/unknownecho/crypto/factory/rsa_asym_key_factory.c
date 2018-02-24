@@ -1,6 +1,26 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of UnknownEchoLib.                                        *
+ *                                                                             *
+ *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
 #include <unknownecho/crypto/factory/rsa_asym_key_factory.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
+#include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/system/alloc.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 
@@ -309,6 +329,9 @@ ue_public_key *ue_rsa_public_key_from_x509_certificate(ue_x509_certificate *cert
 	public_key = NULL;
 	public_key_impl = NULL;
 	rsa = NULL;
+
+	ue_check_parameter_or_return(certificate);
+	ue_check_parameter_or_return(ue_x509_certificate_get_impl(certificate));
 
 	public_key_impl = X509_get_pubkey(ue_x509_certificate_get_impl(certificate));
 	rsa = EVP_PKEY_get1_RSA(public_key_impl);

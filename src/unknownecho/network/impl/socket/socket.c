@@ -1,3 +1,22 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of UnknownEchoLib.                                        *
+ *                                                                             *
+ *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/errorHandling/stacktrace.h>
@@ -9,6 +28,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 
 #if defined(__unix__)
     #include <sys/socket.h>
@@ -323,7 +343,10 @@ bool ue_socket_is_valid(int fd) {
 size_t ue_socket_send_string(int fd, const char *string, ue_tls_connection *tls) {
     size_t sent;
 
-    sent = ue_socket_send_data(fd, (unsigned char *)string, strlen(string), tls);
+    if ((sent = ue_socket_send_data(fd, (unsigned char *)string, strlen(string), tls) == ULONG_MAX)) {
+        ue_stacktrace_push_msg("Sent bytes are equals to ULONG_MAX");
+        return -1;
+    }
 
     return sent;
 }
@@ -431,6 +454,7 @@ size_t ue_socket_receive_string_sync(int fd, ue_string_builder *sb, bool blockin
 
     return received;
 }
+
 size_t ue_socket_receive_bytes_sync(int fd, ue_byte_stream *stream, bool blocking, ue_tls_connection *tls) {
     #if defined(__unix__)
         size_t received, total, bytes;
@@ -452,7 +476,7 @@ size_t ue_socket_receive_bytes_sync(int fd, ue_byte_stream *stream, bool blockin
 
             do {
                 memset(response, 0, sizeof(response));
-                bytes = recv(fd, response, 1024, 0);
+                bytes = recv(fd, response, 4096, 0);
                 ue_logger_trace("%s", response);
                 if (bytes < 0) {
                     ue_stacktrace_push_errno();
@@ -485,6 +509,41 @@ size_t ue_socket_receive_bytes_sync(int fd, ue_byte_stream *stream, bool blockin
     }
 
     ue_logger_trace("%ld bytes received", received);
+
+    return received;
+}
+
+size_t ue_socket_receive_all_bytes_sync(int fd, unsigned char **bytes, size_t size, ue_tls_connection *tls) {
+    #if defined(__unix__)
+        size_t received, total;
+    #endif
+
+    received = -1;
+
+    if (fd <= 0) {
+        ue_stacktrace_push_code(UNKNOWNECHO_INVALID_PARAMETER);
+        return -1;
+    }
+
+    if (!tls) {
+        #if defined(__unix__)
+            ue_safe_alloc(*bytes, unsigned char, size);
+            for (total = 0; total < size;) {
+                received = recv(fd, bytes[total], size - total, MSG_WAITALL);
+                if (received < 0) {
+                    ue_safe_free(*bytes);
+                    return -1;
+                }
+                total += received;
+            }
+        #elif defined(_WIN32) || defined(_WIN64)
+
+        #else
+            #error "OS not supported"
+        #endif
+    } else {
+
+    }
 
     return received;
 }

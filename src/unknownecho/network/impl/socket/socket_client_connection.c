@@ -1,3 +1,22 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of UnknownEchoLib.                                        *
+ *                                                                             *
+ *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
 #include <unknownecho/network/api/socket/socket_client_connection.h>
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/system/alloc.h>
@@ -11,15 +30,15 @@ ue_socket_client_connection *ue_socket_client_connection_init() {
 	connection->state = UNKNOWNECHO_CONNECTION_FREE_STATE;
 	connection->fd = -1;
 	connection->nickname = NULL;
-	connection->split_message = ue_string_vector_create_empty();
-	connection->all_messages = ue_string_vector_create_empty();
-	connection->tmp_message = ue_string_vector_create_empty();
-	connection->current_message = ue_string_vector_create_empty();
-	if ((connection->received_message = ue_string_builder_create()) == NULL) {
+	connection->split_message = ue_byte_vector_create_empty();
+	connection->all_messages = ue_byte_vector_create_empty();
+	connection->tmp_message = ue_byte_vector_create_empty();
+	connection->current_message = ue_byte_vector_create_empty();
+	if ((connection->received_message = ue_byte_stream_create()) == NULL) {
 		ue_stacktrace_push_msg("Failed to init received message");
 		goto clean_up;
 	}
-	if ((connection->message_to_send = ue_string_builder_create()) == NULL) {
+	if ((connection->message_to_send = ue_byte_stream_create()) == NULL) {
 		ue_stacktrace_push_msg("Failed to init message to send");
 		goto clean_up;
 	}
@@ -40,16 +59,12 @@ void ue_socket_client_connection_destroy(ue_socket_client_connection *connection
 	if (connection) {
 		ue_socket_close(connection->fd);
 		ue_safe_free(connection->nickname);
-		ue_string_vector_destroy(connection->all_messages);
-		ue_string_vector_destroy(connection->current_message);
-		ue_string_vector_destroy(connection->tmp_message);
-		ue_string_builder_destroy(connection->received_message);
-		ue_string_builder_destroy(connection->message_to_send);
-		ue_string_vector_destroy(connection->split_message);
-		if (connection->tls) {
-			/*SSL_free(connection->tls);*/
-			/*connection->tls = NULL;*/
-		}
+		ue_byte_vector_destroy(connection->all_messages);
+		ue_byte_vector_destroy(connection->current_message);
+		ue_byte_vector_destroy(connection->tmp_message);
+		ue_byte_vector_destroy(connection->split_message);
+		ue_byte_stream_destroy(connection->received_message);
+		ue_byte_stream_destroy(connection->message_to_send);
 		if (connection->peer_certificate) {
 			ue_x509_certificate_destroy(connection->peer_certificate);
 			connection->peer_certificate = NULL;
@@ -63,21 +78,19 @@ void ue_socket_client_connection_clean_up(ue_socket_client_connection *connectio
 	if (connection) {
 		ue_socket_close(connection->fd);
 		ue_safe_free(connection->nickname);
-		ue_string_vector_clean_up(connection->all_messages);
-		ue_string_vector_clean_up(connection->current_message);
-		ue_string_vector_clean_up(connection->tmp_message);
-		ue_string_builder_clean_up(connection->received_message);
-		ue_string_builder_clean_up(connection->message_to_send);
+		ue_byte_vector_clean_up(connection->all_messages);
+		ue_byte_vector_clean_up(connection->current_message);
+		ue_byte_vector_clean_up(connection->tmp_message);
+		ue_byte_stream_clean_up(connection->received_message);
+		ue_byte_stream_clean_up(connection->message_to_send);
+		ue_byte_vector_destroy(connection->split_message);
 		connection->state = UNKNOWNECHO_CONNECTION_FREE_STATE;
-		if (connection->tls) {
-			ue_tls_connection_destroy(connection->tls);
-			connection->tls = NULL;
-		}
 		if (connection->peer_certificate) {
 			ue_x509_certificate_destroy(connection->peer_certificate);
 			connection->peer_certificate = NULL;
 		}
 		ue_byte_stream_clean_up(connection->received_message_stream);
+		connection->optional_data = NULL;
 	}
 }
 

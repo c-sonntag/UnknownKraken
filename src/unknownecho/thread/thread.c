@@ -1,3 +1,22 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of UnknownEchoLib.                                        *
+ *                                                                             *
+ *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
 #include <unknownecho/thread/thread.h>
 #include <unknownecho/system/alloc.h>
 #include <unknownecho/errorHandling/stacktrace.h>
@@ -109,6 +128,11 @@ bool thread_detach(ue_thread_id *ti) {
 }
 
 bool ue_thread_cancel(ue_thread_id *ti) {
+    if (!ti || ti->id == -1) {
+        ue_logger_warn("Thread already canceled");
+        return true;
+    }
+
     #if defined(__unix__)
         pthread_cancel(ti->id);
         return true;

@@ -1,3 +1,22 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of UnknownEchoLib.                                        *
+ *                                                                             *
+ *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/errorHandling/stacktrace.h>
@@ -21,7 +40,7 @@ struct ue_x509_certificate {
 };
 
 
-static bool load_certificate_pair(const char *cert_file_name, const char *private_key_file_name, X509 **certificate, EVP_PKEY **private_key);
+static bool load_certificate_pair(const char *cert_file_name, const char *private_key_file_name, const char *password, X509 **certificate, EVP_PKEY **private_key);
 
 
 ue_x509_certificate *ue_x509_certificate_create_empty() {
@@ -70,7 +89,7 @@ clean_up:
 	return result;
 }
 
-bool ue_x509_certificate_load_from_files(const char *cert_file_name, const char *private_key_file_name, ue_x509_certificate **certificate, ue_private_key **private_key) {
+bool ue_x509_certificate_load_from_files(const char *cert_file_name, const char *private_key_file_name, const char *password, ue_x509_certificate **certificate, ue_private_key **private_key) {
 	X509 *certificate_impl;
 	EVP_PKEY *private_key_impl;
 	RSA *rsa;
@@ -79,7 +98,7 @@ bool ue_x509_certificate_load_from_files(const char *cert_file_name, const char 
 	private_key_impl = NULL;
 	rsa = NULL;
 
-	if (!load_certificate_pair(cert_file_name, private_key_file_name, &certificate_impl, &private_key_impl)) {
+	if (!load_certificate_pair(cert_file_name, private_key_file_name, password, &certificate_impl, &private_key_impl)) {
 		ue_stacktrace_push_msg("Failed to load impl certificate pair files");
 		return false;
 	}
@@ -185,7 +204,12 @@ bool ue_x509_certificate_print(ue_x509_certificate *certificate, FILE *out_fd) {
 	return true;
 }
 
-static bool load_certificate_pair(const char *cert_file_name, const char *private_key_file_name, X509 **certificate, EVP_PKEY **private_key) {
+static int pass_cb(char *buf, int size, int rwflag, void *u) {
+     memcpy(buf, (char *)u, strlen((char *)u));
+     return strlen((char *)u);
+ }
+
+static bool load_certificate_pair(const char *cert_file_name, const char *private_key_file_name, const char *password, X509 **certificate, EVP_PKEY **private_key) {
 	BIO *bio;
 
 	bio = NULL;
@@ -208,7 +232,11 @@ static bool load_certificate_pair(const char *cert_file_name, const char *privat
 	if (!BIO_read_filename(bio, private_key_file_name)) {
 		goto clean_up;
 	}
-	*private_key = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
+	if (password) {
+		*private_key = PEM_read_bio_PrivateKey(bio, NULL, pass_cb, (void *)password);
+	} else {
+		*private_key = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
+	}
 	if (!*private_key) {
 		goto clean_up;
 	}
