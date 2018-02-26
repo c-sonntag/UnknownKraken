@@ -44,17 +44,16 @@ typedef enum {
 
 typedef struct {
 	int fd;
-	//ue_string_builder *received_message, *message_to_send;
-	ue_byte_stream *received_message, *message_to_send;
+	ue_byte_stream *received_message, *message_to_send, *tmp_stream;
 	ue_connection_state state;
 	char *nickname;
-	//ue_string_vector *split_message, *all_messages, *tmp_message, *current_message;
 	ue_byte_vector *split_message, *all_messages, *tmp_message, *current_message;
 	ue_tls_connection *tls;
 	ue_x509_certificate *peer_certificate;
 	ue_byte_stream *received_message_stream;
 	bool established;
 	void *optional_data;
+	ue_byte_vector_element *message_type, *message_content;
 } ue_socket_client_connection;
 
 ue_socket_client_connection *ue_socket_client_connection_init();

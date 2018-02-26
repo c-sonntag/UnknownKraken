@@ -28,7 +28,6 @@ char *ue_openssl_error_handling_impl(char *begin_msg) {
 
 	error_buffer = NULL;
 
-	ERR_print_errors_fp(stdout);
 	error_code = ERR_get_error();
 	error_buffer = (char *)ERR_reason_error_string(error_code);
 	if (error_buffer) {

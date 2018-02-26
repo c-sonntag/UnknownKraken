@@ -34,13 +34,13 @@
 
 
 static bool load_certs_keys_p12(ue_pkcs12_keystore *keystore, const PKCS12 *p12, const char *passphrase,
-    int passphrase_len, char *pem_passphrase, const EVP_CIPHER *enc);
+    int passphrase_len, const EVP_CIPHER *enc);
 
 static bool load_certs_pkeys_bags(ue_pkcs12_keystore *keystore, const STACK_OF(PKCS12_SAFEBAG) *bags,
-    const char *passphrase, int passphrase_len, char *pem_passphrase, const EVP_CIPHER *enc);
+    const char *passphrase, int passphrase_len, const EVP_CIPHER *enc);
 
 static bool load_certs_pkeys_bag(ue_pkcs12_keystore *keystore, const PKCS12_SAFEBAG *bag, const char *passphrase,
-    int passphrase_len, char *pem_passphrase, const EVP_CIPHER *enc);
+    int passphrase_len, const EVP_CIPHER *enc);
 
 
 static int alg_print(const X509_ALGOR *alg);
@@ -79,7 +79,7 @@ ue_pkcs12_keystore *ue_pkcs12_keystore_create(ue_x509_certificate *certificate, 
     return keystore;
 }
 
-ue_pkcs12_keystore *ue_pkcs12_keystore_load(const char *file_name, char *passphrase, char *pem_passphrase) {
+ue_pkcs12_keystore *ue_pkcs12_keystore_load(const char *file_name, char *passphrase) {
     ue_pkcs12_keystore *keystore;
     BIO *bio;
     char *error_buffer;
@@ -107,7 +107,7 @@ ue_pkcs12_keystore *ue_pkcs12_keystore_load(const char *file_name, char *passphr
 
     keystore = ue_pkcs12_keystore_create_empty();
 
-    if (!load_certs_keys_p12(keystore, p12, passphrase, (int)strlen(passphrase), pem_passphrase, EVP_des_ede3_cbc())) {
+    if (!load_certs_keys_p12(keystore, p12, passphrase, (int)strlen(passphrase), EVP_des_ede3_cbc())) {
         ue_pkcs12_keystore_destroy(keystore);
         keystore = NULL;
         ue_stacktrace_push_msg("Failed to load certs from keystore '%s'", file_name);
@@ -215,7 +215,7 @@ bool ue_pkcs12_keystore_remove_certificate_from_CN(ue_pkcs12_keystore *keystore,
     return result;
 }
 
-bool ue_pkcs12_keystore_write(ue_pkcs12_keystore *keystore, const char *file_name, char *passphrase, char *pem_passphrase) {
+bool ue_pkcs12_keystore_write(ue_pkcs12_keystore *keystore, const char *file_name, char *passphrase) {
     bool result;
     STACK_OF(X509) *other_certificates;
     int i;
@@ -266,7 +266,7 @@ clean_up:
 }
 
 static bool load_certs_keys_p12(ue_pkcs12_keystore *keystore, const PKCS12 *p12, const char *passphrase,
-    int passphrase_len, char *pem_passphrase, const EVP_CIPHER *enc) {
+    int passphrase_len, const EVP_CIPHER *enc) {
 
     bool result;
     STACK_OF(PKCS7) *asafes;
@@ -303,7 +303,7 @@ static bool load_certs_keys_p12(ue_pkcs12_keystore *keystore, const PKCS12 *p12,
             goto clean_up;
         }
 
-        if (!load_certs_pkeys_bags(keystore, bags, passphrase, passphrase_len, pem_passphrase, enc)) {
+        if (!load_certs_pkeys_bags(keystore, bags, passphrase, passphrase_len, enc)) {
             sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
             goto clean_up;
         }
@@ -319,12 +319,12 @@ static bool load_certs_keys_p12(ue_pkcs12_keystore *keystore, const PKCS12 *p12,
 }
 
 static bool load_certs_pkeys_bags(ue_pkcs12_keystore *keystore, const STACK_OF(PKCS12_SAFEBAG) *bags,
-    const char *passphrase, int passphrase_len, char *pem_passphrase, const EVP_CIPHER *enc) {
+    const char *passphrase, int passphrase_len, const EVP_CIPHER *enc) {
 
     int i;
 
     for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
-        if (!load_certs_pkeys_bag(keystore, sk_PKCS12_SAFEBAG_value(bags, i), passphrase, passphrase_len, pem_passphrase, enc)) {
+        if (!load_certs_pkeys_bag(keystore, sk_PKCS12_SAFEBAG_value(bags, i), passphrase, passphrase_len, enc)) {
             ue_logger_trace("Failed to load certs and keys of bag '%d'", i);
             // return false ?;
         }
@@ -334,7 +334,7 @@ static bool load_certs_pkeys_bags(ue_pkcs12_keystore *keystore, const STACK_OF(P
 }
 
 static bool load_certs_pkeys_bag(ue_pkcs12_keystore *keystore, const PKCS12_SAFEBAG *bag, const char *passphrase,
-    int passphrase_len, char *pem_passphrase, const EVP_CIPHER *enc) {
+    int passphrase_len, const EVP_CIPHER *enc) {
 
     EVP_PKEY *pkey;
     PKCS8_PRIV_KEY_INFO *p8;
@@ -463,7 +463,7 @@ static bool load_certs_pkeys_bag(ue_pkcs12_keystore *keystore, const PKCS12_SAFE
             /*if (options & INFO)
                 BIO_printf(bio_err, "Safe Contents bag\n");
             print_attribs(out, attrs, "Bag Attributes");*/
-            return load_certs_pkeys_bags(keystore, PKCS12_SAFEBAG_get0_safes(bag), passphrase, passphrase_len, pem_passphrase, enc);
+            return load_certs_pkeys_bags(keystore, PKCS12_SAFEBAG_get0_safes(bag), passphrase, passphrase_len, enc);
 
         default:
             ue_logger_warn("Warning unsupported bag type : '%s'", PKCS12_SAFEBAG_get0_type(bag));

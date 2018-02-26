@@ -48,10 +48,10 @@ bool ue_byte_read_next_bytes(ue_byte_stream *stream, unsigned char **bytes, size
         return false;
     }
 
-    /*if (stream->position + len >= stream->size) {
+    if (stream->position + len >= stream->size) {
         ue_stacktrace_push_msg("Failed to get next bytes because this would cause a buffer underflow");
         return false;
-    }*/
+    }
 
     ue_safe_alloc(*bytes, unsigned char, len);
     memcpy(*bytes, stream->bytes + stream->position, len * sizeof(unsigned char));

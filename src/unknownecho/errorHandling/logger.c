@@ -95,6 +95,11 @@ bool ue_logger_record(ue_logger *log, int level, const char *file, int line, con
     char *date_time;
     unsigned short int padding;
 
+    if (!log) {
+        ue_stacktrace_push_msg("Specified log ptr is null");
+        return false;
+    }
+
     if (level < log->level) {
         return true;
     }

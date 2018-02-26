@@ -21,12 +21,12 @@
 #include <unknownecho/system/alloc.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 
-ue_tls_session *ue_tls_session_create(char *keystore_path, char *passphrase, char *pem_passphrase, ue_tls_method *method, ue_x509_certificate *ca_certificate) {
+ue_tls_session *ue_tls_session_create(char *keystore_path, char *passphrase, ue_tls_method *method, ue_x509_certificate *ca_certificate) {
     ue_tls_session *tls_session;
 
     ue_safe_alloc(tls_session, ue_tls_session, 1);
 
-    if (!(tls_session->keystore = ue_pkcs12_keystore_load(keystore_path, passphrase, pem_passphrase))) {
+    if (!(tls_session->keystore = ue_pkcs12_keystore_load(keystore_path, passphrase))) {
         ue_stacktrace_push_msg("Failed to loas pkcs12 keystore from file '%s'", keystore_path);
         ue_safe_free(tls_session);
         return NULL;

@@ -65,7 +65,7 @@ void ue_stacktrace_destroy(ue_stacktrace *stack) {
 }
 
 void push_to_stacktrace(ue_stacktrace *stack, ue_error *e) {
-    if (!stack) {
+    if (!stack || !e) {
         return;
     }
 

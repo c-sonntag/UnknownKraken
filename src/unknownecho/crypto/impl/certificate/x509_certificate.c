@@ -174,6 +174,11 @@ void ue_x509_certificate_destroy(ue_x509_certificate *certificate) {
 }
 
 void *ue_x509_certificate_get_impl(ue_x509_certificate *certificate) {
+	if (!certificate) {
+		ue_stacktrace_push_msg("Specified certificate ptr is null");
+		return NULL;
+	}
+
 	return certificate->impl;
 }
 

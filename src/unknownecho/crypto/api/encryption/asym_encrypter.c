@@ -102,9 +102,15 @@ unsigned char *ue_asym_encrypter_public_encrypt(ue_asym_encrypter *encrypter, un
 	ue_check_parameter_or_return(plaintext_size != -1);
 
 	if (strcmp(encrypter->algorithm, "RSA-PKCS1-OAEP") == 0) {
-		ciphertext = ue_rsa_public_encrypt(encrypter->pk, plaintext, plaintext_size, &ciphertext_len, "PKCS1-OAEP");
+		if (!(ciphertext = ue_rsa_public_encrypt(encrypter->pk, plaintext, plaintext_size, &ciphertext_len, "PKCS1-OAEP"))) {
+			ue_stacktrace_push_msg("Failed to encrypt with public key in RSA-PKCS1-OAEP mode");
+			return NULL;
+		}
 	} else if (strcmp(encrypter->algorithm, "RSA-PKCS1") == 0) {
-		ciphertext = ue_rsa_public_encrypt(encrypter->pk, plaintext, plaintext_size, &ciphertext_len, "PKCS1");
+		if (!(ciphertext = ue_rsa_public_encrypt(encrypter->pk, plaintext, plaintext_size, &ciphertext_len, "PKCS1"))) {
+			ue_stacktrace_push_msg("Failed to encrypt with public key in RSA-PKCS1 mode");
+			return NULL;
+		}
 	} else {
 		ue_stacktrace_push_msg("Unknown algorithm");
 		return NULL;
@@ -123,9 +129,15 @@ unsigned char *ue_asym_encrypter_private_decrypt(ue_asym_encrypter *encrypter, u
 	ue_check_parameter_or_return(ciphered_text_size != -1);
 
 	if (strcmp(encrypter->algorithm, "RSA-PKCS1-OAEP") == 0) {
-		plaintext = ue_rsa_private_decrypt(encrypter->sk, ciphered_text, ciphered_text_size, &plaintext_len, "PKCS1-OAEP");
+		if (!(plaintext = ue_rsa_private_decrypt(encrypter->sk, ciphered_text, ciphered_text_size, &plaintext_len, "PKCS1-OAEP"))) {
+			ue_stacktrace_push_msg("Failed to decrypt with private key in RSA-PKCS1-OAEP mode");
+			return NULL;
+		}
 	} else if (strcmp(encrypter->algorithm, "RSA-PKCS1") == 0) {
-		plaintext = ue_rsa_private_decrypt(encrypter->sk, ciphered_text, ciphered_text_size, &plaintext_len, "PKCS1");
+		if (!(plaintext = ue_rsa_private_decrypt(encrypter->sk, ciphered_text, ciphered_text_size, &plaintext_len, "PKCS1"))) {
+			ue_stacktrace_push_msg("Failed to decrypt with private key in RSA-PKCS1 mode");
+			return NULL;
+		}
 	} else {
 		ue_stacktrace_push_msg("Unknown algorithm");
 		return NULL;
@@ -144,9 +156,15 @@ unsigned char *ue_asym_encrypter_private_encrypt(ue_asym_encrypter *encrypter, u
 	ue_check_parameter_or_return(plaintext_size != -1);
 
 	if (strcmp(encrypter->algorithm, "RSA-PKCS1-OAEP") == 0) {
-		ciphertext = ue_rsa_private_encrypt(encrypter->sk, plaintext, plaintext_size, &ciphertext_len, "PKCS1-OAEP");
+		if (!(ciphertext = ue_rsa_private_encrypt(encrypter->sk, plaintext, plaintext_size, &ciphertext_len, "PKCS1-OAEP"))) {
+			ue_stacktrace_push_msg("Failed to encrypt with private key in RSA-PKCS1-OAEP mode");
+			return NULL;
+		}
 	} else if (strcmp(encrypter->algorithm, "RSA-PKCS1") == 0) {
-		ciphertext = ue_rsa_private_encrypt(encrypter->sk, plaintext, plaintext_size, &ciphertext_len, "PKCS1");
+		if (!(ciphertext = ue_rsa_private_encrypt(encrypter->sk, plaintext, plaintext_size, &ciphertext_len, "PKCS1"))) {
+			ue_stacktrace_push_msg("Failed to encrypt with private key in RSA-PKCS1 mode");
+			return NULL;
+		}
 	} else {
 		ue_stacktrace_push_msg("Unknown algorithm");
 		return NULL;
@@ -165,9 +183,15 @@ unsigned char *ue_asym_encrypter_public_decrypt(ue_asym_encrypter *encrypter, un
 	ue_check_parameter_or_return(ciphered_text_size != -1);
 
 	if (strcmp(encrypter->algorithm, "RSA-PKCS1-OAEP") == 0) {
-		plaintext = ue_rsa_public_decrypt(encrypter->pk, ciphered_text, ciphered_text_size, &plaintext_len, "PKCS1-OAEP");
+		if (!(plaintext = ue_rsa_public_decrypt(encrypter->pk, ciphered_text, ciphered_text_size, &plaintext_len, "PKCS1-OAEP"))) {
+			ue_stacktrace_push_msg("Failed to decrypt with public key in RSA-PKCS1-OAEP mode");
+			return NULL;
+		}
 	} else if (strcmp(encrypter->algorithm, "RSA-PKCS1") == 0) {
-		plaintext = ue_rsa_public_decrypt(encrypter->pk, ciphered_text, ciphered_text_size, &plaintext_len, "PKCS1");
+		if (!(plaintext = ue_rsa_public_decrypt(encrypter->pk, ciphered_text, ciphered_text_size, &plaintext_len, "PKCS1"))) {
+			ue_stacktrace_push_msg("Failed to decrypt with public key in RSA-PKCS1 mode");
+			return NULL;
+		}
 	} else {
 		ue_stacktrace_push_msg("Unknown algorithm");
 		return NULL;

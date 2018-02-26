@@ -84,7 +84,7 @@ ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *h
     if (tls_session) {
         ue_logger_info("Keystore manager isn't null, so it will create a TLS connection");
 
-        ue_logger_debug("Creating TLS connection...");
+        ue_logger_info("Creating TLS connection...");
         tls = ue_tls_connection_create(tls_session->ctx);
     	if (!tls) {
             ue_logger_error("Failed to create TLS connection");
@@ -92,23 +92,23 @@ ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *h
             ue_tls_connection_destroy(tls);
             return NULL;
         }
-        ue_logger_debug("TLS connection created");
+        ue_logger_info("TLS connection created");
 
-        ue_logger_debug("Setting socket file descriptor %d to TLS connection...", fd);
+        ue_logger_info("Setting socket file descriptor %d to TLS connection...", fd);
         if (!ue_tls_connection_set_fd(tls, fd)) {
             ue_stacktrace_push_msg("Failed to set socket fd to tls connection");
             ue_tls_connection_destroy(tls);
             return NULL;
         }
-        ue_logger_debug("Socket file descriptor linked to TLS connection");
+        ue_logger_info("Socket file descriptor linked to TLS connection");
 
-        ue_logger_debug("Establishing TLS connection...");
+        ue_logger_info("Establishing TLS connection...");
         if (!ue_tls_connection_connect(tls)) {
             ue_stacktrace_push_msg("Failed to establish TLS connection");
             ue_tls_connection_destroy(tls);
             return NULL;
         }
-        ue_logger_debug("TLS connection established");
+        ue_logger_info("TLS connection established");
 
         if (tls_session->verify_peer && !ue_tls_connection_verify_peer_certificate(tls)) {
             ue_logger_error("Verify peer is enable but peer certificate isn't valid");
@@ -116,7 +116,7 @@ ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *h
             ue_tls_connection_destroy(tls);
             return NULL;
         } else if (tls_session->verify_peer) {
-            ue_logger_debug("Verify peer is enable and peer certificate is valid");
+            ue_logger_info("Verify peer is enable and peer certificate is valid");
         }
     } else {
         ue_logger_warn("Keystore manager is null, so it will create an unsecure connection");

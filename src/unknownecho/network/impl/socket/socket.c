@@ -414,12 +414,9 @@ size_t ue_socket_receive_string_sync(int fd, ue_string_builder *sb, bool blockin
             total = sizeof(response) - 1;
             received = 0;
 
-            ue_logger_trace("Response :");
-
             do {
                 memset(response, 0, sizeof(response));
                 bytes = recv(fd, response, 1024, 0);
-                ue_logger_trace("%s", response);
                 if (bytes < 0) {
                     ue_stacktrace_push_errno();
                     return -1;
@@ -472,12 +469,9 @@ size_t ue_socket_receive_bytes_sync(int fd, ue_byte_stream *stream, bool blockin
             total = sizeof(response) - 1;
             received = 0;
 
-            ue_logger_trace("Response :");
-
             do {
                 memset(response, 0, sizeof(response));
                 bytes = recv(fd, response, 4096, 0);
-                ue_logger_trace("%s", response);
                 if (bytes < 0) {
                     ue_stacktrace_push_errno();
                     return -1;
@@ -565,12 +559,9 @@ size_t ue_socket_receive_data_async(int fd, bool (*flow_consumer)(void *flow, si
             total = sizeof(response) - 1;
             received = 0;
 
-            ue_logger_trace("Resonse :");
-
             do {
                 memset(response, 0, sizeof(response));
                 bytes = recv(fd, response, 1024, 0);
-                ue_logger_trace("%s", response);
                 if (bytes < 0) {
                     ue_stacktrace_push_errno();
                     return -1;

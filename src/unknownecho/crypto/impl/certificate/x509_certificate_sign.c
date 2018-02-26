@@ -20,6 +20,7 @@
 #include <unknownecho/crypto/api/certificate/x509_certificate_sign.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/errorHandling/stacktrace.h>
+#include <unknownecho/errorHandling/check_parameter.h>
 
 #include <openssl/rand.h>
 #include <openssl/x509.h>
@@ -90,6 +91,9 @@ bool ue_x509_certificate_verify(ue_x509_certificate *signed_certificate, ue_x509
     store = NULL;
     error_buffer = NULL;
 
+	ue_check_parameter_or_return(signed_certificate);
+	ue_check_parameter_or_return(ca_certificate);
+
 	if (!(store = X509_STORE_new())) {
 		ue_openssl_error_handling(error_buffer, "X509_STORE_new");
         goto clean_up;
@@ -110,7 +114,7 @@ bool ue_x509_certificate_verify(ue_x509_certificate *signed_certificate, ue_x509
         goto clean_up;
     }
 
-    if (X509_verify_cert(verify_ctx) == 0) {
+    if (X509_verify_cert(verify_ctx) != 1) {
         ue_stacktrace_push_msg(X509_verify_cert_error_string(X509_STORE_CTX_get_error(verify_ctx)));
 		goto clean_up;
     }

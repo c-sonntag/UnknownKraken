@@ -97,8 +97,13 @@ socket_client_manager *instance = NULL;
 #endif
 
 
-#define CA_CERTIFICATE_PATH "res/ah/ca.crt"
-#define KEYSTORE_PATH       "res/keystore.p12"
+#define SERVER_CERTIFICATE_PATH "res/server.pem"
+#define KEYSTORE_PATH           "res/client_keystore.p12"
+#define KEYSTORE_PASSWORD       "password"
+#define CSR_SERVER_HOST         "127.0.0.1"
+#define CSR_SERVER_PORT         5002
+#define TLS_SERVER_HOST         "127.0.0.1"
+#define TLS_SERVER_PORT         5001
 
 
 bool socket_client_manager_create();
@@ -154,13 +159,9 @@ bool read_consumer(void *parameter) {
 		received = receive_message(connection);
 		result = true;
 
-		if (received == 0) {
-			ue_logger_warn("Connection is interrupted. Stopping consumer...");
-			instance->running = false;
-			result = false;
-		}
-		else if (received < 0 || received == ULLONG_MAX) {
-			ue_stacktrace_push_msg("Failed to send client input to server");
+		/* @todo set timeout in case of server lag or reboot */
+		if (received <= 0 || received == ULLONG_MAX) {
+			ue_logger_warn("Connection with server is interrupted. Stopping client...");
 			instance->running = false;
 			result = false;
 		}
@@ -183,10 +184,11 @@ bool read_consumer(void *parameter) {
 					result = false;
 				}
 				else if (memcmp(content->data, "TRUE", content->size) != 0) {
-					ue_logger_warn("Response of nickname request is incomprehensible");
+					ue_logger_warn("Response of nickname request is incomprehensible.");
 					instance->running = false;
 					result = false;
 				}
+				ue_logger_trace("Server has accepted this nickname.");
 			}
 			else if (memcmp(type->data, "CHANNEL_CONNECTION", type->size) == 0) {
 				if (memcmp(content->data, "FALSE", content->size) == 0) {
@@ -195,11 +197,15 @@ bool read_consumer(void *parameter) {
 					result = false;
 				}
 				else if (memcmp(content->data, "TRUE", content->size) != 0) {
-					ue_logger_warn("Response of channel connection request is incomprehensible");
+					ue_logger_warn("Response of channel connection request is incomprehensible.");
 					result = false;
 				} else {
+					char *buffer;
 					content2 = ue_byte_vector_get(connection->split_message, 2);
-					ue_string_to_int((char *)content2->data, &instance->channel_id, 10);
+					buffer = ue_string_create_from((char *)content2->data);
+					instance->channel_id = atoi(buffer);
+					ue_logger_trace("Channel connection has been accepted by the server with channel id %d.", instance->channel_id);
+					ue_safe_free(buffer);
 				}
 			}
 			else if (memcmp(type->data, "MESSAGE", type->size) == 0) {
@@ -345,7 +351,6 @@ bool write_consumer(void *parameter) {
 			else {
 				ue_byte_writer_append_string(connection->message_to_send, "CHANNEL_CONNECTION|");
 				ue_byte_writer_append_string(connection->message_to_send, input + strlen("@channel_connection") + 1);
-				//ue_string_builder_append(connection->message_to_send, input + strlen("@channel_connection") + 1, strlen(input + strlen("@channel_connection") + 1));
 				ue_byte_writer_append_string(connection->message_to_send, "|EOFEOFEOF");
 				result = send_message(connection);
 				if (!result) {
@@ -502,12 +507,12 @@ clean_up:
     return signed_certificate;
 }
 
-bool process_csr(unsigned short int csr_port, ue_x509_certificate **signed_certificate, ue_private_key **private_key) {
+bool process_csr(const char *csr_server_host, unsigned short int csr_server_port, ue_x509_certificate **signed_certificate, ue_private_key **private_key) {
 	bool result;
 	ue_x509_certificate *certificate;
 	int fd;
 	ue_socket_client_connection *connection;
-	size_t iv_size, cipher_data_size;
+	size_t iv_size, cipher_data_size, sent, received;
 	unsigned char *iv, *csr_request;
 	ue_sym_key *future_key;
 	ue_byte_stream *stream;
@@ -524,12 +529,16 @@ bool process_csr(unsigned short int csr_port, ue_x509_certificate **signed_certi
 	*private_key = NULL;
 
 	fd = ue_socket_open_tcp();
-	if (!(connection = ue_socket_connect(fd, AF_INET, "127.0.0.1", csr_port, NULL))) {
+	if (!(connection = ue_socket_connect(fd, AF_INET, csr_server_host, csr_server_port, NULL))) {
 		ue_stacktrace_push_msg("Failed to connect socket to server");
 		goto clean_up;
 	}
 
-	future_key = ue_sym_key_create_random();
+	if (!(future_key = ue_sym_key_create_random())) {
+		ue_stacktrace_push_msg("Failed to gen random sym key for server response encryption");
+		goto clean_up;
+	}
+
 	ue_safe_alloc(iv, unsigned char, 16);
 	if (!(ue_crypto_random_bytes(iv, 16))) {
 		ue_stacktrace_push_msg("Failed to get crypto random bytes for IV");
@@ -537,7 +546,10 @@ bool process_csr(unsigned short int csr_port, ue_x509_certificate **signed_certi
 	}
 	iv_size = 16;
 
-	ca_public_key = ue_rsa_public_key_from_x509_certificate(instance->ca_certificate);
+	if (!(ca_public_key = ue_rsa_public_key_from_x509_certificate(instance->ca_certificate))) {
+		ue_stacktrace_push_msg("Failed to extract RSA public key from CA certificate");
+		goto clean_up;
+	}
 
 	if (!generate_certificate(&certificate, private_key)) {
         ue_stacktrace_push_msg("Failed to generate x509 certificate and private key");
@@ -549,26 +561,37 @@ bool process_csr(unsigned short int csr_port, ue_x509_certificate **signed_certi
 		goto clean_up;
 	}
 
-	//ue_byte_writer_append_string(stream, "CSR|");
+	ue_byte_writer_append_string(stream, "CSR");
 	ue_byte_writer_append_bytes(stream, csr_request, cipher_data_size);
-	//ue_byte_writer_append_string(stream, "|EOFEOFEOF");
+	ue_byte_writer_append_string(stream, "||||||||||||EOFEOFEOF");
 
-	size_t sent = ue_socket_send_data(fd, ue_byte_stream_get_data(stream), ue_byte_stream_get_size(stream), NULL);
+	sent = ue_socket_send_data(fd, ue_byte_stream_get_data(stream), ue_byte_stream_get_size(stream), NULL);
 	ue_logger_trace("CSR bytes sent is %ld", sent);
+	if (sent < 0 || sent == ULLONG_MAX) {
+		ue_logger_error("Connection is interrupted.");
+		ue_stacktrace_push_msg("Failed to send message to server");
+		goto clean_up;
+	}
 
-	size_t received = ue_socket_receive_bytes_sync(fd, connection->received_message, false, NULL);
+	received = ue_socket_receive_bytes_sync(fd, connection->received_message, false, NULL);
 	ue_logger_trace("Size of the received response : %ld", received);
+	if (received < 0 || received == ULLONG_MAX) {
+		ue_logger_error("Connection is interrupted.");
+		ue_stacktrace_push_msg("Failed to received message from server");
+		goto clean_up;
+	}
 
-	*signed_certificate = client_process_server_response(ue_byte_stream_get_data(connection->received_message),
-		ue_byte_stream_get_size(connection->received_message), future_key, iv, iv_size);
+	if (!(*signed_certificate = client_process_server_response(ue_byte_stream_get_data(connection->received_message),
+		ue_byte_stream_get_size(connection->received_message), future_key, iv, iv_size))) {
+		ue_stacktrace_push_msg("Failed to process server response");
+		goto clean_up;
+	}
 
 	if (ue_x509_certificate_verify(*signed_certificate, instance->ca_certificate)) {
         ue_logger_info("Certificate is correctly signed by the CA");
     } else {
         ue_logger_error("Certificate isn't correctly signed by the CA");
     }
-
-	ue_x509_certificate_print(*signed_certificate, stdout);
 
 	result = true;
 
@@ -621,7 +644,7 @@ bool socket_client_manager_start(const char *host, unsigned short int tls_port) 
 	    handle_signal(SIGINT, shutdown_client, 0);
 	    handle_signal(SIGPIPE, SIG_IGN, SA_RESTART);
 
-		instance->tls_session = ue_tls_session_create(KEYSTORE_PATH, "password", "", ue_tls_method_create_v1_client(), instance->ca_certificate);
+		instance->tls_session = ue_tls_session_create(KEYSTORE_PATH, KEYSTORE_PASSWORD, ue_tls_method_create_v1_client(), instance->ca_certificate);
 
 	    instance->fd = ue_socket_open_tcp();
         if (!(instance->connection = ue_socket_connect(instance->fd, AF_INET, host, tls_port, instance->tls_session))) {
@@ -647,7 +670,7 @@ bool socket_client_manager_start(const char *host, unsigned short int tls_port) 
     return true;
 }
 
-bool create_keystore(unsigned short int csr_server_port) {
+bool create_keystore(const char *csr_server_host, unsigned short int csr_server_port) {
 	bool result;
 	ue_pkcs12_keystore *keystore;
 	ue_x509_certificate *signed_certificate;
@@ -660,7 +683,7 @@ bool create_keystore(unsigned short int csr_server_port) {
 
 	if (!ue_is_file_exists(KEYSTORE_PATH)) {
 
-		if (!process_csr(csr_server_port, &signed_certificate, &private_key)) {
+		if (!process_csr(csr_server_host, csr_server_port, &signed_certificate, &private_key)) {
 			ue_stacktrace_push_msg("Failed to process CSR");
 			goto clean_up;
 		}
@@ -670,7 +693,7 @@ bool create_keystore(unsigned short int csr_server_port) {
 			goto clean_up;
 		}
 
-		if (!ue_pkcs12_keystore_write(keystore, KEYSTORE_PATH, "password", "password")) {
+		if (!ue_pkcs12_keystore_write(keystore, KEYSTORE_PATH, KEYSTORE_PASSWORD)) {
 			ue_stacktrace_push_msg("Failed to write keystore to '%s'", KEYSTORE_PATH);
 			goto clean_up;
 		}
@@ -680,8 +703,6 @@ bool create_keystore(unsigned short int csr_server_port) {
 
 clean_up:
 	ue_pkcs12_keystore_destroy(keystore);
-	ue_x509_certificate_destroy(signed_certificate);
-	ue_private_key_destroy(private_key);
 	return result;
 }
 
@@ -697,13 +718,13 @@ bool socket_client_manager_create() {
     instance->tls_session = NULL;
 	instance->channel_id = -1;
 
-	if (!ue_x509_certificate_load_from_file(CA_CERTIFICATE_PATH, &instance->ca_certificate)) {
-		ue_stacktrace_push_msg("Failed to load CA certificate from path '%s'", CA_CERTIFICATE_PATH);
+	if (!ue_x509_certificate_load_from_file(SERVER_CERTIFICATE_PATH, &instance->ca_certificate)) {
+		ue_stacktrace_push_msg("Failed to load CA certificate from path '%s'", SERVER_CERTIFICATE_PATH);
 		ue_safe_free(instance);
 		return false;
 	}
 
-	if (!create_keystore(5002)) {
+	if (!create_keystore(CSR_SERVER_HOST, CSR_SERVER_PORT)) {
 		ue_stacktrace_push_msg("Failed to create keystore");
 		socket_client_manager_destroy();
 		return false;
@@ -751,7 +772,7 @@ int main() {
 		goto end;
 	}
 
-	if (!socket_client_manager_start("127.0.0.1", 5001)) {
+	if (!socket_client_manager_start(TLS_SERVER_HOST, TLS_SERVER_PORT)) {
 		ue_stacktrace_push_msg("Failed to start socket client manager");
 	}
 

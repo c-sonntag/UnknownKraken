@@ -30,17 +30,17 @@ int main(int argc, char **argv) {
     ue_pkcs12_keystore *keystore;
 
     if (argc != 4) {
-        fprintf(stderr, "[ERROR] ./%s <file_path> <passphrase> <pem_passphrase>\n", argv[0]);
+        fprintf(stderr, "[ERROR] ./%s <file_path> <passphrase>\n", argv[0]);
     }
 
     ue_init();
 
-    if (!(keystore = ue_pkcs12_keystore_load(argv[1], argv[2], argv[3]))) {
+    if (!(keystore = ue_pkcs12_keystore_load(argv[1], argv[2]))) {
         ue_stacktrace_push_msg("Failed to loas specified pkcs12 keystore");
         goto clean_up;
     }
 
-    if (!ue_pkcs12_keystore_write(keystore, "out/keystore.p12", argv[2], argv[3])) {
+    if (!ue_pkcs12_keystore_write(keystore, "out/keystore.p12", argv[2])) {
         ue_stacktrace_push_msg("Failed to write keystore to 'out/keystore.p12'");
         goto clean_up;
     }

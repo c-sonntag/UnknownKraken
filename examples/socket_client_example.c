@@ -315,7 +315,7 @@ bool create_keystore() {
 			goto clean_up;
 		}
 
-		if (!ue_pkcs12_keystore_write(keystore, KEYSTORE_PATH, "password", "password")) {
+		if (!ue_pkcs12_keystore_write(keystore, KEYSTORE_PATH, "password")) {
 			ue_stacktrace_push_msg("Failed to write keystore to '%s'", KEYSTORE_PATH);
 			goto clean_up;
 		}
@@ -382,7 +382,7 @@ bool socket_client_manager_start(const char *host, unsigned short int port) {
 	    handle_signal(SIGINT, shutdown_client, 0);
 	    handle_signal(SIGPIPE, SIG_IGN, SA_RESTART);
 
-		if (!(instance->tls_session = ue_tls_session_create(KEYSTORE_PATH, "password", "password", ue_tls_method_create_v1_client(), NULL))) {
+		if (!(instance->tls_session = ue_tls_session_create(KEYSTORE_PATH, "password", ue_tls_method_create_v1_client(), NULL))) {
 			ue_stacktrace_push_msg("Failed to create TLS session");
 			return false;
 		}

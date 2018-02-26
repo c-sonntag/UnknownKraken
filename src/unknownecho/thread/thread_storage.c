@@ -41,6 +41,7 @@ typedef struct {
 } ue_thread_storage;
 
 ue_thread_storage *storage = NULL;
+bool init = false;
 
 #if defined(_WIN32) || defined(_WIN64)
     #include <Windows.h>
@@ -58,7 +59,7 @@ static thread_data *resolve_current_thread_data() {
 	int i;
 	long current_thread_id;
 
-	if (!storage || !storage->data) {
+	if (!init || !storage || !storage->data) {
 		return NULL;
 	}
 
@@ -123,6 +124,8 @@ bool ue_thread_storage_init() {
 		storage->data[i]->ue_thread_id = -1;
 	}
 
+	init = true;
+
     return true;
 }
 
@@ -135,9 +138,13 @@ void ue_thread_storage_uninit() {
 				thread_data_destroy(storage->data[i]);
 			}
 			free((void *)storage->data);
+			storage->data = NULL;
 		}
 		free((void *)storage);
+		storage = NULL;
 	}
+
+	init = false;
 }
 
 bool ue_thread_storage_append_to_be_deleted_data(void *data) {
