@@ -53,7 +53,7 @@ typedef struct {
 	ue_byte_stream *received_message_stream;
 	bool established;
 	void *optional_data;
-	ue_byte_vector_element *message_type, *message_content;
+	ue_byte_vector_element *message_header, *message_content;
 } ue_socket_client_connection;
 
 ue_socket_client_connection *ue_socket_client_connection_init();

@@ -35,6 +35,9 @@
 
 ue_x509_certificate *ue_x509_certificate_sign_from_csr(ue_x509_csr *csr, ue_x509_certificate *ca_certificate, ue_private_key *ca_private_key);
 
+/**
+ *  @todo add chain certificates verification
+ */
 bool ue_x509_certificate_verify(ue_x509_certificate *signed_certificate, ue_x509_certificate *ca_certificate);
 
 #endif

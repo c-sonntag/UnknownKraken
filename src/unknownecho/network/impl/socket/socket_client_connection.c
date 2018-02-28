@@ -48,9 +48,9 @@ ue_socket_client_connection *ue_socket_client_connection_init() {
 	connection->peer_certificate = NULL;
 	connection->established = false;
 	connection->optional_data = NULL;
-	ue_safe_alloc(connection->message_type, ue_byte_vector_element, 1);
-	connection->message_type->data = NULL;
-	connection->message_type->size = 0;
+	ue_safe_alloc(connection->message_header, ue_byte_vector_element, 1);
+	connection->message_header->data = NULL;
+	connection->message_header->size = 0;
 	ue_safe_alloc(connection->message_content, ue_byte_vector_element, 1);
 	connection->message_content->data = NULL;
 	connection->message_content->size = 0;
@@ -78,9 +78,9 @@ void ue_socket_client_connection_destroy(ue_socket_client_connection *connection
 		}
 		ue_byte_stream_destroy(connection->received_message_stream);
 		ue_byte_stream_destroy(connection->tmp_stream);
-		if (connection->message_type) {
-			ue_safe_free(connection->message_type->data);
-			ue_safe_free(connection->message_type);
+		if (connection->message_header) {
+			ue_safe_free(connection->message_header->data);
+			ue_safe_free(connection->message_header);
 		}
 		if (connection->message_content) {
 			ue_safe_free(connection->message_content->data);
@@ -108,9 +108,9 @@ void ue_socket_client_connection_clean_up(ue_socket_client_connection *connectio
 		}
 		ue_byte_stream_clean_up(connection->received_message_stream);
 		ue_byte_stream_clean_up(connection->tmp_stream);
-		if (connection->message_type) {
-			ue_safe_free(connection->message_type->data);
-			connection->message_type->size = 0;
+		if (connection->message_header) {
+			ue_safe_free(connection->message_header->data);
+			connection->message_header->size = 0;
 		}
 		if (connection->message_content) {
 			ue_safe_free(connection->message_content->data);

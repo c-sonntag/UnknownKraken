@@ -207,11 +207,7 @@ size_t ue_tls_connection_read_string_sync(ue_tls_connection *connection, ue_stri
 	received = 0;
 	ssl_error = SSL_ERROR_NONE;
 
-	ue_logger_trace("Response :");
-
 	do {
-		ue_logger_trace("%s", response);
-
 		memset(response, 0, sizeof(response));
 		bytes = SSL_read(connection->impl, response, 1024);
 		if (bytes < 0) {
@@ -280,11 +276,7 @@ size_t ue_tls_connection_read_bytes_sync(ue_tls_connection *connection, ue_byte_
 	received = 0;
 	ssl_error = SSL_ERROR_NONE;
 
-	ue_logger_trace("Response :");
-
 	do {
-		ue_logger_trace("%s", response);
-
 		memset(response, 0, sizeof(response));
 		bytes = SSL_read(connection->impl, response, 1024);
 		if (bytes < 0) {
@@ -353,11 +345,7 @@ size_t ue_tls_connection_read_async(ue_tls_connection *connection, bool (*flow_c
 	received = 0;
 	ssl_error = SSL_ERROR_NONE;
 
-	ue_logger_trace("Response :");
-
 	do {
-		ue_logger_trace("%s", response);
-
 		memset(response, 0, sizeof(response));
 		bytes = SSL_read(connection->impl, response, 1024);
 		if (bytes < 0) {

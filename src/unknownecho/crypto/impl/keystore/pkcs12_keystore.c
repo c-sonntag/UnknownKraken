@@ -137,10 +137,16 @@ void ue_pkcs12_keystore_destroy(ue_pkcs12_keystore *keystore) {
     }
 }
 
-bool ue_pkcs12_keystore_add_certificate(ue_pkcs12_keystore *keystore, ue_x509_certificate *certificate) {
+bool ue_pkcs12_keystore_add_certificate(ue_pkcs12_keystore *keystore, ue_x509_certificate *certificate, const unsigned char *friendly_name, size_t friendly_name_size) {
     bool result;
 
     result = false;
+
+    ue_check_parameter_or_return(keystore);
+    ue_check_parameter_or_return(certificate);
+    ue_check_parameter_or_return(ue_x509_certificate_get_impl(certificate));
+    ue_check_parameter_or_return(friendly_name);
+    ue_check_parameter_or_return(friendly_name_size > 0);
 
     if (keystore->other_certificates) {
         ue_safe_realloc(keystore->other_certificates, ue_x509_certificate *, keystore->other_certificates_number, 1);
@@ -148,11 +154,29 @@ bool ue_pkcs12_keystore_add_certificate(ue_pkcs12_keystore *keystore, ue_x509_ce
         ue_safe_alloc(keystore->other_certificates, ue_x509_certificate *, 1);
     }
     keystore->other_certificates[keystore->other_certificates_number] = certificate;
+    X509_alias_set1(ue_x509_certificate_get_impl(certificate), friendly_name, friendly_name_size);
     keystore->other_certificates_number++;
 
     result = true;
 
     return result;
+}
+
+bool ue_pkcs12_keystore_add_certificate_from_file(ue_pkcs12_keystore *keystore, const char *file_name, const unsigned char *friendly_name, size_t friendly_name_size) {
+    ue_x509_certificate *certificate;
+
+    if (!ue_x509_certificate_load_from_file(file_name, &certificate)) {
+		ue_stacktrace_push_msg("Failed to load certificate from path '%s'", file_name);
+		return false;
+	}
+
+    if (!ue_pkcs12_keystore_add_certificate(keystore, certificate, friendly_name, friendly_name_size)) {
+        ue_x509_certificate_destroy(certificate);
+        ue_stacktrace_push_msg("Failed to add loaded certificate");
+        return false;
+    }
+
+    return true;
 }
 
 bool ue_pkcs12_keystore_add_certificates_bundle(ue_pkcs12_keystore *keystore, const char *file_name, const char *passphrase) {
@@ -205,14 +229,57 @@ clean_up:
     return result;
 }
 
-bool ue_pkcs12_keystore_remove_certificate_from_CN(ue_pkcs12_keystore *keystore, const char *file_name) {
+bool ue_pkcs12_keystore_remove_certificate(ue_pkcs12_keystore *keystore, const unsigned char *friendly_name, size_t friendly_name_size) {
     bool result;
+    size_t i;
+    unsigned char *alias;
+    int alias_size;
 
     result = false;
+
+    for (i = 0; i < keystore->other_certificates_number; i++) {
+        if (!keystore->other_certificates[i]) {
+            continue;
+        }
+
+        if (!(alias = X509_alias_get0(ue_x509_certificate_get_impl(keystore->other_certificates[i]), &alias_size))) {
+            ue_logger_warn("Other certificates '%d' in keystore have no alias", i);
+            continue;
+        }
+
+        if ((size_t)alias_size == friendly_name_size && memcmp(alias, friendly_name, friendly_name_size) == 0) {
+            ue_x509_certificate_destroy(keystore->other_certificates[i]);
+            keystore->other_certificates[i] = NULL;
+            break;
+        }
+    }
 
     result = true;
 
     return result;
+}
+
+ue_x509_certificate *ue_pkcs12_keystore_find_certificate_by_friendly_name(ue_pkcs12_keystore *keystore, const unsigned char *friendly_name, size_t friendly_name_size) {
+    size_t i;
+    unsigned char *alias;
+    int alias_size;
+
+    for (i = 0; i < keystore->other_certificates_number; i++) {
+        if (!keystore->other_certificates[i]) {
+            continue;
+        }
+
+        if (!(alias = X509_alias_get0(ue_x509_certificate_get_impl(keystore->other_certificates[i]), &alias_size))) {
+            ue_logger_warn("Other certificates '%d' in keystore have no alias", i);
+            continue;
+        }
+
+        if ((size_t)alias_size == friendly_name_size && memcmp(alias, friendly_name, friendly_name_size) == 0) {
+            return keystore->other_certificates[i];
+        }
+    }
+
+    return NULL;
 }
 
 bool ue_pkcs12_keystore_write(ue_pkcs12_keystore *keystore, const char *file_name, char *passphrase) {
@@ -232,7 +299,7 @@ bool ue_pkcs12_keystore_write(ue_pkcs12_keystore *keystore, const char *file_nam
     ue_check_parameter_or_return(keystore);
 
     for (i = 0; i < keystore->other_certificates_number; i++) {
-        if (!sk_X509_push(other_certificates, ue_x509_certificate_get_impl(keystore->other_certificates[i]))) {
+        if (keystore->other_certificates[i] && !sk_X509_push(other_certificates, ue_x509_certificate_get_impl(keystore->other_certificates[i]))) {
             ue_openssl_error_handling(error_buffer, "Failed to push other_certificates[%d] into STACK_OF(X509)");
             goto clean_up;
         }
@@ -430,31 +497,21 @@ static bool load_certs_pkeys_bag(ue_pkcs12_keystore *keystore, const PKCS12_SAFE
             //ue_logger_trace("Issuer : %s", X509_get_issuer_name(x509));
             //ue_logger_trace(" ");
             name = PKCS12_get_friendlyname((PKCS12_SAFEBAG *)bag);
-            if (name) {
-                ue_logger_trace("Friendly name : '%s'", name);
-                if (keystore->friendly_name) {
-                    ue_logger_warn("Friendly name of root certificate already exists in keystore object");
-                    ue_safe_free(name);
-                } else {
-                    keystore->friendly_name = name;
-                    if (keystore->certificate) {
-                        ue_logger_warn("Root certificate already exists in keystore object");
-                        X509_free(x509);
-                    } else {
-                        keystore->certificate = ue_x509_certificate_create_empty();
-                        ue_x509_certificate_set_impl(keystore->certificate, x509);
-                    }
-                }
-            } else {
+            if (keystore->friendly_name) {
                 if (keystore->other_certificates) {
                     ue_safe_realloc(keystore->other_certificates, ue_x509_certificate *, keystore->other_certificates_number, 1);
                 } else {
                     ue_safe_alloc(keystore->other_certificates, ue_x509_certificate *, 1);
                 }
+                X509_alias_set1(x509, (const unsigned char *)name, strlen(name));
                 other_certificate = ue_x509_certificate_create_empty();
                 ue_x509_certificate_set_impl(other_certificate, x509);
                 keystore->other_certificates[keystore->other_certificates_number] = other_certificate;
                 keystore->other_certificates_number++;
+            } else {
+                keystore->friendly_name = name;
+                keystore->certificate = ue_x509_certificate_create_empty();
+                ue_x509_certificate_set_impl(keystore->certificate, x509);
             }
             break;
 

@@ -335,7 +335,7 @@ bool socket_server_manager_create(unsigned short int port) {
     instance->server = NULL;
     instance->tls_session = NULL;
 
-    if (!(instance->tls_session = ue_tls_session_create(KEYSTORE_PATH, "password", ue_tls_method_create_v1_server(), NULL))) {
+    if (!(instance->tls_session = ue_tls_session_create(KEYSTORE_PATH, "password", ue_tls_method_create_server(), NULL, 0))) {
         ue_stacktrace_push_msg("Failed to create TLS session");
         return false;
     }

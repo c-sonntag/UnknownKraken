@@ -27,7 +27,7 @@ struct ue_tls_method {
     const SSL_METHOD *impl;
 };
 
-ue_tls_method *ue_tls_method_create_v1_client() {
+ue_tls_method *ue_tls_method_create_client() {
     ue_tls_method *method;
     char *error_buffer;
 
@@ -43,7 +43,7 @@ ue_tls_method *ue_tls_method_create_v1_client() {
     return method;
 }
 
-ue_tls_method *ue_tls_method_create_v1_server() {
+ue_tls_method *ue_tls_method_create_server() {
     ue_tls_method *method;
     char *error_buffer;
 

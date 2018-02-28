@@ -29,14 +29,15 @@
 int main(int argc, char **argv) {
     ue_pkcs12_keystore *keystore;
 
-    if (argc != 4) {
+    if (argc != 3) {
         fprintf(stderr, "[ERROR] ./%s <file_path> <passphrase>\n", argv[0]);
+        exit(1);
     }
 
     ue_init();
 
     if (!(keystore = ue_pkcs12_keystore_load(argv[1], argv[2]))) {
-        ue_stacktrace_push_msg("Failed to loas specified pkcs12 keystore");
+        ue_stacktrace_push_msg("Failed to load specified pkcs12 keystore");
         goto clean_up;
     }
 

@@ -382,7 +382,7 @@ bool socket_client_manager_start(const char *host, unsigned short int port) {
 	    handle_signal(SIGINT, shutdown_client, 0);
 	    handle_signal(SIGPIPE, SIG_IGN, SA_RESTART);
 
-		if (!(instance->tls_session = ue_tls_session_create(KEYSTORE_PATH, "password", ue_tls_method_create_v1_client(), NULL))) {
+		if (!(instance->tls_session = ue_tls_session_create(KEYSTORE_PATH, "password", ue_tls_method_create_client(), NULL, 0))) {
 			ue_stacktrace_push_msg("Failed to create TLS session");
 			return false;
 		}

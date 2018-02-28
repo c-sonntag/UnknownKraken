@@ -44,7 +44,11 @@ typedef struct {
 	ue_pkcs12_keystore *keystore;
 } ue_tls_session;
 
-ue_tls_session *ue_tls_session_create(char *keystore_path, char *passphrase, ue_tls_method *method, ue_x509_certificate *ca_certificate);
+ue_tls_session *ue_tls_session_create(char *keystore_path, char *passphrase, ue_tls_method *method, ue_x509_certificate **ca_certificates, int ca_certificate_count);
+
+ue_tls_session *ue_tls_session_create_server(char *keystore_path, char *passphrase, ue_x509_certificate **ca_certificates, int ca_certificate_count);
+
+ue_tls_session *ue_tls_session_create_client(char *keystore_path, char *passphrase, ue_x509_certificate **ca_certificates, int ca_certificate_count);
 
 void ue_tls_session_destroy(ue_tls_session *tls_session);
 

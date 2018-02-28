@@ -21,6 +21,7 @@
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/check_parameter.h>
+#include <unknownecho/errorHandling/logger.h>
 
 #include <openssl/rand.h>
 #include <openssl/x509.h>

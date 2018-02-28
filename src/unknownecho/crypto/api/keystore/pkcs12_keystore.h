@@ -47,11 +47,15 @@ ue_pkcs12_keystore *ue_pkcs12_keystore_load(const char *file_name, char *passphr
 
 void ue_pkcs12_keystore_destroy(ue_pkcs12_keystore *keystore);
 
-bool ue_pkcs12_keystore_add_certificate(ue_pkcs12_keystore *keystore, ue_x509_certificate *certificate);
+bool ue_pkcs12_keystore_add_certificate(ue_pkcs12_keystore *keystore, ue_x509_certificate *certificate, const unsigned char *friendly_name, size_t friendly_name_size);
+
+bool ue_pkcs12_keystore_add_certificate_from_file(ue_pkcs12_keystore *keystore, const char *file_name, const unsigned char *friendly_name, size_t friendly_name_size);
 
 bool ue_pkcs12_keystore_add_certificates_bundle(ue_pkcs12_keystore *keystore, const char *file_name, const char *passphrase);
 
-bool ue_pkcs12_keystore_remove_certificate_from_CN(ue_pkcs12_keystore *keystore, const char *file_name);
+bool ue_pkcs12_keystore_remove_certificate(ue_pkcs12_keystore *keystore, const unsigned char *friendly_name, size_t friendly_name_size);
+
+ue_x509_certificate *ue_pkcs12_keystore_find_certificate_by_friendly_name(ue_pkcs12_keystore *keystore, const unsigned char *friendly_name, size_t friendly_name_size);
 
 bool ue_pkcs12_keystore_write(ue_pkcs12_keystore *keystore, const char *file_name, char *passphrase);
 

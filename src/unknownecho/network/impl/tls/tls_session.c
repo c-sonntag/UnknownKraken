@@ -21,7 +21,7 @@
 #include <unknownecho/system/alloc.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 
-ue_tls_session *ue_tls_session_create(char *keystore_path, char *passphrase, ue_tls_method *method, ue_x509_certificate *ca_certificate) {
+ue_tls_session *ue_tls_session_create(char *keystore_path, char *passphrase, ue_tls_method *method, ue_x509_certificate **ca_certificates, int ca_certificate_count) {
     ue_tls_session *tls_session;
 
     ue_safe_alloc(tls_session, ue_tls_session, 1);
@@ -40,14 +40,36 @@ ue_tls_session *ue_tls_session_create(char *keystore_path, char *passphrase, ue_
         return NULL;
     }
 
-	if (!(ue_tls_context_load_certificates(tls_session->ctx, tls_session->keystore, ca_certificate))) {
+	if (!(ue_tls_context_load_certificates(tls_session->ctx, tls_session->keystore, ca_certificates, ca_certificate_count))) {
         ue_stacktrace_push_msg("Failed to load keystore certificates into TLS context");
         ue_tls_session_destroy(tls_session);
         return NULL;
     }
 
-	tls_session->verify_peer = ca_certificate ? true : false;
+	tls_session->verify_peer = ca_certificates ? true : false;
     tls_session->tls = NULL;
+
+    return tls_session;
+}
+
+ue_tls_session *ue_tls_session_create_server(char *keystore_path, char *passphrase, ue_x509_certificate **ca_certificates, int ca_certificate_count) {
+    ue_tls_session *tls_session;
+
+    if (!(tls_session = ue_tls_session_create(keystore_path, passphrase, ue_tls_method_create_server(), ca_certificates, ca_certificate_count))) {
+        ue_stacktrace_push_msg("Failed to create TLS session as server");
+        return NULL;
+    }
+
+    return tls_session;
+}
+
+ue_tls_session *ue_tls_session_create_client(char *keystore_path, char *passphrase, ue_x509_certificate **ca_certificates, int ca_certificate_count) {
+    ue_tls_session *tls_session;
+
+    if (!(tls_session = ue_tls_session_create(keystore_path, passphrase, ue_tls_method_create_client(), ca_certificates, ca_certificate_count))) {
+        ue_stacktrace_push_msg("Failed to create TLS session as client");
+        return NULL;
+    }
 
     return tls_session;
 }

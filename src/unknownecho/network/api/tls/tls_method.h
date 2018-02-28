@@ -29,9 +29,9 @@
 
 typedef struct ue_tls_method ue_tls_method;
 
-ue_tls_method *ue_tls_method_create_v1_client();
+ue_tls_method *ue_tls_method_create_client();
 
-ue_tls_method *ue_tls_method_create_v1_server();
+ue_tls_method *ue_tls_method_create_server();
 
 void ue_tls_method_destroy(ue_tls_method *method);
 

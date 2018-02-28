@@ -108,6 +108,16 @@ bool ue_private_key_is_valid(ue_private_key *sk) {
 }
 
 void *ue_private_key_get_impl(ue_private_key *sk) {
+	if (!sk) {
+		ue_stacktrace_push_msg("Specified sk ptr is null");
+		return NULL;
+	}
+
+	if (!sk->impl) {
+		ue_stacktrace_push_msg("Specified sk have no implementation");
+		return NULL;
+	}
+
 	return sk->impl;
 }
 

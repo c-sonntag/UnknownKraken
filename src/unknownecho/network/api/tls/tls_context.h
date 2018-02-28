@@ -38,7 +38,8 @@ ue_tls_context *ue_tls_context_create(ue_tls_method *method);
 
 void ue_tls_context_destroy(ue_tls_context *context);
 
-bool ue_tls_context_load_certificates(ue_tls_context *context, ue_pkcs12_keystore *keystore, ue_x509_certificate *ca_certificate);
+//bool ue_tls_context_load_certificates(ue_tls_context *context, ue_pkcs12_keystore *keystore, ue_x509_certificate *ca_certificate);
+bool ue_tls_context_load_certificates(ue_tls_context *context, ue_pkcs12_keystore *keystore, ue_x509_certificate **ca_certificates, int ca_certificate_count);
 
 bool ue_tls_context_load_certificates_from_path(ue_tls_context *context, char *passphrase, char *ca_pk_path, char *pk_path, char *sk_path);
 
