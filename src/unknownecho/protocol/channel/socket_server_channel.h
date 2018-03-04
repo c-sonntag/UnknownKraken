@@ -1,0 +1,6 @@
+#ifndef SOCKET_SERVER_CHANNEL_H
+#define SOCKET_SERVER_CHANNEL_H
+
+
+
+#endif

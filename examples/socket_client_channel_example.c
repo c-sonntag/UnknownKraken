@@ -1871,10 +1871,12 @@ bool socket_client_manager_create() {
 		goto clean_up;
 	}
 
-	if (!(instance->nickname = get_input("Nickname : "))) {
+	/*if (!(instance->nickname = get_input("Nickname : "))) {
         ue_stacktrace_push_msg("Specified nickname isn't valid");
         goto clean_up;
-    }
+    }*/
+
+	instance->nickname = ue_string_create_from("client");
 
 	logs_file_name = ue_strcat_variadic("ssss", ROOT_PATH, instance->nickname, "/", LOGGER_FILE_NAME);
 	instance->logs_file = NULL;
