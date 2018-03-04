@@ -168,7 +168,7 @@ static int generate_key_csr(EVP_PKEY **key, char *C, char *CN, X509_REQ **req) {
 
     RSA *rsa;
 
-    rsa = ue_rsa_keypair_gen(2048);
+    rsa = ue_rsa_keypair_gen(4096);
 	if (!EVP_PKEY_assign_RSA(*key, rsa)) goto err;
 
 	X509_REQ_set_pubkey(*req, *key);

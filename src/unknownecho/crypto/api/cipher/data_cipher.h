@@ -49,8 +49,17 @@
 
 #include <stddef.h>
 
-bool cipher_plain_data(unsigned char *plain_data, size_t plain_data_size, ue_public_key *public_key, ue_private_key *private_key, unsigned char **cipher_data, size_t *cipher_data_size, ue_sym_key *key);
+/*bool cipher_plain_data(unsigned char *plain_data, size_t plain_data_size, ue_public_key *public_key, ue_private_key *private_key, unsigned char **cipher_data, size_t *cipher_data_size, ue_sym_key *key);
 
-bool decipher_cipher_data(unsigned char *cipher_data, size_t cipher_data_size, ue_private_key *private_key, ue_public_key *public_key, unsigned char **plain_data, size_t *plain_data_size);
+bool decipher_cipher_data(unsigned char *cipher_data, size_t cipher_data_size, ue_private_key *private_key, ue_public_key *public_key, unsigned char **plain_data, size_t *plain_data_size);*/
+
+bool ue_cipher_plain_data(unsigned char *plain_data, size_t plain_data_size,
+    ue_public_key *public_key, ue_private_key *private_key,
+    unsigned char **cipher_data, size_t *cipher_data_size, const char *cipher_name);
+
+bool ue_decipher_cipher_data(unsigned char *cipher_data,
+    size_t cipher_data_size, ue_private_key *private_key,
+    ue_public_key *public_key, unsigned char **plain_data,
+    size_t *plain_data_size, const char *cipher_name);
 
 #endif

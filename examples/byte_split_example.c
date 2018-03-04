@@ -2,6 +2,7 @@
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/byte/byte_split.h>
+#include <unknownecho/string/string_utility.h>
 #include <unknownecho/system/alloc.h>
 
 #include <string.h>
@@ -11,6 +12,7 @@
 int main(int argc, char **argv) {
     unsigned char **split;
     size_t count, *sizes, i;
+    char *buffer;
 
     split = NULL;
     sizes = NULL;
@@ -28,8 +30,10 @@ int main(int argc, char **argv) {
 	}
 
     for (i = 0; i < count; i++) {
+        buffer = ue_string_create_from_bytes(split[i], sizes[i]);
         printf("sizes[%d] : %ld ", i, sizes[i]);
-        printf("%s\n", (char *)split[i]);
+        printf("%s\n", buffer);
+        ue_safe_free(buffer);
     }
 
 clean_up:

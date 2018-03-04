@@ -52,6 +52,8 @@ bool ue_byte_stream_set_position(ue_byte_stream *stream, size_t position);
 
 size_t ue_byte_stream_get_size(ue_byte_stream *stream);
 
-void ue_byte_stream_print(ue_byte_stream *stream, FILE *fd);
+void ue_byte_stream_print_hex(ue_byte_stream *stream, FILE *fd);
+
+void ue_byte_stream_print_string(ue_byte_stream *stream, FILE *fd);
 
 #endif

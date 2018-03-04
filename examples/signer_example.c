@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     ue_logger_info("Rsa ue_signer has been successfully created");
 
     ue_logger_info("Signing message with rsa ue_signer instance...");
-    if (!(signature = ue_signer_sign_buffer(s, message, message_length, &signature_length))) {
+    if (!ue_signer_sign_buffer(s, message, message_length, &signature, &signature_length)) {
         ue_stacktrace_push_msg("Failed to sign message")
         goto clean_up;
     }

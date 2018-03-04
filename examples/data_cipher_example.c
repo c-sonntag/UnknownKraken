@@ -68,18 +68,15 @@ int main(int argc, char **argv) {
 
     private_key = ue_rsa_private_key_from_key_certificate(argv[3]);
 
-    //asym_key = ue_rsa_asym_key_create(2048);
-
-
     ue_timer_start(CIPHER_ID);
-    if (!cipher_plain_data(plain_data, plain_data_size, public_key, private_key, &cipher_data, &cipher_data_size, NULL)) {
+    if (!ue_cipher_plain_data(plain_data, plain_data_size, public_key, private_key, &cipher_data, &cipher_data_size, "aes-256-cbc")) {
         ue_stacktrace_push_msg("Failed to cipher plain data");
         goto clean_up;
     }
     ue_timer_stop(CIPHER_ID);
 
     ue_timer_start(DECIPHER_ID);
-    if (!decipher_cipher_data(cipher_data, cipher_data_size, private_key, public_key, &decipher_data, &decipher_data_size)) {
+    if (!ue_decipher_cipher_data(cipher_data, cipher_data_size, private_key, public_key, &decipher_data, &decipher_data_size, "aes-256-cbc")) {
         ue_stacktrace_push_msg("Failed to decipher cipher data");
         goto clean_up;
     }

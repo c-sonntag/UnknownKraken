@@ -254,3 +254,19 @@ bool ue_byte_vector_contains(ue_byte_vector *vector, unsigned char *target, size
 
     return false;
 }
+
+bool ue_byte_vector_element_print_string(ue_byte_vector_element *element, FILE *out) {
+    size_t i;
+
+    ue_check_parameter_or_return(element);
+    ue_check_parameter_or_return(element->data);
+    ue_check_parameter_or_return(element->size);
+    ue_check_parameter_or_return(out);
+
+    for (i = 0; i < element->size; i++) {
+        fprintf(out, "%c", element->data[i]);
+    }
+    fprintf(out, "\n");
+
+    return true;
+}

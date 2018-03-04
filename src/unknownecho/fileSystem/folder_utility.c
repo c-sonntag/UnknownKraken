@@ -20,7 +20,12 @@
 #include <unknownecho/fileSystem/folder_utility.h>
 #include <unknownecho/fileSystem/file_utility.h>
 #include <unknownecho/string/string_utility.h>
+#include <unknownecho/string/string_builder.h>
+#include <unknownecho/string/string_split.h>
+#include <unknownecho/container/string_vector.h>
 #include <unknownecho/errorHandling/check_parameter.h>
+#include <unknownecho/errorHandling/logger.h>
+#include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/system/alloc.h>
 
 #include <string.h>
@@ -325,4 +330,49 @@ char *ue_get_current_dir() {
 failed:
     ue_safe_free(dir)
     return NULL;
+}
+
+bool ue_create_folder(const char *path_name) {
+    bool result;
+#if defined(__unix__)
+    ue_string_builder *full_path;
+    ue_string_vector *paths;
+    int i;
+#endif
+
+    if (ue_is_dir_exists(path_name)) {
+        ue_logger_warn("Folder at path '%s' already exists", path_name);
+        return true;
+    }
+
+    result = false;
+#if defined(__unix__)
+    full_path = ue_string_builder_create();
+    paths = ue_string_vector_create_empty();
+    ue_string_split_append_one_delim(paths, path_name, "/");
+#endif
+
+#if defined(__unix__)
+    for (i = 0; i < ue_string_vector_size(paths); i++) {
+        ue_string_builder_append_variadic(full_path, "%s/", ue_string_vector_get(paths, i));
+        if (!ue_is_dir_exists(ue_string_builder_get_data(full_path))) {
+            if (mkdir((const char *)ue_string_builder_get_data(full_path), 0700) != 0) {
+                ue_stacktrace_push_errno();
+                goto clean_up;
+            }
+        }
+    }
+#elif defined(_WIN32) || defined(_WIN64)
+    // @todo _wmkdir, mkdir
+    ue_stacktrace_push_msg("Not implemented");
+#endif
+
+    result = true;
+
+clean_up:
+#if defined(__unix__)
+    ue_string_builder_destroy(full_path);
+    ue_string_vector_destroy(paths);
+#endif
+    return result;
 }

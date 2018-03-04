@@ -46,6 +46,8 @@
 
 #include <stddef.h>
 
+bool ue_byte_read_is_int(ue_byte_stream *stream, int position, int n);
+
 /**
  *  @brief      Read the next int of the bytes stream.
  *  @param[in]  stream of bytes

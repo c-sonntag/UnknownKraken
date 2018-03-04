@@ -23,6 +23,7 @@
  *  @author    Charly Lamothe
  *  @copyright GNU Public License.
  *  @see       https://en.wikipedia.org/wiki/X.509
+ *  @todo      clean up internal functions
  */
 
 #ifndef UNKNOWNECHO_X509_CERTIFICATE_H

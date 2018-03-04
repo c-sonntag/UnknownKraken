@@ -21,6 +21,7 @@
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/system/alloc.h>
 #include <unknownecho/errorHandling/stacktrace.h>
+#include <unknownecho/errorHandling/logger.h>
 
 #include <openssl/rsa.h>
 #include <openssl/bn.h>
@@ -129,8 +130,7 @@ bool ue_public_key_print(ue_public_key *pk, FILE *out_fd) {
 	rsa = NULL;
 
 	if (EVP_PKEY_id(pk->impl) == EVP_PKEY_RSA) {
-	    rsa = EVP_PKEY_get1_RSA(pk->impl);
-		if (rsa) {
+	    if (!(rsa = EVP_PKEY_get1_RSA(pk->impl))) {
 			return false;
 		}
 	    RSA_print_fp(out_fd, rsa, 0);

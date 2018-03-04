@@ -37,4 +37,6 @@ char **ue_list_directory(char *dir_name, int *files, bool recursively);
 
 char *ue_get_current_dir();
 
+bool ue_create_folder(const char *path_name);
+
 #endif

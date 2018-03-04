@@ -113,12 +113,21 @@ size_t ue_byte_stream_get_size(ue_byte_stream *stream) {
     return stream->position;
 }
 
-void ue_byte_stream_print(ue_byte_stream *stream, FILE *fd) {
+void ue_byte_stream_print_hex(ue_byte_stream *stream, FILE *fd) {
     size_t i;
 
     fprintf(fd, "0x");
-    for (i = 0; i < stream->size; i++) {
+    for (i = 0; i < stream->position; i++) {
         fprintf(fd, "%02x", stream->bytes[i]);
+    }
+    fprintf(fd, "\n");
+}
+
+void ue_byte_stream_print_string(ue_byte_stream *stream, FILE *fd) {
+    size_t i;
+
+    for (i = 0; i < stream->position; i++) {
+        fprintf(fd, "%c", stream->bytes[i]);
     }
     fprintf(fd, "\n");
 }

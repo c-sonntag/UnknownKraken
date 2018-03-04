@@ -27,27 +27,24 @@
 #ifndef UNKNOWNECHO_SIGNER_H
 #define UNKNOWNECHO_SIGNER_H
 
-#include <unknownecho/crypto/api/encryption/asym_encrypter.h>
-#include <unknownecho/crypto/api/hash/hasher.h>
+#include <unknownecho/crypto/api/key/public_key.h>
+#include <unknownecho/crypto/api/key/private_key.h>
 #include <unknownecho/bool.h>
 
 #include <stddef.h>
 
-typedef struct {
-	ue_asym_encrypter *encrypter;
-	ue_hasher *h;
-} ue_signer;
+typedef struct ue_signer ue_signer;
 
-ue_signer *ue_signer_create();
+ue_signer *ue_signer_create(const char *digest_name);
 
-void ue_signer_destroy(ue_signer *s);
+void ue_signer_destroy(ue_signer *signer);
 
-void ue_signer_destroy_all(ue_signer *s);
+bool ue_signer_set_public_key(ue_signer *signer, ue_public_key *public_key);
 
-bool ue_signer_init(ue_signer *s, ue_asym_encrypter *encrypter, ue_hasher *h);
+bool ue_signer_set_private_key(ue_signer *signer, ue_private_key *private_key);
 
-unsigned char *ue_signer_sign_buffer(ue_signer *s, const unsigned char *buf, size_t buf_length, size_t *signature_length);
+bool ue_signer_sign_buffer(ue_signer *signer, const unsigned char *buf, size_t buf_length, unsigned char **signature, size_t *signature_length);
 
-bool ue_signer_verify_buffer(ue_signer *s, const unsigned char *buf, size_t buf_length, unsigned char *signature, size_t signature_length);
+bool ue_signer_verify_buffer(ue_signer *signer, const unsigned char *buf, size_t buf_length, unsigned char *signature, size_t signature_length);
 
 #endif

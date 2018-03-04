@@ -51,6 +51,9 @@ bool ue_pkcs12_keystore_add_certificate(ue_pkcs12_keystore *keystore, ue_x509_ce
 
 bool ue_pkcs12_keystore_add_certificate_from_file(ue_pkcs12_keystore *keystore, const char *file_name, const unsigned char *friendly_name, size_t friendly_name_size);
 
+bool ue_pkcs12_keystore_add_certificate_from_bytes(ue_pkcs12_keystore *keystore, unsigned char *data, size_t data_size, const unsigned char *friendly_name,
+    size_t friendly_name_size);
+
 bool ue_pkcs12_keystore_add_certificates_bundle(ue_pkcs12_keystore *keystore, const char *file_name, const char *passphrase);
 
 bool ue_pkcs12_keystore_remove_certificate(ue_pkcs12_keystore *keystore, const unsigned char *friendly_name, size_t friendly_name_size);

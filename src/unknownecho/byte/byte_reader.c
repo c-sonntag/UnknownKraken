@@ -19,9 +19,30 @@
 
 #include <unknownecho/byte/byte_reader.h>
 #include <unknownecho/errorHandling/stacktrace.h>
+#include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/system/alloc.h>
 
 #include <string.h>
+
+bool ue_byte_read_is_int(ue_byte_stream *stream, int position, int n) {
+    int read;
+
+    if (!stream || !stream->bytes) {
+        return false;
+    }
+
+    if (position + 3 >= stream->size) {
+        ue_stacktrace_push_msg("Failed to get int because this would cause a buffer underflow");
+        return false;
+    }
+
+    read = (stream->bytes[position] << 24) |
+        (stream->bytes[position+1] << 16) |
+        (stream->bytes[position+2] << 8) |
+        stream->bytes[position+3];
+
+    return read == n;
+}
 
 bool ue_byte_read_next_int(ue_byte_stream *stream, int *n) {
     if (!stream || !stream->bytes) {

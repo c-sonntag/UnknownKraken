@@ -27,7 +27,7 @@
 
 unsigned char **ue_byte_split(unsigned char *bytes, size_t bytes_len, unsigned char *delimiter, size_t delimiter_len, size_t *count, size_t **sizes) {
 	unsigned char **result;
-	size_t i, j, k, l, m, *tmp_sizes, tmp_count;
+	size_t i, j, k, l, m, n, *tmp_sizes, tmp_count;
 	int tmp_len;
 
 	result = NULL;
@@ -35,6 +35,7 @@ unsigned char **ue_byte_split(unsigned char *bytes, size_t bytes_len, unsigned c
 	k = 0;
 	l = 0;
 	m = 0;
+	n = 0;
 	tmp_sizes = NULL;
 
 	if (delimiter_len > bytes_len) {
@@ -76,19 +77,29 @@ unsigned char **ue_byte_split(unsigned char *bytes, size_t bytes_len, unsigned c
 				ue_safe_realloc(result, unsigned char *, tmp_count, 1);
 				ue_safe_realloc(tmp_sizes, size_t, tmp_count, 1);
 			}
-			tmp_len = k;
+
+			tmp_len = m;
 			if (tmp_len <= 0) {
 				ue_stacktrace_push_msg("Invalid k - l + 1. k:%d l:%d", k, l);
 				goto clean_up_error;
 			}
-			tmp_sizes[tmp_count] = tmp_len;
+			if (delimiter_len + k == bytes_len) {
+				tmp_sizes[tmp_count] = k;
+			} else {
+				tmp_sizes[tmp_count] = tmp_len;
+			}
 			ue_safe_alloc(result[tmp_count], unsigned char, tmp_sizes[tmp_count]);
-			memcpy(result[tmp_count], bytes + i - (k + j), k * sizeof(unsigned char));
+			if (delimiter_len + k == bytes_len) {
+				memcpy(result[tmp_count], bytes + n, k * sizeof(unsigned char));
+			} else {
+				memcpy(result[tmp_count], bytes + k - m, m * sizeof(unsigned char));
+			}
 			tmp_count += 1;
-			k = 0;
+			//k = 0;
 			l = 0;
 			j = 0;
 			m = 0;
+			n = k;
 		} else {
 			if (bytes[i] == delimiter[j]) {
 				j++;

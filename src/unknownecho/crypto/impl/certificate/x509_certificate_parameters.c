@@ -40,7 +40,7 @@ ue_x509_certificate_parameters *ue_x509_certificate_parameters_create() {
 
     ue_safe_alloc(parameters, ue_x509_certificate_parameters, 1);
     parameters->serial = 123456789; //@todo generate random
-    parameters->bits = 2048; //@todo set default in defines list (4096 bits ?)
+    parameters->bits = 4096; //@todo set default in defines list (4096 bits ?)
     parameters->days = 365; //@todo set default in defines list
     parameters->C = NULL;
     parameters->CN = NULL;

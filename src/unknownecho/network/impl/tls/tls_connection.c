@@ -209,7 +209,7 @@ size_t ue_tls_connection_read_string_sync(ue_tls_connection *connection, ue_stri
 
 	do {
 		memset(response, 0, sizeof(response));
-		bytes = SSL_read(connection->impl, response, 1024);
+		bytes = SSL_read(connection->impl, response, 4096);
 		if (bytes < 0) {
 			ERR_clear_error();
 			ssl_error = SSL_get_error(connection->impl, bytes);
@@ -278,7 +278,7 @@ size_t ue_tls_connection_read_bytes_sync(ue_tls_connection *connection, ue_byte_
 
 	do {
 		memset(response, 0, sizeof(response));
-		bytes = SSL_read(connection->impl, response, 1024);
+		bytes = SSL_read(connection->impl, response, 4096);
 		if (bytes < 0) {
 			ERR_clear_error();
 			ssl_error = SSL_get_error(connection->impl, bytes);
@@ -347,7 +347,7 @@ size_t ue_tls_connection_read_async(ue_tls_connection *connection, bool (*flow_c
 
 	do {
 		memset(response, 0, sizeof(response));
-		bytes = SSL_read(connection->impl, response, 1024);
+		bytes = SSL_read(connection->impl, response, 4096);
 		if (bytes < 0) {
 			ERR_clear_error();
 			ssl_error = SSL_get_error(connection->impl, bytes);

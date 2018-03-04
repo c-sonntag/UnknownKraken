@@ -61,4 +61,6 @@ bool ue_byte_vector_print_element(ue_byte_vector *vector, int index, FILE *out);
 
 bool ue_byte_vector_contains(ue_byte_vector *vector, unsigned char *target, size_t target_size);
 
+bool ue_byte_vector_element_print_string(ue_byte_vector_element *element, FILE *out);
+
 #endif

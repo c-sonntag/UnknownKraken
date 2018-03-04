@@ -50,6 +50,7 @@ void ue_timer_measure_destroy(ue_timer_measure *measure) {
 	if (measure) {
 		ue_safe_free(measure->times_begin);
 		ue_safe_free(measure->times_end);
+		ue_safe_free(measure->unity);
 		ue_safe_free(measure);
 	}
 }

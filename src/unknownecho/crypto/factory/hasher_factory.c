@@ -28,7 +28,7 @@ ue_hasher *ue_hasher_sha256_create() {
         return NULL;
     }
 
-    if (!(ue_hasher_init(h, "SHA-256"))) {
+    if (!(ue_hasher_init(h, "sha256"))) {
         ue_stacktrace_push_msg("Failed to initialize ue_hasher with SHA-256 algorithm");
         ue_hasher_destroy(h);
         return NULL;

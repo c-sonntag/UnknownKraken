@@ -32,6 +32,9 @@
 
 #include <stddef.h>
 
+/** 
+ *  @todo clean up useless variables in the algorithm
+ */
 unsigned char **ue_byte_split(unsigned char *bytes, size_t bytes_len, unsigned char *delimiter, size_t delimiter_len, size_t *count, size_t **sizes);
 
 bool ue_byte_split_append(ue_byte_vector *vector, unsigned char *bytes, size_t bytes_len, unsigned char *delimiter, size_t delimiter_len);

@@ -22,7 +22,7 @@
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/string/string_utility.h>
 
-ue_sym_encrypter *ue_sym_encrypter_aes_create(ue_sym_key *key) {
+static ue_sym_encrypter *ue_sym_encrypter_create_factory(ue_sym_key *key, const char *cipher_name) {
 	ue_sym_encrypter *encrypter;
 
 	if (!ue_sym_key_is_valid(key)) {
@@ -35,16 +35,20 @@ ue_sym_encrypter *ue_sym_encrypter_aes_create(ue_sym_key *key) {
 		return NULL;
 	}
 
-	encrypter = ue_sym_encrypter_create();
-	encrypter->type = AES;
-	encrypter->mode = AES_CBC;
-	encrypter->key_size = 32;
-	encrypter->iv_size = 16;
-	encrypter->key = key;
+	encrypter = ue_sym_encrypter_create(cipher_name);
+	ue_sym_encrypter_set_key(encrypter, key);
 
 	return encrypter;
 }
 
+ue_sym_encrypter *ue_sym_encrypter_aes_cbc_create(ue_sym_key *key) {
+	return ue_sym_encrypter_create_factory(key, "aes-256-cbc");
+}
+
+ue_sym_encrypter *ue_sym_encrypter_rc4_create(ue_sym_key *key) {
+	return ue_sym_encrypter_create_factory(key, "rc4");
+}
+
 ue_sym_encrypter *ue_sym_encrypter_default_create(ue_sym_key *key) {
-	return ue_sym_encrypter_aes_create(key);
+	return ue_sym_encrypter_rc4_create(key);
 }

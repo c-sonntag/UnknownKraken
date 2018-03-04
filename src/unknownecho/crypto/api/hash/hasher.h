@@ -37,7 +37,7 @@ ue_hasher *ue_hasher_create();
 
 void ue_hasher_destroy(ue_hasher *h);
 
-bool ue_hasher_init(ue_hasher *h, const char *algorithm);
+bool ue_hasher_init(ue_hasher *h, const char *digest_name);
 
 unsigned char *ue_hasher_digest(ue_hasher *h, const unsigned char *message, size_t message_len, size_t *digest_len);
 

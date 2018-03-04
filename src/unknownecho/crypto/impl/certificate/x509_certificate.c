@@ -154,6 +154,7 @@ ue_x509_certificate *ue_x509_certificate_load_from_bytes(unsigned char *data, si
     if (!(certificate_impl = PEM_read_bio_X509(bio, NULL, NULL, NULL))) {
 		ue_openssl_error_handling(error_buffer, "PEM_read_bio_X509");
 		ue_x509_certificate_destroy(certificate);
+		certificate = NULL;
 		goto clean_up;
 	}
 
@@ -176,6 +177,11 @@ void ue_x509_certificate_destroy(ue_x509_certificate *certificate) {
 void *ue_x509_certificate_get_impl(ue_x509_certificate *certificate) {
 	if (!certificate) {
 		ue_stacktrace_push_msg("Specified certificate ptr is null");
+		return NULL;
+	}
+
+	if (!certificate->impl) {
+		ue_stacktrace_push_msg("Specified certificate have no implementation");
 		return NULL;
 	}
 
