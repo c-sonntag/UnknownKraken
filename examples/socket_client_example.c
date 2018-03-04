@@ -129,8 +129,6 @@ bool read_consumer(void *parameter) {
 	result = true;
 	connection = (ue_socket_client_connection *)parameter;
 
-	ue_logger_set_level(ue_logger_manager_get_logger(), LOG_DEBUG);
-
 	while (instance->running) {
 		received = receive_message(connection);
 
@@ -254,8 +252,6 @@ bool write_consumer(void *parameter) {
 
 	result = true;
 	connection = (ue_socket_client_connection *)parameter;
-
-	ue_logger_set_level(ue_logger_manager_get_logger(), LOG_DEBUG);
 
     if (!(instance->nickname = get_input("Nickname : "))) {
         ue_stacktrace_push_msg("Specified nickname isn't valid");
@@ -441,8 +437,6 @@ int main() {
 		printf("[ERROR] Failed to init LibUnknownEcho\n");
 		exit(1);
 	}
-
-	ue_logger_set_level(ue_logger_manager_get_logger(), LOG_DEBUG);
 
 	if (!socket_client_manager_create()) {
 		ue_stacktrace_push_msg("Failed to create socket client manager");

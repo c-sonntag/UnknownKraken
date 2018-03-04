@@ -20,6 +20,7 @@
 #include <unknownecho/init.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
+#include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/bool.h>
 #include <unknownecho/system/alloc.h>
 #include <unknownecho/network/api/socket/socket_client_connection.h>
@@ -107,6 +108,7 @@ typedef struct {
 	ue_sym_key *channel_key;
 	unsigned char *channel_iv;
 	size_t channel_iv_size;
+	FILE *logs_file;
 } socket_client_manager;
 
 socket_client_manager *instance = NULL;
@@ -129,6 +131,7 @@ socket_client_manager *instance = NULL;
 #define CSR_SERVER_PORT                5002
 #define TLS_SERVER_HOST                "127.0.0.1"
 #define TLS_SERVER_PORT                5001
+#define LOGGER_FILE_NAME               "logs.txt"
 
 
 #define CHANNEL_KEY_REQUEST         1
@@ -222,11 +225,15 @@ bool csr_read_consumer(void *parameter) {
 		else {
 			ue_byte_stream_clean_up(response);
 			if (!ue_byte_writer_append_bytes(response, ue_byte_stream_get_data(connection->received_message), ue_byte_stream_get_size(connection->received_message))) {
-				ue_stacktrace_push_msg("");
+				ue_stacktrace_push_msg("Failed write received message to response");
+				goto clean_up;
 			}
 			ue_byte_stream_set_position(response, 0);
 
-			ue_byte_read_next_int(response, &csr_sub_type);
+			if (!ue_byte_read_next_int(response, &csr_sub_type)) {
+				ue_stacktrace_push_msg("Failed to read CSR sub type in response");
+				goto clean_up;
+			}
 
 			if (csr_sub_type != CSR_TLS_RESPONSE &&
 				csr_sub_type != CSR_CIPHER_RESPONSE &&
@@ -235,10 +242,14 @@ bool csr_read_consumer(void *parameter) {
 				continue;
 			}
 
-			ue_safe_free(csr_response);
-
-			ue_byte_read_next_int(response, &csr_response_size);
-			ue_byte_read_next_bytes(response, &csr_response, (size_t)csr_response_size);
+			if (!ue_byte_read_next_int(response, &csr_response_size)) {
+				ue_stacktrace_push_msg("Failed to read CSR response size in response");
+				goto clean_up;
+			}
+			if (!ue_byte_read_next_bytes(response, &csr_response, (size_t)csr_response_size)) {
+				ue_stacktrace_push_msg("Failed to read CSR response in response");
+				goto clean_up;
+			}
 
 			if (csr_sub_type == CSR_TLS_RESPONSE) {
 				ue_logger_trace("Received CSR_TLS_RESPONSE");
@@ -247,12 +258,10 @@ bool csr_read_consumer(void *parameter) {
 					(size_t)csr_response_size, instance->tls_csr_context->future_key, instance->tls_csr_context->iv,
 					instance->tls_csr_context->iv_size))) {
 
-					ue_stacktrace_push_msg("Failed to process server response");
-					instance->running = false;
-					ue_safe_free(csr_response);
-					return false;
+					ue_stacktrace_push_msg("Failed to process CSR TLS response");
+				} else {
+					instance->tls_keystore_ok = true;
 				}
-				instance->tls_keystore_ok = true;
 			}
 			else if (csr_sub_type == CSR_CIPHER_RESPONSE) {
 				ue_logger_trace("Received CSR_CIPHER_RESPONSE");
@@ -261,12 +270,10 @@ bool csr_read_consumer(void *parameter) {
 					(size_t)csr_response_size, instance->cipher_csr_context->future_key, instance->cipher_csr_context->iv,
 					instance->cipher_csr_context->iv_size))) {
 
-					ue_stacktrace_push_msg("Failed to process server response");
-					instance->running = false;
-					ue_safe_free(csr_response);
-					return false;
+					ue_stacktrace_push_msg("Failed to process CSR CIPHER response");
+				} else {
+					instance->cipher_keystore_ok = true;
 				}
-				instance->cipher_keystore_ok = true;
 			}
 			else if (csr_sub_type == CSR_SIGNER_RESPONSE) {
 				ue_logger_trace("Received CSR_SIGNER_RESPONSE");
@@ -275,13 +282,20 @@ bool csr_read_consumer(void *parameter) {
 					(size_t)csr_response_size, instance->signer_csr_context->future_key, instance->signer_csr_context->iv,
 					instance->signer_csr_context->iv_size))) {
 
-					ue_stacktrace_push_msg("Failed to process server response");
-					instance->running = false;
-					ue_safe_free(csr_response);
-					return false;
+					ue_stacktrace_push_msg("Failed to process CSR SIGNER response");
+				} else {
+					instance->signer_keystore_ok = true;
 				}
-				instance->signer_keystore_ok = true;
 			}
+		}
+
+clean_up:
+		ue_safe_free(csr_response);
+		if (ue_stacktrace_is_filled()) {
+			ue_stacktrace_push_msg("The processing of a client CSR failed");
+			/* @todo send a response to the client in case of error */
+			ue_logger_stacktrace("An error occured with the following stacktrace :");
+			ue_stacktrace_clean_up();
 		}
 
 		if (instance->tls_keystore_ok && instance->cipher_keystore_ok && instance->signer_keystore_ok) {
@@ -289,11 +303,18 @@ bool csr_read_consumer(void *parameter) {
 		}
 	}
 
+	result = true;
+
 	return result;
 }
 
 static bool send_message(ue_socket_client_connection *connection, ue_byte_stream *message_to_send) {
 	size_t sent;
+
+	ue_check_parameter_or_return(connection);
+	ue_check_parameter_or_return(connection->fd > 0);
+	ue_check_parameter_or_return(message_to_send);
+	ue_check_parameter_or_return(ue_byte_stream_get_size(message_to_send) > 0);
 
 	ue_thread_mutex_lock(instance->mutex);
 	instance->transmission_state = WRITING_STATE;
@@ -341,7 +362,11 @@ bool send_cipher_message(ue_socket_client_connection *connection, ue_byte_stream
     }
 
 	ue_byte_stream_clean_up(message_to_send);
-	ue_byte_writer_append_bytes(message_to_send, cipher_data, cipher_data_size);
+
+	if (!ue_byte_writer_append_bytes(message_to_send, cipher_data, cipher_data_size)) {
+		ue_stacktrace_push_msg("Failed to write cipher data to message to send");
+		goto clean_up;
+	}
 
 	if (!send_message(connection, message_to_send)) {
 		ue_stacktrace_push_msg("Failed to send cipher message");
@@ -392,7 +417,12 @@ size_t receive_cipher_message(ue_socket_client_connection *connection) {
 	}
 
 	ue_byte_stream_clean_up(connection->received_message);
-	ue_byte_writer_append_bytes(connection->received_message, plain_data, plain_data_size);
+
+	if (!ue_byte_writer_append_bytes(connection->received_message, plain_data, plain_data_size)) {
+		received = -1;
+		ue_stacktrace_push_msg("Failed to write plain data to received message");
+		goto clean_up;
+	}
 
 clean_up:
 	ue_public_key_destroy(server_public_key);
@@ -406,16 +436,36 @@ bool process_get_certificate_request(ue_pkcs12_keystore *keystore, ue_socket_cli
 	unsigned char *certificate_data;
 	int type, certificate_data_size;
 
+	ue_check_parameter_or_return(keystore);
+	ue_check_parameter_or_return(connection);
+	ue_check_parameter_or_return(friendly_name);
+	ue_check_parameter_or_return(friendly_name_size > 0);
+
 	result = false;
 	request = ue_byte_stream_create();
 	response = ue_byte_stream_create();
 	certificate_data = NULL;
 
-	ue_byte_writer_append_int(request, instance->channel_id);
-	ue_byte_writer_append_int(request, GET_CERTIFICATE_REQUEST);
-	ue_byte_writer_append_int(request, (int)friendly_name_size);
-	ue_byte_writer_append_bytes(request, (unsigned char *)friendly_name, friendly_name_size);
-	ue_byte_writer_append_string(request, "|||EOFEOFEOF");
+	if (!ue_byte_writer_append_int(request, instance->channel_id)) {
+		ue_stacktrace_push_msg("Failed to write channel id to request");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_int(request, GET_CERTIFICATE_REQUEST)) {
+		ue_stacktrace_push_msg("Failed to write GET_CERTIFICATE_REQUEST type to request");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_int(request, (int)friendly_name_size)) {
+		ue_stacktrace_push_msg("Failed to write friendly name size to request");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_bytes(request, (unsigned char *)friendly_name, friendly_name_size)) {
+		ue_stacktrace_push_msg("Failed to write friendly name to request");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_string(request, "|||EOFEOFEOF")) {
+		ue_stacktrace_push_msg("Failed to write EOF delimiter to request");
+		goto clean_up;
+	}
 
 	if (!send_cipher_message(connection, request)) {
 		ue_stacktrace_push_msg("Failed to send GET_CERTIFICATE request to server");
@@ -428,16 +478,28 @@ bool process_get_certificate_request(ue_pkcs12_keystore *keystore, ue_socket_cli
 		goto clean_up;
 	}
 
-	ue_byte_writer_append_bytes(response, ue_byte_stream_get_data(connection->received_message), ue_byte_stream_get_size(connection->received_message));
+	if (!ue_byte_writer_append_bytes(response, ue_byte_stream_get_data(connection->received_message), ue_byte_stream_get_size(connection->received_message))) {
+		ue_stacktrace_push_msg("Failed to write received message to response");
+		goto clean_up;
+	}
 	ue_byte_stream_set_position(response, 0);
-	ue_byte_read_next_int(response, &type);
+	if (!ue_byte_read_next_int(response, &type)) {
+		ue_stacktrace_push_msg("Failed to read request type in response");
+		goto clean_up;
+	}
 	if (type != CERTIFICATE_RESPONSE) {
 		ue_logger_error("GET_CERTIFICATE request received an invalid response type");
 		goto clean_up;
 	}
 
-	ue_byte_read_next_int(response, &certificate_data_size);
-	ue_byte_read_next_bytes(response, &certificate_data, (size_t)certificate_data_size);
+	if (!ue_byte_read_next_int(response, &certificate_data_size)) {
+		ue_stacktrace_push_msg("Failed to read certificate data size in response");
+		goto clean_up;
+	}
+	if (!ue_byte_read_next_bytes(response, &certificate_data, (size_t)certificate_data_size)) {
+		ue_stacktrace_push_msg("Failed to read certificate data in response");
+		goto clean_up;
+	}
 
 	ue_logger_info("Missing certificate received. Trying to add it to the cipher keystore...");
 	if (!(ue_pkcs12_keystore_add_certificate_from_bytes(keystore, certificate_data, (size_t)certificate_data_size,
@@ -460,9 +522,14 @@ bool process_nickname_response(ue_byte_stream *response) {
 	bool result;
 	int is_accepted;
 
+	ue_check_parameter_or_return(response);
+
 	result = false;
 
-	ue_byte_read_next_int(response, &is_accepted);
+	if (!ue_byte_read_next_int(response, &is_accepted)) {
+		ue_stacktrace_push_msg("Failed to read is accepted field in response");
+		goto clean_up;
+	}
 
 	if (is_accepted == 0) {
 		ue_logger_info("This nickname is already in use.");
@@ -487,7 +554,12 @@ bool process_channel_connection_response(ue_byte_stream *response) {
 
 	result = false;
 
-	ue_byte_read_next_int(response, &is_accepted);
+	ue_check_parameter_or_return(response);
+
+	if (!ue_byte_read_next_int(response, &is_accepted)) {
+		ue_stacktrace_push_msg("Failed to read is accepted field in response");
+		goto clean_up;
+	}
 
 	if (is_accepted == 0) {
 		ue_logger_info("This channel is already in use or cannot be use right now.");
@@ -498,10 +570,16 @@ bool process_channel_connection_response(ue_byte_stream *response) {
 		ue_logger_warn("Response of channel connection request is incomprehensible.");
 		goto clean_up;
 	} else {
-		ue_byte_read_next_int(response, &instance->channel_id);
+		if (!ue_byte_read_next_int(response, &instance->channel_id)) {
+			ue_stacktrace_push_msg("Failed to read channel id in response");
+			goto clean_up;
+		}
 		ue_logger_trace("Channel connection has been accepted by the server with channel id %d.", instance->channel_id);
 
-		ue_byte_read_next_int(response, &channel_key_state);
+		if (!ue_byte_read_next_int(response, &channel_key_state)) {
+			ue_stacktrace_push_msg("Failed to read channel key state in response");
+			goto clean_up;
+		}
 
 		if (channel_key_state == CHANNEL_KEY_CREATOR_STATE) {
 			ue_logger_info("Generate random channel key");
@@ -536,6 +614,8 @@ bool process_message(ue_byte_stream *message) {
 	int cipher_data_size, nickname_size;
 	ue_byte_stream *printer;
 
+	ue_check_parameter_or_return(message);
+
 	result = false;
 	decrypter = NULL;
 	cipher_data = NULL;
@@ -543,23 +623,53 @@ bool process_message(ue_byte_stream *message) {
 	nickname = NULL;
 	printer = ue_byte_stream_create();
 
-	ue_byte_read_next_int(message, &nickname_size);
-	ue_byte_read_next_bytes(message, &nickname, (size_t)nickname_size);
-	ue_byte_read_next_int(message, &cipher_data_size);
-	ue_byte_read_next_bytes(message, &cipher_data, (size_t)cipher_data_size);
+	if (!ue_byte_read_next_int(message, &nickname_size)) {
+		ue_stacktrace_push_msg("Failed to read nickname size in message");
+		goto clean_up;
+	}
+	if (!ue_byte_read_next_bytes(message, &nickname, (size_t)nickname_size)) {
+		ue_stacktrace_push_msg("Failed to read nickname in message");
+		goto clean_up;
+	}
+	if (!ue_byte_read_next_int(message, &cipher_data_size)) {
+		ue_stacktrace_push_msg("Failed to read cipher data size in message");
+		goto clean_up;
+	}
+	if (!ue_byte_read_next_bytes(message, &cipher_data, (size_t)cipher_data_size)) {
+		ue_stacktrace_push_msg("Failed to read cipher data in message");
+		goto clean_up;
+	}
 
-	ue_byte_writer_append_bytes(printer, nickname, (size_t)nickname_size);
-	ue_byte_writer_append_string(printer, ": ");
+	if (!ue_byte_writer_append_bytes(printer, nickname, (size_t)nickname_size)) {
+		ue_stacktrace_push_msg("Failed to write nickname to printer");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_string(printer, ": ")) {
+		ue_stacktrace_push_msg("Failed to write ':' delimiter to printer");
+		goto clean_up;
+	}
 
-	decrypter = ue_sym_encrypter_default_create(instance->channel_key);
-	ue_sym_encrypter_decrypt(decrypter, cipher_data, (size_t)cipher_data_size,
-		instance->channel_iv, &decipher_data, &decipher_data_size);
-	ue_byte_writer_append_bytes(printer, decipher_data, decipher_data_size);
+	if (!(decrypter = ue_sym_encrypter_default_create(instance->channel_key))) {
+		ue_stacktrace_push_msg("Failed to create default sym decrypter with instance channel key");
+		goto clean_up;
+	}
+	if  (!ue_sym_encrypter_decrypt(decrypter, cipher_data, (size_t)cipher_data_size,
+		instance->channel_iv, &decipher_data, &decipher_data_size)) {
+		ue_stacktrace_push_msg("Failed to decrypt cipher data");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_bytes(printer, decipher_data, decipher_data_size)) {
+		ue_stacktrace_push_msg("Failed to write decipher data to printer");
+		goto clean_up;
+	}
 
-	ue_byte_writer_append_bytes(printer, (unsigned char *)"\n\0", 2);
+	if (!ue_byte_writer_append_bytes(printer, (unsigned char *)"\n\0", 2)) {
+		ue_stacktrace_push_msg("Failed to write \n\0 to printer");
+		goto clean_up;
+	}
 
 	if (!write(instance->fds[1], ue_byte_stream_get_data(printer), ue_byte_stream_get_size(printer))) {
-		ue_logger_warn("Failed to write the message on console");
+		ue_logger_warn("Failed to write the message on console in fd %d", instance->fds[1]);
 		goto clean_up;
 	}
 
@@ -580,15 +690,30 @@ bool process_certificate_response(ue_byte_stream *response) {
 	unsigned char *friendly_name, *certificate_data;
 	int friendly_name_size, certificate_data_size;
 
+	ue_check_parameter_or_return(response);
+	ue_check_parameter_or_return(ue_byte_stream_get_size(response));
+
 	result = false;
 	keystore = NULL;
 	friendly_name = NULL;
 	certificate_data = NULL;
 
-	ue_byte_read_next_int(response, &friendly_name_size);
-	ue_byte_read_next_bytes(response, &friendly_name, (size_t)friendly_name_size);
-	ue_byte_read_next_int(response, &certificate_data_size);
-	ue_byte_read_next_bytes(response, &certificate_data, (size_t)certificate_data_size);
+	if (!ue_byte_read_next_int(response, &friendly_name_size)) {
+		ue_stacktrace_push_msg("Failed to read friendly name size in response");
+		goto clean_up;
+	}
+	if (!ue_byte_read_next_bytes(response, &friendly_name, (size_t)friendly_name_size)) {
+		ue_stacktrace_push_msg("Failed to read friendly name in response");
+		goto clean_up;
+	}
+	if (!ue_byte_read_next_int(response, &certificate_data_size)) {
+		ue_stacktrace_push_msg("Failed to read certificate data size in response");
+		goto clean_up;
+	}
+	if (!ue_byte_read_next_bytes(response, &certificate_data, (size_t)certificate_data_size)) {
+		ue_stacktrace_push_msg("Failed to read certificate data in response");
+		goto clean_up;
+	}
 
 	if (bytes_contains(friendly_name, friendly_name_size, (unsigned char *)"_CIPHER", strlen("_CIPHER"))) {
 		keystore = instance->cipher_keystore;
@@ -599,7 +724,10 @@ bool process_certificate_response(ue_byte_stream *response) {
 		goto clean_up;
 	}
 
-	ue_pkcs12_keystore_add_certificate_from_bytes(keystore, certificate_data, certificate_data_size, friendly_name, friendly_name_size);
+	if (!ue_pkcs12_keystore_add_certificate_from_bytes(keystore, certificate_data, certificate_data_size, friendly_name, friendly_name_size)) {
+		ue_stacktrace_push_msg("Failed to add new certificate from bytes");
+		goto clean_up;
+	}
 
 	result = true;
 
@@ -609,6 +737,10 @@ clean_up:
 
 unsigned char *build_friendly_name(unsigned char *nickname, size_t nickname_size, char *keystore_type, size_t *friendly_name_size) {
 	unsigned char *friendly_name;
+
+	ue_check_parameter_or_return(nickname);
+	ue_check_parameter_or_return(nickname_size > 0);
+	ue_check_parameter_or_return(keystore_type);
 
 	*friendly_name_size = nickname_size + 1 + strlen(keystore_type);
 	ue_safe_alloc(friendly_name, unsigned char, *friendly_name_size);
@@ -628,6 +760,10 @@ bool process_channel_key_response(ue_socket_client_connection *connection, ue_by
 	int key_size, nickname_size, cipher_data_size, read_int;
 	size_t friendly_name_size, plain_data_size;
 
+	ue_check_parameter_or_return(connection);
+	ue_check_parameter_or_return(response);
+	ue_check_parameter_or_return(ue_byte_stream_get_size(response) > 0);
+
 	result = false;
 	key_owner_certificate = NULL;
 	friendly_name = NULL;
@@ -638,10 +774,19 @@ bool process_channel_key_response(ue_socket_client_connection *connection, ue_by
 	key_owner_public_key = NULL;
 	channel_key_stream = ue_byte_stream_create();
 
-	ue_byte_read_next_int(response, &nickname_size);
-	ue_byte_read_next_bytes(response, &nickname, (size_t)nickname_size);
+	if (!ue_byte_read_next_int(response, &nickname_size)) {
+		ue_stacktrace_push_msg("Failed to read nickname size in response");
+		goto clean_up;
+	}
+	if (!ue_byte_read_next_bytes(response, &nickname, (size_t)nickname_size)) {
+		ue_stacktrace_push_msg("Failed to read nickname in response");
+		goto clean_up;
+	}
 
-	friendly_name = build_friendly_name(nickname, (size_t)nickname_size, "SIGNER", &friendly_name_size);
+	if (!(friendly_name = build_friendly_name(nickname, (size_t)nickname_size, "SIGNER", &friendly_name_size))) {
+		ue_stacktrace_push_msg("Failed to build friendly name for SIGNER keystore");
+		goto clean_up;
+	}
 
 	if (!(key_owner_certificate = ue_pkcs12_keystore_find_certificate_by_friendly_name(instance->signer_keystore,
 		(const unsigned char *)friendly_name, friendly_name_size))) {
@@ -650,6 +795,11 @@ bool process_channel_key_response(ue_socket_client_connection *connection, ue_by
 
 		if (!process_get_certificate_request(instance->signer_keystore, connection, (const unsigned char *)friendly_name, friendly_name_size)) {
 			ue_stacktrace_push_msg("Failed to get missing certificate");
+			goto clean_up;
+		}
+
+		if (!ue_pkcs12_keystore_write(instance->signer_keystore, instance->signer_keystore_path, instance->keystore_password)) {
+			ue_stacktrace_push_msg("Failed to write keystore to '%s'", instance->signer_keystore_path);
 			goto clean_up;
 		}
 
@@ -666,8 +816,14 @@ bool process_channel_key_response(ue_socket_client_connection *connection, ue_by
 		goto clean_up;
 	}
 
-	ue_byte_read_next_int(response, &cipher_data_size);
-	ue_byte_read_next_bytes(response, &cipher_data, cipher_data_size);
+	if (!ue_byte_read_next_int(response, &cipher_data_size)) {
+		ue_stacktrace_push_msg("Failed to read cipher data size in response");
+		goto clean_up;
+	}
+	if (!ue_byte_read_next_bytes(response, &cipher_data, cipher_data_size)) {
+		ue_stacktrace_push_msg("Failed to read cipher data in response");
+		goto clean_up;
+	}
 
 	if (!ue_decipher_cipher_data(cipher_data, cipher_data_size, instance->cipher_keystore->private_key,
 		key_owner_public_key, &plain_data, &plain_data_size, "aes-256-cbc")) {
@@ -733,6 +889,9 @@ bool process_channel_key_request(ue_socket_client_connection *connection, ue_byt
 	ue_byte_stream *channel_key_stream;
 	int nickname_size;
 
+	ue_check_parameter_or_return(connection);
+	ue_check_parameter_or_return(request);
+
 	result = false;
 	client_certificate = NULL;
 	cipher_data = NULL;
@@ -741,16 +900,30 @@ bool process_channel_key_request(ue_socket_client_connection *connection, ue_byt
 	nickname = NULL;
 	channel_key_stream = ue_byte_stream_create();
 
-	ue_byte_read_next_int(request, &nickname_size);
-	ue_byte_read_next_bytes(request, &nickname, (size_t)nickname_size);
+	if (!ue_byte_read_next_int(request, &nickname_size)) {
+		ue_stacktrace_push_msg("Failed to read nickname size in request");
+		goto clean_up;
+	}
+	if (!ue_byte_read_next_bytes(request, &nickname, (size_t)nickname_size)) {
+		ue_stacktrace_push_msg("Failed to read nickname in request");
+		goto clean_up;
+	}
 
-	friendly_name = build_friendly_name(nickname, (size_t)nickname_size, "CIPHER", &friendly_name_size);
+	if (!(friendly_name = build_friendly_name(nickname, (size_t)nickname_size, "CIPHER", &friendly_name_size))) {
+		ue_stacktrace_push_msg("Failed to build friendly name for CIPHER keystore");
+		goto clean_up;
+	}
 
 	if (!(client_certificate = ue_pkcs12_keystore_find_certificate_by_friendly_name(instance->cipher_keystore, (const unsigned char *)friendly_name, friendly_name_size))) {
 		ue_logger_warn("Cipher certificate of client was not found. Requesting the server...");
 
 		if (!process_get_certificate_request(instance->cipher_keystore, connection, (const unsigned char *)friendly_name, friendly_name_size)) {
 			ue_stacktrace_push_msg("Failed to get missing certificate");
+			goto clean_up;
+		}
+
+		if (!ue_pkcs12_keystore_write(instance->cipher_keystore, instance->cipher_keystore_path, instance->keystore_password)) {
+			ue_stacktrace_push_msg("Failed to write keystore to '%s'", instance->cipher_keystore_path);
 			goto clean_up;
 		}
 
@@ -767,10 +940,22 @@ bool process_channel_key_request(ue_socket_client_connection *connection, ue_byt
 		goto clean_up;
 	}
 
-	ue_byte_writer_append_int(channel_key_stream, (int)instance->channel_key->size);
-	ue_byte_writer_append_int(channel_key_stream, (int)instance->channel_iv_size);
-	ue_byte_writer_append_bytes(channel_key_stream, instance->channel_key->data, instance->channel_key->size);
-	ue_byte_writer_append_bytes(channel_key_stream, instance->channel_iv, instance->channel_iv_size);
+	if (!ue_byte_writer_append_int(channel_key_stream, (int)instance->channel_key->size)) {
+		ue_stacktrace_push_msg("Failed to write channel key size to stream");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_int(channel_key_stream, (int)instance->channel_iv_size)) {
+		ue_stacktrace_push_msg("Failed to write channel IV size to stream");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_bytes(channel_key_stream, instance->channel_key->data, instance->channel_key->size)) {
+		ue_stacktrace_push_msg("Failed to write channel key to stream");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_bytes(channel_key_stream, instance->channel_iv, instance->channel_iv_size)) {
+		ue_stacktrace_push_msg("Failed to write channel IV to stream");
+		goto clean_up;
+	}
 
 	if (!ue_cipher_plain_data(ue_byte_stream_get_data(channel_key_stream), ue_byte_stream_get_size(channel_key_stream),
 		   client_public_key, instance->signer_keystore->private_key, &cipher_data, &cipher_data_size, "aes-256-cbc")) {
@@ -781,15 +966,39 @@ bool process_channel_key_request(ue_socket_client_connection *connection, ue_byt
 
 	// Build message to send : CHANNEL_KEY_REQUEST_ANSWER|<receiver_nickname>|<ciphered channel key>|
 	ue_byte_stream_clean_up(channel_key_stream);
-	ue_byte_writer_append_int(channel_key_stream, instance->channel_id);
-	ue_byte_writer_append_int(channel_key_stream, CHANNEL_KEY_REQUEST_ANSWER);
-	ue_byte_writer_append_int(channel_key_stream, nickname_size);
-	ue_byte_writer_append_bytes(channel_key_stream, nickname, (size_t)nickname_size);
-	ue_byte_writer_append_int(channel_key_stream, (int)cipher_data_size);
-	ue_byte_writer_append_bytes(channel_key_stream, cipher_data, cipher_data_size);
-	ue_byte_writer_append_string(channel_key_stream, "|||EOFEOFEOF");
+	if (!ue_byte_writer_append_int(channel_key_stream, instance->channel_id)) {
+		ue_stacktrace_push_msg("Failed to write channel id to response");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_int(channel_key_stream, CHANNEL_KEY_REQUEST_ANSWER)) {
+		ue_stacktrace_push_msg("Failed to write CHANNEL_KEY_REQUEST_ANSWER to response");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_int(channel_key_stream, nickname_size)) {
+		ue_stacktrace_push_msg("Failed to write nickname size to response");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_bytes(channel_key_stream, nickname, (size_t)nickname_size)) {
+		ue_stacktrace_push_msg("Failed to write nickname to response");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_int(channel_key_stream, (int)cipher_data_size)) {
+		ue_stacktrace_push_msg("Failed to write cipher data size to response");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_bytes(channel_key_stream, cipher_data, cipher_data_size)) {
+		ue_stacktrace_push_msg("Failed to write cipher data to response");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_string(channel_key_stream, "|||EOFEOFEOF")) {
+		ue_stacktrace_push_msg("Failed to write EOF delimiter to response");
+		goto clean_up;
+	}
 
-	send_cipher_message(connection, channel_key_stream);
+	if (!send_cipher_message(connection, channel_key_stream)) {
+		ue_stacktrace_push_msg("Send the stream in a cipher message failed");
+		goto clean_up;
+	}
 
 	result = true;
 
@@ -821,8 +1030,7 @@ bool tls_read_consumer(void *parameter) {
 		if (received <= 0 || received == ULLONG_MAX) {
 			ue_logger_warn("Stopping client...");
 			if (ue_stacktrace_is_filled()) {
-				ue_logger_error("An error occured while receving a cipher message with the following stacktrace :");
-				ue_stacktrace_print();
+				ue_logger_stacktrace("An error occured while receving a cipher message with the following stacktrace :");
 				ue_stacktrace_clean_up();
 			}
 			instance->running = false;
@@ -830,7 +1038,10 @@ bool tls_read_consumer(void *parameter) {
 		}
 		else {
 			ue_byte_stream_clean_up(stream);
-			ue_byte_writer_append_bytes(stream, ue_byte_stream_get_data(connection->received_message), ue_byte_stream_get_size(connection->received_message));
+			if (!ue_byte_writer_append_bytes(stream, ue_byte_stream_get_data(connection->received_message), ue_byte_stream_get_size(connection->received_message))) {
+				ue_logger_error("Failed to write received message to working stream");
+				continue;
+			}
 			ue_byte_stream_set_position(stream, 0);
 
 			ue_byte_read_next_int(stream, &type);
@@ -878,8 +1089,8 @@ bool tls_read_consumer(void *parameter) {
 
 		if (!result) {
 			if (ue_stacktrace_is_filled()) {
-				ue_logger_error("An error occured in this reading iteration with the following stacktrace :");
-				ue_stacktrace_print();
+				ue_stacktrace_push_msg("Failed to process server response");
+				ue_logger_stacktrace("An error occured in this reading iteration with the following stacktrace :");
 				ue_stacktrace_clean_up();
 			}
 		}
@@ -915,12 +1126,29 @@ static char *get_input(char *prefix) {
 }
 
 static bool send_nickname_request(ue_socket_client_connection *connection) {
+	ue_check_parameter_or_return(connection);
+
 	ue_byte_stream_clean_up(connection->message_to_send);
-	ue_byte_writer_append_int(connection->message_to_send, instance->channel_id);
-	ue_byte_writer_append_int(connection->message_to_send, NICKNAME_REQUEST);
-	ue_byte_writer_append_int(connection->message_to_send, (int)strlen(instance->nickname));
-	ue_byte_writer_append_bytes(connection->message_to_send, (unsigned char *)instance->nickname, strlen(instance->nickname));
-	ue_byte_writer_append_string(connection->message_to_send, "|||EOFEOFEOF");
+	if (!ue_byte_writer_append_int(connection->message_to_send, instance->channel_id)) {
+		ue_stacktrace_push_msg("Failed to write channel id to message to send");
+		return false;
+	}
+	if (!ue_byte_writer_append_int(connection->message_to_send, NICKNAME_REQUEST)) {
+		ue_stacktrace_push_msg("Failed to write NICKNAME_REQUEST type to message to send");
+		return false;
+	}
+	if (!ue_byte_writer_append_int(connection->message_to_send, (int)strlen(instance->nickname))) {
+		ue_stacktrace_push_msg("Failed to write nickname size to message to send");
+		return false;
+	}
+	if (!ue_byte_writer_append_bytes(connection->message_to_send, (unsigned char *)instance->nickname, strlen(instance->nickname))) {
+		ue_stacktrace_push_msg("Failed to write nickname to message to send");
+		return false;
+	}
+	if (!ue_byte_writer_append_string(connection->message_to_send, "|||EOFEOFEOF")) {
+		ue_stacktrace_push_msg("Failed to write EOF delimiter to message to send");
+		return false;
+	}
 
     if (!send_message(connection, connection->message_to_send)) {
         ue_stacktrace_push_msg("Failed to send nickname request");
@@ -930,16 +1158,77 @@ static bool send_nickname_request(ue_socket_client_connection *connection) {
 	return true;
 }
 
-bool tls_write_consumer(void *parameter) {
-	char *input;
+bool process_message_request(ue_socket_client_connection *connection, char *input) {
 	bool result;
-	ue_socket_client_connection *connection;
-	int channel_id;
-	unsigned char *bytes_input;
+	ue_sym_encrypter *encrypter;
+	unsigned char *cipher_data, *bytes_input;
+	size_t cipher_data_size;
+
+	ue_check_parameter_or_return(connection);
+	ue_check_parameter_or_return(input);
+
+	result = false;
+	encrypter = NULL;
+	cipher_data = NULL;
+	bytes_input = NULL;
+
+	if (instance->channel_id >= 0 && instance->channel_key) {
+		ue_byte_writer_append_int(connection->message_to_send, MESSAGE);
+		ue_byte_writer_append_int(connection->message_to_send, (int)strlen(instance->nickname));
+		ue_byte_writer_append_bytes(connection->message_to_send, (unsigned char *)instance->nickname, (int)strlen(instance->nickname));
+
+		bytes_input = ue_bytes_create_from_string(input);
+
+		if (instance->channel_key) {
+			if (!(encrypter = ue_sym_encrypter_default_create(instance->channel_key))) {
+				ue_stacktrace_push_msg("Failed to create sym encrypter with this channel key");
+				goto clean_up;
+			}
+			else if (!ue_sym_encrypter_encrypt(encrypter, bytes_input, strlen(input),
+				instance->channel_iv, &cipher_data, &cipher_data_size)) {
+
+				ue_stacktrace_push_msg("Failed to encrypt this input");
+				goto clean_up;
+			}
+			else if (!ue_byte_writer_append_int(connection->message_to_send, (int)cipher_data_size)) {
+				ue_stacktrace_push_msg("Failed to append cipher data size");
+				goto clean_up;
+			}
+			else if (!ue_byte_writer_append_bytes(connection->message_to_send, cipher_data, cipher_data_size)) {
+				ue_stacktrace_push_msg("Failed to append cipher data to message to send");
+				goto clean_up;
+			}
+		} else {
+			ue_byte_writer_append_string(connection->message_to_send, input);
+		}
+
+		ue_byte_writer_append_string(connection->message_to_send, "|||EOFEOFEOF");
+		result = send_cipher_message(connection, connection->message_to_send);
+	}
+	else if (instance->channel_id < 0) {
+		ue_logger_warn("Cannot send message because no channel is selected");
+	} else {
+		ue_logger_warn("Cannot send message because we don't know channel key for now");
+	}
 
 	result = true;
+
+clean_up:
+	ue_sym_encrypter_destroy(encrypter);
+	ue_safe_free(cipher_data);
+	ue_safe_free(bytes_input);
+	return result;
+}
+
+bool tls_write_consumer(void *parameter) {
+	bool result;
+	char *input;
+	ue_socket_client_connection *connection;
+	int channel_id;
+
+	result = true;
+	input = NULL;
 	connection = (ue_socket_client_connection *)parameter;
-	bytes_input = NULL;
 
     if (!send_nickname_request(connection)) {
         ue_stacktrace_push_msg("Failed to send nickname request");
@@ -948,10 +1237,11 @@ bool tls_write_consumer(void *parameter) {
 
 	while (instance->running) {
 		if (ue_stacktrace_is_filled()) {
-			ue_logger_error("An error occured in the last input iteration, with the following stacktrace :");
-			ue_stacktrace_print();
+			ue_logger_stacktrace("An error occured in the last input iteration, with the following stacktrace :");
 			ue_stacktrace_clean_up();
 		}
+
+		ue_safe_free(input);
 
 		input = get_input(">");
 
@@ -961,18 +1251,33 @@ bool tls_write_consumer(void *parameter) {
 
 		channel_id = -1;
 		ue_byte_stream_clean_up(connection->message_to_send);
-		ue_byte_writer_append_int(connection->message_to_send, instance->channel_id);
+		if (!ue_byte_writer_append_int(connection->message_to_send, instance->channel_id)) {
+			ue_stacktrace_push_msg("Failed to write channel id to message to send");
+			continue;
+		}
 
 		if (strcmp(input, "-q") == 0) {
-			ue_byte_writer_append_int(connection->message_to_send, DISCONNECTION_NOW_REQUEST);
+			if (!ue_byte_writer_append_int(connection->message_to_send, DISCONNECTION_NOW_REQUEST)) {
+				ue_stacktrace_push_msg("Failed to write DISCONNECTION_NOW_REQUEST type to message to send");
+				continue;
+			}
 			ue_byte_writer_append_string(connection->message_to_send, "|||EOFEOFEOF");
-			result = send_cipher_message(connection, connection->message_to_send);
+			if (!(result = send_cipher_message(connection, connection->message_to_send))) {
+				ue_stacktrace_push_msg("Failed to send cipher message");
+				continue;
+			}
 			instance->running = false;
 		}
 		else if (strcmp(input, "-s") == 0) {
-			ue_byte_writer_append_int(connection->message_to_send, SHUTDOWN_NOW_REQUEST);
+			if (!ue_byte_writer_append_int(connection->message_to_send, SHUTDOWN_NOW_REQUEST)) {
+				ue_stacktrace_push_msg("Failed to write SHUTDOWN_NOW_REQUEST type to message to send");
+				continue;
+			}
 			ue_byte_writer_append_string(connection->message_to_send, "|||EOFEOFEOF");
-			result = send_cipher_message(connection, connection->message_to_send);
+			if (!(result = send_cipher_message(connection, connection->message_to_send))) {
+				ue_stacktrace_push_msg("Failed to send cipher message");
+				continue;
+			}
 			instance->running = false;
 		}
 		else if (ue_starts_with("@channel_connection", input)) {
@@ -983,71 +1288,34 @@ bool tls_write_consumer(void *parameter) {
 				ue_logger_warn("Specified channel id is invalid. It have to be >= 0");
 			}
 			else {
-				ue_byte_writer_append_int(connection->message_to_send, CHANNEL_CONNECTION_REQUEST);
-				ue_byte_writer_append_int(connection->message_to_send, channel_id);
-				ue_byte_writer_append_string(connection->message_to_send, "|||EOFEOFEOF");
+				if (!ue_byte_writer_append_int(connection->message_to_send, CHANNEL_CONNECTION_REQUEST)) {
+					ue_stacktrace_push_msg("Failed to write CHANNEL_CONNECTION_REQUEST type to message to send");
+					continue;
+				}
+				if (!ue_byte_writer_append_int(connection->message_to_send, channel_id)) {
+					ue_stacktrace_push_msg("Failed to write channel id to message to send");
+					continue;
+				}
+				if (!ue_byte_writer_append_string(connection->message_to_send, "|||EOFEOFEOF")) {
+					ue_stacktrace_push_msg("Failed to write EOF delimiter to message to send");
+					continue;
+				}
 
-				result = send_cipher_message(connection, connection->message_to_send);
-				if (!result) {
-					ue_logger_warn("Failed to send channel connection request");
+				if (!(result = send_cipher_message(connection, connection->message_to_send))) {
+					ue_stacktrace_push_msg("Failed to send cipher message");
+					continue;
 				}
 			}
 		}
 		else {
-			if (instance->channel_id >= 0 && instance->channel_key) {
-				ue_byte_writer_append_int(connection->message_to_send, MESSAGE);
-				ue_byte_writer_append_int(connection->message_to_send, (int)strlen(instance->nickname));
-				ue_byte_writer_append_bytes(connection->message_to_send, (unsigned char *)instance->nickname, (int)strlen(instance->nickname));
-
-				bytes_input = ue_bytes_create_from_string(input);
-
-				if (instance->channel_key) {
-					ue_sym_encrypter *encrypter;
-					unsigned char *cipher_data;
-					size_t cipher_data_size;
-
-					encrypter = NULL;
-					cipher_data = NULL;
-
-					if (!(encrypter = ue_sym_encrypter_default_create(instance->channel_key))) {
-						ue_stacktrace_push_msg("Failed to create sym encrypter with this channel key");
-						goto clean_up;
-					}
-					else if (!ue_sym_encrypter_encrypt(encrypter, bytes_input, strlen(input),
-						instance->channel_iv, &cipher_data, &cipher_data_size)) {
-
-						ue_stacktrace_push_msg("Failed to encrypt this input");
-						goto clean_up;
-					}
-					else if (!ue_byte_writer_append_int(connection->message_to_send, (int)cipher_data_size)) {
-						ue_stacktrace_push_msg("Failed to append cipher data size");
-						goto clean_up;
-					}
-					else if (!ue_byte_writer_append_bytes(connection->message_to_send, cipher_data, cipher_data_size)) {
-						ue_stacktrace_push_msg("Failed to append cipher data to message to send");
-						goto clean_up;
-					}
-
-					ue_sym_encrypter_destroy(encrypter);
-					ue_safe_free(cipher_data);
-				} else {
-					ue_byte_writer_append_string(connection->message_to_send, input);
-				}
-
-				ue_byte_writer_append_string(connection->message_to_send, "|||EOFEOFEOF");
-				result = send_cipher_message(connection, connection->message_to_send);
-			}
-			else if (instance->channel_id < 0) {
-				ue_logger_warn("Cannot send message because no channel is selected");
-			} else {
-				ue_logger_warn("Cannot send message because we don't know channel key for now");
+			if (!(result = process_message_request(connection, input))) {
+				ue_stacktrace_push_msg("Failed to process message request");
+				continue;
 			}
 		}
-
-clean_up:
-		ue_safe_free(input);
-		ue_safe_free(bytes_input);
 	}
+
+	ue_safe_free(input);
 
 	return result;
 }
@@ -1105,6 +1373,9 @@ char *generate_csr_string(ue_x509_certificate *certificate, ue_private_key *priv
     ue_x509_csr *csr;
     char *csr_string;
 
+	ue_check_parameter_or_return(certificate);
+	ue_check_parameter_or_return(private_key);
+
     csr_string = NULL;
     csr = NULL;
 
@@ -1131,19 +1402,47 @@ unsigned char *client_build_request(ue_x509_certificate *certificate, ue_private
     ue_byte_stream *stream;
     unsigned char *cipher_data;
 
+	ue_check_parameter_or_return(certificate);
+	ue_check_parameter_or_return(private_key);
+	ue_check_parameter_or_return(ca_public_key);
+	ue_check_parameter_or_return(future_key);
+	ue_check_parameter_or_return(iv);
+	ue_check_parameter_or_return(iv_size > 0);
+
     csr_string = NULL;
     public_key = NULL;
     stream = ue_byte_stream_create();
     cipher_data = NULL;
 
-    csr_string = generate_csr_string(certificate, private_key);
+    if (!(csr_string = generate_csr_string(certificate, private_key))) {
+		ue_stacktrace_push_msg("Failed to generate CSR string from certificate and private key");
+		goto clean_up;
+	}
 
-    ue_byte_writer_append_int(stream, (int)strlen(csr_string));
-    ue_byte_writer_append_int(stream, (int)future_key->size);
-    ue_byte_writer_append_int(stream, (int)iv_size);
-    ue_byte_writer_append_string(stream, csr_string);
-    ue_byte_writer_append_bytes(stream, future_key->data, future_key->size);
-    ue_byte_writer_append_bytes(stream, iv, iv_size);
+    if (!ue_byte_writer_append_int(stream, (int)strlen(csr_string))) {
+		ue_stacktrace_push_msg("Failed to write CSR string size to stream");
+		goto clean_up;
+	}
+    if (!ue_byte_writer_append_int(stream, (int)future_key->size)) {
+		ue_stacktrace_push_msg("Failed to write future key size to stream");
+		goto clean_up;
+	}
+    if (!ue_byte_writer_append_int(stream, (int)iv_size)) {
+		ue_stacktrace_push_msg("Failed to write IV size to stream");
+		goto clean_up;
+	}
+    if (!ue_byte_writer_append_string(stream, csr_string)) {
+		ue_stacktrace_push_msg("Failed to write CSR string to stream");
+		goto clean_up;
+	}
+    if (!ue_byte_writer_append_bytes(stream, future_key->data, future_key->size)) {
+		ue_stacktrace_push_msg("Failed to write future to stream");
+		goto clean_up;
+	}
+    if (!ue_byte_writer_append_bytes(stream, iv, iv_size)) {
+		ue_stacktrace_push_msg("Failed to write IV to stream");
+		goto clean_up;
+	}
 
     if (!ue_cipher_plain_data(ue_byte_stream_get_data(stream), ue_byte_stream_get_size(stream), ca_public_key, NULL, &cipher_data, cipher_data_size, "aes-256-cbc")) {
         ue_stacktrace_push_msg("Failed to cipher plain data");
@@ -1162,6 +1461,12 @@ ue_x509_certificate *client_process_server_response(unsigned char *server_respon
     ue_x509_certificate *signed_certificate;
     unsigned char *signed_certificate_buffer;
     size_t signed_certificate_buffer_size;
+
+	ue_check_parameter_or_return(server_response);
+	ue_check_parameter_or_return(server_response_size > 0);
+	ue_check_parameter_or_return(key);
+	ue_check_parameter_or_return(iv);
+	ue_check_parameter_or_return(iv_size > 0);
 
     signed_certificate = NULL;
 
@@ -1188,6 +1493,9 @@ bool send_csr(csr_context *context, int csr_sub_type) {
 	unsigned char *csr_request;
 	ue_byte_stream *stream;
 	ue_public_key *ca_public_key;
+
+	ue_check_parameter_or_return(context);
+	ue_check_parameter_or_return(csr_sub_type == CSR_TLS_REQUEST || csr_sub_type == CSR_CIPHER_REQUEST || csr_sub_type == CSR_SIGNER_REQUEST);
 
 	result = false;
 	certificate = NULL;
@@ -1224,16 +1532,37 @@ bool send_csr(csr_context *context, int csr_sub_type) {
 		goto clean_up;
 	}
 
-	ue_byte_writer_append_int(stream, csr_sub_type);
-	ue_byte_writer_append_int(stream, (int)strlen(instance->nickname));
-	ue_byte_writer_append_bytes(stream, (unsigned char *)instance->nickname, strlen(instance->nickname));
-	ue_byte_writer_append_int(stream, (int)cipher_data_size);
-	ue_byte_writer_append_bytes(stream, csr_request, cipher_data_size);
+	if (!ue_byte_writer_append_int(stream, csr_sub_type)) {
+		ue_stacktrace_push_msg("Failed to write CSR sub type to stream");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_int(stream, (int)strlen(instance->nickname))) {
+		ue_stacktrace_push_msg("Failed to write nickname size to stream");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_bytes(stream, (unsigned char *)instance->nickname, strlen(instance->nickname))) {
+		ue_stacktrace_push_msg("Failed to write nickname to stream");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_int(stream, (int)cipher_data_size)) {
+		ue_stacktrace_push_msg("Failed to write cipher data size to stream");
+		goto clean_up;
+	}
+	if (!ue_byte_writer_append_bytes(stream, csr_request, cipher_data_size)) {
+		ue_stacktrace_push_msg("Failed to write CSR request to stream");
+		goto clean_up;
+	}
 
 	ue_byte_stream_clean_up(instance->connection->message_to_send);
-	ue_byte_writer_append_bytes(instance->connection->message_to_send, ue_byte_stream_get_data(stream), ue_byte_stream_get_size(stream));
+	if (!ue_byte_writer_append_bytes(instance->connection->message_to_send, ue_byte_stream_get_data(stream), ue_byte_stream_get_size(stream))) {
+		ue_stacktrace_push_msg("Failed to write stream data to message to send");
+		goto clean_up;
+	}
 
-	send_message(instance->connection, instance->connection->message_to_send);
+	if (!send_message(instance->connection, instance->connection->message_to_send)) {
+		ue_stacktrace_push_msg("Failed to send message to send");
+		goto clean_up;
+	}
 
 	result = true;
 
@@ -1246,13 +1575,18 @@ clean_up:
 }
 
 bool socket_client_manager_start(const char *host, unsigned short int tls_port) {
+	ue_check_parameter_or_return(host);
+	ue_check_parameter_or_return(tls_port > 0);
+
     if (pipe(instance->fds) == -1) {
-        abort();
+		ue_stacktrace_push_errno();
+        return false;
     }
 
     instance->child_pid = fork();
     if (instance->child_pid == -1) {
-        abort();
+		ue_stacktrace_push_errno();
+        return false;
     }
 
     if (instance->child_pid == 0) {
@@ -1260,7 +1594,8 @@ bool socket_client_manager_start(const char *host, unsigned short int tls_port) 
         char f[PATH_MAX + 1];
         sprintf(f, "/dev/fd/%d", instance->fds[0]);
         execlp("xterm", "xterm", "-e", "cat", f, NULL);
-        abort();
+		ue_stacktrace_push_errno();
+        return false;
     }
 
     if (instance->child_pid != 0) {
@@ -1280,8 +1615,6 @@ bool socket_client_manager_start(const char *host, unsigned short int tls_port) 
 		}
 
 		ue_safe_free(ca_certificates);
-
-		ue_safe_str_free(instance->keystore_password);
 
 	    instance->fd = ue_socket_open_tcp();
         if (!(instance->connection = ue_socket_connect(instance->fd, AF_INET, host, tls_port, instance->tls_session))) {
@@ -1310,6 +1643,10 @@ bool socket_client_manager_start(const char *host, unsigned short int tls_port) 
 bool create_keystores(const char *csr_server_host, unsigned short int csr_server_port, char *keystore_password) {
 	bool result;
 	bool tls_keystore_exists, cipher_keystore_exists, signer_keystore_exists;
+
+	ue_check_parameter_or_return(csr_server_host);
+	ue_check_parameter_or_return(csr_server_port > 0);
+	ue_check_parameter_or_return(keystore_password);
 
 	result = false;
 
@@ -1406,8 +1743,7 @@ bool create_keystores(const char *csr_server_host, unsigned short int csr_server
 		ue_thread_join(instance->read_thread, NULL);
 
 		if (ue_stacktrace_is_filled()) {
-			ue_logger_error("An error occurred while processing read_consumer()");
-			ue_stacktrace_print();
+			ue_logger_stacktrace("An error occurred while processing read_consumer()");
 			ue_stacktrace_clean_up();
 			goto clean_up;
 		}
@@ -1494,11 +1830,12 @@ clean_up:
 
 bool socket_client_manager_create() {
 	bool result;
-	char *certificate_folder_path, *keystore_folder_path;
+	char *certificate_folder_path, *keystore_folder_path, *logs_file_name;
 
 	result = false;
 	certificate_folder_path = NULL;
 	keystore_folder_path = NULL;
+	logs_file_name = NULL;
 
 	ue_safe_alloc(instance, socket_client_manager, 1);
     instance->fd = -1;
@@ -1538,6 +1875,16 @@ bool socket_client_manager_create() {
         ue_stacktrace_push_msg("Specified nickname isn't valid");
         goto clean_up;
     }
+
+	logs_file_name = ue_strcat_variadic("ssss", ROOT_PATH, instance->nickname, "/", LOGGER_FILE_NAME);
+	instance->logs_file = NULL;
+    if (!(instance->logs_file = fopen(logs_file_name, "a"))) {
+        ue_stacktrace_push_msg("Failed to open logs file at path '%s'", logs_file_name)
+    }
+
+	ue_logger_set_fp(ue_logger_manager_get_logger(), instance->logs_file);
+
+    ue_logger_set_details(ue_logger_manager_get_logger(), true);
 
 	instance->csr_server_certificate_path = ue_strcat_variadic("sss", ROOT_PATH, instance->nickname, CSR_SERVER_CERTIFICATE_PATH);
 	instance->tls_server_certificate_path = ue_strcat_variadic("sss", ROOT_PATH, instance->nickname, TLS_SERVER_CERTIFICATE_PATH);
@@ -1608,6 +1955,7 @@ bool socket_client_manager_create() {
 clean_up:
 	ue_safe_free(certificate_folder_path);
 	ue_safe_free(keystore_folder_path);
+	ue_safe_free(logs_file_name);
 	return result;
 }
 
@@ -1665,10 +2013,9 @@ void socket_client_manager_destroy() {
 	ue_safe_free(instance->signer_keystore_path);
 	ue_sym_key_destroy(instance->channel_key);
 	ue_safe_free(instance->channel_iv);
+	ue_safe_fclose(instance->logs_file);
 	ue_safe_free(instance)
 }
-
-#include <unknownecho/fileSystem/folder_utility.h>
 
 int main() {
     if (!ue_init()) {
@@ -1676,7 +2023,8 @@ int main() {
 		exit(1);
 	}
 
-	//ue_logger_set_level(ue_logger_manager_get_logger(), LOG_DEBUG);
+	ue_logger_set_file_level(ue_logger_manager_get_logger(), LOG_TRACE);
+	ue_logger_set_print_level(ue_logger_manager_get_logger(), LOG_INFO);
 
 	if (!socket_client_manager_create()) {
 		ue_stacktrace_push_msg("Failed to create socket client manager");
@@ -1690,8 +2038,7 @@ int main() {
 end:
 	socket_client_manager_destroy();
 	if (ue_stacktrace_is_filled()) {
-		ue_logger_error("An error occurred with the following stacktrace :");
-		ue_stacktrace_print_all();
+		ue_logger_stacktrace("An error occurred with the following stacktrace :");
 	}
     ue_uninit();
     return 0;

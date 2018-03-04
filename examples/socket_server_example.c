@@ -109,8 +109,6 @@ static bool process_request(void *parameter) {
     bool result;
     int i;
 
-    //ue_logger_set_level(ue_logger_manager_get_logger(), LOG_DEBUG);
-
     connection = (ue_socket_client_connection *)parameter;
     result = false;
 
@@ -209,8 +207,6 @@ bool read_consumer(ue_socket_client_connection *connection) {
         return false;
     }
 
-    ue_logger_set_level(ue_logger_manager_get_logger(), LOG_DEBUG);
-
     request_processor_thread = NULL;
 
     ue_byte_stream_clean_up(connection->received_message);
@@ -250,8 +246,6 @@ bool write_consumer(ue_socket_client_connection *connection) {
     if (!instance->server->running) {
         return false;
     }
-
-    ue_logger_set_level(ue_logger_manager_get_logger(), LOG_DEBUG);
 
     if (connection->message_to_send->position > 0) {
         if (ue_starts_with("MESSAGE", (char *)ue_byte_stream_get_data(connection->message_to_send))) {
@@ -375,8 +369,6 @@ int main() {
 		printf("[ERROR] Failed to init LibUnknownEcho\n");
 		exit(1);
 	}
-
-    ue_logger_set_level(ue_logger_manager_get_logger(), LOG_DEBUG);
 
     if (!socket_server_manager_create(5001)) {
         ue_stacktrace_push_msg("Failed to create socket server manager");

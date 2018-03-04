@@ -1,0 +1,7 @@
+- Create a channel protocol exchange from socket_client/server_channel_example.
+- Improve network error handling during message exchange.
+- Remove server shutdown command in client code.
+- Remove in real time outdated or useless certificates in client/server keystores.
+- Add allocation error handling.
+- Documents, comments.
+- Not disconnect the connection each time it's interrupt.

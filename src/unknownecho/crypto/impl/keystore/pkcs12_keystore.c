@@ -81,6 +81,9 @@ ue_pkcs12_keystore *ue_pkcs12_keystore_load(const char *file_name, char *passphr
     char *error_buffer;
     PKCS12 *p12;
 
+    ue_check_parameter_or_return(file_name);
+    ue_check_parameter_or_return(passphrase);
+
     keystore = NULL;
     bio = NULL;
     error_buffer = NULL;
@@ -380,15 +383,18 @@ static bool load_certs_keys_p12(ue_pkcs12_keystore *keystore, const PKCS12 *p12,
         } else if (bagnid == NID_pkcs7_encrypted) {
             bags = PKCS12_unpack_p7encdata(p7, passphrase, passphrase_len);
         } else {
+            ue_logger_warn("Unknown bag id for PKCS7 num %d", i);
             continue;
         }
         if (!bags) {
-            goto clean_up;
+            ue_logger_warn("Empty bags for PKCS7 num %d", i);
+            continue;
         }
 
         if (!load_certs_pkeys_bags(keystore, bags, passphrase, passphrase_len, enc)) {
             sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
-            goto clean_up;
+            ue_logger_warn("Failed to load certs bags of PKCS7 num %d", i);
+            continue;
         }
         sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
         bags = NULL;
@@ -396,7 +402,6 @@ static bool load_certs_keys_p12(ue_pkcs12_keystore *keystore, const PKCS12 *p12,
 
     result = true;
 
- clean_up:
     sk_PKCS7_pop_free(asafes, PKCS7_free);
     return result;
 }

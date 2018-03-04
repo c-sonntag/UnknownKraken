@@ -43,7 +43,7 @@ typedef enum {
 } ue_logger_type;
 
 typedef struct {
-    int level;
+    int print_level, file_level;
     bool quiet;
     bool colored;
     bool details;

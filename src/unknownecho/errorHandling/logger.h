@@ -38,9 +38,12 @@
 #include <unknownecho/bool.h>
 #include <unknownecho/errorHandling/logger_struct.h>
 #include <unknownecho/errorHandling/logger_manager.h>
+#include <unknownecho/errorHandling/stacktrace_struct.h>
+#include <unknownecho/thread/thread_storage.h>
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 ue_logger *ue_logger_create();
 
@@ -48,9 +51,13 @@ void ue_logger_destroy(ue_logger *log);
 
 void ue_logger_set_fp(ue_logger *log, FILE *fp);
 
-void ue_logger_set_level(ue_logger *log, int level);
+void ue_logger_set_file_level(ue_logger *log, int level);
 
-int ue_logger_get_level(ue_logger *log);
+void ue_logger_set_print_level(ue_logger *log, int level);
+
+int ue_logger_get_print_level(ue_logger *log);
+
+int ue_logger_get_file_level(ue_logger *log);
 
 void ue_logger_set_quiet(ue_logger *log, bool enable);
 
@@ -60,17 +67,21 @@ void ue_logger_set_details(ue_logger *log, bool enable);
 
 bool ue_logger_record(ue_logger *log, int level, const char *file, int line, const char *fmt, ...);
 
-#define ue_logger_trace(...) ue_logger_record(ue_logger_manager_get_logger(), LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
+bool ue_logger_record_stacktrace(ue_logger *log, ue_stacktrace *stacktrace, const char *message, const char *file, int line);
 
-#define ue_logger_debug(...) ue_logger_record(ue_logger_manager_get_logger(), LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
+#define ue_logger_stacktrace(message) ue_logger_record_stacktrace(ue_logger_manager_get_logger(), ue_thread_storage_get_stacktrace(), (const char *)message, (const char *)(strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__), __LINE__)
 
-#define ue_logger_info(...) ue_logger_record(ue_logger_manager_get_logger(), LOG_INFO,  __FILE__, __LINE__, __VA_ARGS__)
+#define ue_logger_trace(...) ue_logger_record(ue_logger_manager_get_logger(), LOG_TRACE, (const char *)(strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__), __LINE__, __VA_ARGS__)
 
-#define ue_logger_warn(...) ue_logger_record(ue_logger_manager_get_logger(), LOG_WARN,  __FILE__, __LINE__, __VA_ARGS__)
+#define ue_logger_debug(...) ue_logger_record(ue_logger_manager_get_logger(), LOG_DEBUG, (const char *)(strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__), __LINE__, __VA_ARGS__)
 
-#define ue_logger_error(...) ue_logger_record(ue_logger_manager_get_logger(), LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
+#define ue_logger_info(...) ue_logger_record(ue_logger_manager_get_logger(), LOG_INFO, (const char *)(strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__), __LINE__, __VA_ARGS__)
 
-#define ue_logger_fatal(...) ue_logger_record(ue_logger_manager_get_logger(), LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
+#define ue_logger_warn(...) ue_logger_record(ue_logger_manager_get_logger(), LOG_WARN,  (const char *)(strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__), __LINE__, __VA_ARGS__)
+
+#define ue_logger_error(...) ue_logger_record(ue_logger_manager_get_logger(), LOG_ERROR, (const char *)(strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__), __LINE__, __VA_ARGS__)
+
+#define ue_logger_fatal(...) ue_logger_record(ue_logger_manager_get_logger(), LOG_FATAL, (const char *)(strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__), __LINE__, __VA_ARGS__)
 
 FILE *ue_logger_get_fp(ue_logger *log);
 
