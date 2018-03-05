@@ -90,7 +90,7 @@ char *ue_stacktrace_to_string(ue_stacktrace *stack) {
 	ue_thread_id_buffer = (char *)malloc(20 * sizeof(char));
 	sprintf(ue_thread_id_buffer, "%lu", stack->ue_thread_id);
 
-	/* Affiche ainsi l'erreur la plus importante en haut de l'affichage du ue_stacktrace */
+	/* Print the most important error at the top of the stacktrace */
 	stack->errors[0]->is_main_error = true;
 
 	size = 0;
