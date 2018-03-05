@@ -70,7 +70,7 @@ int main() {
 
     ue_init();
 
-    if (!(out_file_path = resolve_out_file_path("ue_logger_example.log"))) {
+    if (!(out_file_path = resolve_out_file_path("logger_example.log"))) {
         goto end;
     }
 
