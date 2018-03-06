@@ -1,0 +1,30 @@
+- Etablir une connexion TLS entre plusieurs clients via un serveur.
+- Etablir plusieurs connexions TLS entre plusieurs clients sur différents channels.
+- Chiffrer les communications en plus du TLS avec une clé de session échanger via crypto asym.
+- Enregistrer les différents certificats dans des keystores.
+- Effectuer une demande de signature de certificat (CSR) lors de la création du keystore du client, au serveur.
+
+~
+
+Le serveur a 4 keystores :
+- Un pour les certificats du TLS.
+- Un pour les certificats du CIPHER (qui chiffre les échanges de clés de sessions).
+- Un pour les certificats du SIGNER (qui servent qu'à signer les messages).
+- Un pour le certificat du CSR (pour signer le certificat d'un nouveau client).
+
+Le client a 3 keystores :
+- TLS, CIPHER et SIGNER qui contiennent son cert/clé + ceux de ceux à qui il a déjà parlé
+Quand un client se co à un channel, si le channel est vide il crée une clé de session, sinon il demande la clé de session à un client connecté au channel, en passant par le serveur. Si il connait pas les certificats CIPHER/SIGNER de l'autre client, il les demande au serveur
+
+~
+
+J'ai utilisé le design pattern Facade : 
+Dans un module qui a beaucoup de fichiers, tu fais deux à quatre sous dossiers :
+- api : contient tous les fichiers qui contiennent le code que tu veux que les gens utilisent, où que les autres modules utilise.
+- impl : contient tous les fichiers qui sont les implémentations de api. Les fichiers peuvent être utilisé que par api de ce module, et peut contenir des impl pour différents os par ex.
+- factory (optionnel) : contient des factory pour crée certains objets complexes à partir de api.
+- utils (optionnel) : des fonctions utilitaires qui servent seulement dans ce module
+Plusieurs raisons :
+- Simplifier l'utilisation de la lib : seulement les fichiers de api et factory.
+- Si tu changes de sous lib par exemple pour openssl, je modifie seulement impl et aucun autre endroit ne sera impacté.
+- Si j'ajoues une autre impl en plus. Par exemple j'utiliserai pas Openssl sous MAC OS, mais la lib native

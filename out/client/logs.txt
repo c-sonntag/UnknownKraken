@@ -1,0 +1,143 @@
+[INFO] Creating 'outswa/certificate'... socket_client_channel.c:1813 at Tue Mar  6 10:05:07 2018
+[INFO] Creating 'outswa/keystore'... socket_client_channel.c:1821 at Tue Mar  6 10:05:07 2018
+[ERROR] An error occurred with the following stacktrace : socket_client_channel_protocol_example.c:76 at Tue Mar  6 10:05:07 2018
+Failed to create channel client (thread 139978812131136)
+Caused by: Failed to load CSR server certificate from path 'outswa/certificate/csr_server.pem'
+   at ue_socket_client_channel_create (socket_client_channel.c:1829)
+   at main (socket_client_channel_protocol_example.c:63)
+[INFO] Creating 'out/swa/keystore'... socket_client_channel.c:1821 at Tue Mar  6 10:06:36 2018
+[WARN] Keystore manager is null, so it will create an unsecure connection socket_client.c:122 at Tue Mar  6 10:06:36 2018
+[INFO] Socket connection is established socket_client.c:146 at Tue Mar  6 10:06:36 2018
+[INFO] TLS keystore doesn't exists. A CSR will be built. socket_client_channel.c:1620 at Tue Mar  6 10:06:36 2018
+[INFO] Convert x509 CRS to string... socket_client_channel.c:1293 at Tue Mar  6 10:06:45 2018
+[TRACE] 1907 bytes sent socket.c:395 at Tue Mar  6 10:06:45 2018
+[INFO] Cipher keystore doesn't exists. A CSR will be built. socket_client_channel.c:1630 at Tue Mar  6 10:06:45 2018
+[TRACE] Received CSR_TLS_RESPONSE socket_client_channel.c:161 at Tue Mar  6 10:06:45 2018
+[INFO] Convert x509 CRS to string... socket_client_channel.c:1293 at Tue Mar  6 10:06:48 2018
+[TRACE] 1907 bytes sent socket.c:395 at Tue Mar  6 10:06:48 2018
+[INFO] Signer keystore doesn't exists. A CSR will be built. socket_client_channel.c:1640 at Tue Mar  6 10:06:48 2018
+[TRACE] Received CSR_CIPHER_RESPONSE socket_client_channel.c:173 at Tue Mar  6 10:06:48 2018
+[INFO] Convert x509 CRS to string... socket_client_channel.c:1293 at Tue Mar  6 10:06:49 2018
+[TRACE] 1907 bytes sent socket.c:395 at Tue Mar  6 10:06:49 2018
+[TRACE] Received CSR_SIGNER_RESPONSE socket_client_channel.c:185 at Tue Mar  6 10:06:50 2018
+[INFO] Certificate is correctly signed by the CA socket_client_channel.c:1661 at Tue Mar  6 10:06:50 2018
+[INFO] TLS keystore created. socket_client_channel.c:1679 at Tue Mar  6 10:06:50 2018
+[INFO] Certificate is correctly signed by the CA socket_client_channel.c:1684 at Tue Mar  6 10:06:50 2018
+[INFO] Cipher keystore created. socket_client_channel.c:1704 at Tue Mar  6 10:06:50 2018
+[INFO] Certificate is correctly signed by the CA socket_client_channel.c:1709 at Tue Mar  6 10:06:50 2018
+[INFO] Signer keystore created. socket_client_channel.c:1729 at Tue Mar  6 10:06:50 2018
+[INFO] Keystore manager isn't null, so it will create a TLS connection socket_client.c:85 at Tue Mar  6 10:06:50 2018
+[INFO] Creating TLS connection... socket_client.c:87 at Tue Mar  6 10:06:50 2018
+[INFO] TLS connection created socket_client.c:95 at Tue Mar  6 10:06:50 2018
+[INFO] Setting socket file descriptor 5 to TLS connection... socket_client.c:97 at Tue Mar  6 10:06:50 2018
+[INFO] Socket file descriptor linked to TLS connection socket_client.c:103 at Tue Mar  6 10:06:50 2018
+[INFO] Establishing TLS connection... socket_client.c:105 at Tue Mar  6 10:06:50 2018
+[INFO] TLS connection established socket_client.c:111 at Tue Mar  6 10:06:50 2018
+[INFO] Verify peer is enable and peer certificate is valid socket_client.c:119 at Tue Mar  6 10:06:50 2018
+[INFO] Socket connection is established socket_client.c:146 at Tue Mar  6 10:06:50 2018
+[TRACE] 27 bytes sent socket.c:395 at Tue Mar  6 10:06:50 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 10:06:50 2018
+[TRACE] Server has accepted this nickname. socket_client_channel.c:962 at Tue Mar  6 10:06:50 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 10:06:59 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 10:06:59 2018
+[TRACE] CHANNEL_CONNECTION_RESPONSE socket_client_channel.c:965 at Tue Mar  6 10:06:59 2018
+[TRACE] Channel connection has been accepted by the server with channel id 0. socket_client_channel.c:483 at Tue Mar  6 10:06:59 2018
+[INFO] Generate random channel key socket_client_channel.c:491 at Tue Mar  6 10:06:59 2018
+[TRACE] 1108 bytes sent socket.c:395 at Tue Mar  6 10:07:01 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 10:07:01 2018
+[TRACE] MESSAGE received socket_client_channel.c:972 at Tue Mar  6 10:07:01 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 10:07:26 2018
+[TRACE] CHANNEL_KEY_REQUEST socket_client_channel.c:986 at Tue Mar  6 10:07:26 2018
+[WARN] Cipher certificate of client was not found. Requesting the server... socket_client_channel.c:824 at Tue Mar  6 10:07:26 2018
+[TRACE] 1108 bytes sent socket.c:395 at Tue Mar  6 10:07:26 2018
+[TRACE] 2452 bytes received socket.c:505 at Tue Mar  6 10:07:26 2018
+[INFO] Missing certificate received. Trying to add it to the cipher keystore... socket_client_channel.c:410 at Tue Mar  6 10:07:26 2018
+[INFO] Retrying find cipher certificate... socket_client_channel.c:836 at Tue Mar  6 10:07:26 2018
+[TRACE] 2260 bytes sent socket.c:395 at Tue Mar  6 10:07:26 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 10:07:29 2018
+[TRACE] MESSAGE received socket_client_channel.c:972 at Tue Mar  6 10:07:29 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 10:07:31 2018
+[TRACE] MESSAGE received socket_client_channel.c:972 at Tue Mar  6 10:07:31 2018
+[TRACE] 0 bytes received socket.c:505 at Tue Mar  6 10:11:05 2018
+[WARN] Connection with server is interrupted. socket_client_channel.c:301 at Tue Mar  6 10:11:05 2018
+[WARN] Stopping client... socket_client_channel.c:937 at Tue Mar  6 10:11:05 2018
+[INFO] Keystore manager isn't null, so it will create a TLS connection socket_client.c:85 at Tue Mar  6 10:12:19 2018
+[INFO] Creating TLS connection... socket_client.c:87 at Tue Mar  6 10:12:19 2018
+[INFO] TLS connection created socket_client.c:95 at Tue Mar  6 10:12:19 2018
+[INFO] Setting socket file descriptor 4 to TLS connection... socket_client.c:97 at Tue Mar  6 10:12:20 2018
+[INFO] Socket file descriptor linked to TLS connection socket_client.c:103 at Tue Mar  6 10:12:20 2018
+[INFO] Establishing TLS connection... socket_client.c:105 at Tue Mar  6 10:12:20 2018
+[INFO] TLS connection established socket_client.c:111 at Tue Mar  6 10:12:29 2018
+[INFO] Verify peer is enable and peer certificate is valid socket_client.c:119 at Tue Mar  6 10:12:29 2018
+[INFO] Socket connection is established socket_client.c:146 at Tue Mar  6 10:12:29 2018
+[TRACE] 27 bytes sent socket.c:395 at Tue Mar  6 10:12:29 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 10:12:32 2018
+[TRACE] Server has accepted this nickname. socket_client_channel.c:962 at Tue Mar  6 10:12:33 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 10:12:37 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 10:12:40 2018
+[TRACE] CHANNEL_CONNECTION_RESPONSE socket_client_channel.c:965 at Tue Mar  6 10:12:41 2018
+[TRACE] Channel connection has been accepted by the server with channel id 0. socket_client_channel.c:483 at Tue Mar  6 10:12:41 2018
+[INFO] Generate random channel key socket_client_channel.c:491 at Tue Mar  6 10:12:41 2018
+[TRACE] 1108 bytes sent socket.c:395 at Tue Mar  6 10:12:45 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 10:12:48 2018
+[TRACE] MESSAGE received socket_client_channel.c:972 at Tue Mar  6 10:12:49 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 10:12:52 2018
+[TRACE] 0 bytes received socket.c:505 at Tue Mar  6 10:12:54 2018
+[WARN] Connection with server is interrupted. socket_client_channel.c:301 at Tue Mar  6 10:12:54 2018
+[WARN] Stopping client... socket_client_channel.c:937 at Tue Mar  6 10:12:54 2018
+[INFO] Keystore manager isn't null, so it will create a TLS connection socket_client.c:85 at Tue Mar  6 13:11:52 2018
+[INFO] Creating TLS connection... socket_client.c:87 at Tue Mar  6 13:11:53 2018
+[INFO] TLS connection created socket_client.c:95 at Tue Mar  6 13:11:53 2018
+[INFO] Setting socket file descriptor 4 to TLS connection... socket_client.c:97 at Tue Mar  6 13:11:53 2018
+[INFO] Socket file descriptor linked to TLS connection socket_client.c:103 at Tue Mar  6 13:11:53 2018
+[INFO] Establishing TLS connection... socket_client.c:105 at Tue Mar  6 13:11:53 2018
+[INFO] TLS connection established socket_client.c:111 at Tue Mar  6 13:12:04 2018
+[INFO] Verify peer is enable and peer certificate is valid socket_client.c:119 at Tue Mar  6 13:12:04 2018
+[INFO] Socket connection is established socket_client.c:146 at Tue Mar  6 13:12:04 2018
+[TRACE] 27 bytes sent socket.c:395 at Tue Mar  6 13:12:05 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 13:12:07 2018
+[TRACE] Server has accepted this nickname. socket_client_channel.c:962 at Tue Mar  6 13:12:09 2018
+[TRACE] 0 bytes received socket.c:505 at Tue Mar  6 13:12:16 2018
+[WARN] Connection with server is interrupted. socket_client_channel.c:301 at Tue Mar  6 13:12:16 2018
+[WARN] Stopping client... socket_client_channel.c:937 at Tue Mar  6 13:12:16 2018
+[INFO] Keystore manager isn't null, so it will create a TLS connection socket_client.c:85 at Tue Mar  6 13:16:12 2018
+[INFO] Creating TLS connection... socket_client.c:87 at Tue Mar  6 13:16:12 2018
+[INFO] TLS connection created socket_client.c:95 at Tue Mar  6 13:16:12 2018
+[INFO] Setting socket file descriptor 4 to TLS connection... socket_client.c:97 at Tue Mar  6 13:16:12 2018
+[INFO] Socket file descriptor linked to TLS connection socket_client.c:103 at Tue Mar  6 13:16:12 2018
+[INFO] Establishing TLS connection... socket_client.c:105 at Tue Mar  6 13:16:12 2018
+[INFO] TLS connection established socket_client.c:111 at Tue Mar  6 13:16:24 2018
+[INFO] Verify peer is enable and peer certificate is valid socket_client.c:119 at Tue Mar  6 13:16:24 2018
+[INFO] Socket connection is established socket_client.c:146 at Tue Mar  6 13:16:24 2018
+[TRACE] 27 bytes sent socket.c:395 at Tue Mar  6 13:16:24 2018
+[WARN] Cannot send message because no channel is selected socket_client_channel.c:1115 at Tue Mar  6 13:16:25 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 13:16:27 2018
+[TRACE] Server has accepted this nickname. socket_client_channel.c:962 at Tue Mar  6 13:16:29 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 13:16:37 2018
+[WARN] Cannot send message because no channel is selected socket_client_channel.c:1115 at Tue Mar  6 13:16:41 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 13:16:41 2018
+[TRACE] CHANNEL_CONNECTION_RESPONSE socket_client_channel.c:965 at Tue Mar  6 13:16:42 2018
+[TRACE] Channel connection has been accepted by the server with channel id 0. socket_client_channel.c:483 at Tue Mar  6 13:16:42 2018
+[INFO] Generate random channel key socket_client_channel.c:491 at Tue Mar  6 13:16:42 2018
+[TRACE] 1108 bytes sent socket.c:395 at Tue Mar  6 13:16:45 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 13:16:48 2018
+[TRACE] MESSAGE received socket_client_channel.c:972 at Tue Mar  6 13:16:50 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 13:16:52 2018
+[TRACE] 0 bytes received socket.c:505 at Tue Mar  6 13:16:54 2018
+[WARN] Connection with server is interrupted. socket_client_channel.c:301 at Tue Mar  6 13:16:54 2018
+[WARN] Stopping client... socket_client_channel.c:937 at Tue Mar  6 13:16:54 2018
+[INFO] Keystore manager isn't null, so it will create a TLS connection socket_client.c:85 at Tue Mar  6 13:23:24 2018
+[INFO] Creating TLS connection... socket_client.c:87 at Tue Mar  6 13:23:24 2018
+[INFO] TLS connection created socket_client.c:95 at Tue Mar  6 13:23:24 2018
+[INFO] Setting socket file descriptor 4 to TLS connection... socket_client.c:97 at Tue Mar  6 13:23:24 2018
+[INFO] Socket file descriptor linked to TLS connection socket_client.c:103 at Tue Mar  6 13:23:24 2018
+[INFO] Establishing TLS connection... socket_client.c:105 at Tue Mar  6 13:23:24 2018
+[INFO] TLS connection established socket_client.c:111 at Tue Mar  6 13:23:31 2018
+[INFO] Verify peer is enable and peer certificate is valid socket_client.c:119 at Tue Mar  6 13:23:31 2018
+[INFO] Socket connection is established socket_client.c:146 at Tue Mar  6 13:23:31 2018
+[TRACE] 27 bytes sent socket.c:395 at Tue Mar  6 13:23:31 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 13:23:33 2018
+[TRACE] Server has accepted this nickname. socket_client_channel.c:962 at Tue Mar  6 13:23:33 2018
+[TRACE] 0 bytes received socket.c:505 at Tue Mar  6 13:23:39 2018
+[WARN] Connection with server is interrupted. socket_client_channel.c:301 at Tue Mar  6 13:23:39 2018
+[WARN] Stopping client... socket_client_channel.c:937 at Tue Mar  6 13:23:39 2018

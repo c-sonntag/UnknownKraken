@@ -1,0 +1,146 @@
+[ERROR] An error occurred with the following stacktrace : socket_server_channel_protocol_example.c:38 at Tue Mar  6 10:01:13 2018
+Failed to create server channel (thread 139622678882112)
+Caused by: No such file or directory
+   at ue_pkcs12_keystore_write (pkcs12_keystore.c:338)
+   at create_keystores (socket_server_channel.c:1358)
+   at ue_socket_server_channel_create (socket_server_channel.c:1509)
+   at main (socket_server_channel_protocol_example.c:27)
+[DEBUG] server_channel->csr_keystore_path : out/server/keystore/csr_server_keystore.p12 socket_server_channel.c:1357 at Tue Mar  6 10:03:35 2018
+[ERROR] An error occurred with the following stacktrace : socket_server_channel_protocol_example.c:38 at Tue Mar  6 10:03:35 2018
+Failed to create server channel (thread 140090981431104)
+Caused by: No such file or directory
+   at ue_pkcs12_keystore_write (pkcs12_keystore.c:338)
+   at create_keystores (socket_server_channel.c:1359)
+   at ue_socket_server_channel_create (socket_server_channel.c:1510)
+   at main (socket_server_channel_protocol_example.c:27)
+[DEBUG] server_channel->csr_keystore_path : out/server/keystore/csr_server_keystore.p12 socket_server_channel.c:1357 at Tue Mar  6 10:04:55 2018
+[INFO] CSR server waiting on port 5002 socket_server_channel.c:1519 at Tue Mar  6 10:04:55 2018
+[INFO] TLS server waiting on port 5001 socket_server_channel.c:1536 at Tue Mar  6 10:04:55 2018
+[INFO] Client client successfully accepted socket_server.c:268 at Tue Mar  6 10:06:36 2018
+[TRACE] CSR server has receive a request socket_server_channel.c:384 at Tue Mar  6 10:06:45 2018
+[TRACE] Request received from CSR server starts with 'CSR' socket_server_channel.c:516 at Tue Mar  6 10:06:45 2018
+[TRACE] 1809 bytes sent socket.c:395 at Tue Mar  6 10:06:45 2018
+[TRACE] CSR server has receive a request socket_server_channel.c:384 at Tue Mar  6 10:06:48 2018
+[TRACE] Request received from CSR server starts with 'CSR' socket_server_channel.c:516 at Tue Mar  6 10:06:48 2018
+[TRACE] 1813 bytes sent socket.c:395 at Tue Mar  6 10:06:48 2018
+[TRACE] CSR server has receive a request socket_server_channel.c:384 at Tue Mar  6 10:06:49 2018
+[TRACE] Request received from CSR server starts with 'CSR' socket_server_channel.c:516 at Tue Mar  6 10:06:50 2018
+[TRACE] 1813 bytes sent socket.c:395 at Tue Mar  6 10:06:50 2018
+[INFO] Client client successfully accepted socket_server.c:268 at Tue Mar  6 10:06:50 2018
+[TRACE] 27 bytes received socket.c:505 at Tue Mar  6 10:06:50 2018
+[TRACE] Received nickname request socket_server_channel.c:1132 at Tue Mar  6 10:06:50 2018
+[TRACE] Check if nickname is already in use. socket_server_channel.c:578 at Tue Mar  6 10:06:50 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 10:06:50 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 10:06:59 2018
+[TRACE] CHANNEL_CONNECTION request received socket_server_channel.c:1136 at Tue Mar  6 10:06:59 2018
+[INFO] Successfully added connection of nickname swa to channel id 0 socket_server_channel.c:812 at Tue Mar  6 10:06:59 2018
+[INFO] Building response... socket_server_channel.c:813 at Tue Mar  6 10:06:59 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 10:06:59 2018
+[TRACE] 1108 bytes received socket.c:505 at Tue Mar  6 10:07:01 2018
+[TRACE] Received MESSAGE from client socket_server_channel.c:1144 at Tue Mar  6 10:07:01 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 10:07:01 2018
+[INFO] Client client successfully accepted socket_server.c:268 at Tue Mar  6 10:07:14 2018
+[TRACE] CSR server has receive a request socket_server_channel.c:384 at Tue Mar  6 10:07:16 2018
+[TRACE] Request received from CSR server starts with 'CSR' socket_server_channel.c:516 at Tue Mar  6 10:07:16 2018
+[TRACE] 1809 bytes sent socket.c:395 at Tue Mar  6 10:07:16 2018
+[TRACE] CSR server has receive a request socket_server_channel.c:384 at Tue Mar  6 10:07:19 2018
+[TRACE] Request received from CSR server starts with 'CSR' socket_server_channel.c:516 at Tue Mar  6 10:07:19 2018
+[TRACE] 1813 bytes sent socket.c:395 at Tue Mar  6 10:07:19 2018
+[TRACE] CSR server has receive a request socket_server_channel.c:384 at Tue Mar  6 10:07:21 2018
+[TRACE] Request received from CSR server starts with 'CSR' socket_server_channel.c:516 at Tue Mar  6 10:07:21 2018
+[TRACE] 1813 bytes sent socket.c:395 at Tue Mar  6 10:07:21 2018
+[INFO] Client client successfully accepted socket_server.c:268 at Tue Mar  6 10:07:21 2018
+[TRACE] 29 bytes received socket.c:505 at Tue Mar  6 10:07:21 2018
+[TRACE] Received nickname request socket_server_channel.c:1132 at Tue Mar  6 10:07:21 2018
+[TRACE] Check if nickname is already in use. socket_server_channel.c:578 at Tue Mar  6 10:07:21 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 10:07:21 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 10:07:26 2018
+[TRACE] CHANNEL_CONNECTION request received socket_server_channel.c:1136 at Tue Mar  6 10:07:26 2018
+[INFO] Successfully added connection of nickname pouet to channel id 0 socket_server_channel.c:812 at Tue Mar  6 10:07:26 2018
+[INFO] Building response... socket_server_channel.c:813 at Tue Mar  6 10:07:26 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 10:07:26 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 10:07:26 2018
+[TRACE] 1108 bytes received socket.c:505 at Tue Mar  6 10:07:26 2018
+[TRACE] GET_CERTIFICATE_REQUEST socket_server_channel.c:1153 at Tue Mar  6 10:07:26 2018
+[TRACE] GET_CERTIFICATE_REQUEST request successfully proceed socket_server_channel.c:1064 at Tue Mar  6 10:07:26 2018
+[TRACE] 2452 bytes sent socket.c:395 at Tue Mar  6 10:07:26 2018
+[TRACE] 2260 bytes received socket.c:505 at Tue Mar  6 10:07:26 2018
+[TRACE] CHANNEL_KEY_REQUEST_ANSWER socket_server_channel.c:1149 at Tue Mar  6 10:07:26 2018
+[TRACE] 2228 bytes sent socket.c:395 at Tue Mar  6 10:07:26 2018
+[TRACE] 1108 bytes received socket.c:505 at Tue Mar  6 10:07:26 2018
+[TRACE] GET_CERTIFICATE_REQUEST socket_server_channel.c:1153 at Tue Mar  6 10:07:26 2018
+[TRACE] GET_CERTIFICATE_REQUEST request successfully proceed socket_server_channel.c:1064 at Tue Mar  6 10:07:26 2018
+[TRACE] 2452 bytes sent socket.c:395 at Tue Mar  6 10:07:27 2018
+[TRACE] 1108 bytes received socket.c:505 at Tue Mar  6 10:07:29 2018
+[TRACE] Received MESSAGE from client socket_server_channel.c:1144 at Tue Mar  6 10:07:29 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 10:07:29 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 10:07:29 2018
+[TRACE] 1108 bytes received socket.c:505 at Tue Mar  6 10:07:31 2018
+[TRACE] Received MESSAGE from client socket_server_channel.c:1144 at Tue Mar  6 10:07:31 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 10:07:31 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 10:07:31 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 10:11:05 2018
+[INFO] Shutdown detected socket_server_channel.c:1125 at Tue Mar  6 10:11:05 2018
+[INFO] CSR server waiting on port 5002 socket_server_channel.c:1519 at Tue Mar  6 10:11:59 2018
+[INFO] TLS server waiting on port 5001 socket_server_channel.c:1536 at Tue Mar  6 10:12:01 2018
+[INFO] Client client successfully accepted socket_server.c:268 at Tue Mar  6 10:12:29 2018
+[TRACE] 27 bytes received socket.c:505 at Tue Mar  6 10:12:29 2018
+[TRACE] Received nickname request socket_server_channel.c:1132 at Tue Mar  6 10:12:29 2018
+[TRACE] Check if nickname is already in use. socket_server_channel.c:578 at Tue Mar  6 10:12:29 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 10:12:32 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 10:12:37 2018
+[TRACE] CHANNEL_CONNECTION request received socket_server_channel.c:1136 at Tue Mar  6 10:12:39 2018
+[INFO] Successfully added connection of nickname swa to channel id 0 socket_server_channel.c:812 at Tue Mar  6 10:12:39 2018
+[INFO] Building response... socket_server_channel.c:813 at Tue Mar  6 10:12:39 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 10:12:40 2018
+[TRACE] 1108 bytes received socket.c:505 at Tue Mar  6 10:12:45 2018
+[TRACE] Received MESSAGE from client socket_server_channel.c:1144 at Tue Mar  6 10:12:46 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 10:12:48 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 10:12:52 2018
+[INFO] Shutdown detected socket_server_channel.c:1125 at Tue Mar  6 10:12:53 2018
+[INFO] CSR server waiting on port 5002 socket_server_channel.c:1521 at Tue Mar  6 13:11:37 2018
+[INFO] TLS server waiting on port 5001 socket_server_channel.c:1538 at Tue Mar  6 13:11:39 2018
+[INFO] Client client successfully accepted socket_server.c:268 at Tue Mar  6 13:12:04 2018
+[TRACE] 27 bytes received socket.c:505 at Tue Mar  6 13:12:05 2018
+[TRACE] Received nickname request socket_server_channel.c:1134 at Tue Mar  6 13:12:05 2018
+[TRACE] Check if nickname is already in use. socket_server_channel.c:578 at Tue Mar  6 13:12:05 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 13:12:07 2018
+[TRACE] Signal received 2 socket_server_channel.c:69 at Tue Mar  6 13:12:16 2018
+[INFO] Shuting down server... socket_server_channel.c:70 at Tue Mar  6 13:12:16 2018
+[INFO] CSR server waiting on port 5002 socket_server_channel.c:1521 at Tue Mar  6 13:15:59 2018
+[INFO] TLS server waiting on port 5001 socket_server_channel.c:1538 at Tue Mar  6 13:16:00 2018
+[INFO] Client client successfully accepted socket_server.c:268 at Tue Mar  6 13:16:24 2018
+[TRACE] 27 bytes received socket.c:505 at Tue Mar  6 13:16:24 2018
+[TRACE] Received nickname request socket_server_channel.c:1134 at Tue Mar  6 13:16:24 2018
+[TRACE] Check if nickname is already in use. socket_server_channel.c:578 at Tue Mar  6 13:16:24 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 13:16:27 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 13:16:37 2018
+[TRACE] CHANNEL_CONNECTION request received socket_server_channel.c:1138 at Tue Mar  6 13:16:39 2018
+[INFO] Successfully added connection of nickname swa to channel id 0 socket_server_channel.c:812 at Tue Mar  6 13:16:39 2018
+[INFO] Building response... socket_server_channel.c:813 at Tue Mar  6 13:16:39 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 13:16:41 2018
+[TRACE] 1108 bytes received socket.c:505 at Tue Mar  6 13:16:45 2018
+[TRACE] Received MESSAGE from client socket_server_channel.c:1146 at Tue Mar  6 13:16:47 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 13:16:48 2018
+[TRACE] 1092 bytes received socket.c:505 at Tue Mar  6 13:16:52 2018
+[INFO] Shutdown detected socket_server_channel.c:1127 at Tue Mar  6 13:16:54 2018
+[INFO] CSR server waiting on port 5002 socket_server_channel.c:1521 at Tue Mar  6 13:22:52 2018
+[INFO] TLS server waiting on port 5001 socket_server_channel.c:1538 at Tue Mar  6 13:22:52 2018
+[TRACE] Signal received 2 socket_server_channel.c:69 at Tue Mar  6 13:22:54 2018
+[INFO] Shuting down server... socket_server_channel.c:70 at Tue Mar  6 13:22:54 2018
+[INFO] CSR server waiting on port 5002 socket_server_channel.c:1521 at Tue Mar  6 13:23:07 2018
+[INFO] TLS server waiting on port 5001 socket_server_channel.c:1538 at Tue Mar  6 13:23:09 2018
+[ERROR] An error occurred with the following stacktrace : socket_server_channel_protocol_example.c:38 at Tue Mar  6 13:23:11 2018
+Failed to create server channel (thread 139620662507328)
+Caused by: Address already in use
+   at ue_socket_bind (socket_server.c:410)
+   at ue_socket_server_create (socket_server.c:97)
+   at ue_socket_server_channel_create (socket_server_channel.c:1517)
+   at main (socket_server_channel_protocol_example.c:27)
+[INFO] Client client successfully accepted socket_server.c:268 at Tue Mar  6 13:23:31 2018
+[TRACE] 27 bytes received socket.c:505 at Tue Mar  6 13:23:31 2018
+[TRACE] Received nickname request socket_server_channel.c:1134 at Tue Mar  6 13:23:31 2018
+[TRACE] Check if nickname is already in use. socket_server_channel.c:578 at Tue Mar  6 13:23:31 2018
+[TRACE] 1092 bytes sent socket.c:395 at Tue Mar  6 13:23:33 2018
+[TRACE] Signal received 2 socket_server_channel.c:69 at Tue Mar  6 13:23:38 2018
+[INFO] Shuting down server... socket_server_channel.c:70 at Tue Mar  6 13:23:38 2018

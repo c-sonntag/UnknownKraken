@@ -1,3 +1,4 @@
+- Functional example with Docker
 - Create a channel protocol exchange from socket_client/server_channel_example.
 - Improve network error handling during message exchange.
 - Remove server shutdown command in client code.

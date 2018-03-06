@@ -194,6 +194,8 @@ clean_up:
     ue_safe_free(cipher_data_temp);
     ue_safe_free(encrypted_key);
     ue_safe_free(iv);
+    ue_safe_free(compressed);
+    ue_safe_free(signature);
     ue_signer_destroy(signer);
     return result;
 }
