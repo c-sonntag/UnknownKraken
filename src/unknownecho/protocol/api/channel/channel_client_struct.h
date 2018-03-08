@@ -1,5 +1,24 @@
-#ifndef UNKNOWNECHO_CLIENT_CHANNEL_STRUCT_H
-#define UNKNOWNECHO_CLIENT_CHANNEL_STRUCT_H
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of UnknownEchoLib.                                        *
+ *                                                                             *
+ *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
+#ifndef UNKNOWNECHO_CHANNEL_CLIENT_STRUCT_H
+#define UNKNOWNECHO_CHANNEL_CLIENT_STRUCT_H
 
 #include <unknownecho/network/api/tls/tls_session.h>
 #include <unknownecho/network/api/socket/socket_client_connection.h>
@@ -20,7 +39,7 @@ typedef enum {
 	READING_STATE,
 	WRITING_STATE,
 	CLOSING_STATE
-} data_transmission_state;
+} ue_data_transmission_state;
 
 /* @todo put into the main struct */
 typedef struct {
@@ -29,7 +48,7 @@ typedef struct {
 	ue_sym_key *future_key;
 	unsigned char *iv;
 	size_t iv_size;
-} csr_context;
+} ue_csr_context;
 
 typedef struct {
 	int fd;
@@ -39,13 +58,13 @@ typedef struct {
 	ue_thread_id *read_thread, *write_thread;
 	ue_thread_mutex *mutex;
 	ue_thread_cond *cond;
-	data_transmission_state transmission_state;
+	ue_data_transmission_state transmission_state;
 	bool running;
 	ue_byte_stream *new_message;
 	int channel_id;
 	ue_x509_certificate *csr_server_certificate, *tls_server_certificate, *cipher_server_certificate, *signer_server_certificate;
 	bool tls_keystore_ok, cipher_keystore_ok, signer_keystore_ok;
-	csr_context *tls_csr_context, *cipher_csr_context, *signer_csr_context;
+	ue_csr_context *tls_csr_context, *cipher_csr_context, *signer_csr_context;
 	ue_pkcs12_keystore *tls_keystore, *cipher_keystore, *signer_keystore;
 	const char *csr_server_certificate_path;
 	const char *tls_server_certificate_path;
@@ -61,6 +80,6 @@ typedef struct {
 	char *root_path, *tls_server_host;
 	int tls_server_port;
 	bool (*write_consumer)(ue_byte_stream *printer);
-} ue_client_channel;
+} ue_channel_client;
 
 #endif

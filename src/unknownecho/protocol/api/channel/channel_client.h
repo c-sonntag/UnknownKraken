@@ -17,11 +17,22 @@
  *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
-#ifndef UNKNOWNECHO_FRIENDLY_NAME_H
-#define UNKNOWNECHO_FRIENDLY_NAME_H
+#ifndef UNKNOWNECHO_CHANNEL_CLIENT_H
+#define UNKNOWNECHO_CHANNEL_CLIENT_H
 
-#include <stddef.h>
+#include <unknownecho/bool.h>
+#include <unknownecho/protocol/api/channel/channel_client_struct.h>
+#include <unknownecho/byte/byte_stream.h>
 
-unsigned char *ue_friendly_name_build(unsigned char *nickname, size_t nickname_size, char *keystore_type, size_t *friendly_name_size);
+bool ue_channel_client_init();
+
+void ue_channel_client_uninit();
+
+ue_channel_client *ue_channel_client_create(char *root_path, char *nickname, const char *csr_server_host, int csr_server_port,
+	const char *tls_server_host, int tls_server_port, char *keystore_password, bool (*write_consumer)(ue_byte_stream *printer));
+
+void ue_channel_client_destroy(ue_channel_client *channel_client);
+
+bool ue_channel_client_start(ue_channel_client *channel_client);
 
 #endif

@@ -54,7 +54,7 @@ typedef enum {
 	READING_STATE,
 	WRITING_STATE,
 	CLOSING_STATE
-} data_transmission_state;
+} ue_data_transmission_state;
 
 typedef struct {
 	int fd;
@@ -65,7 +65,7 @@ typedef struct {
 	ue_thread_id *read_thread, *write_thread;
 	ue_thread_mutex *mutex;
 	ue_thread_cond *cond;
-	data_transmission_state transmission_state;
+	ue_data_transmission_state transmission_state;
 	bool running;
 	int fds[2];
 	ue_byte_stream *new_message;

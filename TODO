@@ -1,5 +1,5 @@
 - Functional examples with Docker
-- Terminate the channel protocol exchange from socket_client/server_channel_example.
+- Terminate the channel protocol exchange from socket_client/channel_server_example.
 - Improve network error handling during message exchanges.
 - Remove server shutdown command in channel client protocol.
 - Remove in real time outdated or useless certificates in client/server keystores.
