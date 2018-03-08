@@ -5,7 +5,7 @@
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 
 #include <unknownecho/network/api/socket/socket_server.h>
 #include <unknownecho/network/api/socket/socket_client_connection.h>
@@ -17,7 +17,7 @@
 #include <unknownecho/thread/thread.h>
 #include <unknownecho/thread/thread_mutex.h>
 #include <unknownecho/thread/thread_cond.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/bool.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
@@ -30,12 +30,14 @@
 #include <unknownecho/crypto/api/cipher/data_cipher.h>
 #include <unknownecho/crypto/api/keystore/pkcs12_keystore.h>
 #include <unknownecho/crypto/api/encryption/sym_encrypter.h>
+#include <unknownecho/crypto/api/csr/csr_request.h>
 #include <unknownecho/crypto/factory/x509_certificate_factory.h>
 #include <unknownecho/crypto/factory/sym_key_factory.h>
 #include <unknownecho/crypto/factory/sym_encrypter_factory.h>
 #include <unknownecho/crypto/factory/pkcs12_keystore_factory.h>
 #include <unknownecho/crypto/factory/rsa_asym_key_factory.h>
 #include <unknownecho/crypto/utils/crypto_random.h>
+#include <unknownecho/crypto/utils/friendly_name.h>
 #include <unknownecho/byte/byte_utility.h>
 #include <unknownecho/byte/byte_writer.h>
 #include <unknownecho/byte/byte_reader.h>
@@ -43,6 +45,7 @@
 #include <unknownecho/byte/byte_split.h>
 #include <unknownecho/container/byte_vector.h>
 #include <unknownecho/fileSystem/file_utility.h>
+#include <unknownecho/input.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,137 +81,6 @@ void shutdown_server(int sig) {
 
     ue_thread_cancel(server_channel->csr_server_thread);
     ue_thread_cancel(server_channel->tls_server_thread);
-}
-
-unsigned char *build_friendly_name(unsigned char *nickname, size_t nickname_size, char *keystore_type, size_t *friendly_name_size) {
-	unsigned char *friendly_name;
-
-    ue_check_parameter_or_return(nickname);
-    ue_check_parameter_or_return(nickname_size > 0);
-    ue_check_parameter_or_return(keystore_type);
-
-	*friendly_name_size = nickname_size + 1 + strlen(keystore_type);
-	ue_safe_alloc(friendly_name, unsigned char, *friendly_name_size);
-	memcpy(friendly_name, nickname, nickname_size * sizeof(unsigned char));
-	memcpy(friendly_name + nickname_size, "_", sizeof(unsigned char));
-	memcpy(friendly_name + nickname_size + 1, keystore_type, strlen(keystore_type) * sizeof(unsigned char));
-
-	return friendly_name;
-}
-
-unsigned char *csr_server_process_response(ue_private_key *csr_private_key, ue_x509_certificate *ca_certificate, ue_private_key *ca_private_key,
-    unsigned char *client_request, size_t client_request_size, size_t *server_response_size, ue_x509_certificate **signed_certificate) {
-
-    unsigned char *decipher_data, *server_response, *decipher_client_request, *key_data, *iv;
-    size_t decipher_data_size, decipher_client_request_size, key_size, iv_size;
-    ue_byte_stream *stream;
-    int read_int;
-    ue_sym_key *key;
-    ue_sym_encrypter *sym_encrypter;
-    ue_x509_csr *csr;
-    char *string_pem_certificate;
-
-    decipher_data = NULL;
-    server_response = NULL;
-    decipher_client_request = NULL;
-    stream = ue_byte_stream_create();
-    key = NULL;
-    sym_encrypter = NULL;
-    csr = NULL;
-    string_pem_certificate = NULL;
-    key_data = NULL;
-    iv = NULL;
-
-    ue_check_parameter_or_return(csr_private_key);
-    ue_check_parameter_or_return(ca_certificate);
-    ue_check_parameter_or_return(ca_private_key);
-    ue_check_parameter_or_return(client_request);
-    ue_check_parameter_or_return(client_request_size > 0);
-
-    if (!ue_decipher_cipher_data(client_request, client_request_size, csr_private_key, NULL, &decipher_data, &decipher_data_size, "aes-256-cbc")) {
-        ue_stacktrace_push_msg("Failed to decipher cipher data");
-        goto clean_up;
-    }
-
-    if (!ue_byte_writer_append_bytes(stream, decipher_data, decipher_data_size)) {
-		ue_stacktrace_push_msg("Failed to write deciphered client CSR");
-		goto clean_up;
-	}
-	ue_byte_stream_set_position(stream, 0);
-
-    ue_byte_read_next_int(stream, &read_int);
-    if (read_int == 0) {
-        ue_stacktrace_push_msg("Failed to read decipher client request size");
-        goto clean_up;
-    }
-    decipher_client_request_size = read_int;
-
-    ue_byte_read_next_int(stream, &read_int);
-    if (read_int == 0) {
-        ue_stacktrace_push_msg("Failed to read future key size");
-        goto clean_up;
-    }
-    key_size = read_int;
-
-    ue_byte_read_next_int(stream, &read_int);
-    if (read_int == 0) {
-        ue_stacktrace_push_msg("Failed to read future IV size");
-        goto clean_up;
-    }
-    iv_size = read_int;
-
-    if (!(ue_byte_read_next_bytes(stream, &decipher_client_request, decipher_client_request_size))) {
-        ue_stacktrace_push_msg("Failed to read decipher client request");
-        goto clean_up;
-    }
-
-    if (!(ue_byte_read_next_bytes(stream, &key_data, key_size))) {
-        ue_stacktrace_push_msg("Failed to read asym key to use");
-        goto clean_up;
-    }
-
-    if (!(ue_byte_read_next_bytes(stream, &iv, iv_size))) {
-        ue_stacktrace_push_msg("Failed to read IV to use");
-        goto clean_up;
-    }
-
-    if (!(key = ue_sym_key_create(key_data, key_size))) {
-        ue_stacktrace_push_msg("Failed to create sym key");
-        goto clean_up;
-    }
-
-    if (!(csr = ue_x509_bytes_to_csr(decipher_client_request, decipher_client_request_size))) {
-        ue_stacktrace_push_msg("Failed to convert decipher bytes to x509 CSR");
-        goto clean_up;
-    }
-
-    if (!(*signed_certificate = ue_x509_certificate_sign_from_csr(csr, ca_certificate, ca_private_key))) {
-        ue_stacktrace_push_msg("Failed to gen certificate from client certificate");
-        goto clean_up;
-    }
-
-    if (!(string_pem_certificate = ue_x509_certificate_to_pem_string(*signed_certificate))) {
-        ue_stacktrace_push_msg("Failed to convert certificate to PEM string");
-        goto clean_up;
-    }
-
-    sym_encrypter = ue_sym_encrypter_default_create(key);
-	if (!ue_sym_encrypter_encrypt(sym_encrypter, (unsigned char *)string_pem_certificate, strlen(string_pem_certificate), iv, &server_response, server_response_size)) {
-		ue_stacktrace_push_msg("Failed to encrypt csr content");
-		goto clean_up;
-	}
-
-clean_up:
-    ue_safe_free(decipher_data);
-    ue_safe_free(decipher_client_request);
-    ue_safe_free(iv);
-    ue_byte_stream_destroy(stream);
-    ue_sym_key_destroy(key);
-    ue_safe_free(key_data);
-    ue_sym_encrypter_destroy(sym_encrypter);
-    ue_x509_csr_destroy(csr);
-    ue_safe_free(string_pem_certificate);
-    return server_response;
 }
 
 bool record_client_certificate(ue_x509_certificate *signed_certificate, int csr_sub_type, unsigned char *friendly_name, size_t friendly_name_size) {
@@ -386,7 +258,7 @@ bool csr_server_process_request(void *parameter) {
             if (csr_sub_type == CSR_TLS_REQUEST) {
                 ca_certificate = server_channel->tls_keystore->certificate;
                 ca_private_key = server_channel->tls_keystore->private_key;
-                if (!(friendly_name = build_friendly_name(nickname, (size_t)nickname_size, "TLS", &friendly_name_size))) {
+                if (!(friendly_name = ue_friendly_name_build(nickname, (size_t)nickname_size, "TLS", &friendly_name_size))) {
                     ue_stacktrace_push_msg("Failed to build friendly name for TLS keystore");
                     goto clean_up;
                 }
@@ -395,7 +267,7 @@ bool csr_server_process_request(void *parameter) {
             else if (csr_sub_type == CSR_CIPHER_REQUEST) {
                 ca_certificate = server_channel->cipher_keystore->certificate;
                 ca_private_key = server_channel->cipher_keystore->private_key;
-                if (!(friendly_name = build_friendly_name(nickname, (size_t)nickname_size, "CIPHER", &friendly_name_size))) {
+                if (!(friendly_name = ue_friendly_name_build(nickname, (size_t)nickname_size, "CIPHER", &friendly_name_size))) {
                     ue_stacktrace_push_msg("Failed to build friendly name for CIPHER keystore");
                     goto clean_up;
                 }
@@ -404,7 +276,7 @@ bool csr_server_process_request(void *parameter) {
             else if (csr_sub_type == CSR_SIGNER_REQUEST) {
                 ca_certificate = server_channel->signer_keystore->certificate;
                 ca_private_key = server_channel->signer_keystore->private_key;
-                if (!(friendly_name = build_friendly_name(nickname, (size_t)nickname_size, "SIGNER", &friendly_name_size))) {
+                if (!(friendly_name = ue_friendly_name_build(nickname, (size_t)nickname_size, "SIGNER", &friendly_name_size))) {
                     ue_stacktrace_push_msg("Failed to build friendly name for SIGNER keystore");
                     goto clean_up;
                 }
@@ -415,7 +287,7 @@ bool csr_server_process_request(void *parameter) {
                 goto clean_up;
             }
 
-            if (!(signed_certificate_data = csr_server_process_response(server_channel->csr_keystore->private_key, ca_certificate, ca_private_key,
+            if (!(signed_certificate_data = ue_csr_build_server_response(server_channel->csr_keystore->private_key, ca_certificate, ca_private_key,
                 csr_request, (size_t)csr_request_size, &signed_certificate_data_size, &signed_certificate))) {
 
                 ue_stacktrace_push_msg("Failed to process CSR response");
@@ -544,30 +416,6 @@ bool csr_server_write_consumer(ue_socket_client_connection *connection) {
     return true;
 }
 
-char *get_input(char *prefix) {
-	char input[256], *result;
-	int i;
-
-	result = NULL;
-
-	printf("%s", prefix);
-
-  	if (fgets(input, 256, stdin)) {
-  		if (input[0] == 10) {
-  			return NULL;
-  		}
-  		for (i = 0; i < 256; i++) {
-  			if (input[i] != ' ') {
-  				result = ue_string_create_from(input);
-  				ue_remove_last_char(result);
-  				break;
-  			}
-  		}
-  	}
-
-  	return result;
-}
-
 static bool check_suggest_nickname(const char *nickname) {
     int i;
 
@@ -612,7 +460,7 @@ size_t send_cipher_message(ue_socket_client_connection *connection, ue_byte_stre
         goto clean_up;
     }
 
-    if (!(friendly_name = build_friendly_name((unsigned char *)connection->nickname, strlen(connection->nickname), "CIPHER", &friendly_name_size))) {
+    if (!(friendly_name = ue_friendly_name_build((unsigned char *)connection->nickname, strlen(connection->nickname), "CIPHER", &friendly_name_size))) {
         ue_stacktrace_push_msg("Failed to build friendly name for CIPHER keystore with connection->nickname : %s", connection->nickname);
         goto clean_up;
     }
@@ -665,7 +513,7 @@ size_t receive_cipher_message(ue_socket_client_connection *connection) {
     ue_check_parameter_or_return(connection);
     ue_check_parameter_or_return(connection->nickname);
 
-    if (!(friendly_name = build_friendly_name((unsigned char *)connection->nickname, strlen(connection->nickname), "SIGNER", &friendly_name_size))) {
+    if (!(friendly_name = ue_friendly_name_build((unsigned char *)connection->nickname, strlen(connection->nickname), "SIGNER", &friendly_name_size))) {
         ue_stacktrace_push_msg("Failed to build friendly name for SIGNER keystore with connection->nickname : %s", connection->nickname);
         goto clean_up;
     }

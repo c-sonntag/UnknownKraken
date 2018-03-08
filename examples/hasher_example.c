@@ -23,7 +23,7 @@
 #include <unknownecho/byte/hex_utility.h>
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 
 #include <stddef.h>
 #include <string.h>

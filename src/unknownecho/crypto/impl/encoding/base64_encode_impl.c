@@ -37,8 +37,9 @@ unsigned char *ue_base64_encode_impl(const unsigned char *src, size_t len, size_
         return NULL; /* integer overflow */
     }
     out = malloc(olen);
-    if (out == NULL);
+    if (out == NULL) {
         return NULL;
+    }
 
     end = src + len;
     in = src;

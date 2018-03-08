@@ -18,7 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/network/api/tls/tls_context.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/errorHandling/logger.h>
 

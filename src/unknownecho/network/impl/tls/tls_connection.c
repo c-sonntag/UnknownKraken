@@ -18,7 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/network/api/tls/tls_connection.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
 #include <unknownecho/crypto/api/errorHandling/crypto_error_handling.h>
 #include <unknownecho/string/string_utility.h>
@@ -149,7 +149,7 @@ size_t ue_tls_connection_write_sync(ue_tls_connection *connection, const void *d
 	do {
 		_Pragma("GCC diagnostic push");
     	_Pragma("GCC diagnostic ignored \"-Wpedantic\"");
-			bytes = SSL_write(connection->impl, data + sent, size - sent);
+			bytes = SSL_write(connection->impl, (unsigned char *)data + sent, size - sent);
 		_Pragma("GCC diagnostic pop");
 		if (bytes < 0) {
 			ERR_clear_error();

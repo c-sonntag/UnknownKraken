@@ -18,7 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/crypto/factory/sym_encrypter_factory.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/string/string_utility.h>
 

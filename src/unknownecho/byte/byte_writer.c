@@ -18,7 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/byte/byte_writer.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 
 #include <string.h>

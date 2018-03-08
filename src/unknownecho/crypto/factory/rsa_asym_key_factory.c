@@ -21,7 +21,7 @@
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 
 #include <openssl/rsa.h>

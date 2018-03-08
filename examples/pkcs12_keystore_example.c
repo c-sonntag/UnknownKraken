@@ -19,7 +19,7 @@
 
 #include <unknownecho/init.h>
 #include <unknownecho/bool.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/crypto/api/keystore/pkcs12_keystore.h>

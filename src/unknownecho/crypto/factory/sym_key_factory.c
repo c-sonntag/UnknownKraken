@@ -20,7 +20,7 @@
 #include <unknownecho/crypto/factory/sym_key_factory.h>
 #include <unknownecho/crypto/utils/crypto_random.h>
 #include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 
 #include <stddef.h>
 

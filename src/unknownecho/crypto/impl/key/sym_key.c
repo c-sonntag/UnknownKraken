@@ -18,7 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/crypto/api/key/sym_key.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/byte/byte_utility.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/errorHandling/check_parameter.h>

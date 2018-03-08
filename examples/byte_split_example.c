@@ -3,7 +3,7 @@
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/byte/byte_split.h>
 #include <unknownecho/string/string_utility.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 
 #include <string.h>
 #include <stddef.h>

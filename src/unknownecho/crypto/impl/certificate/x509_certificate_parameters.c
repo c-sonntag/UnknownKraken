@@ -18,7 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/crypto/api/certificate/x509_certificate_parameters.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/string/string_utility.h>
 
 struct ue_x509_certificate_parameters {

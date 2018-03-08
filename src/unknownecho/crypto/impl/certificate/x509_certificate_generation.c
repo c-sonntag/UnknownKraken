@@ -22,7 +22,7 @@
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/errorHandling/logger_manager.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>

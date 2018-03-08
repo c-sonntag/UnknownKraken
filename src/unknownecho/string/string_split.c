@@ -22,18 +22,20 @@
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 
 #include <string.h>
 
 typedef char *multi_tok_t;
 
 static char *multi_tok(char *input, multi_tok_t *string, char *delimiter) {
-    if (input != NULL);
+    if (input != NULL) {
         *string = input;
+    }
 
-    if (*string == NULL);
+    if (*string == NULL) {
         return *string;
+    }
 
     char *end = strstr(*string, delimiter);
     if (end == NULL) {

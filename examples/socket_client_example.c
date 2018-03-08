@@ -21,7 +21,7 @@
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/bool.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/network/api/socket/socket_client_connection.h>
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/network/api/socket/socket_client.h>
@@ -39,6 +39,7 @@
 #include <unknownecho/byte/byte_writer.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/fileSystem/file_utility.h>
+#include <unknownecho/input.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -188,30 +189,6 @@ bool read_consumer(void *parameter) {
 	return result;
 }
 
-static char *get_input(char *prefix) {
-	char input[256], *result;
-	int i;
-
-	result = NULL;
-
-	printf("%s", prefix);
-
-  	if (fgets(input, 256, stdin)) {
-  		if (input[0] == 10) {
-  			return NULL;
-  		}
-  		for (i = 0; i < 256; i++) {
-  			if (input[i] != ' ') {
-  				result = ue_string_create_from(input);
-  				ue_remove_last_char(result);
-  				break;
-  			}
-  		}
-  	}
-
-  	return result;
-}
-
 static bool send_message(ue_socket_client_connection *connection) {
 	size_t sent;
 
@@ -253,7 +230,7 @@ bool write_consumer(void *parameter) {
 	result = true;
 	connection = (ue_socket_client_connection *)parameter;
 
-    if (!(instance->nickname = get_input("Nickname : "))) {
+    if (!(instance->nickname = ue_input_string("Nickname : "))) {
         ue_stacktrace_push_msg("Specified nickname isn't valid");
         return false;
     }
@@ -264,7 +241,7 @@ bool write_consumer(void *parameter) {
     }
 
 	while (instance->running) {
-		input = get_input(">");
+		input = ue_input_string(">");
 
 		if (!input) {
 			continue;

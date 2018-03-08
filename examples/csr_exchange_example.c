@@ -34,7 +34,7 @@
 #include <unknownecho/crypto/factory/rsa_asym_key_factory.h>
 #include <unknownecho/crypto/factory/sym_key_factory.h>
 #include <unknownecho/crypto/factory/sym_encrypter_factory.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/byte/byte_utility.h>

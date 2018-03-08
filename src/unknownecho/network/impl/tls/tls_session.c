@@ -18,7 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/network/api/tls/tls_session.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 
 ue_tls_session *ue_tls_session_create(char *keystore_path, char *passphrase, ue_tls_method *method, ue_x509_certificate **ca_certificates, int ca_certificate_count) {

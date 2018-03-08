@@ -18,7 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/byte/hex_utility.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 
 #include <string.h>
 

@@ -18,7 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/thread/thread_cond.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 

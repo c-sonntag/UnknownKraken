@@ -19,7 +19,7 @@
 
 #include <unknownecho/init.h>
 #include <unknownecho/bool.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate_parameters.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate_generation.h>

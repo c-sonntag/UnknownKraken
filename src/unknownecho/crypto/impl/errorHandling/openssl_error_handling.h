@@ -21,7 +21,7 @@
 #define UNKNOWNECHO_OPENSSL_ERROR_HANDLING_H
 
 #include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 
 char *ue_openssl_error_handling_impl(char *begin_msg);
 

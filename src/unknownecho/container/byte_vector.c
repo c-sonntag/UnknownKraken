@@ -19,7 +19,7 @@
 
 #include <unknownecho/container/byte_vector.h>
 #include <unknownecho/byte/byte_utility.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 
 #include <string.h>

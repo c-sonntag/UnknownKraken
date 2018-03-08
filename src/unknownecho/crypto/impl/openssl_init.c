@@ -18,7 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/crypto/impl/openssl_init.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 
 #include <openssl/ssl.h>

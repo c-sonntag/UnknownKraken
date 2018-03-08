@@ -22,7 +22,7 @@
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/byte/byte_writer.h>
 

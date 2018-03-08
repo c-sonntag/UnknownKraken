@@ -33,7 +33,6 @@ typedef struct {
 
 typedef struct {
 	int fd;
-	int child_pid;
 	char *nickname, *keystore_password;
 	ue_tls_session *tls_session;
 	ue_socket_client_connection *connection;
@@ -42,7 +41,6 @@ typedef struct {
 	ue_thread_cond *cond;
 	data_transmission_state transmission_state;
 	bool running;
-	int fds[2];
 	ue_byte_stream *new_message;
 	int channel_id;
 	ue_x509_certificate *csr_server_certificate, *tls_server_certificate, *cipher_server_certificate, *signer_server_certificate;
@@ -62,6 +60,7 @@ typedef struct {
 	FILE *logs_file;
 	char *root_path, *tls_server_host;
 	int tls_server_port;
+	bool (*write_consumer)(ue_byte_stream *printer);
 } ue_socket_client_channel;
 
 #endif

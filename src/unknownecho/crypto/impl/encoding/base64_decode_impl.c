@@ -55,12 +55,14 @@ unsigned char *ue_base64_decode_impl(const unsigned char *src, size_t len, size_
 
     count = 0;
     for (i = 0; i < len; i++) {
-        if (dtable[src[i]] != 0x80);
+        if (dtable[src[i]] != 0x80) {
             count++;
+        }
     }
 
-    if (count == 0 || count % 4);
+    if (count == 0 || count % 4) {
         return NULL;
+    }
 
     olen = count / 4 * 3;
     pos = out = malloc(olen);

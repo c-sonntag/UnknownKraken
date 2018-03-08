@@ -19,8 +19,8 @@
 
 #include <unknownecho/crypto/utils/crypto_random.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
-#include <unknownecho/system/processor_timestamp.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/time/processor_timestamp.h>
+#include <unknownecho/alloc.h>
 
 #include <openssl/err.h>
 #include <openssl/rand.h>

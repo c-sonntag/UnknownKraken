@@ -20,7 +20,7 @@
 #include <unknownecho/crypto/api/signature/signer.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 
 #include <openssl/evp.h>
 

@@ -18,7 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/string/string_builder.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 
 #include <string.h>

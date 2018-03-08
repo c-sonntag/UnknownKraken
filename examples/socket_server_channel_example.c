@@ -28,7 +28,7 @@
 #include <unknownecho/thread/thread.h>
 #include <unknownecho/thread/thread_mutex.h>
 #include <unknownecho/thread/thread_cond.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/bool.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
@@ -47,6 +47,7 @@
 #include <unknownecho/crypto/factory/pkcs12_keystore_factory.h>
 #include <unknownecho/crypto/factory/rsa_asym_key_factory.h>
 #include <unknownecho/crypto/utils/crypto_random.h>
+#include <unknownecho/crypto/utils/friendly_name.h>
 #include <unknownecho/byte/byte_utility.h>
 #include <unknownecho/byte/byte_writer.h>
 #include <unknownecho/byte/byte_reader.h>
@@ -54,6 +55,7 @@
 #include <unknownecho/byte/byte_split.h>
 #include <unknownecho/container/byte_vector.h>
 #include <unknownecho/fileSystem/file_utility.h>
+#include <unknownecho/input.h>
 
 #include <stdlib.h>
 #include <signal.h>
@@ -294,22 +296,6 @@ void shutdown_server(int sig) {
 
     ue_thread_cancel(instance->csr_server_thread);
     ue_thread_cancel(instance->tls_server_thread);
-}
-
-unsigned char *build_friendly_name(unsigned char *nickname, size_t nickname_size, char *keystore_type, size_t *friendly_name_size) {
-	unsigned char *friendly_name;
-
-    ue_check_parameter_or_return(nickname);
-    ue_check_parameter_or_return(nickname_size > 0);
-    ue_check_parameter_or_return(keystore_type);
-
-	*friendly_name_size = nickname_size + 1 + strlen(keystore_type);
-	ue_safe_alloc(friendly_name, unsigned char, *friendly_name_size);
-	memcpy(friendly_name, nickname, nickname_size * sizeof(unsigned char));
-	memcpy(friendly_name + nickname_size, "_", sizeof(unsigned char));
-	memcpy(friendly_name + nickname_size + 1, keystore_type, strlen(keystore_type) * sizeof(unsigned char));
-
-	return friendly_name;
 }
 
 unsigned char *csr_server_process_response(ue_private_key *csr_private_key, ue_x509_certificate *ca_certificate, ue_private_key *ca_private_key,
@@ -602,7 +588,7 @@ bool csr_server_process_request(void *parameter) {
             if (csr_sub_type == CSR_TLS_REQUEST) {
                 ca_certificate = instance->tls_keystore->certificate;
                 ca_private_key = instance->tls_keystore->private_key;
-                if (!(friendly_name = build_friendly_name(nickname, (size_t)nickname_size, "TLS", &friendly_name_size))) {
+                if (!(friendly_name = ue_friendly_name_build(nickname, (size_t)nickname_size, "TLS", &friendly_name_size))) {
                     ue_stacktrace_push_msg("Failed to build friendly name for TLS keystore");
                     goto clean_up;
                 }
@@ -611,7 +597,7 @@ bool csr_server_process_request(void *parameter) {
             else if (csr_sub_type == CSR_CIPHER_REQUEST) {
                 ca_certificate = instance->cipher_keystore->certificate;
                 ca_private_key = instance->cipher_keystore->private_key;
-                if (!(friendly_name = build_friendly_name(nickname, (size_t)nickname_size, "CIPHER", &friendly_name_size))) {
+                if (!(friendly_name = ue_friendly_name_build(nickname, (size_t)nickname_size, "CIPHER", &friendly_name_size))) {
                     ue_stacktrace_push_msg("Failed to build friendly name for CIPHER keystore");
                     goto clean_up;
                 }
@@ -620,7 +606,7 @@ bool csr_server_process_request(void *parameter) {
             else if (csr_sub_type == CSR_SIGNER_REQUEST) {
                 ca_certificate = instance->signer_keystore->certificate;
                 ca_private_key = instance->signer_keystore->private_key;
-                if (!(friendly_name = build_friendly_name(nickname, (size_t)nickname_size, "SIGNER", &friendly_name_size))) {
+                if (!(friendly_name = ue_friendly_name_build(nickname, (size_t)nickname_size, "SIGNER", &friendly_name_size))) {
                     ue_stacktrace_push_msg("Failed to build friendly name for SIGNER keystore");
                     goto clean_up;
                 }
@@ -760,30 +746,6 @@ bool csr_server_write_consumer(ue_socket_client_connection *connection) {
     return true;
 }
 
-char *get_input(char *prefix) {
-	char input[256], *result;
-	int i;
-
-	result = NULL;
-
-	printf("%s", prefix);
-
-  	if (fgets(input, 256, stdin)) {
-  		if (input[0] == 10) {
-  			return NULL;
-  		}
-  		for (i = 0; i < 256; i++) {
-  			if (input[i] != ' ') {
-  				result = ue_string_create_from(input);
-  				ue_remove_last_char(result);
-  				break;
-  			}
-  		}
-  	}
-
-  	return result;
-}
-
 static bool check_suggest_nickname(const char *nickname) {
     int i;
 
@@ -828,7 +790,7 @@ size_t send_cipher_message(ue_socket_client_connection *connection, ue_byte_stre
         goto clean_up;
     }
 
-    if (!(friendly_name = build_friendly_name((unsigned char *)connection->nickname, strlen(connection->nickname), "CIPHER", &friendly_name_size))) {
+    if (!(friendly_name = ue_friendly_name_build((unsigned char *)connection->nickname, strlen(connection->nickname), "CIPHER", &friendly_name_size))) {
         ue_stacktrace_push_msg("Failed to build friendly name for CIPHER keystore with connection->nickname : %s", connection->nickname);
         goto clean_up;
     }
@@ -881,7 +843,7 @@ size_t receive_cipher_message(ue_socket_client_connection *connection) {
     ue_check_parameter_or_return(connection);
     ue_check_parameter_or_return(connection->nickname);
 
-    if (!(friendly_name = build_friendly_name((unsigned char *)connection->nickname, strlen(connection->nickname), "SIGNER", &friendly_name_size))) {
+    if (!(friendly_name = ue_friendly_name_build((unsigned char *)connection->nickname, strlen(connection->nickname), "SIGNER", &friendly_name_size))) {
         ue_stacktrace_push_msg("Failed to build friendly name for SIGNER keystore with connection->nickname : %s", connection->nickname);
         goto clean_up;
     }
@@ -1680,7 +1642,7 @@ bool socket_server_manager_create(unsigned short int csr_server_port, unsigned s
         instance->channels[i] = channel_create(NULL, NULL);
     }
 
-    /*if (!(instance->keystore_password = get_input("Keystore password : "))) {
+    /*if (!(instance->keystore_password = ue_input_string("Keystore password : "))) {
         ue_stacktrace_push_msg("Specified password isn't valid");
         return false;
     }*/

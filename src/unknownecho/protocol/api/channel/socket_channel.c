@@ -1,5 +1,5 @@
 #include <unknownecho/protocol/api/channel/socket_channel.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
 

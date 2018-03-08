@@ -20,7 +20,7 @@
 #include <unknownecho/byte/byte_reader.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 
 #include <string.h>
 

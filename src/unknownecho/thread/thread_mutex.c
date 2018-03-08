@@ -21,7 +21,7 @@
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 
 #if defined(_WIN32) || defined(_WIN64)
     #include <unknownecho/errorHandling/error.h>

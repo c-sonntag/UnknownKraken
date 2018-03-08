@@ -19,7 +19,7 @@
 
 #include <unknownecho/network/api/socket/socket_client_connection.h>
 #include <unknownecho/network/api/socket/socket.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/string/string_utility.h>
 

@@ -1,0 +1,54 @@
+[WARN] Keystore manager is null, so it will create an unsecure connection socket_client.c:122 at Thu Mar  8 05:01:19 2018
+[INFO] Socket connection is established socket_client.c:146 at Thu Mar  8 05:01:19 2018
+[INFO] TLS keystore doesn't exists. A CSR will be built. socket_client_channel.c:625 at Thu Mar  8 05:01:19 2018
+[INFO] Convert x509 CRS to string... csr_request.c:30 at Thu Mar  8 05:01:21 2018
+[TRACE] 1907 bytes sent socket.c:395 at Thu Mar  8 05:01:21 2018
+[INFO] Cipher keystore doesn't exists. A CSR will be built. socket_client_channel.c:635 at Thu Mar  8 05:01:21 2018
+[TRACE] Received CSR_TLS_RESPONSE socket_client_channel.c:889 at Thu Mar  8 05:01:21 2018
+[INFO] Convert x509 CRS to string... csr_request.c:30 at Thu Mar  8 05:01:26 2018
+[TRACE] 1907 bytes sent socket.c:395 at Thu Mar  8 05:01:26 2018
+[INFO] Signer keystore doesn't exists. A CSR will be built. socket_client_channel.c:645 at Thu Mar  8 05:01:26 2018
+[TRACE] Received CSR_CIPHER_RESPONSE socket_client_channel.c:901 at Thu Mar  8 05:01:26 2018
+[INFO] Convert x509 CRS to string... csr_request.c:30 at Thu Mar  8 05:01:28 2018
+[TRACE] 1907 bytes sent socket.c:395 at Thu Mar  8 05:01:28 2018
+[TRACE] Received CSR_SIGNER_RESPONSE socket_client_channel.c:913 at Thu Mar  8 05:01:28 2018
+[INFO] Certificate is correctly signed by the CA socket_client_channel.c:666 at Thu Mar  8 05:01:28 2018
+[INFO] TLS keystore created. socket_client_channel.c:684 at Thu Mar  8 05:01:28 2018
+[INFO] Certificate is correctly signed by the CA socket_client_channel.c:689 at Thu Mar  8 05:01:28 2018
+[INFO] Cipher keystore created. socket_client_channel.c:709 at Thu Mar  8 05:01:28 2018
+[INFO] Certificate is correctly signed by the CA socket_client_channel.c:714 at Thu Mar  8 05:01:28 2018
+[INFO] Signer keystore created. socket_client_channel.c:734 at Thu Mar  8 05:01:28 2018
+[INFO] Keystore manager isn't null, so it will create a TLS connection socket_client.c:85 at Thu Mar  8 05:01:28 2018
+[INFO] Creating TLS connection... socket_client.c:87 at Thu Mar  8 05:01:28 2018
+[INFO] TLS connection created socket_client.c:95 at Thu Mar  8 05:01:28 2018
+[INFO] Setting socket file descriptor 6 to TLS connection... socket_client.c:97 at Thu Mar  8 05:01:28 2018
+[INFO] Socket file descriptor linked to TLS connection socket_client.c:103 at Thu Mar  8 05:01:28 2018
+[INFO] Establishing TLS connection... socket_client.c:105 at Thu Mar  8 05:01:28 2018
+[INFO] TLS connection established socket_client.c:111 at Thu Mar  8 05:01:29 2018
+[INFO] Verify peer is enable and peer certificate is valid socket_client.c:119 at Thu Mar  8 05:01:29 2018
+[INFO] Socket connection is established socket_client.c:146 at Thu Mar  8 05:01:29 2018
+[TRACE] 27 bytes sent socket.c:395 at Thu Mar  8 05:01:29 2018
+[TRACE] 1092 bytes received socket.c:505 at Thu Mar  8 05:01:29 2018
+[TRACE] Server has accepted this nickname. socket_client_channel.c:989 at Thu Mar  8 05:01:29 2018
+[WARN] Cannot send message because no channel is selected socket_client_channel.c:1441 at Thu Mar  8 05:01:30 2018
+[TRACE] 1092 bytes sent socket.c:395 at Thu Mar  8 05:01:36 2018
+[TRACE] 1092 bytes received socket.c:505 at Thu Mar  8 05:01:36 2018
+[TRACE] CHANNEL_CONNECTION_RESPONSE socket_client_channel.c:992 at Thu Mar  8 05:01:36 2018
+[TRACE] Channel connection has been accepted by the server with channel id 0. socket_client_channel.c:1511 at Thu Mar  8 05:01:36 2018
+[INFO] Generate random channel key socket_client_channel.c:1519 at Thu Mar  8 05:01:36 2018
+[TRACE] 1108 bytes sent socket.c:395 at Thu Mar  8 05:01:37 2018
+[TRACE] 1092 bytes received socket.c:505 at Thu Mar  8 05:01:37 2018
+[TRACE] MESSAGE received socket_client_channel.c:999 at Thu Mar  8 05:01:37 2018
+[TRACE] 1092 bytes received socket.c:505 at Thu Mar  8 05:02:28 2018
+[TRACE] CHANNEL_KEY_REQUEST socket_client_channel.c:1013 at Thu Mar  8 05:02:28 2018
+[WARN] Cipher certificate of client was not found. Requesting the server... socket_client_channel.c:1264 at Thu Mar  8 05:02:28 2018
+[TRACE] 1108 bytes sent socket.c:395 at Thu Mar  8 05:02:28 2018
+[TRACE] 2452 bytes received socket.c:505 at Thu Mar  8 05:02:28 2018
+[INFO] Missing certificate received. Trying to add it to the cipher keystore... socket_client_channel.c:1211 at Thu Mar  8 05:02:28 2018
+[INFO] Retrying find cipher certificate... socket_client_channel.c:1276 at Thu Mar  8 05:02:28 2018
+[TRACE] 2260 bytes sent socket.c:395 at Thu Mar  8 05:02:28 2018
+[TRACE] 1092 bytes received socket.c:505 at Thu Mar  8 05:02:31 2018
+[TRACE] MESSAGE received socket_client_channel.c:999 at Thu Mar  8 05:02:31 2018
+[TRACE] 0 bytes received socket.c:505 at Thu Mar  8 05:02:34 2018
+[WARN] Connection with server is interrupted. socket_client_channel.c:516 at Thu Mar  8 05:02:34 2018
+[WARN] Stopping client... socket_client_channel.c:964 at Thu Mar  8 05:02:34 2018

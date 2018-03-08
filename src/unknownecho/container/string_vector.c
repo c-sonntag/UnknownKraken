@@ -19,7 +19,7 @@
 
 #include <unknownecho/container/string_vector.h>
 #include <unknownecho/string/string_utility.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 
 ue_string_vector *ue_string_vector_create_empty() {

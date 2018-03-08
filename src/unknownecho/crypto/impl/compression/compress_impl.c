@@ -19,7 +19,7 @@
 
 #include <unknownecho/crypto/impl/compression/compress_impl.h>
 #include <unknownecho/crypto/impl/errorHandling/zlib_error_handling.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 
 #include <stdlib.h>
 #include <zlib.h>

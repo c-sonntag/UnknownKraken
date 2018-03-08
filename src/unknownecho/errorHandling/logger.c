@@ -27,7 +27,7 @@
  */
 
 #include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/system/alloc.h>
+#include <unknownecho/alloc.h>
 
 #include <stdio.h>
 #include <stdlib.h>
