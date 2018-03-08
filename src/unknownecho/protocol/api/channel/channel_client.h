@@ -24,7 +24,7 @@
 #include <unknownecho/protocol/api/channel/channel_client_struct.h>
 #include <unknownecho/byte/byte_stream.h>
 
-bool ue_channel_client_init();
+bool ue_channel_client_init(int channel_clients_number);
 
 void ue_channel_client_uninit();
 

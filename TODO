@@ -1,17 +1,18 @@
-- Functional examples with Docker
-- Terminate the channel protocol exchange from socket_client/channel_server_example.
+- Functional examples with Docker.
+- Add callback consumers in channel protocol.
 - Improve network error handling during message exchanges.
 - Remove server shutdown command in channel client protocol.
 - Remove in real time outdated or useless certificates in client/server keystores.
 - Add allocation error handling.
 - Documents, comments.
 - Not disconnect the connection each time it's interrupt (timeout).
-- Seed with processor timestamp if needed
-- Make all sources compatible with Windows
-- Improve compilation flags (optimization)
-- Check if libasm can be uselful
-- Check for a better malloc implementation
-- Make circuit protocol
-- Make it work with a longer CA chain
-- Tests with CMocka
-- Set to channel key a lifetime (not too long)
+- Seed with processor timestamp if needed.
+- Make all sources compatible with Windows.
+- Improve compilation flags (optimization).
+- Check if libasm can be uselful.
+- Check for a better malloc implementation.
+- Make circuit protocol.
+- Make it work with a longer CA chain.
+- Tests with CMocka.
+- Set to channel key a lifetime (not too long).
+- Add factories for channel protocol.

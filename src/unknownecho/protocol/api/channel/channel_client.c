@@ -19,13 +19,11 @@
 
 #include <unknownecho/protocol/api/channel/channel_client.h>
 #include <unknownecho/protocol/api/channel/channel_message_type.h>
-#include <unknownecho/protocol/api/channel/channel_client_struct.h>
-
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/bool.h>
 #include <unknownecho/alloc.h>
+#include <unknownecho/input.h>
 #include <unknownecho/network/api/socket/socket_client_connection.h>
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/network/api/socket/socket_client.h>
@@ -61,14 +59,10 @@
 #include <unknownecho/container/byte_vector.h>
 #include <unknownecho/fileSystem/file_utility.h>
 #include <unknownecho/fileSystem/folder_utility.h>
-#include <unknownecho/input.h>
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <signal.h>
 #include <stddef.h>
 #include <string.h>
-#include <unistd.h>
 #include <limits.h>
 #include <sys/socket.h>
 
@@ -140,8 +134,12 @@ static bool process_channel_key_response(ue_channel_client *channel_client, ue_s
 static bool generate_certificate(ue_x509_certificate **certificate, ue_private_key **private_key);
 
 
-bool ue_channel_client_init() {
+bool ue_channel_client_init(int channel_clients_number) {
 	int i;
+
+	ue_check_parameter_or_return(channel_clients_number > 0);
+
+	max_channel_clients_number = channel_clients_number;
 
 	ue_safe_alloc(channel_clients, ue_channel_client *, max_channel_clients_number);
 	for (i = 0; i < max_channel_clients_number; i++) {
@@ -179,7 +177,10 @@ ue_channel_client *ue_channel_client_create(char *root_path, char *nickname, con
 	logs_file_name = NULL;
 	int available_channel_client_index;
 
-	available_channel_client_index = get_available_channel_client_index();
+	if ((available_channel_client_index = get_available_channel_client_index()) == -1) {
+		ue_stacktrace_push_msg("No such channel client slot available")
+		return NULL;
+	}
 
 	ue_safe_alloc(channel_clients[available_channel_client_index], ue_channel_client, 1);
 	channel_client = channel_clients[available_channel_client_index];

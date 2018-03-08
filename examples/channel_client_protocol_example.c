@@ -15,12 +15,13 @@
 #include <unistd.h>
 #include <limits.h>
 
-#define ROOT_PATH         "out"
-#define CSR_SERVER_HOST   "127.0.0.1"
-#define CSR_SERVER_PORT   5002
-#define TLS_SERVER_HOST   "127.0.0.1"
-#define TLS_SERVER_PORT   5001
-#define KEYSTORE_PASSWORD "password"
+#define ROOT_PATH                  "out"
+#define CSR_SERVER_HOST            "127.0.0.1"
+#define CSR_SERVER_PORT            5002
+#define TLS_SERVER_HOST            "127.0.0.1"
+#define TLS_SERVER_PORT            5001
+#define KEYSTORE_PASSWORD          "password"
+#define MAX_CHANNEL_CLIENTS_NUMBER 3
 
 int fds[2];
 
@@ -73,7 +74,7 @@ int main() {
             goto end;
         }
 
-        ue_channel_client_init();
+        ue_channel_client_init(MAX_CHANNEL_CLIENTS_NUMBER);
 
         if (!(channel_client = ue_channel_client_create(ROOT_PATH, nickname, CSR_SERVER_HOST, CSR_SERVER_PORT,
         	TLS_SERVER_HOST, TLS_SERVER_PORT, KEYSTORE_PASSWORD, write_consumer))) {
