@@ -1,13 +1,13 @@
-#include <unknownecho/protocol/api/channel/socket_channel.h>
+#include <unknownecho/protocol/api/channel/channel.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
 
-ue_socket_channel *ue_socket_channel_create() {
-    ue_socket_channel *channel;
+ue_channel *ue_channel_create() {
+    ue_channel *channel;
     int i;
 
-    ue_safe_alloc(channel, ue_socket_channel, 1);
+    ue_safe_alloc(channel, ue_channel, 1);
     channel->max_connections_number = 10;
     ue_safe_alloc(channel->connections, ue_socket_client_connection *, channel->max_connections_number);
     for (i = 0; i < channel->max_connections_number; i++) {
@@ -18,14 +18,14 @@ ue_socket_channel *ue_socket_channel_create() {
     return channel;
 }
 
-void ue_socket_channel_destroy(ue_socket_channel *channel) {
+void ue_channel_destroy(ue_channel *channel) {
     if (channel) {
         ue_safe_free(channel->connections);
         ue_safe_free(channel);
     }
 }
 
-bool ue_socket_channel_add_connection(ue_socket_channel *channel, ue_socket_client_connection *connection) {
+bool ue_channel_add_connection(ue_channel *channel, ue_socket_client_connection *connection) {
     int i;
 
     if (!channel) {
@@ -59,7 +59,7 @@ bool ue_socket_channel_add_connection(ue_socket_channel *channel, ue_socket_clie
     return false;
 }
 
-bool ue_socket_channel_remove_connection_by_nickname(ue_socket_channel *channel, char *nickname) {
+bool ue_channel_remove_connection_by_nickname(ue_channel *channel, char *nickname) {
     int i;
 
     if (!channel) {
@@ -95,7 +95,7 @@ bool ue_socket_channel_remove_connection_by_nickname(ue_socket_channel *channel,
     return true;
 }
 
-bool ue_socket_channels_remove_connection_by_nickname(ue_socket_channel **channels, int channels_number, char *nickname) {
+bool ue_channels_remove_connection_by_nickname(ue_channel **channels, int channels_number, char *nickname) {
     int i;
 
     if (!channels) {
@@ -109,7 +109,7 @@ bool ue_socket_channels_remove_connection_by_nickname(ue_socket_channel **channe
     }
 
     for (i = 0; i < channels_number; i++) {
-        if (!ue_socket_channel_remove_connection_by_nickname(channels[i], nickname)) {
+        if (!ue_channel_remove_connection_by_nickname(channels[i], nickname)) {
             ue_logger_warn("Failed to remove connection by nickname in channel id %d", i);
         }
     }
@@ -117,7 +117,7 @@ bool ue_socket_channels_remove_connection_by_nickname(ue_socket_channel **channe
     return true;
 }
 
-ue_socket_client_connection *ue_socket_channel_get_availabe_connection_for_channel_key(ue_socket_channel *channel, ue_socket_client_connection *unused_connection) {
+ue_socket_client_connection *ue_channel_get_availabe_connection_for_channel_key(ue_channel *channel, ue_socket_client_connection *unused_connection) {
     int i;
 
     for (i = 0; i < channel->max_connections_number; i++) {

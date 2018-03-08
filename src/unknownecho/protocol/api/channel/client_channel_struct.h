@@ -1,5 +1,5 @@
-#ifndef UNKNOWNECHO_SOCKET_CLIENT_CHANNEL_STRUCT_H
-#define UNKNOWNECHO_SOCKET_CLIENT_CHANNEL_STRUCT_H
+#ifndef UNKNOWNECHO_CLIENT_CHANNEL_STRUCT_H
+#define UNKNOWNECHO_CLIENT_CHANNEL_STRUCT_H
 
 #include <unknownecho/network/api/tls/tls_session.h>
 #include <unknownecho/network/api/socket/socket_client_connection.h>
@@ -61,6 +61,6 @@ typedef struct {
 	char *root_path, *tls_server_host;
 	int tls_server_port;
 	bool (*write_consumer)(ue_byte_stream *printer);
-} ue_socket_client_channel;
+} ue_client_channel;
 
 #endif

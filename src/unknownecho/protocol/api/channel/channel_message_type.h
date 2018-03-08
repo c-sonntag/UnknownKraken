@@ -1,5 +1,5 @@
-#ifndef UNKNOWNECHO_SOCKET_CHANNEL_MESSAGE_TYPE_H
-#define UNKNOWNECHO_SOCKET_CHANNEL_MESSAGE_TYPE_H
+#ifndef UNKNOWNECHO_CHANNEL_MESSAGE_TYPE_H
+#define UNKNOWNECHO_CHANNEL_MESSAGE_TYPE_H
 
 typedef enum {
     CHANNEL_KEY_REQUEST         = 1,
@@ -23,6 +23,6 @@ typedef enum {
     CSR_CIPHER_RESPONSE         = 19,
     CSR_SIGNER_RESPONSE         = 20,
     ALREADY_CONNECTED_RESPONSE  = 21
-} ue_socket_channel_message_type;
+} ue_channel_message_type;
 
 #endif

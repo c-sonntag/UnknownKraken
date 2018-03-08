@@ -1,7 +1,7 @@
-#include <unknownecho/protocol/api/channel/socket_server_channel.h>
-#include <unknownecho/protocol/api/channel/socket_server_channel_struct.h>
-#include <unknownecho/protocol/api/channel/socket_channel_message_type.h>
-#include <unknownecho/protocol/api/channel/socket_channel.h>
+#include <unknownecho/protocol/api/channel/server_channel.h>
+#include <unknownecho/protocol/api/channel/server_channel_struct.h>
+#include <unknownecho/protocol/api/channel/channel_message_type.h>
+#include <unknownecho/protocol/api/channel/channel.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
@@ -55,7 +55,7 @@
 #include <limits.h>
 #include <stdio.h>
 
-ue_socket_server_channel *server_channel = NULL;
+ue_server_channel *server_channel = NULL;
 
 void handle_signal(int sig, void (*h)(int), int options) {
     struct sigaction s;
@@ -650,7 +650,7 @@ bool process_channel_connection_request(ue_socket_client_connection *connection,
             ue_stacktrace_push_msg("Failed to write FALSE answer to message to send");
             goto clean_up;
         }
-    } else if (!ue_socket_channel_add_connection(server_channel->channels[channel_id], connection)) {
+    } else if (!ue_channel_add_connection(server_channel->channels[channel_id], connection)) {
         ue_logger_warn("Failed to add connection of nickname '%s' to channel id %d", connection->nickname, channel_id);
         if (!ue_byte_writer_append_int(connection->message_to_send, 0)) {
             ue_stacktrace_push_msg("Failed to write FALSE answer to message to send");
@@ -682,7 +682,7 @@ bool process_channel_connection_request(ue_socket_client_connection *connection,
         }
         /* Else we have to the key from another client */
         else {
-            if (!(channel_key_owner_connection = ue_socket_channel_get_availabe_connection_for_channel_key(server_channel->channels[channel_id], connection))) {
+            if (!(channel_key_owner_connection = ue_channel_get_availabe_connection_for_channel_key(server_channel->channels[channel_id], connection))) {
                 ue_stacktrace_push_msg("Failed to found channel key owner connection but connections_number of channel id %d is > 1 (%d)",
                     channel_id, server_channel->channels[channel_id]->connections_number);
                 goto clean_up;
@@ -967,7 +967,7 @@ static bool tls_server_process_request(void *parameter) {
 
         if (type == DISCONNECTION_NOW_REQUEST) {
             ue_logger_info("Client disconnection.");
-            ue_socket_channels_remove_connection_by_nickname(server_channel->channels, server_channel->channels_number, connection->nickname);
+            ue_channels_remove_connection_by_nickname(server_channel->channels, server_channel->channels_number, connection->nickname);
             ue_socket_client_connection_clean_up(connection);
             result = true;
         }
@@ -1289,7 +1289,7 @@ end:
     return result;
 }
 
-bool ue_socket_server_channel_create(char *persistent_path,
+bool ue_server_channel_create(char *persistent_path,
     unsigned short int csr_server_port, unsigned short int tls_server_port,
     char *keystore_password, int channels_number, char *server_key_password) {
 
@@ -1299,7 +1299,7 @@ bool ue_socket_server_channel_create(char *persistent_path,
     server_channel = NULL;
     ca_certificates = NULL;
 
-    ue_safe_alloc(server_channel, ue_socket_server_channel, 1);
+    ue_safe_alloc(server_channel, ue_server_channel, 1);
     server_channel->csr_server = NULL;
     server_channel->tls_server = NULL;
     server_channel->tls_session = NULL;
@@ -1333,10 +1333,10 @@ bool ue_socket_server_channel_create(char *persistent_path,
     ue_logger_set_details(ue_logger_manager_get_logger(), true);
 
     server_channel->channels_number = channels_number;
-    ue_safe_alloc(server_channel->channels, ue_socket_channel *, channels_number);
+    ue_safe_alloc(server_channel->channels, ue_channel *, channels_number);
     server_channel->channels_number = channels_number;
     for (i = 0; i < server_channel->channels_number; i++) {
-        server_channel->channels[i] = ue_socket_channel_create();
+        server_channel->channels[i] = ue_channel_create();
     }
 
     server_channel->keystore_password = ue_string_create_from(keystore_password);
@@ -1400,7 +1400,7 @@ bool ue_socket_server_channel_create(char *persistent_path,
     return true;
 }
 
-void ue_socket_server_channel_destroy() {
+void ue_server_channel_destroy() {
     int i;
 
 	if (server_channel) {
@@ -1412,7 +1412,7 @@ void ue_socket_server_channel_destroy() {
         ue_socket_server_destroy(server_channel->csr_server);
 	    ue_tls_session_destroy(server_channel->tls_session);
         for (i = 0; i < server_channel->channels_number; i++) {
-            ue_socket_channel_destroy(server_channel->channels[i]);
+            ue_channel_destroy(server_channel->channels[i]);
         }
         ue_safe_free(server_channel->channels);
         if (server_channel->signal_caught) {
@@ -1446,7 +1446,7 @@ void ue_socket_server_channel_destroy() {
 	}
 }
 
-bool ue_socket_server_channel_process() {
+bool ue_server_channel_process() {
     _Pragma("GCC diagnostic push")
     _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
         server_channel->csr_server_thread = ue_thread_create((void *)ue_socket_server_process_polling, (void *)server_channel->csr_server);

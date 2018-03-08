@@ -1,12 +1,12 @@
-#ifndef UNKNOWNECHO_SOCKET_SERVER_CHANNEL_STRUCT_H
-#define UNKNOWNECHO_SOCKET_SERVER_CHANNEL_STRUCT_H
+#ifndef UNKNOWNECHO_SERVER_CHANNEL_STRUCT_H
+#define UNKNOWNECHO_SERVER_CHANNEL_STRUCT_H
 
 #include <unknownecho/network/api/socket/socket_server.h>
 #include <unknownecho/network/api/tls/tls_session.h>
 #include <unknownecho/thread/thread_mutex.h>
 #include <unknownecho/thread/thread_cond.h>
 #include <unknownecho/thread/thread_id_struct.h>
-#include <unknownecho/protocol/api/channel/socket_channel.h>
+#include <unknownecho/protocol/api/channel/channel.h>
 #include <unknownecho/crypto/api/keystore/pkcs12_keystore.h>
 #include <unknownecho/bool.h>
 
@@ -15,15 +15,15 @@
 typedef enum {
     WORKING_STATE,
     FREE_STATE
-} ue_socket_server_channel_processing_state;
+} ue_server_channel_processing_state;
 
 typedef struct {
     ue_socket_server *csr_server, *tls_server;
 	ue_thread_mutex *csr_server_mutex, *tls_server_mutex;
 	ue_thread_cond *csr_server_cond, *tls_server_cond;
-	ue_socket_server_channel_processing_state csr_server_processing_state, tls_server_processing_state;
+	ue_server_channel_processing_state csr_server_processing_state, tls_server_processing_state;
 	ue_tls_session *tls_session;
-    ue_socket_channel **channels;
+    ue_channel **channels;
     int channels_number;
     ue_thread_id *csr_server_thread, *tls_server_thread;
     bool signal_caught;
@@ -35,6 +35,6 @@ typedef struct {
         *cipher_server_key_path, *signer_server_certificate_path, *signer_server_key_path,
         *server_key_password, *csr_keystore_path, *tls_keystore_path, *cipher_keystore_path,
         *signer_keystore_path, *csr_server_port, *tls_server_port, *logger_file_path;
-} ue_socket_server_channel;
+} ue_server_channel;
 
 #endif

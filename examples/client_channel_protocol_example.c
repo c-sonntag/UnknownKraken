@@ -2,8 +2,8 @@
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/errorHandling/logger_manager.h>
 #include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/protocol/api/channel/socket_client_channel.h>
-#include <unknownecho/protocol/api/channel/socket_client_channel_struct.h>
+#include <unknownecho/protocol/api/channel/client_channel.h>
+#include <unknownecho/protocol/api/channel/client_channel_struct.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/input.h>
@@ -30,7 +30,7 @@ bool write_consumer(ue_byte_stream *printer) {
 
 int main() {
     char *nickname;
-    ue_socket_client_channel *client_channel;
+    ue_client_channel *client_channel;
     int child_pid;
 
     if (!ue_init()) {
@@ -73,15 +73,15 @@ int main() {
             goto end;
         }
 
-        ue_socket_client_channel_init();
+        ue_client_channel_init();
 
-        if (!(client_channel = ue_socket_client_channel_create(ROOT_PATH, nickname, CSR_SERVER_HOST, CSR_SERVER_PORT,
+        if (!(client_channel = ue_client_channel_create(ROOT_PATH, nickname, CSR_SERVER_HOST, CSR_SERVER_PORT,
         	TLS_SERVER_HOST, TLS_SERVER_PORT, KEYSTORE_PASSWORD, write_consumer))) {
             ue_stacktrace_push_msg("Failed to create channel client");
             goto end;
         }
 
-        if (!ue_socket_client_channel_start(client_channel)) {
+        if (!ue_client_channel_start(client_channel)) {
             ue_stacktrace_push_msg("Failed to start channel client");
             goto end;
         }
@@ -92,8 +92,8 @@ end:
         close(fds[1]);
     }
     ue_safe_free(nickname);
-	ue_socket_client_channel_destroy(client_channel);
-	ue_socket_client_channel_uninit();
+	ue_client_channel_destroy(client_channel);
+	ue_client_channel_uninit();
 	if (ue_stacktrace_is_filled()) {
 		ue_logger_stacktrace("An error occurred with the following stacktrace :");
 	}
