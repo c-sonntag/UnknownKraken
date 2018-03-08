@@ -77,9 +77,17 @@ typedef struct {
 	unsigned char *channel_iv;
 	size_t channel_iv_size;
 	FILE *logs_file;
-	char *root_path, *tls_server_host;
+	char *persistent_path, *tls_server_host;
 	int tls_server_port;
-	bool (*write_consumer)(ue_byte_stream *printer);
+	void *user_context;
+	bool (*write_callback)(void *user_context, ue_byte_stream *printer);
+	bool (*initialization_begin_callback)(void *user_context);
+	bool (*initialization_end_callback)(void *user_context);
+	bool (*uninitialization_begin_callback)(void *user_context);
+	bool (*uninitialization_end_callback)(void *user_context);
+	bool (*connection_begin_callback)(void *user_context);
+	bool (*connection_end_callback)(void *user_context);
+	char *(*user_input_callback)(void *user_context);
 } ue_channel_client;
 
 #endif

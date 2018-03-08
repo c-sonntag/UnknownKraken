@@ -28,11 +28,17 @@ bool ue_channel_client_init(int channel_clients_number);
 
 void ue_channel_client_uninit();
 
-ue_channel_client *ue_channel_client_create(char *root_path, char *nickname, const char *csr_server_host, int csr_server_port,
-	const char *tls_server_host, int tls_server_port, char *keystore_password, bool (*write_consumer)(ue_byte_stream *printer));
+ue_channel_client *ue_channel_client_create(char *persistent_path, char *nickname, const char *csr_server_host, int csr_server_port,
+	const char *tls_server_host, int tls_server_port, char *keystore_password, const char *server_certificates_path, void *user_context,
+	bool (*write_callback)(void *user_context, ue_byte_stream *printer), bool (*initialization_begin_callback)(void *user_context),
+	bool (*initialization_end_callback)(void *user_context), bool (*uninitialization_begin_callback)(void *user_context),
+	bool (*uninitialization_end_callback)(void *user_context), bool (*connection_begin_callback)(void *user_context),
+	bool (*connection_end_callback)(void *user_context), char *(*user_input_callback)(void *user_context));
 
 void ue_channel_client_destroy(ue_channel_client *channel_client);
 
 bool ue_channel_client_start(ue_channel_client *channel_client);
+
+void ue_channel_client_shutdown_signal_callback(int sig);
 
 #endif

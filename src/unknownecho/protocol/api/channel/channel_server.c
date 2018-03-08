@@ -59,9 +59,9 @@
 #include <unknownecho/byte/byte_split.h>
 #include <unknownecho/container/byte_vector.h>
 #include <unknownecho/fileSystem/file_utility.h>
+#include <unknownecho/fileSystem/folder_utility.h>
 
 #include <stdio.h>
-#include <signal.h>
 #include <stddef.h>
 #include <string.h>
 #include <limits.h>
@@ -69,10 +69,6 @@
 
 ue_channel_server *channel_server = NULL;
 
-
-static void handle_signal(int sig, void (*h)(int), int options);
-
-static void shutdown_server(int sig);
 
 static size_t send_cipher_message(ue_socket_client_connection *connection, ue_byte_stream *message_to_send);
 
@@ -111,13 +107,19 @@ static bool check_suggest_nickname(const char *nickname);
 
 bool ue_channel_server_create(char *persistent_path,
     unsigned short int csr_server_port, unsigned short int tls_server_port,
-    char *keystore_password, int channels_number, char *server_key_password) {
+    char *keystore_password, int channels_number, char *server_key_password, void *user_context,
+    bool (*initialization_begin_callback)(void *user_context), bool (*initialization_end_callback)(void *user_context),
+    bool (*uninitialization_begin_callback)(void *user_context), bool (*uninitialization_end_callback)(void *user_context)) {
 
+    bool result;
     int i;
     ue_x509_certificate **ca_certificates;
+    char *keystore_folder_path;
 
+    result = false;
     channel_server = NULL;
     ca_certificates = NULL;
+    keystore_folder_path = NULL;
 
     ue_safe_alloc(channel_server, ue_channel_server, 1);
     channel_server->csr_server = NULL;
@@ -143,14 +145,22 @@ bool ue_channel_server_create(char *persistent_path,
     channel_server->tls_keystore_path = NULL;
     channel_server->cipher_keystore_path = NULL;
     channel_server->signer_keystore_path = NULL;
+    channel_server->user_context = user_context;
+    channel_server->initialization_begin_callback = initialization_begin_callback;
+    channel_server->initialization_end_callback = initialization_end_callback;
+    channel_server->uninitialization_begin_callback = uninitialization_begin_callback;
+    channel_server->uninitialization_end_callback = uninitialization_end_callback;
+
+    if (channel_server->initialization_begin_callback) {
+        channel_server->initialization_begin_callback(user_context);
+    }
 
     if (!(channel_server->logs_file = fopen(channel_server->logger_file_path, "a"))) {
         ue_stacktrace_push_msg("Failed to open logs file at path '%s'", channel_server->logger_file_path)
+    } else {
+        ue_logger_set_fp(ue_logger_manager_get_logger(), channel_server->logs_file);
+        //ue_logger_set_details(ue_logger_manager_get_logger(), true);
     }
-
-    ue_logger_set_fp(ue_logger_manager_get_logger(), channel_server->logs_file);
-
-    ue_logger_set_details(ue_logger_manager_get_logger(), true);
 
     channel_server->channels_number = channels_number;
     ue_safe_alloc(channel_server->channels, ue_channel *, channels_number);
@@ -158,6 +168,18 @@ bool ue_channel_server_create(char *persistent_path,
     for (i = 0; i < channel_server->channels_number; i++) {
         channel_server->channels[i] = ue_channel_create();
     }
+
+    keystore_folder_path = ue_strcat_variadic("ss", channel_server->persistent_path, "/keystore");
+
+	if (!ue_is_dir_exists(keystore_folder_path)) {
+		ue_logger_info("Creating '%s'...", keystore_folder_path);
+		if (!ue_create_folder(keystore_folder_path)) {
+			ue_stacktrace_push_msg("Failed to create '%s'", keystore_folder_path);
+            ue_safe_free(keystore_folder_path);
+			goto clean_up;
+		}
+	}
+    ue_safe_free(keystore_folder_path);
 
     channel_server->keystore_password = ue_string_create_from(keystore_password);
 
@@ -179,12 +201,12 @@ bool ue_channel_server_create(char *persistent_path,
 
     if (!create_keystores(channel_server)) {
         ue_stacktrace_push_msg("Failed to create keystore");
-        return false;
+        goto clean_up;
     }
 
     if (!(channel_server->csr_server = ue_socket_server_create(csr_server_port, csr_server_read_consumer, csr_server_write_consumer, NULL))) {
         ue_stacktrace_push_msg("Failed to start establisher server on port %d", csr_server_port);
-        return false;
+        goto clean_up;
     }
 
     ue_logger_info("CSR server waiting on port %d", csr_server_port);
@@ -194,20 +216,17 @@ bool ue_channel_server_create(char *persistent_path,
 
     if (!(channel_server->tls_session = ue_tls_session_create_server(channel_server->tls_keystore_path, channel_server->keystore_password, ca_certificates, 1))) {
         ue_stacktrace_push_msg("Failed to create TLS session");
-        return false;
+        goto clean_up;
     }
 
     ue_safe_free(ca_certificates);
 
     if (!(channel_server->tls_server = ue_socket_server_create(tls_server_port, tls_server_read_consumer, tls_server_write_consumer, channel_server->tls_session))) {
         ue_stacktrace_push_msg("Failed to tls start server on port %d", tls_server_port);
-        return false;
+        goto clean_up;
     }
 
     ue_logger_info("TLS server waiting on port %d", tls_server_port);
-
-    handle_signal(SIGINT, shutdown_server, 0);
-    handle_signal(SIGPIPE, SIG_IGN, SA_RESTART);
 
     channel_server->tls_server_mutex = ue_thread_mutex_create();
     channel_server->tls_server_cond = ue_thread_cond_create();
@@ -217,13 +236,22 @@ bool ue_channel_server_create(char *persistent_path,
     channel_server->csr_server_processing_state = FREE_STATE;
     channel_server->signal_caught = false;
 
-    return true;
+    result = true;
+
+clean_up:
+    if (channel_server->initialization_end_callback) {
+        channel_server->initialization_end_callback(channel_server->user_context);
+    }
+    return result;
 }
 
 void ue_channel_server_destroy() {
     int i;
 
 	if (channel_server) {
+        if (channel_server->uninitialization_begin_callback) {
+            channel_server->uninitialization_begin_callback(channel_server->user_context);
+        }
 		ue_thread_mutex_destroy(channel_server->tls_server_mutex);
         ue_thread_mutex_destroy(channel_server->csr_server_mutex);
 	    ue_thread_cond_destroy(channel_server->tls_server_cond);
@@ -262,6 +290,9 @@ void ue_channel_server_destroy() {
         ue_safe_free(channel_server->csr_server_port);
         ue_safe_free(channel_server->tls_server_port);
         ue_safe_free(channel_server->logger_file_path);
+        if (channel_server->uninitialization_end_callback) {
+            channel_server->uninitialization_end_callback(channel_server->user_context);
+        }
 	    ue_safe_free(channel_server)
 	}
 }
@@ -279,18 +310,7 @@ bool ue_channel_server_process() {
     return true;
 }
 
-static void handle_signal(int sig, void (*h)(int), int options) {
-    struct sigaction s;
-
-    s.sa_handler = h;
-    sigemptyset(&s.sa_mask);
-    s.sa_flags = options;
-    if (sigaction(sig, &s, NULL) < 0) {
-        ue_stacktrace_push_errno()
-    }
-}
-
-static void shutdown_server(int sig) {
+void ue_channel_server_shutdown_signal_callback(int sig) {
     ue_logger_trace("Signal received %d", sig);
     ue_logger_info("Shuting down server...");
     channel_server->signal_caught = true;
@@ -1071,13 +1091,6 @@ static bool tls_server_process_request(void *parameter) {
             ue_logger_info("Client disconnection.");
             ue_channels_remove_connection_by_nickname(channel_server->channels, channel_server->channels_number, connection->nickname);
             ue_socket_client_connection_clean_up(connection);
-            result = true;
-        }
-        else if (type == SHUTDOWN_NOW_REQUEST) {
-            ue_logger_info("Shutdown detected");
-            channel_server->signal_caught = true;
-            channel_server->tls_server->running = false;
-            channel_server->csr_server->running = false;
             result = true;
         }
         else if (type == NICKNAME_REQUEST) {

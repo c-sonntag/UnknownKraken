@@ -53,7 +53,7 @@ ue_logger *ue_logger_create() {
     log->fp = stdout;
     log->mutex = ue_thread_mutex_create();
     log->colored = true;
-    log->details = true;
+    log->details = false;
 
     return log;
 }

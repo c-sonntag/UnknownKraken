@@ -24,10 +24,14 @@
 
 bool ue_channel_server_create(char *persistent_path,
     unsigned short int csr_server_port, unsigned short int tls_server_port,
-    char *keystore_password, int channels_number, char *server_key_password);
+    char *keystore_password, int channels_number, char *server_key_password, void *user_context,
+    bool (*initialization_begin_callback)(void *user_context), bool (*initialization_end_callback)(void *user_context),
+    bool (*uninitialization_begin_callback)(void *user_context), bool (*uninitialization_end_callback)(void *user_context));
 
 void ue_channel_server_destroy();
 
 bool ue_channel_server_process();
+
+void ue_channel_server_shutdown_signal_callback();
 
 #endif

@@ -23,7 +23,7 @@
 typedef enum {
     CHANNEL_KEY_REQUEST         = 1,
     DISCONNECTION_NOW_REQUEST   = 2,
-    SHUTDOWN_NOW_REQUEST        = 3,
+    ALREADY_CONNECTED_RESPONSE  = 3,
     CHANNEL_CONNECTION_REQUEST  = 4,
     GET_CERTIFICATE_REQUEST     = 5,
     NICKNAME_REQUEST            = 6,
@@ -40,8 +40,7 @@ typedef enum {
     NICKNAME_RESPONSE           = 17,
     CSR_TLS_RESPONSE            = 18,
     CSR_CIPHER_RESPONSE         = 19,
-    CSR_SIGNER_RESPONSE         = 20,
-    ALREADY_CONNECTED_RESPONSE  = 21
+    CSR_SIGNER_RESPONSE         = 20
 } ue_channel_message_type;
 
 #endif
