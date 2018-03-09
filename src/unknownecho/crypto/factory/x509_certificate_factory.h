@@ -22,6 +22,7 @@
  *  @brief     Factory to create signed or self-signed X509 certificate.
  *  @author    Charly Lamothe
  *  @copyright GNU Public License.
+ *  @todo      Add callback for RSA keypair gen
  */
 
 #ifndef UNKNOWNECHO_X509_CERTIFICATE_FACTORY_H

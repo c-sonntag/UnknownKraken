@@ -50,7 +50,7 @@ ue_logger *ue_logger_create() {
     log->print_level = 0;
     log->file_level = 0;
     log->quiet = false;
-    log->fp = stdout;
+    log->fp = NULL;
     log->mutex = ue_thread_mutex_create();
     log->colored = true;
     log->details = false;

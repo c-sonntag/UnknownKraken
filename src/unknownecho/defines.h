@@ -27,8 +27,24 @@
 #ifndef UNKNOWNECHO_DEFINES_H
 #define UNKNOWNECHO_DEFINES_H
 
+/* Lib defines */
+
 #define UNKNOWNECHO_LIB_NAME                         "LibUnknownEcho"
 #define UNKNOWNECHO_LiB_VERSION                      "0.1"
+
+/* Crypto defines */
+
+#define UNKNOWNECHO_DEFAULT_CIPHER_NAME              "aes-256-cbc"
+#define UNKNOWNECHO_DEFAULT_DIGEST_NAME              "sha256"
+
+/* X509 generation defines */
+
+#define UNKNOWNECHO_DEFAULT_X509_NOT_AFTER_YEAR      1
+#define UNKNOWNECHO_DEFAULT_X509_NOT_AFTER_DAYS      365
+#define UNKNOWNECHO_DEFAULT_RSA_KEY_BITS             4096
+#define UNKNOWNECHO_DEFUALT_X509_SERIAL_LENGTH       20
+
+/* Channel protocol defines */
 
 #define UNKNOWNECHO_DEFAULT_SERVER_PERSISTENT_PATH   "out/server"
 #define UNKNOWNECHO_DEFAULT_CLIENT_PERSISTENT_PATH   "out"
@@ -37,7 +53,5 @@
 #define UNKNOWNECHO_DEFAULT_CSR_SERVER_PORT          5002
 #define UNKNOWNECHO_DEFAULT_TLS_SERVER_PORT          5001
 #define UNKNOWNECHO_DEFAULT_CLIENT_CHANNELS_NUMBER   3
-#define UNKNOWNECHO_DEFAULT_CIPHER_NAME              "aes-256-cbc"
-#define UNKNOWNECHO_DEFAULT_DIGEST_NAME              "sha256"
 
 #endif

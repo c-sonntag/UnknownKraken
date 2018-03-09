@@ -20,6 +20,7 @@
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/errorHandling/stacktrace.h>
+#include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/alloc.h>
 
 #include <openssl/x509.h>
@@ -31,9 +32,6 @@
 #include <string.h>
 #include <stddef.h>
 
-/**
- * @todo  parsing : https://zakird.com/2013/10/13/certificate-parsing-with-openssl
- */
 
 struct ue_x509_certificate {
 	X509 *impl;
@@ -56,17 +54,23 @@ bool ue_x509_certificate_load_from_file(const char *file_name, ue_x509_certifica
 	bool result;
 	X509 *certificate_impl;
 	BIO *bio;
+	char *error_buffer;
+
+	ue_check_parameter_or_return(file_name);
 
 	result = false;
 	certificate_impl = NULL;
 	bio = NULL;
+	error_buffer = NULL;
 
 	bio = BIO_new(BIO_s_file());
 	if (!BIO_read_filename(bio, file_name)) {
+		ue_openssl_error_handling(error_buffer, "Failed to read file");
 		goto clean_up;
 	}
-	certificate_impl = PEM_read_bio_X509(bio, NULL, NULL, NULL);
-	if (!certificate_impl) {
+
+	if (!(certificate_impl = PEM_read_bio_X509(bio, NULL, NULL, NULL))) {
+		ue_openssl_error_handling(error_buffer, "Failed to read bio as PEM");
 		goto clean_up;
 	}
 
@@ -89,14 +93,22 @@ clean_up:
 	return result;
 }
 
-bool ue_x509_certificate_load_from_files(const char *cert_file_name, const char *private_key_file_name, const char *password, ue_x509_certificate **certificate, ue_private_key **private_key) {
+bool ue_x509_certificate_load_from_files(const char *cert_file_name, const char *private_key_file_name, const char *password,
+	ue_x509_certificate **certificate, ue_private_key **private_key) {
+
 	X509 *certificate_impl;
 	EVP_PKEY *private_key_impl;
 	RSA *rsa;
+	char *error_buffer;
+
+	ue_check_parameter_or_return(cert_file_name);
+	ue_check_parameter_or_return(private_key_file_name);
+	ue_check_parameter_or_return(password);
 
 	certificate_impl = NULL;
 	private_key_impl = NULL;
 	rsa = NULL;
+	error_buffer = NULL;
 
 	if (!load_certificate_pair(cert_file_name, private_key_file_name, password, &certificate_impl, &private_key_impl)) {
 		ue_stacktrace_push_msg("Failed to load impl certificate pair files");
@@ -105,34 +117,32 @@ bool ue_x509_certificate_load_from_files(const char *cert_file_name, const char 
 
 	if (!(*certificate = ue_x509_certificate_create_empty())) {
 		ue_stacktrace_push_msg("Failed to create empty x509 certificate");
-		X509_free(certificate_impl);
-		EVP_PKEY_free(private_key_impl);
-		return false;
+		goto clean_up_failed;
 	}
 	if (!ue_x509_certificate_set_impl(*certificate, certificate_impl)) {
 		ue_stacktrace_push_msg("Failed to set x509 certificate impl to new ue_x509_certificate");
-		X509_free(certificate_impl);
-		EVP_PKEY_free(private_key_impl);
-		return false;
+		goto clean_up_failed;
 	}
 
 	if (!(rsa = EVP_PKEY_get1_RSA(private_key_impl))) {
-		ue_stacktrace_push_msg("Failed to get RSA implementation from private key impl");
-		ue_x509_certificate_destroy(*certificate);
-		EVP_PKEY_free(private_key_impl);
-		return false;
+		ue_openssl_error_handling(error_buffer, "Failed to get RSA implementation from private key impl");
+		goto clean_up_failed;
 	}
 
 	if (!(*private_key = ue_private_key_create(RSA_PRIVATE_KEY, rsa, RSA_size(rsa)))) {
 		ue_stacktrace_push_msg("Failed to create ue_private_key from rsa impl");
-		ue_x509_certificate_destroy(*certificate);
-		ue_private_key_destroy(*private_key);
-		return false;
+		goto clean_up_failed;
 	}
 
+	return true;
 	EVP_PKEY_free(private_key_impl);
 
-	return true;
+clean_up_failed:
+	X509_free(certificate_impl);
+	EVP_PKEY_free(private_key_impl);
+	ue_x509_certificate_destroy(*certificate);
+	ue_private_key_destroy(*private_key);
+	return false;
 }
 
 ue_x509_certificate *ue_x509_certificate_load_from_bytes(unsigned char *data, size_t data_size) {
@@ -140,6 +150,9 @@ ue_x509_certificate *ue_x509_certificate_load_from_bytes(unsigned char *data, si
     BIO *bio;
     char *error_buffer;
 	X509 *certificate_impl;
+
+	ue_check_parameter_or_return(data);
+	ue_check_parameter_or_return(data_size > 0);
 
     certificate = ue_x509_certificate_create_empty();
     bio = NULL;
@@ -188,12 +201,10 @@ void *ue_x509_certificate_get_impl(ue_x509_certificate *certificate) {
 	return certificate->impl;
 }
 
-/**
- * @todo  chain verification :
- *        - http://fm4dd.com/openssl/certverify.htm
- *		  - https://stackoverflow.com/questions/23407376/testing-x509-certificate-expiry-date-with-c
- */
 bool ue_x509_certificate_set_impl(ue_x509_certificate *certificate, void *impl) {
+	ue_check_parameter_or_return(certificate);
+	ue_check_parameter_or_return(impl);
+
 	certificate->impl = impl;
 	return true;
 }
@@ -205,6 +216,9 @@ bool ue_x509_certificate_equals(ue_x509_certificate *c1, ue_x509_certificate *c2
 bool ue_x509_certificate_print(ue_x509_certificate *certificate, FILE *out_fd) {
 	char *error_buffer;
 
+	ue_check_parameter_or_return(certificate);
+	ue_check_parameter_or_return(out_fd);
+
 	error_buffer = NULL;
 
 	if (PEM_write_X509(out_fd, certificate->impl) == 0) {
@@ -215,42 +229,116 @@ bool ue_x509_certificate_print(ue_x509_certificate *certificate, FILE *out_fd) {
 	return true;
 }
 
+char *ue_x509_certificate_to_pem_string(ue_x509_certificate *certificate) {
+    BIO *bio;
+    char *pem, *error_buffer;
+	size_t size;
+	int result;
+
+	ue_check_parameter_or_return(certificate);
+
+	bio = NULL;
+	pem = NULL;
+	error_buffer = NULL;
+
+    if (!(bio = BIO_new(BIO_s_mem()))) {
+		ue_openssl_error_handling(error_buffer, "Failed to alloc new BIO");
+		return NULL;
+	}
+
+    if (!PEM_write_bio_X509(bio, ue_x509_certificate_get_impl(certificate))) {
+		ue_openssl_error_handling(error_buffer, "Failed to write x509 certificate as PEM");
+		BIO_free_all(bio);
+		return NULL;
+	}
+
+	if ((size = BIO_pending(bio)) <= 0) {
+		ue_stacktrace_push_msg("Bio have an invalid size");
+		BIO_free_all(bio);
+		return NULL;
+	}
+
+	ue_safe_alloc(pem, char, size);
+
+    result = BIO_read(bio, pem, size);
+	if (result <= 0) {
+		BIO_free_all(bio);
+		ue_safe_free(pem);
+		if (result == 0) {
+			ue_stacktrace_push_msg("No data read because bio is empty");
+		} else if (result == -1) {
+			ue_stacktrace_push_msg("Reading of bio data failed with an error");
+		} else if (result == -2) {
+			ue_stacktrace_push_msg("This operation is not supported by this bio");
+		}
+		return NULL;
+	}
+
+    BIO_free_all(bio);
+
+	return pem;
+}
+
 static int pass_cb(char *buf, int size, int rwflag, void *u) {
      memcpy(buf, (char *)u, strlen((char *)u));
      return strlen((char *)u);
  }
 
-static bool load_certificate_pair(const char *cert_file_name, const char *private_key_file_name, const char *password, X509 **certificate, EVP_PKEY **private_key) {
+static bool load_certificate_pair(const char *cert_file_name, const char *private_key_file_name, const char *password,
+	X509 **certificate, EVP_PKEY **private_key) {
+
 	BIO *bio;
+	char *error_buffer;
+
+	ue_check_parameter_or_return(cert_file_name);
+	ue_check_parameter_or_return(private_key_file_name);
 
 	bio = NULL;
+	error_buffer = NULL;
 	*certificate = NULL;
 	*private_key = NULL;
 
-	/* Load public key. */
-	bio = BIO_new(BIO_s_file());
+	/* Load certificate */
+	if (!(bio = BIO_new(BIO_s_file()))) {
+		ue_openssl_error_handling(error_buffer, "Failed to create new BIO for certificate");
+		return false;
+	}
+
 	if (!BIO_read_filename(bio, cert_file_name)) {
+		ue_openssl_error_handling(error_buffer, "Failed to read certificate file");
 		goto clean_up;
 	}
-	*certificate = PEM_read_bio_X509(bio, NULL, NULL, NULL);
-	if (!*certificate) {
+
+	if (!(*certificate = PEM_read_bio_X509(bio, NULL, NULL, NULL))) {
+		ue_openssl_error_handling(error_buffer, "Failed to read BIO as PEM x509 certificate");
 		goto clean_up;
 	}
+
 	BIO_free_all(bio);
 
-	/* Load private key. */
-	bio = BIO_new(BIO_s_file());
+	/* Load private key */
+	if (!(bio = BIO_new(BIO_s_file()))) {
+		ue_openssl_error_handling(error_buffer, "Failed to create new BIO for private key");
+		goto clean_up;
+	}
+
 	if (!BIO_read_filename(bio, private_key_file_name)) {
+		ue_openssl_error_handling(error_buffer, "Failed to read private key file");
 		goto clean_up;
 	}
+
 	if (password) {
-		*private_key = PEM_read_bio_PrivateKey(bio, NULL, pass_cb, (void *)password);
+		if (!(*private_key = PEM_read_bio_PrivateKey(bio, NULL, pass_cb, (void *)password))) {
+			ue_openssl_error_handling(error_buffer, "Failed to read BIO as PEM private key with a password");
+			goto clean_up;
+		}
 	} else {
-		*private_key = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
+		if (!(*private_key = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL))) {
+			ue_openssl_error_handling(error_buffer, "Failed to read BIO as PEM private key without a password");
+			goto clean_up;
+		}
 	}
-	if (!*private_key) {
-		goto clean_up;
-	}
+
 	BIO_free_all(bio);
 
 	return true;
@@ -260,26 +348,4 @@ clean_up:
 	X509_free(*certificate);
 	EVP_PKEY_free(*private_key);
 	return false;
-}
-
-char *ue_x509_certificate_to_pem_string(ue_x509_certificate *certificate) {
-    BIO *bio;
-    char *pem;
-	size_t size;
-
-	bio = NULL;
-	pem = NULL;
-
-    bio = BIO_new(BIO_s_mem());
-
-    PEM_write_bio_X509(bio, ue_x509_certificate_get_impl(certificate));
-
-	size = BIO_pending(bio);
-    pem = (char *)malloc(size + 1);
-    memset(pem, 0, size + 1);
-    BIO_read(bio, pem, size);
-
-    BIO_free_all(bio);
-
-	return pem;
 }

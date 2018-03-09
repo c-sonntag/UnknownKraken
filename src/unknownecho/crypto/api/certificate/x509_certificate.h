@@ -23,7 +23,11 @@
  *  @author    Charly Lamothe
  *  @copyright GNU Public License.
  *  @see       https://en.wikipedia.org/wiki/X.509
- *  @todo      clean up internal functions
+ *  @todo      parsing : https://zakird.com/2013/10/13/certificate-parsing-with-openssl
+ *  @todo      chain verification :
+ *                - http://fm4dd.com/openssl/certverify.htm,
+ *                - https://stackoverflow.com/questions/23407376/testing-x509-certificate-expiry-date-with-c
+ *
  */
 
 #ifndef UNKNOWNECHO_X509_CERTIFICATE_H

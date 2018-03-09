@@ -20,23 +20,26 @@
 #include <unknownecho/crypto/api/certificate/x509_certificate_parameters.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate_generation.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
+#include <unknownecho/crypto/utils/crypto_random.h>
 #include <unknownecho/errorHandling/stacktrace.h>
+#include <unknownecho/errorHandling/check_parameter.h>
+#include <unknownecho/defines.h>
 
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/rsa.h>
-#include <openssl/rand.h>
 
 #include <string.h>
 
 
-static int generate_key_csr(EVP_PKEY **key, char *C, char *CN, X509_REQ **req);
+static bool generate_signed_key_pair(X509 *ca_crt, EVP_PKEY *ca_key, char *C, char *CN, X509 **crt, EVP_PKEY **key);
 
-static int generate_set_random_serial(X509 *crt);
+static bool generate_key_csr(EVP_PKEY **key, char *C, char *CN, X509_REQ **req);
 
-static int generate_signed_key_pair(X509 *ca_crt, EVP_PKEY *ca_key, char *C, char *CN, X509 **crt, EVP_PKEY **key);
+/* Generates a 20 byte random serial number and sets in certificate. */
+static bool generate_set_random_serial(X509 *crt);
 
-static RSA *ue_rsa_keypair_gen(int bits);
+static RSA *rsa_keypair_gen(int bits);
 
 
 bool ue_x509_certificate_generate_self_signed_ca(char *C, char *CN, ue_x509_certificate **certificate, ue_private_key **private_key) {
@@ -49,6 +52,9 @@ bool ue_x509_certificate_generate_self_signed_ca(char *C, char *CN, ue_x509_cert
 	parameters = NULL;
 	certificate_impl = NULL;
 	private_key_impl = NULL;
+
+	ue_check_parameter_or_return(C);
+	ue_check_parameter_or_return(CN);
 
 	if (!(parameters = ue_x509_certificate_parameters_create())) {
 		ue_stacktrace_push_msg("Failed to create x509 parameters structure");
@@ -100,101 +106,187 @@ bool ue_x509_certificate_generate_signed(ue_x509_certificate *ca_certificate, ue
 	X509 *certificate_impl;
 	EVP_PKEY *private_key_impl;
 	RSA *rsa;
+	char *error_buffer;
+
+	ue_check_parameter_or_return(ca_certificate);
+	ue_check_parameter_or_return(ca_private_key);
+	ue_check_parameter_or_return(C);
+	ue_check_parameter_or_return(CN);
 
 	certificate_impl = NULL;
 	private_key_impl = NULL;
 	rsa = NULL;
+	*certificate = NULL;
+	*private_key = NULL;
 
-	generate_signed_key_pair(ue_x509_certificate_get_impl(ca_certificate), ue_private_key_get_impl(ca_private_key), C, CN, &certificate_impl, &private_key_impl);
+	if (!generate_signed_key_pair(ue_x509_certificate_get_impl(ca_certificate), ue_private_key_get_impl(ca_private_key), C, CN,
+		&certificate_impl, &private_key_impl)) {
+		ue_stacktrace_push_msg("Failed to generate signed key pair");
+		goto clean_up_failed;
+	}
 
-	*certificate = ue_x509_certificate_create_empty();
-	ue_x509_certificate_set_impl(*certificate, certificate_impl);
+	if (!(*certificate = ue_x509_certificate_create_empty())) {
+		ue_stacktrace_push_msg("Failed to generate new x509 certificate");
+		goto clean_up_failed;
+	}
 
-	rsa = EVP_PKEY_get1_RSA(private_key_impl);
-	*private_key = ue_private_key_create(RSA_PRIVATE_KEY, rsa, RSA_size(rsa));
+	if (!ue_x509_certificate_set_impl(*certificate, certificate_impl)) {
+		ue_stacktrace_push_msg("Failed to cert impl to cert");
+		goto clean_up_failed;
+	}
+
+	if (!(rsa = EVP_PKEY_get1_RSA(private_key_impl))) {
+		ue_openssl_error_handling(error_buffer, "Failed to get RSA from EVP_PKEY");
+		goto clean_up_failed;
+	}
+
+	if(!(*private_key = ue_private_key_create(RSA_PRIVATE_KEY, rsa, RSA_size(rsa)))) {
+		ue_stacktrace_push_msg("Failed to create new private key from RSA impl");
+		goto clean_up_failed;
+	}
+
 	EVP_PKEY_free(private_key_impl);
 
 	return true;
+
+clean_up_failed:
+	ue_x509_certificate_destroy(*certificate);
+	X509_free(certificate_impl);
+	EVP_PKEY_free(private_key_impl);
+	RSA_free(rsa);
+	return false;
 }
 
-static int generate_signed_key_pair(X509 *ca_crt, EVP_PKEY *ca_key, char *C, char *CN, X509 **crt, EVP_PKEY **key) {
-	/* Generate the private key and corresponding CSR. */
-	X509_REQ *req = NULL;
-	if (!generate_key_csr(key, C,CN, &req)) {
-		fprintf(stderr, "Failed to generate key and/or CSR!\n");
-		return 0;
+static bool generate_signed_key_pair(X509 *ca_crt, EVP_PKEY *ca_key, char *C, char *CN, X509 **crt, EVP_PKEY **key) {
+	X509_REQ *req;
+	EVP_PKEY *req_pubkey;
+	char *error_buffer;
+
+	ue_check_parameter_or_return(ca_crt);
+	ue_check_parameter_or_return(ca_key);
+	ue_check_parameter_or_return(C);
+	ue_check_parameter_or_return(CN);
+
+	req = NULL;
+	req_pubkey = NULL;
+	error_buffer = NULL;
+	*crt = NULL;
+	*key = NULL;
+
+	if (!generate_key_csr(key, C, CN, &req)) {
+		ue_stacktrace_push_msg("Fialed to generate CSR key");
+		return false;
 	}
 
-	/* Sign with the CA. */
-	*crt = X509_new();
-	if (!*crt) goto err;
+	if (!(*crt = X509_new())) {
+		ue_openssl_error_handling(error_buffer, "Failed to create new X509");
+		goto clean_up_failed;
+	}
 
-	X509_set_version(*crt, 2); /* Set version to X509v3 */
+	/* Set version to X509v3 */
+	X509_set_version(*crt, 2);
 
 	/* Generate random 20 byte serial. */
-	if (!generate_set_random_serial(*crt)) goto err;
+	if (!generate_set_random_serial(*crt)) {
+		ue_stacktrace_push_msg("Failed to generate and set random serial to cert");
+		goto clean_up_failed;
+	}
 
 	/* Set issuer to CA's subject. */
-	X509_set_issuer_name(*crt, X509_get_subject_name(ca_crt));
+	if (!X509_set_issuer_name(*crt, X509_get_subject_name(ca_crt))) {
+		ue_stacktrace_push_msg("Failed to set CA's CN as cert issuer name")
+		goto clean_up_failed;
+	}
 
-	/* Set validity of certificate to 2 years. */
+	/* @todo get default not after in defines */
 	X509_gmtime_adj(X509_get_notBefore(*crt), 0);
-	X509_gmtime_adj(X509_get_notAfter(*crt), (long)2*365*3600);
+	X509_gmtime_adj(X509_get_notAfter(*crt), (long)UNKNOWNECHO_DEFAULT_X509_NOT_AFTER_YEAR *
+		UNKNOWNECHO_DEFAULT_X509_NOT_AFTER_DAYS * 3600);
 
-	/* Get the request's subject and just use it (we don't bother checking it since we generated
-	 * it ourself). Also take the request's public key. */
+	/* Get the request's subject */
 	X509_set_subject_name(*crt, X509_REQ_get_subject_name(req));
-	EVP_PKEY *req_pubkey = X509_REQ_get_pubkey(req);
+	req_pubkey = X509_REQ_get_pubkey(req);
 	X509_set_pubkey(*crt, req_pubkey);
-	EVP_PKEY_free(req_pubkey);
 
 	/* Now perform the actual signing with the CA. */
-	if (X509_sign(*crt, ca_key, EVP_sha256()) == 0) goto err;
+	if (X509_sign(*crt, ca_key, EVP_get_digestbyname(UNKNOWNECHO_DEFAULT_DIGEST_NAME)) == 0) {
+		ue_openssl_error_handling(error_buffer, "Failed to sign X509 certificate");
+		goto clean_up_failed;
+	}
 
 	X509_REQ_free(req);
-	return 1;
-err:
+	EVP_PKEY_free(req_pubkey);
+	return true;
+
+clean_up_failed:
 	EVP_PKEY_free(*key);
 	X509_REQ_free(req);
 	X509_free(*crt);
-	return 0;
+	EVP_PKEY_free(req_pubkey);
+	return false;
 }
 
-static int generate_key_csr(EVP_PKEY **key, char *C, char *CN, X509_REQ **req) {
-	*key = EVP_PKEY_new();
-	if (!*key) goto err;
-	*req = X509_REQ_new();
-	if (!*req) goto err;
+static bool generate_key_csr(EVP_PKEY **key, char *C, char *CN, X509_REQ **req) {
+	char *error_buffer;
+	RSA *rsa;
+	X509_NAME *name;
 
-    RSA *rsa;
+	ue_check_parameter_or_return(C);
+	ue_check_parameter_or_return(CN);
 
-    rsa = ue_rsa_keypair_gen(4096);
-	if (!EVP_PKEY_assign_RSA(*key, rsa)) goto err;
+	error_buffer = NULL;
+	rsa = NULL;
+
+	if (!(*key = EVP_PKEY_new())) {
+		ue_openssl_error_handling(error_buffer, "EVP_PKEY_new");
+		goto clean_up_failed;
+	}
+
+	if (!(*req = X509_REQ_new())) {
+		ue_openssl_error_handling(error_buffer, "X509_REQ_new");
+		goto clean_up_failed;
+	}
+
+	/* @todo get default bits length in defines */
+    if (!(rsa = rsa_keypair_gen(UNKNOWNECHO_DEFAULT_RSA_KEY_BITS))) {
+		ue_stacktrace_push_msg("Failed to gen RSA keypair");
+		goto clean_up_failed;
+	}
+
+	if (!EVP_PKEY_assign_RSA(*key, rsa)) {
+		ue_openssl_error_handling(error_buffer, "EVP_PKEY_assign_RSA");
+		goto clean_up_failed;
+	}
 
 	X509_REQ_set_pubkey(*req, *key);
 
 	/* Set the DN of the request. */
-	X509_NAME *name = X509_REQ_get_subject_name(*req);
+	name = X509_REQ_get_subject_name(*req);
 	X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC, (const unsigned char*)C, strlen(C), -1, 0);
-	/*X509_NAME_add_entry_by_txt(name, "ST", MBSTRING_ASC, (const unsigned char*)REQ_DN_ST, -1, -1, 0);
-	X509_NAME_add_entry_by_txt(name, "L", MBSTRING_ASC, (const unsigned char*)REQ_DN_L, -1, -1, 0);
-	X509_NAME_add_entry_by_txt(name, "O", MBSTRING_ASC, (const unsigned char*)REQ_DN_O, -1, -1, 0);
-	X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_ASC, (const unsigned char*)REQ_DN_OU, -1, -1, 0);*/
 	X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (const unsigned char*)CN, strlen(CN), -1, 0);
 
 	/* Self-sign the request to prove that we posses the key. */
-	if (!X509_REQ_sign(*req, *key, EVP_sha256())) goto err;
-	return 1;
-err:
+	if (!X509_REQ_sign(*req, *key, EVP_get_digestbyname(UNKNOWNECHO_DEFAULT_DIGEST_NAME))) {
+		ue_openssl_error_handling(error_buffer, "X509_REQ_sign");
+		goto clean_up_failed;
+	}
+
+	return true;
+
+clean_up_failed:
 	EVP_PKEY_free(*key);
 	X509_REQ_free(*req);
-	return 0;
+	return false;
 }
 
-static int generate_set_random_serial(X509 *crt) {
-	/* Generates a 20 byte random serial number and sets in certificate. */
+static bool generate_set_random_serial(X509 *crt) {
 	unsigned char serial_bytes[20];
-	if (RAND_bytes(serial_bytes, sizeof(serial_bytes)) != 1) return 0;
+
+	if (!ue_crypto_random_bytes(serial_bytes, 20)) {
+		ue_stacktrace_push_msg("Failed to gen crypto random bytes");
+		return false;
+	}
+
 	serial_bytes[0] &= 0x7f; /* Ensure positive serial! */
 	BIGNUM *bn = BN_new();
 	BN_bin2bn(serial_bytes, sizeof(serial_bytes), bn);
@@ -205,10 +297,10 @@ static int generate_set_random_serial(X509 *crt) {
 
 	ASN1_INTEGER_free(serial);
 	BN_free(bn);
-	return 1;
+	return true;
 }
 
-static RSA *ue_rsa_keypair_gen(int bits) {
+static RSA *rsa_keypair_gen(int bits) {
 	RSA *ue_rsa_key_pair;
 	unsigned long e;
 	int ret;

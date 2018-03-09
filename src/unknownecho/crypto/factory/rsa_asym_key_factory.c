@@ -29,17 +29,51 @@
 #include <openssl/evp.h>
 #include <openssl/bio.h>
 
-static RSA *ue_rsa_keypair_gen(int bits) {
+/*static int genrsa_callback(int p, int n, BN_GENCB *cb)
+{
+    char c = '*';
+
+    if (p == 0) c = '.';
+    if (p == 1) c = '+';
+    if (p == 2) c = '*';
+    if (p == 3) c = '\n';
+    BIO_write(cb->arg, &c, 1);
+    (void)BIO_flush(cb->arg);
+    return 1;
+}*/
+
+/*static void callback(int p, int n, void *arg) {
+	char c = 'B';
+
+	if (p == 0) {
+        c = '.';
+    }
+	if (p == 1) {
+        c='+';
+    }
+	if (p == 2) {
+        c='*';
+    }
+	if (p == 3) {
+        c='\n';
+    }
+
+	fputc(c, ue_logger_get_fp(ue_logger_manager_get_logger()));
+}*/
+
+static RSA *rsa_keypair_gen(int bits) {
 	RSA *ue_rsa_key_pair;
 	unsigned long e;
 	int ret;
 	BIGNUM *bne;
     char *error_buffer;
+    //BN_GENCB cb;
 
 	ue_rsa_key_pair = NULL;
 	bne = NULL;
     e = RSA_F4;
     error_buffer = NULL;
+    //BN_GENCB_set(&cb, callback, bio_err);
 
     if (bits != 2048 && bits != 4096) {
     	return NULL;
@@ -210,7 +244,7 @@ ue_asym_key *ue_rsa_asym_key_create(int bits) {
 	sk = NULL;
 	pk = NULL;
 
-	if (!(ue_rsa_key_pair = ue_rsa_keypair_gen(bits))) {
+	if (!(ue_rsa_key_pair = rsa_keypair_gen(bits))) {
 		ue_stacktrace_push_msg("Failed to gen openssl RSA keypair");
 		goto clean_up;
 	}

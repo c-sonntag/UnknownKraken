@@ -23,6 +23,7 @@
  *             already existing certificate.
  *  @author    Charly Lamothe
  *  @copyright GNU Public License.
+ *  @todo      Add callback for RSA key generation
  */
 
 #ifndef UNKNOWNECHO_RSA_ASYM_KEY_FACTORY_H

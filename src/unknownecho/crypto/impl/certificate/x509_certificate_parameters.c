@@ -18,11 +18,14 @@
  *******************************************************************************/
 
 #include <unknownecho/crypto/api/certificate/x509_certificate_parameters.h>
+#include <unknownecho/crypto/utils/crypto_random.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/string/string_utility.h>
+#include <unknownecho/defines.h>
 
 struct ue_x509_certificate_parameters {
-    int serial;
+    unsigned char *serial;
+    int serial_length;
     int bits;
     int days;
     char *C;
@@ -39,9 +42,18 @@ ue_x509_certificate_parameters *ue_x509_certificate_parameters_create() {
     ue_x509_certificate_parameters *parameters;
 
     ue_safe_alloc(parameters, ue_x509_certificate_parameters, 1);
-    parameters->serial = 123456789; //@todo generate random
-    parameters->bits = 4096; //@todo set default in defines list (4096 bits ?)
-    parameters->days = 365; //@todo set default in defines list
+    ue_safe_alloc(parameters->serial, unsigned char, UNKNOWNECHO_DEFUALT_X509_SERIAL_LENGTH);
+	if (!ue_crypto_random_bytes(parameters->serial, UNKNOWNECHO_DEFUALT_X509_SERIAL_LENGTH)) {
+		ue_stacktrace_push_msg("Failed to gen crypto random bytes");
+		return false;
+	}
+    /* @todo set default serial length in defines */
+    parameters->serial_length = UNKNOWNECHO_DEFUALT_X509_SERIAL_LENGTH;
+    /* Ensure serial is positive */
+	parameters->serial[0] &= 0x7f;
+
+    parameters->bits = UNKNOWNECHO_DEFAULT_RSA_KEY_BITS;
+    parameters->days = UNKNOWNECHO_DEFAULT_X509_NOT_AFTER_DAYS;
     parameters->C = NULL;
     parameters->CN = NULL;
     parameters->basic_constraint = NULL;
@@ -59,17 +71,17 @@ void ue_x509_certificate_parameters_destroy(ue_x509_certificate_parameters *para
         ue_safe_free(parameters->basic_constraint);
         ue_safe_free(parameters->subject_key_identifier);
         ue_safe_free(parameters->cert_type);
+        ue_safe_free(parameters->serial);
         ue_safe_free(parameters);
     }
 }
 
-bool ue_x509_certificate_parameters_set_serial(ue_x509_certificate_parameters *parameters, int serial) {
-    parameters->serial = serial;
-    return true;
+unsigned char *ue_x509_certificate_parameters_get_serial(ue_x509_certificate_parameters *parameters) {
+    return parameters->serial;
 }
 
-int ue_x509_certificate_parameters_get_serial(ue_x509_certificate_parameters *parameters) {
-    return parameters->serial;
+int ue_x509_certificate_parameters_get_serial_length(ue_x509_certificate_parameters *parameters) {
+    return parameters->serial_length;
 }
 
 bool ue_x509_certificate_parameters_set_bits(ue_x509_certificate_parameters *parameters, int bits) {

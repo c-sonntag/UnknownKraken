@@ -24,7 +24,7 @@
  *  @copyright GNU Public License.
  *  @see       x509_certificate.h
  *  @see       x509_certificate_parameters.h
- *  @todo      clean_up internal functions
+ *  @todo      add callback for RSA generation
  */
 
 #ifndef UNKNOWNECHO_X509_CERTFICATE_GENERATION_H

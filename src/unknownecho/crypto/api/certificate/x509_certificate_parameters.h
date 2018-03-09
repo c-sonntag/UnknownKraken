@@ -36,9 +36,9 @@ ue_x509_certificate_parameters *ue_x509_certificate_parameters_create();
 
 void ue_x509_certificate_parameters_destroy(ue_x509_certificate_parameters *parameters);
 
-bool ue_x509_certificate_parameters_set_serial(ue_x509_certificate_parameters *parameters, int serial);
+unsigned char *ue_x509_certificate_parameters_get_serial(ue_x509_certificate_parameters *parameters);
 
-int ue_x509_certificate_parameters_get_serial(ue_x509_certificate_parameters *parameters);
+int ue_x509_certificate_parameters_get_serial_length(ue_x509_certificate_parameters *parameters);
 
 bool ue_x509_certificate_parameters_set_bits(ue_x509_certificate_parameters *parameters, int bits);
 
