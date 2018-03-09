@@ -109,7 +109,8 @@ bool ue_channel_server_create(char *persistent_path,
     int csr_server_port, int tls_server_port,
     char *keystore_password, int channels_number, char *key_password, void *user_context,
     bool (*initialization_begin_callback)(void *user_context), bool (*initialization_end_callback)(void *user_context),
-    bool (*uninitialization_begin_callback)(void *user_context), bool (*uninitialization_end_callback)(void *user_context)) {
+    bool (*uninitialization_begin_callback)(void *user_context), bool (*uninitialization_end_callback)(void *user_context),
+    const char *cipher_name, const char *digest_name) {
 
     bool result;
     int i;
@@ -150,6 +151,8 @@ bool ue_channel_server_create(char *persistent_path,
     channel_server->initialization_end_callback = initialization_end_callback;
     channel_server->uninitialization_begin_callback = uninitialization_begin_callback;
     channel_server->uninitialization_end_callback = uninitialization_end_callback;
+    channel_server->cipher_name = ue_string_create_from(cipher_name);
+	channel_server->digest_name = ue_string_create_from(digest_name);
 
     if (channel_server->initialization_begin_callback) {
         channel_server->initialization_begin_callback(user_context);
@@ -289,6 +292,8 @@ void ue_channel_server_destroy() {
         ue_safe_free(channel_server->csr_server_port);
         ue_safe_free(channel_server->tls_server_port);
         ue_safe_free(channel_server->logger_file_path);
+        ue_safe_free(channel_server->cipher_name);
+        ue_safe_free(channel_server->digest_name);
         if (channel_server->uninitialization_end_callback) {
             channel_server->uninitialization_end_callback(channel_server->user_context);
         }
@@ -363,7 +368,8 @@ static size_t send_cipher_message(ue_socket_client_connection *connection, ue_by
     }
 
 	if (!ue_cipher_plain_data(ue_byte_stream_get_data(message_stream), ue_byte_stream_get_size(message_stream),
-	       client_public_key, channel_server->signer_keystore->private_key, &cipher_data, &cipher_data_size, "aes-256-cbc")) {
+	       client_public_key, channel_server->signer_keystore->private_key, &cipher_data, &cipher_data_size, channel_server->cipher_name,
+           channel_server->digest_name)) {
 
         ue_stacktrace_push_msg("Failed to cipher plain data");
         goto clean_up;
@@ -423,7 +429,7 @@ static size_t receive_cipher_message(ue_socket_client_connection *connection) {
     }
 
 	if (!ue_decipher_cipher_data(ue_byte_stream_get_data(connection->received_message), ue_byte_stream_get_size(connection->received_message),
-		channel_server->cipher_keystore->private_key, client_public_key, &plain_data, &plain_data_size, "aes-256-cbc")) {
+		channel_server->cipher_keystore->private_key, client_public_key, &plain_data, &plain_data_size, channel_server->cipher_name, channel_server->digest_name)) {
 
 		received = -1;
 		ue_stacktrace_push_msg("Failed decipher message data");
@@ -735,7 +741,7 @@ static bool csr_server_process_request(void *parameter) {
             }
 
             if (!(signed_certificate_data = ue_csr_build_server_response(channel_server->csr_keystore->private_key, ca_certificate, ca_private_key,
-                csr_request, (size_t)csr_request_size, &signed_certificate_data_size, &signed_certificate))) {
+                csr_request, (size_t)csr_request_size, &signed_certificate_data_size, &signed_certificate, channel_server->cipher_name, channel_server->digest_name))) {
 
                 ue_stacktrace_push_msg("Failed to process CSR response");
                 goto clean_up;
@@ -1347,9 +1353,7 @@ static bool process_message_request(ue_socket_client_connection *connection, ue_
         goto clean_up;
     }
 
-    //if (!connection->optional_data) {
-        ue_safe_alloc(connection->optional_data, int, 1);
-    //}
+    ue_safe_alloc(connection->optional_data, int, 1)
     memcpy(connection->optional_data, &current_channel_id, sizeof(int));
     connection->state = UNKNOWNECHO_CONNECTION_WRITE_STATE;
     result = true;

@@ -148,7 +148,9 @@ unsigned char *client_build_request(ue_public_key *ca_public_key, size_t *cipher
     ue_byte_writer_append_bytes(stream, future_key->data, future_key->size);
     ue_byte_writer_append_bytes(stream, iv, iv_size);
 
-    if (!ue_cipher_plain_data(ue_byte_stream_get_data(stream), ue_byte_stream_get_size(stream), ca_public_key, NULL, &cipher_data, cipher_data_size, "aes-256-cbc")) {
+    if (!ue_cipher_plain_data(ue_byte_stream_get_data(stream), ue_byte_stream_get_size(stream), ca_public_key, NULL,
+        &cipher_data, cipher_data_size, "aes-256-cbc", "sha256")) {
+
         ue_stacktrace_push_msg("Failed to cipher plain data");
         goto clean_up;
     }
@@ -185,7 +187,9 @@ unsigned char *server_process_response(ue_x509_certificate *ca_certificate, ue_p
     key_data = NULL;
     iv = NULL;
 
-    if (!ue_decipher_cipher_data(client_request, client_request_size, ca_private_key, NULL, &decipher_data, &decipher_data_size, "aes-256-cbc")) {
+    if (!ue_decipher_cipher_data(client_request, client_request_size, ca_private_key, NULL, &decipher_data, &decipher_data_size,
+        "aes-256-cbc", "sha256")) {
+
         ue_stacktrace_push_msg("Failed to decipher cipher data");
         goto clean_up;
     }

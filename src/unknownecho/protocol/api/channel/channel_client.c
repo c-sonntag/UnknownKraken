@@ -165,7 +165,8 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 	bool (*write_callback)(void *user_context, ue_byte_stream *printer), bool (*initialization_begin_callback)(void *user_context),
 	bool (*initialization_end_callback)(void *user_context), bool (*uninitialization_begin_callback)(void *user_context),
 	bool (*uninitialization_end_callback)(void *user_context), bool (*connection_begin_callback)(void *user_context),
-	bool (*connection_end_callback)(void *user_context), char *(*user_input_callback)(void *user_context)) {
+	bool (*connection_end_callback)(void *user_context), char *(*user_input_callback)(void *user_context),
+	const char *cipher_name, const char *digest_name) {
 
 	ue_channel_client *channel_client;
 	bool result;
@@ -247,6 +248,8 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 	channel_client->persistent_path = ue_string_create_from(persistent_path);
 	channel_client->tls_server_host = ue_string_create_from(tls_server_host);
 	channel_client->tls_server_port = tls_server_port;
+	channel_client->cipher_name = ue_string_create_from(cipher_name);
+	channel_client->digest_name = ue_string_create_from(digest_name);
 
 	full_persistent_path = ue_strcat_variadic("sss", channel_client->persistent_path, "/", channel_client->nickname);
 
@@ -381,6 +384,8 @@ void ue_channel_client_destroy(ue_channel_client *channel_client) {
 	ue_safe_free(channel_client->channel_iv);
 	ue_safe_free(channel_client->persistent_path);
 	ue_safe_free(channel_client->tls_server_host);
+	ue_safe_free(channel_client->cipher_name);
+	ue_safe_free(channel_client->digest_name);
 	if (channel_client->uninitialization_end_callback) {
 		channel_client->uninitialization_end_callback(channel_client->user_context);
 	}
@@ -522,7 +527,8 @@ static bool send_cipher_message(ue_channel_client *channel_client, ue_socket_cli
     }
 
 	if (!ue_cipher_plain_data(ue_byte_stream_get_data(message_to_send), ue_byte_stream_get_size(message_to_send),
-		server_public_key, channel_client->signer_keystore->private_key, &cipher_data, &cipher_data_size, "aes-256-cbc")) {
+		server_public_key, channel_client->signer_keystore->private_key, &cipher_data, &cipher_data_size, channel_client->cipher_name,
+		channel_client->digest_name)) {
 
         ue_stacktrace_push_msg("Failed to cipher plain data");
         goto clean_up;
@@ -576,7 +582,7 @@ static size_t receive_cipher_message(ue_channel_client *channel_client, ue_socke
     }
 
 	if (!ue_decipher_cipher_data(ue_byte_stream_get_data(connection->received_message), ue_byte_stream_get_size(connection->received_message),
-		channel_client->cipher_keystore->private_key, server_public_key, &plain_data, &plain_data_size, "aes-256-cbc")) {
+		channel_client->cipher_keystore->private_key, server_public_key, &plain_data, &plain_data_size, channel_client->cipher_name, channel_client->digest_name)) {
 
 		received = -1;
 		ue_stacktrace_push_msg("Failed decipher message data");
@@ -826,7 +832,7 @@ static bool send_csr(ue_channel_client *channel_client, ue_csr_context *context,
     }
 
 	if (!(csr_request = ue_csr_build_client_request(certificate, context->private_key, ca_public_key, &cipher_data_size, context->future_key, context->iv,
-		context->iv_size))) {
+		context->iv_size, channel_client->cipher_name, channel_client->digest_name))) {
 
 		ue_stacktrace_push_msg("Failed to build CSR request");
 		goto clean_up;
@@ -1338,7 +1344,8 @@ static bool process_channel_key_request(ue_channel_client *channel_client, ue_so
 	}
 
 	if (!ue_cipher_plain_data(ue_byte_stream_get_data(channel_key_stream), ue_byte_stream_get_size(channel_key_stream),
-		   client_public_key, channel_client->signer_keystore->private_key, &cipher_data, &cipher_data_size, "aes-256-cbc")) {
+		   client_public_key, channel_client->signer_keystore->private_key, &cipher_data, &cipher_data_size, channel_client->cipher_name,
+	   	   channel_client->digest_name)) {
 
 		ue_stacktrace_push_msg("Failed to cipher plain data");
 		goto clean_up;
@@ -1774,7 +1781,7 @@ static bool process_channel_key_response(ue_channel_client *channel_client, ue_s
 	}
 
 	if (!ue_decipher_cipher_data(cipher_data, cipher_data_size, channel_client->cipher_keystore->private_key,
-		key_owner_public_key, &plain_data, &plain_data_size, "aes-256-cbc")) {
+		key_owner_public_key, &plain_data, &plain_data_size, channel_client->cipher_name, channel_client->digest_name)) {
 
 		ue_stacktrace_push_msg("Failed decipher message data");
 		goto clean_up;

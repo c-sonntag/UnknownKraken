@@ -2,12 +2,7 @@
 #include <unknownecho/protocol/api/channel/channel_client.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/string/string_utility.h>
-
-#define DEFAULT_CSR_SERVER_PORT          5002
-#define DEFAULT_TLS_SERVER_PORT          5001
-#define DEFAULT_PERSISTENT_PATH          "out"
-#define DEFAULT_SERVER_CERTIFICATES_PATH "out/certificate"
-#define LOCALHOST                        "127.0.0.1"
+#include <unknownecho/defines.h>
 
 ue_channel_client_parameters *ue_channel_client_parameters_create(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ue_byte_stream *printer)) {
     ue_channel_client_parameters *parameters;
@@ -30,6 +25,8 @@ ue_channel_client_parameters *ue_channel_client_parameters_create(char *nickname
     parameters->connection_begin_callback = NULL;
 	parameters->connection_end_callback = NULL;
     parameters->user_input_callback = NULL;
+    parameters->cipher_name = NULL;
+    parameters->digest_name = NULL;
 
     return parameters;
 }
@@ -42,6 +39,8 @@ void ue_channel_client_parameters_destroy(ue_channel_client_parameters *paramete
         ue_safe_free(parameters->tls_server_host);
         ue_safe_free(parameters->keystore_password);
         ue_safe_free(parameters->server_certificates_path);
+        ue_safe_free(parameters->cipher_name);
+        ue_safe_free(parameters->digest_name);
         ue_safe_free(parameters);
     }
 }
@@ -116,38 +115,56 @@ bool ue_channel_client_parameters_set_user_input_callback(ue_channel_client_para
     return true;
 }
 
+bool ue_channel_client_parameters_set_cipher_name(ue_channel_client_parameters *parameters, const char *cipher_name) {
+    parameters->cipher_name = ue_string_create_from(cipher_name);
+    return true;
+}
+
+bool ue_channel_client_parameters_set_digest_name(ue_channel_client_parameters *parameters, const char *digest_name) {
+    parameters->digest_name = ue_string_create_from(digest_name);
+    return true;
+}
+
 ue_channel_client *ue_channel_client_parameters_build(ue_channel_client_parameters *parameters) {
     ue_channel_client *channel_client;
 
     if (!parameters->persistent_path) {
-        parameters->persistent_path = ue_string_create_from(DEFAULT_PERSISTENT_PATH);
+        parameters->persistent_path = ue_string_create_from(UNKNOWNECHO_DEFAULT_CLIENT_PERSISTENT_PATH);
     }
 
     if (!parameters->csr_server_host) {
-        parameters->csr_server_host = ue_string_create_from(LOCALHOST);
+        parameters->csr_server_host = ue_string_create_from(UNKNOWNECHO_LOCALHOST);
     }
 
     if (parameters->csr_server_port == -1) {
-        parameters->csr_server_port = DEFAULT_CSR_SERVER_PORT;
+        parameters->csr_server_port = UNKNOWNECHO_DEFAULT_CSR_SERVER_PORT;
     }
 
     if (!parameters->tls_server_host) {
-        parameters->tls_server_host = ue_string_create_from(LOCALHOST);
+        parameters->tls_server_host = ue_string_create_from(UNKNOWNECHO_LOCALHOST);
     }
 
     if (parameters->tls_server_port == -1) {
-        parameters->tls_server_port = DEFAULT_TLS_SERVER_PORT;
+        parameters->tls_server_port = UNKNOWNECHO_DEFAULT_TLS_SERVER_PORT;
     }
 
     if (!parameters->server_certificates_path) {
-        parameters->server_certificates_path = ue_string_create_from(DEFAULT_SERVER_CERTIFICATES_PATH);
+        parameters->server_certificates_path = ue_string_create_from(UNKNOWNECHO_DEFAULT_SERVER_CERTIFICATES_PATH);
+    }
+
+    if (!parameters->cipher_name) {
+        parameters->cipher_name = ue_string_create_from(UNKNOWNECHO_DEFAULT_CIPHER_NAME);
+    }
+
+    if (!parameters->digest_name) {
+        parameters->digest_name = ue_string_create_from(UNKNOWNECHO_DEFAULT_DIGEST_NAME);
     }
 
     channel_client = ue_channel_client_create(parameters->persistent_path, parameters->nickname, parameters->csr_server_host, parameters->csr_server_port,
     	parameters->tls_server_host, parameters->tls_server_port, parameters->keystore_password, parameters->server_certificates_path,
         parameters->user_context, parameters->write_callback, parameters->initialization_begin_callback, parameters->initialization_end_callback,
         parameters->uninitialization_begin_callback, parameters->uninitialization_end_callback, parameters->connection_begin_callback,
-    	parameters->connection_end_callback, parameters->user_input_callback);
+    	parameters->connection_end_callback, parameters->user_input_callback, parameters->cipher_name, parameters->digest_name);
 
     return channel_client;
 }

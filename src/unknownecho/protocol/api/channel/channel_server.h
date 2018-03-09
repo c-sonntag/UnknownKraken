@@ -26,7 +26,8 @@ bool ue_channel_server_create(char *persistent_path,
     int csr_server_port, int tls_server_port,
     char *keystore_password, int channels_number, char *key_password, void *user_context,
     bool (*initialization_begin_callback)(void *user_context), bool (*initialization_end_callback)(void *user_context),
-    bool (*uninitialization_begin_callback)(void *user_context), bool (*uninitialization_end_callback)(void *user_context));
+    bool (*uninitialization_begin_callback)(void *user_context), bool (*uninitialization_end_callback)(void *user_context),
+    const char *cipher_name, const char *digest_name);
 
 void ue_channel_server_destroy();
 

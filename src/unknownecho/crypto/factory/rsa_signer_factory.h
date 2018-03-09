@@ -32,8 +32,16 @@
 #include <unknownecho/crypto/api/key/private_key.h>
 #include <unknownecho/crypto/api/key/asym_key.h>
 
-ue_signer *ue_rsa_signer_create(ue_public_key *pk, ue_private_key *sk);
+ue_signer *ue_rsa_signer_create(ue_public_key *pk, ue_private_key *sk, const char *digest_name);
 
-ue_signer *ue_rsa_signer_create_from_pair(ue_asym_key *akey);
+ue_signer *ue_rsa_signer_create_default(ue_public_key *pk, ue_private_key *sk);
+
+ue_signer *ue_rsa_signer_create_sha256(ue_public_key *pk, ue_private_key *sk);
+
+ue_signer *ue_rsa_signer_create_from_pair(ue_asym_key *akey, const char *digest_name);
+
+ue_signer *ue_rsa_signer_create_default_from_pair(ue_asym_key *akey);
+
+ue_signer *ue_rsa_signer_create_sha256_from_pair(ue_asym_key *akey);
 
 #endif

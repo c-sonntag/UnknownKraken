@@ -21,7 +21,7 @@
 #include <unknownecho/crypto/factory/hasher_factory.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 
-ue_signer *ue_rsa_signer_create(ue_public_key *pk, ue_private_key *sk) {
+ue_signer *ue_rsa_signer_create(ue_public_key *pk, ue_private_key *sk, const char *digest_name) {
 	ue_signer *signer;
 
 	if (!pk) {
@@ -34,7 +34,7 @@ ue_signer *ue_rsa_signer_create(ue_public_key *pk, ue_private_key *sk) {
 		return NULL;
 	}
 
-	if (!(signer = ue_signer_create("sha256"))) {
+	if (!(signer = ue_signer_create(digest_name))) {
 		ue_stacktrace_push_msg("Failed to create signer");
 		return NULL;
 	}
@@ -45,6 +45,22 @@ ue_signer *ue_rsa_signer_create(ue_public_key *pk, ue_private_key *sk) {
 	return signer;
 }
 
-ue_signer *ue_rsa_signer_create_from_pair(ue_asym_key *akey) {
-	return ue_rsa_signer_create(akey->pk, akey->sk);
+ue_signer *ue_rsa_signer_create_default(ue_public_key *pk, ue_private_key *sk) {
+	return ue_rsa_signer_create_sha256(pk, sk);
+}
+
+ue_signer *ue_rsa_signer_create_sha256(ue_public_key *pk, ue_private_key *sk) {
+	return ue_rsa_signer_create(pk, sk, "sha256");
+}
+
+ue_signer *ue_rsa_signer_create_from_pair(ue_asym_key *akey, const char *digest_name) {
+	return ue_rsa_signer_create(akey->pk, akey->sk, digest_name);
+}
+
+ue_signer *ue_rsa_signer_create_default_from_pair(ue_asym_key *akey) {
+	return ue_rsa_signer_create_default(akey->pk, akey->sk);
+}
+
+ue_signer *ue_rsa_signer_create_sha256_from_pair(ue_asym_key *akey) {
+	return ue_rsa_signer_create_sha256(akey->pk, akey->sk);
 }

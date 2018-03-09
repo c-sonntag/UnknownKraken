@@ -37,7 +37,8 @@
 
 bool ue_cipher_plain_data(unsigned char *plain_data, size_t plain_data_size,
     ue_public_key *public_key, ue_private_key *private_key,
-    unsigned char **cipher_data, size_t *cipher_data_size, const char *cipher_name) {
+    unsigned char **cipher_data, size_t *cipher_data_size, const char *cipher_name,
+    const char *digest_name) {
 
     bool result;
     unsigned char *encrypted_key, *iv, *cipher_data_temp, *signature, *compressed;
@@ -70,7 +71,7 @@ bool ue_cipher_plain_data(unsigned char *plain_data, size_t plain_data_size,
     }
 
     if (private_key) {
-        if (!(signer = ue_rsa_signer_create(public_key, private_key))) {
+        if (!(signer = ue_rsa_signer_create(public_key, private_key, digest_name))) {
             ue_stacktrace_push_msg("Failed to create rsa ue_signer with key pair");
             goto clean_up;
         }
@@ -112,7 +113,8 @@ clean_up:
 bool ue_decipher_cipher_data(unsigned char *cipher_data,
     size_t cipher_data_size, ue_private_key *private_key,
     ue_public_key *public_key, unsigned char **plain_data,
-    size_t *plain_data_size, const char *cipher_name) {
+    size_t *plain_data_size, const char *cipher_name,
+    const char *digest_name) {
 
     bool result, verify_signature;
     ue_byte_stream *stream;
@@ -175,7 +177,7 @@ bool ue_decipher_cipher_data(unsigned char *cipher_data,
 	}
 
     if (verify_signature) {
-        if (!(signer = ue_rsa_signer_create(public_key, private_key))) {
+        if (!(signer = ue_rsa_signer_create(public_key, private_key, digest_name))) {
             ue_stacktrace_push_msg("Failed to create signer to verify signature");
             goto clean_up;
         }

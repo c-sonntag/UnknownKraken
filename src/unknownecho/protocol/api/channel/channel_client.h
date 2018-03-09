@@ -33,7 +33,8 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 	bool (*write_callback)(void *user_context, ue_byte_stream *printer), bool (*initialization_begin_callback)(void *user_context),
 	bool (*initialization_end_callback)(void *user_context), bool (*uninitialization_begin_callback)(void *user_context),
 	bool (*uninitialization_end_callback)(void *user_context), bool (*connection_begin_callback)(void *user_context),
-	bool (*connection_end_callback)(void *user_context), char *(*user_input_callback)(void *user_context));
+	bool (*connection_end_callback)(void *user_context), char *(*user_input_callback)(void *user_context),
+	const char *cipher_name, const char *digest_name);
 
 void ue_channel_client_destroy(ue_channel_client *channel_client);
 

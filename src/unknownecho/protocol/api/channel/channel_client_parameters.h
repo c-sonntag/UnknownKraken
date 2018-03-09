@@ -38,6 +38,10 @@ bool ue_channel_client_parameters_set_connection_end_callback(ue_channel_client_
 
 bool ue_channel_client_parameters_set_user_input_callback(ue_channel_client_parameters *parameters, char *(*user_input_callback)(void *user_context));
 
+bool ue_channel_client_parameters_set_cipher_name(ue_channel_client_parameters *parameters, const char *cipher_name);
+
+bool ue_channel_client_parameters_set_digest_name(ue_channel_client_parameters *parameters, const char *digest_name);
+
 ue_channel_client *ue_channel_client_parameters_build(ue_channel_client_parameters *parameters);
 
 #endif

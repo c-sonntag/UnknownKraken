@@ -59,7 +59,8 @@ static char *generate_csr_string(ue_x509_certificate *certificate, ue_private_ke
 }
 
 unsigned char *ue_csr_build_client_request(ue_x509_certificate *certificate, ue_private_key *private_key,
-    ue_public_key *ca_public_key, size_t *cipher_data_size, ue_sym_key *future_key, unsigned char *iv, size_t iv_size) {
+    ue_public_key *ca_public_key, size_t *cipher_data_size, ue_sym_key *future_key, unsigned char *iv, size_t iv_size,
+    const char *cipher_name, const char *digest_name) {
 
     char *csr_string;
     ue_public_key *public_key;
@@ -108,7 +109,9 @@ unsigned char *ue_csr_build_client_request(ue_x509_certificate *certificate, ue_
 		goto clean_up;
 	}
 
-    if (!ue_cipher_plain_data(ue_byte_stream_get_data(stream), ue_byte_stream_get_size(stream), ca_public_key, NULL, &cipher_data, cipher_data_size, "aes-256-cbc")) {
+    if (!ue_cipher_plain_data(ue_byte_stream_get_data(stream), ue_byte_stream_get_size(stream), ca_public_key, NULL, &cipher_data,
+        cipher_data_size, cipher_name, digest_name)) {
+
         ue_stacktrace_push_msg("Failed to cipher plain data");
         goto clean_up;
     }
@@ -153,7 +156,8 @@ clean_up:
 }
 
 unsigned char *ue_csr_build_server_response(ue_private_key *csr_private_key, ue_x509_certificate *ca_certificate, ue_private_key *ca_private_key,
-    unsigned char *client_request, size_t client_request_size, size_t *server_response_size, ue_x509_certificate **signed_certificate) {
+    unsigned char *client_request, size_t client_request_size, size_t *server_response_size, ue_x509_certificate **signed_certificate,
+    const char *cipher_name, const char *digest_name) {
 
     unsigned char *decipher_data, *server_response, *decipher_client_request, *key_data, *iv;
     size_t decipher_data_size, decipher_client_request_size, key_size, iv_size;
@@ -181,7 +185,9 @@ unsigned char *ue_csr_build_server_response(ue_private_key *csr_private_key, ue_
     ue_check_parameter_or_return(client_request);
     ue_check_parameter_or_return(client_request_size > 0);
 
-    if (!ue_decipher_cipher_data(client_request, client_request_size, csr_private_key, NULL, &decipher_data, &decipher_data_size, "aes-256-cbc")) {
+    if (!ue_decipher_cipher_data(client_request, client_request_size, csr_private_key, NULL, &decipher_data, &decipher_data_size,
+        cipher_name, digest_name)) {
+
         ue_stacktrace_push_msg("Failed to decipher cipher data");
         goto clean_up;
     }

@@ -88,6 +88,7 @@ typedef struct {
 	bool (*connection_begin_callback)(void *user_context);
 	bool (*connection_end_callback)(void *user_context);
 	char *(*user_input_callback)(void *user_context);
+	const char *cipher_name, *digest_name;
 } ue_channel_client;
 
 #endif

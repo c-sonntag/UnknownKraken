@@ -15,6 +15,7 @@ typedef struct {
     bool (*initialization_end_callback)(void *user_context);
     bool (*uninitialization_begin_callback)(void *user_context);
     bool (*uninitialization_end_callback)(void *user_context);
+    const char *cipher_name, *digest_name;
 } ue_channel_server_parameters;
 
 #endif

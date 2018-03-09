@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
     akey = ue_rsa_asym_key_create(2048);
 
     ue_logger_info("Creating rsa ue_signer with random asym key of 2048 bits...");
-    if (!(s = ue_rsa_signer_create_from_pair(akey))) {
+    if (!(s = ue_rsa_signer_create_default_from_pair(akey))) {
         ue_stacktrace_push_msg("Failed to create rsa ue_signer with random asym key")
         goto clean_up;
     }

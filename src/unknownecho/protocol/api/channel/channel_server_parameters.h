@@ -26,6 +26,10 @@ bool ue_channel_server_parameters_set_uninitialization_begin_callback(ue_channel
 
 bool ue_channel_server_parameters_set_uninitialization_end_callback(ue_channel_server_parameters *parameters, bool (*uninitialization_end_callback)(void *user_context));
 
+bool ue_channel_server_parameters_set_cipher_name(ue_channel_server_parameters *parameters, const char *cipher_name);
+
+bool ue_channel_server_parameters_set_digest_name(ue_channel_server_parameters *parameters, const char *digest_name);
+
 bool ue_channel_server_parameters_build(ue_channel_server_parameters *parameters);
 
 #endif

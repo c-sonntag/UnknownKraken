@@ -14,5 +14,4 @@
 - Tests with CMocka.
 - Set to channel key a lifetime (not too long).
 - Set date logging more readable.
-- Add encryption settings possible in channel protocol parameters struct.
 - Anticipate the behavior if a specified port is already bound.
