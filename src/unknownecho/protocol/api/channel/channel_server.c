@@ -106,8 +106,8 @@ static bool check_suggest_nickname(const char *nickname);
 
 
 bool ue_channel_server_create(char *persistent_path,
-    unsigned short int csr_server_port, unsigned short int tls_server_port,
-    char *keystore_password, int channels_number, char *server_key_password, void *user_context,
+    int csr_server_port, int tls_server_port,
+    char *keystore_password, int channels_number, char *key_password, void *user_context,
     bool (*initialization_begin_callback)(void *user_context), bool (*initialization_end_callback)(void *user_context),
     bool (*uninitialization_begin_callback)(void *user_context), bool (*uninitialization_end_callback)(void *user_context)) {
 
@@ -140,7 +140,7 @@ bool ue_channel_server_create(char *persistent_path,
     channel_server->cipher_server_key_path = NULL;
     channel_server->signer_server_certificate_path = NULL;
     channel_server->signer_server_key_path = NULL;
-    channel_server->server_key_password = NULL;
+    channel_server->key_password = NULL;
     channel_server->csr_keystore_path = NULL;
     channel_server->tls_keystore_path = NULL;
     channel_server->cipher_keystore_path = NULL;
@@ -192,7 +192,7 @@ bool ue_channel_server_create(char *persistent_path,
     channel_server->signer_server_certificate_path = ue_strcat_variadic("ss", channel_server->persistent_path, "/certificate/signer_server.pem");
     channel_server->signer_server_key_path = ue_strcat_variadic("ss", channel_server->persistent_path, "/certificate/signer_server_key.pem");
 
-    channel_server->server_key_password = ue_string_create_from(server_key_password);
+    channel_server->key_password = ue_string_create_from(key_password);
 
     channel_server->csr_keystore_path = ue_strcat_variadic("ss", channel_server->persistent_path, "/keystore/csr_server_keystore.p12");
     channel_server->tls_keystore_path = ue_strcat_variadic("ss", channel_server->persistent_path, "/keystore/tls_server_keystore.p12");
@@ -272,7 +272,6 @@ void ue_channel_server_destroy() {
         ue_pkcs12_keystore_destroy(channel_server->tls_keystore);
         ue_pkcs12_keystore_destroy(channel_server->cipher_keystore);
     	ue_pkcs12_keystore_destroy(channel_server->signer_keystore);
-        ue_safe_fclose(channel_server->logs_file);
         ue_safe_free(channel_server->persistent_path);
         ue_safe_free(channel_server->csr_server_certificate_path);
         ue_safe_free(channel_server->csr_server_key_path);
@@ -282,7 +281,7 @@ void ue_channel_server_destroy() {
         ue_safe_free(channel_server->cipher_server_key_path);
         ue_safe_free(channel_server->signer_server_certificate_path);
         ue_safe_free(channel_server->signer_server_key_path);
-        ue_safe_free(channel_server->server_key_password);
+        ue_safe_free(channel_server->key_password);
         ue_safe_free(channel_server->csr_keystore_path);
         ue_safe_free(channel_server->tls_keystore_path);
         ue_safe_free(channel_server->cipher_keystore_path);
@@ -293,6 +292,7 @@ void ue_channel_server_destroy() {
         if (channel_server->uninitialization_end_callback) {
             channel_server->uninitialization_end_callback(channel_server->user_context);
         }
+        ue_safe_fclose(channel_server->logs_file);
 	    ue_safe_free(channel_server)
 	}
 }
@@ -460,7 +460,7 @@ static bool create_keystores() {
     signer_private_key = NULL;
 
     if (!ue_is_file_exists(channel_server->csr_keystore_path)) {
-        if (!ue_x509_certificate_load_from_files(channel_server->csr_server_certificate_path, channel_server->csr_server_key_path, channel_server->server_key_password, &csr_certificate, &csr_private_key)) {
+        if (!ue_x509_certificate_load_from_files(channel_server->csr_server_certificate_path, channel_server->csr_server_key_path, channel_server->key_password, &csr_certificate, &csr_private_key)) {
             ue_stacktrace_push_msg("Failed to load certificate and key from files '%s' and '%s'", channel_server->csr_server_certificate_path, channel_server->csr_server_key_path);
             goto end;
         }
@@ -483,7 +483,7 @@ static bool create_keystores() {
     }
 
     if (!ue_is_file_exists(channel_server->tls_keystore_path)) {
-        if (!ue_x509_certificate_load_from_files(channel_server->tls_server_certificate_path, channel_server->tls_server_key_path, channel_server->server_key_password, &tls_certificate, &tls_private_key)) {
+        if (!ue_x509_certificate_load_from_files(channel_server->tls_server_certificate_path, channel_server->tls_server_key_path, channel_server->key_password, &tls_certificate, &tls_private_key)) {
             ue_stacktrace_push_msg("Failed to load certificate and key from files '%s' and '%s'", channel_server->tls_server_certificate_path, channel_server->tls_server_key_path);
             goto end;
         }
@@ -505,7 +505,7 @@ static bool create_keystores() {
     }
 
     if (!ue_is_file_exists(channel_server->cipher_keystore_path)) {
-        if (!ue_x509_certificate_load_from_files(channel_server->cipher_server_certificate_path, channel_server->cipher_server_key_path, channel_server->server_key_password, &cipher_certificate, &cipher_private_key)) {
+        if (!ue_x509_certificate_load_from_files(channel_server->cipher_server_certificate_path, channel_server->cipher_server_key_path, channel_server->key_password, &cipher_certificate, &cipher_private_key)) {
             ue_stacktrace_push_msg("Failed to load certificate and key from files '%s' and '%s'", channel_server->cipher_server_certificate_path, channel_server->cipher_server_key_path);
             goto end;
         }
@@ -527,7 +527,7 @@ static bool create_keystores() {
     }
 
     if (!ue_is_file_exists(channel_server->signer_keystore_path)) {
-        if (!ue_x509_certificate_load_from_files(channel_server->signer_server_certificate_path, channel_server->signer_server_key_path, channel_server->server_key_password, &signer_certificate, &signer_private_key)) {
+        if (!ue_x509_certificate_load_from_files(channel_server->signer_server_certificate_path, channel_server->signer_server_key_path, channel_server->key_password, &signer_certificate, &signer_private_key)) {
             ue_stacktrace_push_msg("Failed to load certificate and key from files '%s' and '%s'", channel_server->signer_server_certificate_path, channel_server->signer_server_key_path);
             goto end;
         }

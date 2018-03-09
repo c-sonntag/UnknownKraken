@@ -52,7 +52,7 @@ typedef struct {
     char *persistent_path, *csr_server_certificate_path, *csr_server_key_path,
         *tls_server_certificate_path, *tls_server_key_path, *cipher_server_certificate_path,
         *cipher_server_key_path, *signer_server_certificate_path, *signer_server_key_path,
-        *server_key_password, *csr_keystore_path, *tls_keystore_path, *cipher_keystore_path,
+        *key_password, *csr_keystore_path, *tls_keystore_path, *cipher_keystore_path,
         *signer_keystore_path, *csr_server_port, *tls_server_port, *logger_file_path;
     void *user_context;
     bool (*initialization_begin_callback)(void *user_context);

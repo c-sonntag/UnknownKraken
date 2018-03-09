@@ -4,6 +4,7 @@
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/protocol/api/channel/channel_client.h>
 #include <unknownecho/protocol/api/channel/channel_client_struct.h>
+#include <unknownecho/protocol/factory/channel_client_factory.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/input.h>
@@ -17,14 +18,7 @@
 #include <limits.h>
 #include <signal.h>
 
-#define PERSISTENT_PATH            "out"
-#define CSR_SERVER_HOST            "127.0.0.1"
-#define CSR_SERVER_PORT            5002
-#define TLS_SERVER_HOST            "127.0.0.1"
-#define TLS_SERVER_PORT            5001
-#define KEYSTORE_PASSWORD          "password"
 #define MAX_CHANNEL_CLIENTS_NUMBER 3
-#define SERVER_CERTIFICATES_PATH   "out/certificate"
 
 int fds[2];
 
@@ -95,9 +89,7 @@ int main() {
 
         ue_channel_client_init(MAX_CHANNEL_CLIENTS_NUMBER);
 
-        if (!(channel_client = ue_channel_client_create(PERSISTENT_PATH, nickname, CSR_SERVER_HOST, CSR_SERVER_PORT,
-        	TLS_SERVER_HOST, TLS_SERVER_PORT, KEYSTORE_PASSWORD, SERVER_CERTIFICATES_PATH, NULL, write_callback, NULL,
-            NULL, NULL, NULL, NULL, NULL, NULL))) {
+        if (!(channel_client = ue_channel_client_create_default(nickname, "password", write_callback))) {
 
             ue_stacktrace_push_msg("Failed to create channel client");
             goto end;
@@ -117,11 +109,13 @@ end:
         close(fds[1]);
     }
     ue_safe_free(nickname);
-	ue_channel_client_destroy(channel_client);
-	ue_channel_client_uninit();
-	if (ue_stacktrace_is_filled()) {
+    if (ue_stacktrace_is_filled()) {
 		ue_logger_stacktrace("An error occurred with the following stacktrace :");
 	}
+    if (child_pid != 0) {
+        ue_channel_client_destroy(channel_client);
+        ue_channel_client_uninit();
+    }
     ue_uninit();
     return 0;
 }

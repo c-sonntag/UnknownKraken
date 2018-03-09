@@ -201,6 +201,7 @@ bool ue_logger_record_stacktrace(ue_logger *log, ue_stacktrace *stacktrace, cons
         }
         fprintf(stdout, "\n");
         record_stacktrace(stdout, stacktrace);
+        fflush(stdout);
     }
 
     /* Log to file */
@@ -213,9 +214,8 @@ bool ue_logger_record_stacktrace(ue_logger *log, ue_stacktrace *stacktrace, cons
         }
         fprintf(log->fp, "\n");
         record_stacktrace(log->fp, stacktrace);
+        //fflush(log->fp);
     }
-
-    fflush(log->fp);
 
     /* Release lock */
     ue_thread_mutex_unlock(log->mutex);

@@ -270,7 +270,9 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 	channel_client->cipher_keystore_path = ue_strcat_variadic("ss", full_persistent_path, CIPHER_KEYSTORE_PATH);
 	channel_client->signer_keystore_path = ue_strcat_variadic("ss", full_persistent_path, SIGNER_KEYSTORE_PATH);
 
-	channel_client->keystore_password = ue_string_create_from(keystore_password);
+	if (keystore_password) {
+		channel_client->keystore_password = ue_string_create_from(keystore_password);
+	}
 
 	keystore_folder_path = ue_strcat_variadic("ssss", channel_client->persistent_path, "/", channel_client->nickname, "/keystore");
 
@@ -284,31 +286,26 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 
 	if (!ue_x509_certificate_load_from_file(channel_client->csr_server_certificate_path, &channel_client->csr_server_certificate)) {
 		ue_stacktrace_push_msg("Failed to load CSR server certificate from path '%s'", channel_client->csr_server_certificate_path);
-		ue_safe_free(channel_client);
 		goto clean_up;
 	}
 
 	if (!ue_x509_certificate_load_from_file(channel_client->tls_server_certificate_path, &channel_client->tls_server_certificate)) {
 		ue_stacktrace_push_msg("Failed to load TLS server certificate from path '%s'", channel_client->tls_server_certificate_path);
-		ue_safe_free(channel_client);
 		goto clean_up;
 	}
 
 	if (!ue_x509_certificate_load_from_file(channel_client->cipher_server_certificate_path, &channel_client->cipher_server_certificate)) {
 		ue_stacktrace_push_msg("Failed to load cipher server certificate from path '%s'", channel_client->cipher_server_certificate_path);
-		ue_safe_free(channel_client);
 		goto clean_up;
 	}
 
 	if (!ue_x509_certificate_load_from_file(channel_client->signer_server_certificate_path, &channel_client->signer_server_certificate)) {
 		ue_stacktrace_push_msg("Failed to load signer server certificate from path '%s'", channel_client->signer_server_certificate_path);
-		ue_safe_free(channel_client);
 		goto clean_up;
 	}
 
 	if (!create_keystores(channel_client, csr_server_host, csr_server_port, channel_client->keystore_password)) {
 		ue_stacktrace_push_msg("Failed to create keystore");
-		ue_channel_client_destroy(channel_client);
 		goto clean_up;
 	}
 
@@ -382,12 +379,13 @@ void ue_channel_client_destroy(ue_channel_client *channel_client) {
 	ue_safe_free(channel_client->signer_keystore_path);
 	ue_sym_key_destroy(channel_client->channel_key);
 	ue_safe_free(channel_client->channel_iv);
-	ue_safe_fclose(channel_client->logs_file);
 	ue_safe_free(channel_client->persistent_path);
 	ue_safe_free(channel_client->tls_server_host);
 	if (channel_client->uninitialization_end_callback) {
 		channel_client->uninitialization_end_callback(channel_client->user_context);
 	}
+	ue_safe_fclose(channel_client->logs_file);
+	ue_logger_set_fp(ue_logger_manager_get_logger(), NULL);
 	ue_safe_free(channel_client);
 }
 

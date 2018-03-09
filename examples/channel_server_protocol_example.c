@@ -3,14 +3,12 @@
 #include <unknownecho/errorHandling/logger_manager.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/protocol/api/channel/channel_server.h>
+#include <unknownecho/protocol/factory/channel_server_factory.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
 
-#define ROOT_PATH           "out/server"
-#define CSR_SERVER_PORT     5002
-#define TLS_SERVER_PORT     5001
 #define KEYSTORE_PASSWORD   "password"
 #define SERVER_KEY_PASSWORD "passphrase"
 
@@ -34,9 +32,7 @@ int main() {
 	ue_logger_set_file_level(ue_logger_manager_get_logger(), LOG_TRACE);
 	ue_logger_set_print_level(ue_logger_manager_get_logger(), LOG_INFO);
 
-    if (!ue_channel_server_create(ROOT_PATH, CSR_SERVER_PORT, TLS_SERVER_PORT,
-        KEYSTORE_PASSWORD, 3, SERVER_KEY_PASSWORD, NULL, NULL, NULL, NULL, NULL)) {
-            
+    if (!ue_channel_server_create_default(KEYSTORE_PASSWORD, SERVER_KEY_PASSWORD)) {
         ue_stacktrace_push_msg("Failed to create server channel");
         goto end;
     }
