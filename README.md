@@ -2,7 +2,9 @@
 
 LibUnknownEcho helps to put secure exchanges in the development of C client/server application.
 
-## Low level features
+***
+
+# Low level features
 * TLS connection between a client and a server.
 * TLS connection between multiple clients through a server.
 * Encrypt messages with symmetric and asymmetric cryptography.
@@ -14,10 +16,11 @@ LibUnknownEcho helps to put secure exchanges in the development of C client/serv
 * Encoding in Base64.
 * Compression with Inflate/Deflate.
 
+***
 
-## Hight level features
+# Hight level features
 
-### Channel protocol
+## Channel protocol
 Channel protocol is an all-in-one protocol to create a server that handle multiple client exchanges in different channels.
 A possible application of this protocol can be a secure chat application, where each channel is a conversation room.
 
@@ -35,24 +38,28 @@ The server is now listening on two ports :
 * If it's the first time, the client build 3 certificate/key pairs, for TLS, ciphering and signing, and build for each of them a CSR. This CSR is send to the server on the CSR port in order to sign each certificate. The server will record this signed certificates, and the client will save them in 3 distinct keystores.
 * The client can now establish a connection with a channel. If he's the only connected, he will be responsible of the session key of the channel. If not, he ask through the server the session key. Note that the server doesn't have the knowledge of the key. After that, each message will be encrypted with the key.
 
-## Dependencies
+***
+
+# Dependencies
 * libssl 1.1.0 for TLS connection support.
 * libcrypto 1.1.0 for encryption support.
 * libz 1.2.11 for compression support.
 
-## Installation from sources
+***
+
+# Installation from sources
 * Install libssl version 1.10 (that contains also libcrypto 1.10) :
-    (1) wget https://www.openssl.org/source/openssl-1.1.0.tar.gz
-    (2) tar -zxvf openssl-1.1.0.tar.gz
-    (3) cd openssl-1.1.0
-    (4) ./config
-    (5) make
-    (6) sudo make install
+    * wget https://www.openssl.org/source/openssl-1.1.0.tar.gz
+    * tar -zxvf openssl-1.1.0.tar.gz
+    * cd openssl-1.1.0
+    * ./config
+    * make
+    * sudo make install
 * Install zlib version 1.2.11
-    (1) Download source code from web site : https://zlib.net/
-    (2) ./configure
-    (3) make
-    (4) sudo make install
+    * Download source code from web site : https://zlib.net/
+    * ./configure
+    * make
+    * sudo make install
 * Install a recent version of CMake.
 * Compile LibUnknownEcho
     * In debug mode : ./build_debug.sh
@@ -60,14 +67,17 @@ The server is now listening on two ports :
     * Clean all : ./clean.sh
 The lib will appear in bin folder, and all the examples in bin/debug/examples or bin/release/examples according to the compilation mode.
 
+***
 
-## Other dependencies
+# Other dependencies
 * Make, CMake for compilation.
 * Valgrind for memory debugging/memory leak detection.
 
-## Architecture
+***
 
-### Facade design pattern
+# Architecture
+
+## Facade design pattern
 The facade design pattern is use to simplify the complexity of a module.
 In the module, we have 2 to 4 sub folders which are :
 * api : that contains the highest level of functions/structs of the module.
