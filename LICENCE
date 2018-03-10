@@ -633,7 +633,7 @@ the "copyright" line and a pointer to where the full notice is found.
 
     LibUnknownEcho is a portable, robust and lightweight library that
     allow to quickly add crypto manipulations, in order to exchange
-    ecurely data.
+    securely data.
     Copyright (C) 2018  Charly Lamothe
 
     This program is free software: you can redistribute it and/or modify
