@@ -22,9 +22,12 @@
 #include <unknownecho/alloc.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/defines.h>
+#include <unknownecho/errorHandling/check_parameter.h>
 
 ue_channel_server_parameters *ue_channel_server_parameters_create(char *keystore_password, char *key_password) {
     ue_channel_server_parameters *parameters;
+
+    ue_check_parameter_or_return(keystore_password);
 
     ue_safe_alloc(parameters, ue_channel_server_parameters, 1);
     parameters->persistent_path = NULL;
@@ -32,7 +35,11 @@ ue_channel_server_parameters *ue_channel_server_parameters_create(char *keystore
     parameters->tls_server_port = -1;
     parameters->keystore_password = ue_string_create_from(keystore_password);
     parameters->channels_number = -1;
-    parameters->key_password = ue_string_create_from(key_password);
+    if (key_password) {
+        parameters->key_password = ue_string_create_from(key_password);
+    } else {
+        parameters->key_password = NULL;
+    }
     parameters->user_context = NULL;
     parameters->initialization_begin_callback = NULL;
     parameters->initialization_end_callback = NULL;

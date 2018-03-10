@@ -103,7 +103,6 @@ bool ue_x509_certificate_load_from_files(const char *cert_file_name, const char 
 
 	ue_check_parameter_or_return(cert_file_name);
 	ue_check_parameter_or_return(private_key_file_name);
-	ue_check_parameter_or_return(password);
 
 	certificate_impl = NULL;
 	private_key_impl = NULL;

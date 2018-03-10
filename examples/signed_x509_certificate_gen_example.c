@@ -39,7 +39,7 @@ int main() {
 
     ue_init();
 
-    if (!ue_x509_certificate_generate_self_signed_ca("FR", "SWA", &ca_certificate, &ca_private_key)) {
+    if (!ue_x509_certificate_generate_self_signed_ca("SWA", &ca_certificate, &ca_private_key)) {
         ue_logger_error("Failed to generate self signed CA");
         goto clean_up;
     }
@@ -54,7 +54,7 @@ int main() {
         goto clean_up;
     }
 
-    if (!ue_x509_certificate_generate_signed(read_ca_certificate, read_ca_private_key, "FR", "SWA", &certificate, &private_key)) {
+    if (!ue_x509_certificate_generate_signed(read_ca_certificate, read_ca_private_key, "SWA", &certificate, &private_key)) {
         ue_logger_error("Failed to generate certificate signed by CA");
         goto clean_up;
     }

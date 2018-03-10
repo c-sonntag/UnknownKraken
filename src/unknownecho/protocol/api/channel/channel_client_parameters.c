@@ -19,12 +19,16 @@
 
 #include <unknownecho/protocol/api/channel/channel_client_parameters.h>
 #include <unknownecho/protocol/api/channel/channel_client.h>
+#include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/defines.h>
 
 ue_channel_client_parameters *ue_channel_client_parameters_create(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ue_byte_stream *printer)) {
     ue_channel_client_parameters *parameters;
+
+    ue_check_parameter_or_return(nickname);
+    ue_check_parameter_or_return(keystore_password);
 
     ue_safe_alloc(parameters, ue_channel_client_parameters, 1);
     parameters->persistent_path = NULL;

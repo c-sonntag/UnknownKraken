@@ -40,6 +40,7 @@
 #include <unknownecho/crypto/api/key/public_key.h>
 #include <unknownecho/crypto/api/key/private_key.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
+#include <unknownecho/crypto/api/certificate/x509_certificate_generation.h>
 #include <unknownecho/crypto/api/certificate/x509_csr.h>
 #include <unknownecho/crypto/api/cipher/data_cipher.h>
 #include <unknownecho/crypto/api/keystore/pkcs12_keystore.h>
@@ -65,6 +66,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <limits.h>
+#include <errno.h>
 
 
 ue_channel_server *channel_server = NULL;
@@ -73,6 +75,8 @@ ue_channel_server *channel_server = NULL;
 static size_t send_cipher_message(ue_socket_client_connection *connection, ue_byte_stream *message_to_send);
 
 static size_t receive_cipher_message(ue_socket_client_connection *connection);
+
+static bool create_certificates();
 
 static bool create_keystores();
 
@@ -115,12 +119,13 @@ bool ue_channel_server_create(char *persistent_path,
     bool result;
     int i;
     ue_x509_certificate **ca_certificates;
-    char *keystore_folder_path;
+    char *keystore_folder_path, *certificate_folder_path;
 
     result = false;
     channel_server = NULL;
     ca_certificates = NULL;
     keystore_folder_path = NULL;
+    certificate_folder_path = NULL;
 
     ue_safe_alloc(channel_server, ue_channel_server, 1);
     channel_server->csr_server = NULL;
@@ -158,11 +163,28 @@ bool ue_channel_server_create(char *persistent_path,
         channel_server->initialization_begin_callback(user_context);
     }
 
-    if (!(channel_server->logs_file = fopen(channel_server->logger_file_path, "a"))) {
-        ue_stacktrace_push_msg("Failed to open logs file at path '%s'", channel_server->logger_file_path)
+    if (ue_is_file_exists(channel_server->logger_file_path)) {
+        if (!(channel_server->logs_file = fopen(channel_server->logger_file_path, "a"))) {
+            ue_stacktrace_push_msg("Failed to open logs file at path '%s'", channel_server->logger_file_path)
+        } else {
+            ue_logger_set_fp(ue_logger_manager_get_logger(), channel_server->logs_file);
+            //ue_logger_set_details(ue_logger_manager_get_logger(), true);
+        }
     } else {
-        ue_logger_set_fp(ue_logger_manager_get_logger(), channel_server->logs_file);
-        //ue_logger_set_details(ue_logger_manager_get_logger(), true);
+        if (!(channel_server->logs_file = fopen(channel_server->logger_file_path, "w"))) {
+            ue_stacktrace_push_msg("Failed to open logs file at path '%s'", channel_server->logger_file_path)
+        } else {
+            ue_logger_set_fp(ue_logger_manager_get_logger(), channel_server->logs_file);
+            //ue_logger_set_details(ue_logger_manager_get_logger(), true);
+        }
+    }
+
+    if (!ue_is_dir_exists(channel_server->channel_server->persistent_path)) {
+        ue_logger_info("Creating '%s'...", keystore_folder_path);
+		if (!ue_create_folder(channel_server->persistent_path)) {
+			ue_stacktrace_push_msg("Failed to create '%s'", channel_server->persistent_path);
+			goto clean_up;
+		}
     }
 
     channel_server->channels_number = channels_number;
@@ -184,6 +206,18 @@ bool ue_channel_server_create(char *persistent_path,
 	}
     ue_safe_free(keystore_folder_path);
 
+    certificate_folder_path = ue_strcat_variadic("ss", channel_server->persistent_path, "/certificate");
+
+	if (!ue_is_dir_exists(certificate_folder_path)) {
+		ue_logger_info("Creating '%s'...", certificate_folder_path);
+		if (!ue_create_folder(certificate_folder_path)) {
+			ue_stacktrace_push_msg("Failed to create '%s'", certificate_folder_path);
+            ue_safe_free(certificate_folder_path);
+			goto clean_up;
+		}
+	}
+    ue_safe_free(certificate_folder_path);
+
     channel_server->keystore_password = ue_string_create_from(keystore_password);
 
     channel_server->csr_server_certificate_path = ue_strcat_variadic("ss", channel_server->persistent_path, "/certificate/csr_server.pem");
@@ -195,15 +229,24 @@ bool ue_channel_server_create(char *persistent_path,
     channel_server->signer_server_certificate_path = ue_strcat_variadic("ss", channel_server->persistent_path, "/certificate/signer_server.pem");
     channel_server->signer_server_key_path = ue_strcat_variadic("ss", channel_server->persistent_path, "/certificate/signer_server_key.pem");
 
-    channel_server->key_password = ue_string_create_from(key_password);
+    if (key_password) {
+        channel_server->key_password = ue_string_create_from(key_password);
+    } else {
+        channel_server->key_password = NULL;
+    }
+
+    if (!create_certificates()) {
+        ue_stacktrace_push_msg("Failed to create certificates");
+        goto clean_up;
+    }
 
     channel_server->csr_keystore_path = ue_strcat_variadic("ss", channel_server->persistent_path, "/keystore/csr_server_keystore.p12");
     channel_server->tls_keystore_path = ue_strcat_variadic("ss", channel_server->persistent_path, "/keystore/tls_server_keystore.p12");
     channel_server->cipher_keystore_path = ue_strcat_variadic("ss", channel_server->persistent_path, "/keystore/cipher_server_keystore.p12");
     channel_server->signer_keystore_path = ue_strcat_variadic("ss", channel_server->persistent_path, "/keystore/signer_server_keystore.p12");
 
-    if (!create_keystores(channel_server)) {
-        ue_stacktrace_push_msg("Failed to create keystore");
+    if (!create_keystores()) {
+        ue_stacktrace_push_msg("Failed to create keystores");
         goto clean_up;
     }
 
@@ -481,6 +524,11 @@ static bool create_keystores() {
             ue_stacktrace_push_msg("Failed to write keystore to '%s'", channel_server->csr_keystore_path);
             goto end;
         }
+
+        ue_logger_info("Removing the hard disk CSR private key.");
+        if (remove(channel_server->csr_server_key_path) != 0) {
+            ue_logger_warn("Failed to remove '%s' with error message '%s'.", channel_server->csr_server_key_path, strerror(errno));
+        }
     } else {
         if (!(channel_server->csr_keystore = ue_pkcs12_keystore_load(channel_server->csr_keystore_path, channel_server->keystore_password))) {
             ue_stacktrace_push_msg("Failed to load specified pkcs12 keystore");
@@ -502,6 +550,11 @@ static bool create_keystores() {
         if (!ue_pkcs12_keystore_write(channel_server->tls_keystore, channel_server->tls_keystore_path, channel_server->keystore_password)) {
             ue_stacktrace_push_msg("Failed to write keystore to '%s'", channel_server->tls_keystore_path);
             goto end;
+        }
+
+        ue_logger_info("Removing the hard disk TLS private key.");
+        if (remove(channel_server->tls_server_key_path) != 0) {
+            ue_logger_warn("Failed to remove '%s' with error message '%s'.", channel_server->tls_server_key_path, strerror(errno));
         }
     } else {
         if (!(channel_server->tls_keystore = ue_pkcs12_keystore_load(channel_server->tls_keystore_path, channel_server->keystore_password))) {
@@ -525,6 +578,11 @@ static bool create_keystores() {
             ue_stacktrace_push_msg("Failed to write keystore to '%s'", channel_server->cipher_keystore_path);
             goto end;
         }
+
+        ue_logger_info("Removing the hard disk CIPHER private key.");
+        if (remove(channel_server->cipher_server_key_path) != 0) {
+            ue_logger_warn("Failed to remove '%s' with error message '%s'.", channel_server->cipher_server_key_path, strerror(errno));
+        }
     } else {
         if (!(channel_server->cipher_keystore = ue_pkcs12_keystore_load(channel_server->cipher_keystore_path, channel_server->keystore_password))) {
             ue_stacktrace_push_msg("Failed to load specified pkcs12 keystore");
@@ -547,6 +605,11 @@ static bool create_keystores() {
             ue_stacktrace_push_msg("Failed to write keystore to '%s'", channel_server->signer_keystore_path);
             goto end;
         }
+
+        ue_logger_info("Removing the hard disk SIGNER private key.");
+        if (remove(channel_server->signer_server_key_path) != 0) {
+            ue_logger_warn("Failed to remove '%s' with error message '%s'.", channel_server->signer_server_key_path, strerror(errno));
+        }
     } else {
         if (!(channel_server->signer_keystore = ue_pkcs12_keystore_load(channel_server->signer_keystore_path, channel_server->keystore_password))) {
             ue_stacktrace_push_msg("Failed to load specified pkcs12 keystore");
@@ -557,6 +620,116 @@ static bool create_keystores() {
     result = true;
 
 end:
+    return result;
+}
+
+static bool create_certificates() {
+    bool result;
+    ue_x509_certificate *certificate;
+    ue_private_key *private_key;
+
+    result = false;
+    certificate = NULL;
+    private_key = NULL;
+
+    if (!ue_is_file_exists(channel_server->csr_server_certificate_path)) {
+        ue_logger_info("CSR certificate doesn't exists. Generating certificate and private key...");
+
+        if (!ue_x509_certificate_generate_self_signed_ca("CSR_SERVER", &certificate, &private_key)) {
+            ue_stacktrace_push_msg("Failed to generate self signed CA");
+            goto clean_up;
+        }
+
+        ue_logger_info("CSR pair successfully generated.");
+
+        if (!ue_x509_certificate_print_pair(certificate, private_key, channel_server->csr_server_certificate_path,
+            channel_server->csr_server_key_path)) {
+
+            ue_stacktrace_push_msg("Failed to print ca certificate and private key to files");
+            goto clean_up;
+        }
+
+        ue_logger_info("CSR certificate successfully wrote at '%s'.", channel_server->csr_server_certificate_path);
+        ue_logger_info("CSR private key successfully wrote at '%s'.", channel_server->csr_server_key_path);
+
+        ue_x509_certificate_destroy(certificate);
+        ue_private_key_destroy(private_key);
+    }
+
+    if (!ue_is_file_exists(channel_server->tls_server_certificate_path)) {
+        ue_logger_info("TLS certificate doesn't exists. Generating certificate and private key...");
+
+        if (!ue_x509_certificate_generate_self_signed_ca("TLS_SERVER", &certificate, &private_key)) {
+            ue_stacktrace_push_msg("Failed to generate self signed CA");
+            goto clean_up;
+        }
+
+        ue_logger_info("TLS pair successfully generated.");
+
+        if (!ue_x509_certificate_print_pair(certificate, private_key, channel_server->tls_server_certificate_path,
+            channel_server->tls_server_key_path)) {
+
+            ue_stacktrace_push_msg("Failed to print ca certificate and private key to files");
+            goto clean_up;
+        }
+
+        ue_logger_info("TLS certificate successfully wrote at '%s'.", channel_server->tls_server_certificate_path);
+        ue_logger_info("TLS private key successfully wrote at '%s'.", channel_server->tls_server_key_path);
+
+        ue_x509_certificate_destroy(certificate);
+        ue_private_key_destroy(private_key);
+    }
+
+    if (!ue_is_file_exists(channel_server->cipher_server_certificate_path)) {
+        ue_logger_info("CIPHER certificate doesn't exists. Generating certificate and private key...");
+
+        if (!ue_x509_certificate_generate_self_signed_ca("CIPHER_SERVER", &certificate, &private_key)) {
+            ue_stacktrace_push_msg("Failed to generate self signed CA");
+            goto clean_up;
+        }
+
+        ue_logger_info("CIPHER pair successfully generated.");
+
+        if (!ue_x509_certificate_print_pair(certificate, private_key, channel_server->cipher_server_certificate_path,
+            channel_server->cipher_server_key_path)) {
+
+            ue_stacktrace_push_msg("Failed to print ca certificate and private key to files");
+            goto clean_up;
+        }
+
+        ue_logger_info("CIPHER certificate successfully wrote at '%s'.", channel_server->cipher_server_certificate_path);
+        ue_logger_info("CIPHER private key successfully wrote at '%s'.", channel_server->cipher_server_key_path);
+
+        ue_x509_certificate_destroy(certificate);
+        ue_private_key_destroy(private_key);
+    }
+
+    if (!ue_is_file_exists(channel_server->signer_server_certificate_path)) {
+        ue_logger_info("SIGNER certificate doesn't exists. Generating certificate and private key...");
+
+        if (!ue_x509_certificate_generate_self_signed_ca("SIGNER_SERVER", &certificate, &private_key)) {
+            ue_stacktrace_push_msg("Failed to generate self signed CA");
+            goto clean_up;
+        }
+
+        ue_logger_info("SIGNER pair successfully generated.");
+
+        if (!ue_x509_certificate_print_pair(certificate, private_key, channel_server->signer_server_certificate_path,
+            channel_server->signer_server_key_path)) {
+
+            ue_stacktrace_push_msg("Failed to print ca certificate and private key to files");
+            goto clean_up;
+        }
+
+        ue_logger_info("SIGNER certificate successfully wrote at '%s'.", channel_server->signer_server_certificate_path);
+        ue_logger_info("SIGNER private key successfully wrote at '%s'.", channel_server->signer_server_key_path);
+    }
+
+    result = true;
+
+clean_up:
+    ue_x509_certificate_destroy(certificate);
+    ue_private_key_destroy(private_key);
     return result;
 }
 

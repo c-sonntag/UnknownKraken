@@ -36,7 +36,7 @@ int main() {
 
     ue_init();
 
-    if (!ue_x509_certificate_generate_self_signed_ca("FR", "SWA", &certificate, &private_key)) {
+    if (!ue_x509_certificate_generate_self_signed_ca("SWA", &certificate, &private_key)) {
         ue_logger_error("Failed to generate self signed CA");
         goto clean_up;
     }

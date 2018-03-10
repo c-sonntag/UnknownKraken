@@ -32,9 +32,9 @@
 #include <string.h>
 
 
-static bool generate_signed_key_pair(X509 *ca_crt, EVP_PKEY *ca_key, char *C, char *CN, X509 **crt, EVP_PKEY **key);
+static bool generate_signed_key_pair(X509 *ca_crt, EVP_PKEY *ca_key, char *CN, X509 **crt, EVP_PKEY **key);
 
-static bool generate_key_csr(EVP_PKEY **key, char *C, char *CN, X509_REQ **req);
+static bool generate_key_csr(EVP_PKEY **key, char *CN, X509_REQ **req);
 
 /* Generates a 20 byte random serial number and sets in certificate. */
 static bool generate_set_random_serial(X509 *crt);
@@ -42,7 +42,7 @@ static bool generate_set_random_serial(X509 *crt);
 static RSA *rsa_keypair_gen(int bits);
 
 
-bool ue_x509_certificate_generate_self_signed_ca(char *C, char *CN, ue_x509_certificate **certificate, ue_private_key **private_key) {
+bool ue_x509_certificate_generate_self_signed_ca(char *CN, ue_x509_certificate **certificate, ue_private_key **private_key) {
 	bool result;
 	ue_x509_certificate_parameters *parameters;
     ue_x509_certificate *certificate_impl;
@@ -53,17 +53,11 @@ bool ue_x509_certificate_generate_self_signed_ca(char *C, char *CN, ue_x509_cert
 	certificate_impl = NULL;
 	private_key_impl = NULL;
 
-	ue_check_parameter_or_return(C);
 	ue_check_parameter_or_return(CN);
 
 	if (!(parameters = ue_x509_certificate_parameters_create())) {
 		ue_stacktrace_push_msg("Failed to create x509 parameters structure");
 		return false;
-	}
-
-    if (!ue_x509_certificate_parameters_set_country(parameters, C)) {
-		ue_stacktrace_push_msg("Failed to set C to x509 parameters");
-		goto clean_up;
 	}
 
     if (!ue_x509_certificate_parameters_set_common_name(parameters, CN)) {
@@ -101,7 +95,7 @@ clean_up:
 }
 
 bool ue_x509_certificate_generate_signed(ue_x509_certificate *ca_certificate, ue_private_key *ca_private_key,
-    char *C, char *CN, ue_x509_certificate **certificate, ue_private_key **private_key) {
+    char *CN, ue_x509_certificate **certificate, ue_private_key **private_key) {
 
 	X509 *certificate_impl;
 	EVP_PKEY *private_key_impl;
@@ -110,7 +104,6 @@ bool ue_x509_certificate_generate_signed(ue_x509_certificate *ca_certificate, ue
 
 	ue_check_parameter_or_return(ca_certificate);
 	ue_check_parameter_or_return(ca_private_key);
-	ue_check_parameter_or_return(C);
 	ue_check_parameter_or_return(CN);
 
 	certificate_impl = NULL;
@@ -119,7 +112,7 @@ bool ue_x509_certificate_generate_signed(ue_x509_certificate *ca_certificate, ue
 	*certificate = NULL;
 	*private_key = NULL;
 
-	if (!generate_signed_key_pair(ue_x509_certificate_get_impl(ca_certificate), ue_private_key_get_impl(ca_private_key), C, CN,
+	if (!generate_signed_key_pair(ue_x509_certificate_get_impl(ca_certificate), ue_private_key_get_impl(ca_private_key), CN,
 		&certificate_impl, &private_key_impl)) {
 		ue_stacktrace_push_msg("Failed to generate signed key pair");
 		goto clean_up_failed;
@@ -157,14 +150,13 @@ clean_up_failed:
 	return false;
 }
 
-static bool generate_signed_key_pair(X509 *ca_crt, EVP_PKEY *ca_key, char *C, char *CN, X509 **crt, EVP_PKEY **key) {
+static bool generate_signed_key_pair(X509 *ca_crt, EVP_PKEY *ca_key, char *CN, X509 **crt, EVP_PKEY **key) {
 	X509_REQ *req;
 	EVP_PKEY *req_pubkey;
 	char *error_buffer;
 
 	ue_check_parameter_or_return(ca_crt);
 	ue_check_parameter_or_return(ca_key);
-	ue_check_parameter_or_return(C);
 	ue_check_parameter_or_return(CN);
 
 	req = NULL;
@@ -173,7 +165,7 @@ static bool generate_signed_key_pair(X509 *ca_crt, EVP_PKEY *ca_key, char *C, ch
 	*crt = NULL;
 	*key = NULL;
 
-	if (!generate_key_csr(key, C, CN, &req)) {
+	if (!generate_key_csr(key, CN, &req)) {
 		ue_stacktrace_push_msg("Fialed to generate CSR key");
 		return false;
 	}
@@ -226,12 +218,11 @@ clean_up_failed:
 	return false;
 }
 
-static bool generate_key_csr(EVP_PKEY **key, char *C, char *CN, X509_REQ **req) {
+static bool generate_key_csr(EVP_PKEY **key, char *CN, X509_REQ **req) {
 	char *error_buffer;
 	RSA *rsa;
 	X509_NAME *name;
 
-	ue_check_parameter_or_return(C);
 	ue_check_parameter_or_return(CN);
 
 	error_buffer = NULL;
@@ -262,7 +253,6 @@ static bool generate_key_csr(EVP_PKEY **key, char *C, char *CN, X509_REQ **req) 
 
 	/* Set the DN of the request. */
 	name = X509_REQ_get_subject_name(*req);
-	X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC, (const unsigned char*)C, strlen(C), -1, 0);
 	X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (const unsigned char*)CN, strlen(CN), -1, 0);
 
 	/* Self-sign the request to prove that we posses the key. */

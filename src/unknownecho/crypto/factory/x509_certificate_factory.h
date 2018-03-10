@@ -32,9 +32,9 @@
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
 #include <unknownecho/crypto/api/key/private_key.h>
 
-bool ue_x509_certificate_generate_self_signed_ca(char *C, char *CN, ue_x509_certificate **certificate, ue_private_key **private_key);
+bool ue_x509_certificate_generate_self_signed_ca(char *CN, ue_x509_certificate **certificate, ue_private_key **private_key);
 
 bool ue_x509_certificate_generate_signed(ue_x509_certificate *ca_certificate, ue_private_key *ca_private_key,
-    char *C, char *CN, ue_x509_certificate **certificate, ue_private_key **private_key);
+    char *CN, ue_x509_certificate **certificate, ue_private_key **private_key);
 
 #endif

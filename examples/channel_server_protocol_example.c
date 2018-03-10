@@ -23,13 +23,13 @@
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/protocol/api/channel/channel_server.h>
 #include <unknownecho/protocol/factory/channel_server_factory.h>
+#include <unknownecho/input.h>
+#include <unknownecho/alloc.h>
+#include <unknownecho/string/string_utility.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
-
-#define KEYSTORE_PASSWORD   "password"
-#define SERVER_KEY_PASSWORD "passphrase"
 
 static void handle_signal(int sig, void (*h)(int), int options) {
     struct sigaction s;
@@ -43,15 +43,30 @@ static void handle_signal(int sig, void (*h)(int), int options) {
 }
 
 int main() {
+    char *keystore_password, *key_password;
+
     if (!ue_init()) {
 		printf("[ERROR] Failed to init LibUnknownEcho\n");
 		exit(1);
 	}
 
+    keystore_password = NULL;
+    key_password = NULL;
+
 	ue_logger_set_file_level(ue_logger_manager_get_logger(), LOG_TRACE);
 	ue_logger_set_print_level(ue_logger_manager_get_logger(), LOG_INFO);
 
-    if (!ue_channel_server_create_default(KEYSTORE_PASSWORD, SERVER_KEY_PASSWORD)) {
+    if (!(keystore_password = ue_input_string("Keystore password : "))) {
+        ue_stacktrace_push_msg("Specified nickname isn't valid");
+        goto end;
+    }
+
+    if (!(key_password = ue_input_string("Key password : "))) {
+        ue_stacktrace_push_msg("Specified nickname isn't valid");
+        goto end;
+    }
+
+    if (!ue_channel_server_create_default(keystore_password, key_password)) {
         ue_stacktrace_push_msg("Failed to create server channel");
         goto end;
     }
@@ -65,6 +80,8 @@ int main() {
     }
 
 end:
+    ue_safe_free(keystore_password);
+    ue_safe_free(key_password);
 	if (ue_stacktrace_is_filled()) {
 		ue_logger_stacktrace("An error occurred with the following stacktrace :");
 	}

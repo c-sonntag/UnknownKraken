@@ -62,7 +62,7 @@ bool write_callback(void *user_context, ue_byte_stream *printer) {
 }
 
 int main() {
-    char *nickname;
+    char *nickname, *password;
     ue_channel_client *channel_client;
     int child_pid;
 
@@ -72,6 +72,7 @@ int main() {
 	}
 
     nickname = NULL;
+    password = NULL;
     channel_client = NULL;
     fds[1] = -1;
 
@@ -80,6 +81,11 @@ int main() {
 
     if (!(nickname = ue_input_string("Nickname : "))) {
         ue_stacktrace_push_msg("Specified nickname isn't valid");
+        goto end;
+    }
+
+    if (!(password = ue_input_string("Password : "))) {
+        ue_stacktrace_push_msg("Specified password isn't valid");
         goto end;
     }
 
@@ -108,7 +114,7 @@ int main() {
 
         ue_channel_client_init(MAX_CHANNEL_CLIENTS_NUMBER);
 
-        if (!(channel_client = ue_channel_client_create_default(nickname, "password", write_callback))) {
+        if (!(channel_client = ue_channel_client_create_default(nickname, password, write_callback))) {
 
             ue_stacktrace_push_msg("Failed to create channel client");
             goto end;
@@ -128,6 +134,7 @@ end:
         close(fds[1]);
     }
     ue_safe_free(nickname);
+    ue_safe_free(password);
     if (ue_stacktrace_is_filled()) {
 		ue_logger_stacktrace("An error occurred with the following stacktrace :");
 	}

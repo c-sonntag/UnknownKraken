@@ -137,12 +137,6 @@ bool ue_x509_certificate_generate(ue_x509_certificate_parameters *parameters, ue
 		goto clean_up_failed;
 	}
 
-	/* Netscape specific extensions */
-	if (!add_ext(x, NID_netscape_cert_type, ue_x509_certificate_parameters_get_cert_type(parameters))) {
-		ue_stacktrace_push_msg("Failed to add cert type ext to cert");
-		goto clean_up_failed;
-	}
-
 	if (!X509_sign(x, pk, EVP_get_digestbyname(UNKNOWNECHO_DEFAULT_DIGEST_NAME))) {
 		ue_openssl_error_handling(error_buffer, "Failed to sign cert");
 		goto clean_up_failed;
