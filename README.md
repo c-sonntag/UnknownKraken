@@ -1,6 +1,6 @@
-### LibUnknownEcho
+# LibUnknownEcho
 
-LibUnknownEcho help to put secure exchanges in the development of C client/server application.
+LibUnknownEcho helps to put secure exchanges in the development of C client/server application.
 
 ## Low level features
 * TLS connection between a client and a server.
@@ -14,9 +14,10 @@ LibUnknownEcho help to put secure exchanges in the development of C client/serve
 * Encoding in Base64.
 * Compression with Inflate/Deflate.
 
+
 ## Hight level features
 
-# Channel protocol
+### Channel protocol
 Channel protocol is an all-in-one protocol to create a server that handle multiple client exchanges in different channels.
 A possible application of this protocol can be a secure chat application, where each channel is a conversation room.
 
@@ -66,7 +67,7 @@ The lib will appear in bin folder, and all the examples in bin/debug/examples or
 
 ## Architecture
 
-# Facade design pattern
+### Facade design pattern
 The facade design pattern is use to simplify the complexity of a module.
 In the module, we have 2 to 4 sub folders which are :
 * api : that contains the highest level of functions/structs of the module.
