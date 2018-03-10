@@ -163,28 +163,28 @@ bool ue_channel_server_create(char *persistent_path,
         channel_server->initialization_begin_callback(user_context);
     }
 
+    if (!ue_is_dir_exists(channel_server->persistent_path)) {
+        ue_logger_info("Creating '%s'...", channel_server->persistent_path);
+		if (!ue_create_folder(channel_server->persistent_path)) {
+			ue_stacktrace_push_msg("Failed to create '%s'", channel_server->persistent_path);
+			goto clean_up;
+		}
+    }
+
     if (ue_is_file_exists(channel_server->logger_file_path)) {
         if (!(channel_server->logs_file = fopen(channel_server->logger_file_path, "a"))) {
-            ue_stacktrace_push_msg("Failed to open logs file at path '%s'", channel_server->logger_file_path)
+            ue_logger_warn("Failed to open logs file at path '%s'", channel_server->logger_file_path);
         } else {
             ue_logger_set_fp(ue_logger_manager_get_logger(), channel_server->logs_file);
             //ue_logger_set_details(ue_logger_manager_get_logger(), true);
         }
     } else {
         if (!(channel_server->logs_file = fopen(channel_server->logger_file_path, "w"))) {
-            ue_stacktrace_push_msg("Failed to open logs file at path '%s'", channel_server->logger_file_path)
+            ue_logger_warn("Failed to open logs file at path '%s'", channel_server->logger_file_path);
         } else {
             ue_logger_set_fp(ue_logger_manager_get_logger(), channel_server->logs_file);
             //ue_logger_set_details(ue_logger_manager_get_logger(), true);
         }
-    }
-
-    if (!ue_is_dir_exists(channel_server->channel_server->persistent_path)) {
-        ue_logger_info("Creating '%s'...", keystore_folder_path);
-		if (!ue_create_folder(channel_server->persistent_path)) {
-			ue_stacktrace_push_msg("Failed to create '%s'", channel_server->persistent_path);
-			goto clean_up;
-		}
     }
 
     channel_server->channels_number = channels_number;
