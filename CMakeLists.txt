@@ -44,12 +44,12 @@ else ()
 endif ()
 
 if (UNIX)
-	add_compile_options("-std=gnu99")
+	add_compile_options("-std=gnu99" "-pthread" "-ldl")
 else ()
 	add_compile_options("-std=c99")
 endif ()
 
-add_compile_options("-Wall" "-Werror" "-pedantic" "-pthread" "-ldl" "-fno-builtin")
+add_compile_options("-Wall" "-Werror" "-pedantic" "-fno-builtin")
 
 #
 ##
@@ -80,7 +80,10 @@ if (SEARCH_LIB)
 endif ()
 
 # Search pthread
-find_package (Threads)
+
+if (UNIX)
+	find_package (Threads)
+endif ()
 
 #
 ## PROGRAM :
@@ -121,6 +124,5 @@ foreach (filePath ${files} )
 		target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/libcrypto.so.1.1" -ldl)
 	endif ()
 	target_link_libraries(${executableName} ${PROJECT_NAME})
-	#target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/asmlib/libaelf64.a")
 	set_target_properties(${executableName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${EXAMPLES_OUTPUT_PATH})
 endforeach ()
