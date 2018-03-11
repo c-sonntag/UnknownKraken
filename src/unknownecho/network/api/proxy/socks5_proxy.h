@@ -20,7 +20,7 @@
  *******************************************************************************/
 
  /**
-  *  @file      socks5.h
+  *  @file      socks5_proxy.h
   *  @brief     SOCKS5 module to connect to a proxy.
   *  @author    Charly Lamothe
   *  @copyright GNU Public License.
