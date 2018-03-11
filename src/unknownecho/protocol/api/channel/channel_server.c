@@ -1075,6 +1075,7 @@ static bool tls_server_read_consumer(ue_socket_client_connection *connection) {
     }
 
     request_processor_thread = NULL;
+    received = 0;
 
     ue_check_parameter_or_return(connection);
 

@@ -21,6 +21,7 @@
 #include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/string/string_utility.h>
+#include <unknownecho/defines.h>
 
 static ue_sym_encrypter *ue_sym_encrypter_create_factory(ue_sym_key *key, const char *cipher_name) {
 	ue_sym_encrypter *encrypter;
@@ -42,7 +43,7 @@ static ue_sym_encrypter *ue_sym_encrypter_create_factory(ue_sym_key *key, const 
 }
 
 ue_sym_encrypter *ue_sym_encrypter_aes_cbc_create(ue_sym_key *key) {
-	return ue_sym_encrypter_create_factory(key, "aes-256-cbc");
+	return ue_sym_encrypter_create_factory(key, UNKNOWNECHO_DEFAULT_CIPHER_NAME);
 }
 
 ue_sym_encrypter *ue_sym_encrypter_rc4_create(ue_sym_key *key) {
