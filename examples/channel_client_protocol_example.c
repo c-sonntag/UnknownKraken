@@ -115,9 +115,9 @@ int main(int argc, char **argv) {
 
         ue_channel_client_init(MAX_CHANNEL_CLIENTS_NUMBER);
 
-        if (argv > 1) {
+        if (argc > 1) {
             ue_logger_info("Trying to create and connect remote channel client on host %s...", argv[1]);
-            if (!(channel_client = ue_channel_client_create_default_remove(nickname, password, write_callback, argv[1]))) {
+            if (!(channel_client = ue_channel_client_create_default_remote(nickname, password, write_callback, argv[1]))) {
                 ue_stacktrace_push_msg("Failed to create remote channel client");
                 goto end;
             }
