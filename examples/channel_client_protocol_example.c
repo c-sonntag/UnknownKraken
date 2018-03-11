@@ -61,7 +61,7 @@ bool write_callback(void *user_context, ue_byte_stream *printer) {
     return write(fds[1], ue_byte_stream_get_data(printer), ue_byte_stream_get_size(printer));
 }
 
-int main() {
+int main(int argc, char **argv) {
     char *nickname, *password;
     ue_channel_client *channel_client;
     int child_pid;
@@ -115,10 +115,18 @@ int main() {
 
         ue_channel_client_init(MAX_CHANNEL_CLIENTS_NUMBER);
 
-        if (!(channel_client = ue_channel_client_create_default(nickname, password, write_callback))) {
-
-            ue_stacktrace_push_msg("Failed to create channel client");
-            goto end;
+        if (argv > 1) {
+            ue_logger_info("Trying to create and connect remote channel client on host %s...", argv[1]);
+            if (!(channel_client = ue_channel_client_create_default_remove(nickname, password, write_callback, argv[1]))) {
+                ue_stacktrace_push_msg("Failed to create remote channel client");
+                goto end;
+            }
+        } else {
+            ue_logger_info("Trying to create and connect local channel client...");
+            if (!(channel_client = ue_channel_client_create_default_local(nickname, password, write_callback))) {
+                ue_stacktrace_push_msg("Failed to create local channel client");
+                goto end;
+            }
         }
 
         handle_signal(SIGINT, ue_channel_client_shutdown_signal_callback, 0);

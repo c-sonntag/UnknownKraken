@@ -52,11 +52,41 @@ static bool connection_end_callback(void *user_context) {
     return true;
 }
 
-ue_channel_client *ue_channel_client_create_default(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ue_byte_stream *printer)) {
+ue_channel_client *ue_channel_client_create_default_local(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ue_byte_stream *printer)) {
     ue_channel_client_parameters *parameters;
     ue_channel_client *channel_client;
 
     parameters = ue_channel_client_parameters_create(nickname, keystore_password, write_callback);
+
+    ue_channel_client_parameters_set_initialization_begin_callback(parameters, initialization_begin_callback);
+
+    ue_channel_client_parameters_set_initialization_end_callback(parameters, initialization_end_callback);
+
+    ue_channel_client_parameters_set_uninitialization_begin_callback(parameters, uninitialization_begin_callback);
+
+    ue_channel_client_parameters_set_uninitialization_end_callback(parameters, uninitialization_end_callback);
+
+    ue_channel_client_parameters_set_connection_begin_callback(parameters, connection_begin_callback);
+
+    ue_channel_client_parameters_set_connection_end_callback(parameters, connection_end_callback);
+
+    channel_client = ue_channel_client_parameters_build(parameters);
+
+    ue_channel_client_parameters_destroy(parameters);
+
+    return channel_client;
+}
+
+ue_channel_client *ue_channel_client_create_default_remote(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ue_byte_stream *printer),
+    const char *host) {
+    ue_channel_client_parameters *parameters;
+    ue_channel_client *channel_client;
+
+    parameters = ue_channel_client_parameters_create(nickname, keystore_password, write_callback);
+
+    ue_channel_client_parameters_set_tls_host(parameters, host);
+
+    ue_channel_client_parameters_set_csr_host(parameters, host);
 
     ue_channel_client_parameters_set_initialization_begin_callback(parameters, initialization_begin_callback);
 

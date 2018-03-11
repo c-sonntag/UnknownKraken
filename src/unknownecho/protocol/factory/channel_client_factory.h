@@ -24,6 +24,9 @@
 #include <unknownecho/bool.h>
 #include <unknownecho/byte/byte_stream.h>
 
-ue_channel_client *ue_channel_client_create_default(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ue_byte_stream *printer));
+ue_channel_client *ue_channel_client_create_default_local(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ue_byte_stream *printer));
+
+ue_channel_client *ue_channel_client_create_default_remote(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ue_byte_stream *printer),
+    const char *host);
 
 #endif

@@ -50,9 +50,9 @@ bool ue_socket_destroy(int fd);
 
 bool ue_socket_is_valid(int fd);
 
-size_t ue_socket_send_string(int fd, const char *string, ue_tls_connection *tls);
+int ue_socket_send_string(int fd, const char *string, ue_tls_connection *tls);
 
-size_t ue_socket_send_data(int fd, unsigned char *data, size_t size, ue_tls_connection *tls);
+int ue_socket_send_data(int fd, unsigned char *data, size_t size, ue_tls_connection *tls);
 
 size_t ue_socket_receive_string_sync(int fd, ue_string_builder *sb, bool blocking, ue_tls_connection *tls);
 

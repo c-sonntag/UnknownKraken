@@ -31,7 +31,7 @@
 #include <stdio.h>
 
 int main() {
-	size_t bytes;
+	int sent;
 	ue_string_builder *request;
 	ue_byte_stream *response;
 	int fd;
@@ -40,34 +40,40 @@ int main() {
 
 	request = ue_string_builder_create();
 	response = ue_byte_stream_create();
+	fd = -1;
 
+	ue_logger_info("Trying to connect to checkip.dyndns.org through tor proxy...");
 	if ((fd = ue_tor_proxy_connect("checkip.dyndns.org", "80")) == -1) {
 		ue_stacktrace_push_msg("Failed to connect to site through local TOR proxy");
 		goto clean_up;
 	}
+	ue_logger_info("Connected to checkip.dyndns.org through tor proxy.");
 
 	ue_string_builder_append_variadic(request, "GET /checkip.dyndns.org HTTP/1.1\r\n\r\n");
-	bytes = ue_socket_send_string(fd, (char *)ue_string_builder_get_data(request), NULL);
-	ue_logger_info("Sent : %ld", bytes);
-	if (bytes <= 0) {
+	sent = ue_socket_send_string(fd, ue_string_builder_get_data(request), NULL);
+	if (sent < 0) {
 		ue_stacktrace_push_msg("Failed to send HTTP GET request");
 		goto clean_up;
+	} else if (sent == 0) {
+		ue_stacktrace_push_msg("The request was received by the server but not accepted");
+		goto clean_up;
 	}
-	ue_logger_info("Request successfully sent.");
+	ue_logger_info("Request successfully sent (%d bytes sent).", sent);
 
-	bytes = ue_socket_receive_bytes_sync(fd, response, true, NULL);
-	ue_logger_info("Received : %ld", bytes);
-	if (bytes <= 0) {
+	sent = ue_socket_receive_bytes_sync(fd, response, true, NULL);
+	ue_logger_info("Received : %ld", sent);
+	if (sent <= 0) {
 		ue_stacktrace_push_msg("Failed to receive HTTP GET response");
 		goto clean_up;
 	}
 	ue_logger_info("Response successfully reveived.");
 
-	//ue_write_binary_file("out.html", ue_byte_stream_get_data(response), ue_byte_stream_get_size(response));
 	fprintf(stdout, "%s\n", (char *)ue_byte_stream_get_data(response));
 
 clean_up:
-	ue_socket_close(fd);
+	if (fd != -1) {
+		ue_socket_close(fd);
+	}
 	ue_string_builder_destroy(request);
 	ue_byte_stream_destroy(response);
 	if (ue_stacktrace_is_filled()) {

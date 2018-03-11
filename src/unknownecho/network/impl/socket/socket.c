@@ -340,22 +340,22 @@ bool ue_socket_is_valid(int fd) {
     return fd != -1;
 }
 
-size_t ue_socket_send_string(int fd, const char *string, ue_tls_connection *tls) {
-    size_t sent;
+int ue_socket_send_string(int fd, const char *string, ue_tls_connection *tls) {
+    int sent;
 
-    if ((sent = ue_socket_send_data(fd, (unsigned char *)string, strlen(string), tls) == ULONG_MAX)) {
-        ue_stacktrace_push_msg("Sent bytes are equals to ULONG_MAX");
+    if ((sent = ue_socket_send_data(fd, (unsigned char *)string, strlen(string), tls)) == -1) {
+        ue_stacktrace_push_msg("Failed to send string");
         return -1;
     }
 
     return sent;
 }
 
-size_t ue_socket_send_data(int fd, unsigned char *data, size_t size, ue_tls_connection *tls) {
-    size_t sent;
+int ue_socket_send_data(int fd, unsigned char *data, size_t size, ue_tls_connection *tls) {
+    int sent;
 
     #if defined(__unix__)
-        size_t bytes;
+        int bytes;
     #elif defined(_WIN32) || defined(_WIN64)
         char *error_buffer;
     #endif

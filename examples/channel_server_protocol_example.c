@@ -55,7 +55,7 @@ static void handle_signal(int sig, void (*h)(int), int options) {
 int main() {
     char *keystore_password, *key_password;
 
-    /* Initialize the lib */
+    /* Initialize the lib*/
     if (!ue_init()) {
 		printf("[ERROR] Failed to init LibUnknownEcho\n");
 		exit(1);
@@ -68,7 +68,7 @@ int main() {
 	ue_logger_set_file_level(ue_logger_manager_get_logger(), LOG_TRACE);
 	ue_logger_set_print_level(ue_logger_manager_get_logger(), LOG_INFO);
 
-    /* Get the user keystore password */
+    /* Get the user keystore password. If it's fail, it will add an error message to the stacktrace */
     if (!(keystore_password = ue_input_string("Keystore password : "))) {
         ue_stacktrace_push_msg("Specified nickname isn't valid");
         goto end;
