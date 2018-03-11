@@ -445,6 +445,7 @@ static size_t receive_cipher_message(ue_socket_client_connection *connection) {
 	plain_data = NULL;
     client_public_key = NULL;
     friendly_name = NULL;
+    received = 0;
 
     ue_check_parameter_or_return(connection);
     ue_check_parameter_or_return(connection->nickname);
@@ -1074,8 +1075,8 @@ static bool tls_server_read_consumer(ue_socket_client_connection *connection) {
         return false;
     }
 
-    request_processor_thread = NULL;
     received = 0;
+    request_processor_thread = NULL;
 
     ue_check_parameter_or_return(connection);
 

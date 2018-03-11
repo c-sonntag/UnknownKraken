@@ -18,7 +18,7 @@ LibUnknownEcho helps to put secure exchanges in the development of C client/serv
 
 ***
 
-# Hight level features
+# Hight level features
 
 ## Channel protocol
 Channel protocol is an all-in-one protocol to create a server that handle multiple client exchanges in different channels.
@@ -65,7 +65,7 @@ The server is now listening on two ports :
     * In debug mode : ./build_debug.sh
     * In release mode : ./build_release.sh
     * Clean all : ./clean.sh
-The lib will appear in bin folder, and all the examples in bin/debug/examples or bin/release/examples according to the compilation mode.
+The static lib will appear in bin folder, and all the examples in bin/debug/examples or bin/release/examples according to the compilation mode.
 
 ***
 

@@ -17,7 +17,7 @@ set(${CMAKE_CURRENT_SOURCE_DIR} ..)
 set(SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(TESTS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 set(EXAMPLES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/examples")
-set(SEARCH_LIB FALSE)
+set(SEARCH_LIB TRUE)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
 	set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/release")
@@ -77,9 +77,6 @@ if (SEARCH_LIB)
 	else ()
 	    # Error; with REQUIRED, pkg_search_module() will throw an error by it's own
 	endif ()
-
-	# Search CMocka
-	find_library(CMOCKA_LIBRARY libcmocka.so)
 endif ()
 
 # Search pthread
@@ -96,7 +93,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC "${SRC_PATH}")
 if (SEARCH_LIB)
 	target_link_libraries(${PROJECT_NAME} ${OPENSSL_LIBRARIES})
 	target_link_libraries(${PROJECT_NAME} ${ZLIB_LIBRARIES})
-	target_link_libraries(${PROJECT_NAME} ${CMOCKA_LIBRARY})
 else ()
 	target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/lib/libssl.so.1.1" -ldl)
 	target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/lib/libcrypto.so.1.1" -ldl)
@@ -109,11 +105,6 @@ target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
 #add_executable(ue_test ${PROGRAM_TARGET_TESTS_FILES})
 #target_include_directories(ue_test PUBLIC "${TESTS_PATH}")
 #target_link_libraries(ue_test ${PROJECT_NAME})
-#if (SEARCH_LIB)
-#	target_link_libraries(ue_test ${CMOCKA_LIBRARY})
-#else ()
-#	target_link_libraries(ue_test "${CMAKE_SOURCE_DIR}/lib/libcmocka.so")
-#endif ()
 #set_target_properties(ue_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${TESTS_OUTPUT_PATH})
 
 # Build examples

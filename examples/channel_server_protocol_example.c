@@ -17,6 +17,13 @@
  *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
+ /**
+  *  @file      channel_server_protocol_example.c
+  *  @brief     Create nad launch the default channel server.
+  *  @author    Charly Lamothe
+  *  @copyright GNU Public License.
+  */
+
 #include <unknownecho/init.h>
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/errorHandling/logger_manager.h>
@@ -31,6 +38,9 @@
 #include <stdlib.h>
 #include <signal.h>
 
+/**
+ * Set the specified callback h to the specified signal sig
+ */
 static void handle_signal(int sig, void (*h)(int), int options) {
     struct sigaction s;
 
@@ -45,6 +55,7 @@ static void handle_signal(int sig, void (*h)(int), int options) {
 int main() {
     char *keystore_password, *key_password;
 
+    /* Initialize the lib */
     if (!ue_init()) {
 		printf("[ERROR] Failed to init LibUnknownEcho\n");
 		exit(1);
@@ -53,19 +64,28 @@ int main() {
     keystore_password = NULL;
     key_password = NULL;
 
+    /* Set log levels for the screen and the log file */
 	ue_logger_set_file_level(ue_logger_manager_get_logger(), LOG_TRACE);
 	ue_logger_set_print_level(ue_logger_manager_get_logger(), LOG_INFO);
 
+    /* Get the user keystore password */
     if (!(keystore_password = ue_input_string("Keystore password : "))) {
         ue_stacktrace_push_msg("Specified nickname isn't valid");
         goto end;
     }
 
+    /* Get the user private keys password */
     if (!(key_password = ue_input_string("Key password : "))) {
         ue_stacktrace_push_msg("Specified nickname isn't valid");
         goto end;
     }
 
+    /**
+     * Create a default channel server with only this two passwords in parameter.
+     * The other parameters are specified with the default values in defines.h,
+     * which are the persistent folder ('out' by default), hosts (localhost) and ports
+     * (5001 for the TLS server and 5002 for the CSR server).
+     */
     if (!ue_channel_server_create_default(keystore_password, key_password)) {
         ue_stacktrace_push_msg("Failed to create server channel");
         goto end;

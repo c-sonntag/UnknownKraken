@@ -75,6 +75,7 @@ int main() {
     password = NULL;
     channel_client = NULL;
     fds[1] = -1;
+    child_pid = -1;
 
 	ue_logger_set_file_level(ue_logger_manager_get_logger(), LOG_TRACE);
 	ue_logger_set_print_level(ue_logger_manager_get_logger(), LOG_INFO);
