@@ -88,9 +88,6 @@ endif ()
 set(PROJECT_NAME_STATIC "${PROJECT_NAME}_static")
 set(PROJECT_NAME_SHARED "${PROJECT_NAME}_shared")
 
-set(PROJECT_NAME_SHARED ON CACHE BOOL "Build shared library")
-set(PROJECT_NAME_STATIC ON CACHE BOOL "Build static library")
-
 # Load source files
 file(GLOB_RECURSE PROGRAM_TARGET_SRC_FILES "${SRC_PATH}/*.c")
 
