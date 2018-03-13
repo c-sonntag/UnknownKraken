@@ -48,24 +48,7 @@ The server is now listening on two ports :
 ***
 
 # Installation from sources
-* Install libssl version 1.10 (that contains also libcrypto 1.10) :
-    * wget https://www.openssl.org/source/openssl-1.1.0.tar.gz
-    * tar -zxvf openssl-1.1.0.tar.gz
-    * cd openssl-1.1.0
-    * ./config
-    * make
-    * sudo make install
-* Install zlib version 1.2.11
-    * Download source code from web site : https://zlib.net/
-    * ./configure
-    * make
-    * sudo make install
-* Install a recent version of CMake.
-* Compile LibUnknownEcho
-    * In debug mode : ./build_debug.sh
-    * In release mode : ./build_release.sh
-    * Clean all : ./clean.sh
-The static lib will appear in bin folder, and all the examples in bin/debug/examples or bin/release/examples according to the compilation mode.
+See [INSTALL](INSTALL).
 
 ***
 
