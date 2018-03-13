@@ -838,10 +838,7 @@ static bool send_csr(ue_channel_client *channel_client, ue_csr_context *context,
 		goto clean_up;
 	}
 
-	for (size_t i = 0; i < cipher_data_size; i++) {
-		printf("%c", csr_request[i]);
-	}
-	printf("\n");
+	ue_logger_debug("cipher_data_size : %d", cipher_data_size);
 
 	if (!ue_byte_writer_append_int(stream, csr_sub_type)) {
 		ue_stacktrace_push_msg("Failed to write CSR sub type to stream");
