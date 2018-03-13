@@ -15,3 +15,13 @@
 - Set to channel key a lifetime (not too long).
 - Set date logging more readable.
 - Anticipate the behavior if a specified port is already bound.
+- Fix possible nickname issue when multiple clients request same nickname.
+- Make channel protocol more flexible (w/wo CSR for example).
+- Clean examples.
+- Reduce certificates right ?.
+- Cipher plain data password and protect the memory of them for limit basic reverse engineering.
+- Use the hash of keystore and key passwords and not the plain data.
+- Add IPv6 support.
+- Mix UPD and TPC channels.
+- Build library as shared as well
+- Clean-up CMakeLists.txt and scripts.

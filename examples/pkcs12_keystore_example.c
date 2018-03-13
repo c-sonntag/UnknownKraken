@@ -34,7 +34,10 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    ue_init();
+    if (!ue_init()) {
+        fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
+        exit(EXIT_FAILURE);
+    }
 
     if (!(keystore = ue_pkcs12_keystore_load(argv[1], argv[2]))) {
         ue_stacktrace_push_msg("Failed to load specified pkcs12 keystore");

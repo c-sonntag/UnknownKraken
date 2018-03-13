@@ -1,23 +1,25 @@
-#
 ## @brief LibUnknownEcho
 ## @author Charly Lamothe
-#
+
 
 # --- PROJECT ---
 
 PROJECT(unknownecho)
 cmake_minimum_required(VERSION 3.5)
 
-#
-##
-#
+
+# --- GLOBAL OPTIONS ---
+
+set(CMAKE_VERBOSE_MAKEFILE off)
+set(SEARCH_LIB TRUE)
+
 
 # --- PATH ---
+
 set(${CMAKE_CURRENT_SOURCE_DIR} ..)
 set(SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(TESTS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 set(EXAMPLES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/examples")
-set(SEARCH_LIB FALSE)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
 	set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/release")
@@ -29,15 +31,12 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(TESTS_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/debug/tests")
 endif ()
 
-#
-##
-#
 
-# --- GNU COMPILE OPTIONS ---
+# --- COMPILE OPTIONS ---
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")     ## (not debug)
    if(CMAKE_COMPILER_IS_GNUCXX)               ## (GNU COMMAND)
       add_compile_options("-O3")              ### No Optimization
-      set(CMAKE_EXE_LINKER_FLAGS "-s")        ### Strip binary (no work on debug)
+      set(CMAKE_EXE_LINKER_FLAGS "-s")        ### Strip binary (only in release mode)
    endif ()
 else ()
 	add_compile_options("-g")
@@ -51,11 +50,8 @@ endif ()
 
 add_compile_options("-Wall" "-Werror" "-pedantic" "-fno-builtin")
 
-#
-##
-#
 
-# --- LIBRARY ---
+# --- SEARCH LIB ---
 
 if (SEARCH_LIB)
 	find_package(PkgConfig REQUIRED)
@@ -85,29 +81,63 @@ if (UNIX)
 	find_package (Threads)
 endif ()
 
-#
-## PROGRAM :
-#
 
-# Build library
+# --- BUILD UNKNOWNECHO ---
+
+# Options
+set(PROJECT_NAME_STATIC "${PROJECT_NAME}_static")
+set(PROJECT_NAME_SHARED "${PROJECT_NAME}_shared")
+
+set(PROJECT_NAME_SHARED ON CACHE BOOL "Build shared library")
+set(PROJECT_NAME_STATIC ON CACHE BOOL "Build static library")
+
+# Load source files
 file(GLOB_RECURSE PROGRAM_TARGET_SRC_FILES "${SRC_PATH}/*.c")
-add_library(${PROJECT_NAME} STATIC ${PROGRAM_TARGET_SRC_FILES})
-target_include_directories(${PROJECT_NAME} PUBLIC "${SRC_PATH}")
+
+# Build shared library
+add_library(${PROJECT_NAME_SHARED} SHARED ${PROGRAM_TARGET_SRC_FILES})
+set_target_properties(${PROJECT_NAME_SHARED} PROPERTIES OUTPUT_NAME unknownecho)
 if (SEARCH_LIB)
-	target_link_libraries(${PROJECT_NAME} ${OPENSSL_LIBRARIES})
-	target_link_libraries(${PROJECT_NAME} ${ZLIB_LIBRARIES})
+	target_link_libraries(${PROJECT_NAME_SHARED} ${OPENSSL_LIBRARIES})
+	target_link_libraries(${PROJECT_NAME_SHARED} ${ZLIB_LIBRARIES})
 else ()
-	target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/lib/libssl.so.1.1" -ldl)
-	target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/lib/libcrypto.so.1.1" -ldl)
-	target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/lib/libz.a"  -ldl)
+	target_link_libraries(${PROJECT_NAME_SHARED} "${CMAKE_SOURCE_DIR}/lib/libssl.so.1.1" -ldl)
+	target_link_libraries(${PROJECT_NAME_SHARED} "${CMAKE_SOURCE_DIR}/lib/libcrypto.so.1.1" -ldl)
+	target_link_libraries(${PROJECT_NAME_SHARED} "${CMAKE_SOURCE_DIR}/lib/libz.a"  -ldl)
 endif ()
-target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${PROJECT_NAME_SHARED} ${CMAKE_THREAD_LIBS_INIT})
+
+# Build static library
+add_library(${PROJECT_NAME_STATIC} STATIC ${PROGRAM_TARGET_SRC_FILES})
+set_target_properties(${PROJECT_NAME_STATIC} PROPERTIES OUTPUT_NAME unknownecho)
+if (SEARCH_LIB)
+	target_link_libraries(${PROJECT_NAME_STATIC} ${OPENSSL_LIBRARIES})
+	target_link_libraries(${PROJECT_NAME_STATIC} ${ZLIB_LIBRARIES})
+else ()
+	target_link_libraries(${PROJECT_NAME_STATIC} "${CMAKE_SOURCE_DIR}/lib/libssl.so.1.1" -ldl)
+	target_link_libraries(${PROJECT_NAME_STATIC} "${CMAKE_SOURCE_DIR}/lib/libcrypto.so.1.1" -ldl)
+	target_link_libraries(${PROJECT_NAME_STATIC} "${CMAKE_SOURCE_DIR}/lib/libz.a"  -ldl)
+endif ()
+target_link_libraries(${PROJECT_NAME_STATIC} ${CMAKE_THREAD_LIBS_INIT})
+
+
+# --- INSTALL ---
+
+# Copy includes
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION /usr/include
+          FILES_MATCHING PATTERN "*.h")
+
+# Copy static library
+install (TARGETS ${PROJECT_NAME_STATIC} ARCHIVE DESTINATION "/usr/lib")
+
+# Copy shared library
+install (TARGETS ${PROJECT_NAME_SHARED} LIBRARY DESTINATION "/usr/lib")
 
 # Build tests
 #file(GLOB_RECURSE PROGRAM_TARGET_TESTS_FILES "${TESTS_PATH}/*.c")
 #add_executable(ue_test ${PROGRAM_TARGET_TESTS_FILES})
 #target_include_directories(ue_test PUBLIC "${TESTS_PATH}")
-#target_link_libraries(ue_test ${PROJECT_NAME})
+#target_link_libraries(ue_test ${PROJECT_NAME_STATIC})
 #set_target_properties(ue_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${TESTS_OUTPUT_PATH})
 
 # Build examples
@@ -123,6 +153,6 @@ foreach (filePath ${files} )
 		target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/libssl.so.1.1" -ldl)
 		target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/libcrypto.so.1.1" -ldl)
 	endif ()
-	target_link_libraries(${executableName} ${PROJECT_NAME})
+	target_link_libraries(${executableName} ${PROJECT_NAME_STATIC})
 	set_target_properties(${executableName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${EXAMPLES_OUTPUT_PATH})
 endforeach ()

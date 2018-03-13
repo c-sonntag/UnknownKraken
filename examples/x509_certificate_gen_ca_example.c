@@ -34,7 +34,10 @@ int main() {
     certificate = NULL;
     private_key = NULL;
 
-    ue_init();
+    if (!ue_init()) {
+        fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
+        exit(EXIT_FAILURE);
+    }
 
     if (!ue_x509_certificate_generate_self_signed_ca("SWA", &certificate, &private_key)) {
         ue_logger_error("Failed to generate self signed CA");

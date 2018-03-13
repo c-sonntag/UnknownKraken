@@ -29,6 +29,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+void print_usage(char *name) {
+    printf("%s <data>\n", name);
+}
+
 int main(int argc, char **argv) {
     int exit_code;
     unsigned char *message, *compressed, *decompressed;
@@ -40,15 +44,16 @@ int main(int argc, char **argv) {
     decompressed = NULL;
 
     if (argc == 1) {
-        fprintf(stderr, "[FATAL] An argument is required\n");
+        fprintf(stderr, "[FATAL] An argument is required.\n");
+        print_usage(argv[0]);
         exit(EXIT_FAILURE);
     }
 
     if (!ue_init()) {
-        fprintf(stderr, "[FATAL] Failed to initialize UnknownEchoLib\n");
+        fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
         exit(EXIT_FAILURE);
     }
-    ue_logger_info("UnknownEchoLib is correctly initialized");
+    ue_logger_info("UnknownEchoLib is correctly initialized.");
 
     ue_logger_info("Converting parameter '%s' to bytes...", argv[1]);
     if (!(message = ue_bytes_create_from_string(argv[1]))) {

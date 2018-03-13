@@ -38,6 +38,10 @@
 #define CIPHER_ID   1
 #define DECIPHER_ID 2
 
+void print_usage(char *name) {
+    printf("%s <data>\n", name);
+}
+
 int main(int argc, char **argv) {
     unsigned char *plain_data, *cipher_data, *decipher_data;
     size_t plain_data_size, cipher_data_size, decipher_data_size/*, i*/;
@@ -54,7 +58,16 @@ int main(int argc, char **argv) {
     private_key = NULL;
     asym_key = NULL;
 
-    ue_init();
+    if (argc == 1) {
+        fprintf(stderr, "[FATAL] An argument is required.\n");
+        print_usage(argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    if (!ue_init()) {
+        fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
+        exit(EXIT_FAILURE);
+    }
 
     if (!(plain_data = ue_bytes_create_from_string(argv[1]))) {
         ue_stacktrace_push_msg("Failed to convert arg to bytes")

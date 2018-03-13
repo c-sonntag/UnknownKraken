@@ -82,15 +82,25 @@ bool write_callback(void *user_context, ue_byte_stream *printer) {
     return write(fds[1], ue_byte_stream_get_data(printer), ue_byte_stream_get_size(printer));
 }
 
+void print_usage(char *name) {
+    printf("%s [<host>]\n", name);
+}
+
 int main(int argc, char **argv) {
     char *nickname, *password;
     ue_channel_client *channel_client;
     int child_pid;
 
+    if (argc > 2) {
+        fprintf(stderr, "[FATAL] Only one optional argument is possible.\n");
+        print_usage(argv[0]);
+        exit(1);
+    }
+
     /* Initialize LibUnknownEcho */
     if (!ue_init()) {
-		printf("[ERROR] Failed to init LibUnknownEcho\n");
-		exit(1);
+        fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
+        exit(EXIT_FAILURE);
 	}
 
     nickname = NULL;
@@ -101,7 +111,7 @@ int main(int argc, char **argv) {
 
     /* Set log levels for the screen and the log file */
 	ue_logger_set_file_level(ue_logger_manager_get_logger(), LOG_TRACE);
-	ue_logger_set_print_level(ue_logger_manager_get_logger(), LOG_INFO);
+	ue_logger_set_print_level(ue_logger_manager_get_logger(), LOG_TRACE);
 
     /**
      * Get the user nickname.

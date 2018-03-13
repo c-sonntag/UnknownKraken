@@ -57,8 +57,8 @@ int main() {
 
     /* Initialize LibUnknownEcho */
     if (!ue_init()) {
-		printf("[ERROR] Failed to init LibUnknownEcho\n");
-		exit(1);
+        fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
+        exit(EXIT_FAILURE);
 	}
 
     keystore_password = NULL;
@@ -66,7 +66,7 @@ int main() {
 
     /* Set log levels for the screen and the log file */
 	ue_logger_set_file_level(ue_logger_manager_get_logger(), LOG_TRACE);
-	ue_logger_set_print_level(ue_logger_manager_get_logger(), LOG_INFO);
+	ue_logger_set_print_level(ue_logger_manager_get_logger(), LOG_TRACE);
 
     /* Get the user keystore password. If it's fail, it will add an error message to the stacktrace. */
     if (!(keystore_password = ue_input_string("Keystore password : "))) {

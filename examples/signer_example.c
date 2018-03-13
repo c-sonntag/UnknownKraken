@@ -30,6 +30,10 @@
 #include <stddef.h>
 #include <string.h>
 
+void print_usage(char *name) {
+    printf("%s <data>\n", name);
+}
+
 int main(int argc, char **argv) {
     int exit_code;
     ue_signer *s;
@@ -43,7 +47,8 @@ int main(int argc, char **argv) {
     akey = NULL;
 
     if (argc == 1) {
-        fprintf(stderr, "[FATAL] An argument is required\n");
+        fprintf(stderr, "[FATAL] An argument is required.\n");
+        print_usage(argv[0]);
         exit(EXIT_FAILURE);
     }
 
