@@ -12,7 +12,9 @@
     * make
     * sudo make install
 * Install zlib version 1.2.11
-    * Download source code from web site : https://zlib.net/
+    * wget https://zlib.net/zlib-1.2.11.tar.gz
+    * tar -zxvf zlib-1.2.11.tar.gz
+    * cd zlib-1.2.11
     * ./configure
     * make
     * sudo make install

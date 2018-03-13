@@ -90,9 +90,11 @@ set(PROJECT_NAME_SHARED "${PROJECT_NAME}_shared")
 
 # Load source files
 file(GLOB_RECURSE PROGRAM_TARGET_SRC_FILES "${SRC_PATH}/*.c")
+file(GLOB_RECURSE PROGRAM_TARGET_HEADER_FILES "${SRC_PATH}/*.h")
 
 # Build shared library
 add_library(${PROJECT_NAME_SHARED} SHARED ${PROGRAM_TARGET_SRC_FILES})
+target_include_directories(${PROJECT_NAME_SHARED} PUBLIC "${SRC_PATH}")
 set_target_properties(${PROJECT_NAME_SHARED} PROPERTIES OUTPUT_NAME unknownecho)
 if (SEARCH_LIB)
 	target_link_libraries(${PROJECT_NAME_SHARED} ${OPENSSL_LIBRARIES})
@@ -106,6 +108,7 @@ target_link_libraries(${PROJECT_NAME_SHARED} ${CMAKE_THREAD_LIBS_INIT})
 
 # Build static library
 add_library(${PROJECT_NAME_STATIC} STATIC ${PROGRAM_TARGET_SRC_FILES})
+target_include_directories(${PROJECT_NAME_STATIC} PUBLIC "${SRC_PATH}")
 set_target_properties(${PROJECT_NAME_STATIC} PROPERTIES OUTPUT_NAME unknownecho)
 if (SEARCH_LIB)
 	target_link_libraries(${PROJECT_NAME_STATIC} ${OPENSSL_LIBRARIES})

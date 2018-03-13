@@ -914,6 +914,11 @@ static bool csr_server_process_request(void *parameter) {
                 goto clean_up;
             }
 
+            for (size_t i = 0; i < csr_request_size; i++) {
+        		printf("%c", csr_request[i]);
+        	}
+        	printf("\n");
+
             if (!(signed_certificate_data = ue_csr_build_server_response(channel_server->csr_keystore->private_key, ca_certificate, ca_private_key,
                 csr_request, (size_t)csr_request_size, &signed_certificate_data_size, &signed_certificate, channel_server->cipher_name, channel_server->digest_name))) {
 

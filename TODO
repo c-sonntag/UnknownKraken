@@ -25,3 +25,4 @@
 - Mix UPD and TPC channels.
 - Build library as shared as well
 - Clean-up CMakeLists.txt and scripts.
+- Abstract communication (TCP, ...). 
