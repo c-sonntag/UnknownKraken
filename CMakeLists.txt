@@ -89,8 +89,7 @@ set(PROJECT_NAME_STATIC "${PROJECT_NAME}_static")
 set(PROJECT_NAME_SHARED "${PROJECT_NAME}_shared")
 
 # Load source files
-file(GLOB_RECURSE PROGRAM_TARGET_SRC_FILES "${SRC_PATH}/*.c")
-file(GLOB_RECURSE PROGRAM_TARGET_HEADER_FILES "${SRC_PATH}/*.h")
+file(GLOB_RECURSE PROGRAM_TARGET_SRC_FILES "${SRC_PATH}/*.*")
 
 # Build shared library
 add_library(${PROJECT_NAME_SHARED} SHARED ${PROGRAM_TARGET_SRC_FILES})
@@ -127,10 +126,10 @@ target_link_libraries(${PROJECT_NAME_STATIC} ${CMAKE_THREAD_LIBS_INIT})
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION /usr/include
           FILES_MATCHING PATTERN "*.h")
 
-# Copy static library
+# Copy static library
 install (TARGETS ${PROJECT_NAME_STATIC} ARCHIVE DESTINATION "/usr/lib")
 
-# Copy shared library
+# Copy shared library
 install (TARGETS ${PROJECT_NAME_SHARED} LIBRARY DESTINATION "/usr/lib")
 
 # Build tests

@@ -59,6 +59,6 @@ bool ue_x509_certificate_equals(ue_x509_certificate *c1, ue_x509_certificate *c2
 
 bool ue_x509_certificate_print(ue_x509_certificate *certificate, FILE *out_fd);
 
-char *ue_x509_certificate_to_pem_string(ue_x509_certificate *certificate);
+char *ue_x509_certificate_to_pem_string(ue_x509_certificate *certificate, size_t *result_size);
 
 #endif

@@ -41,6 +41,11 @@ typedef enum {
 	CLOSING_STATE
 } ue_data_transmission_state;
 
+typedef enum {
+    WORKING_STATE,
+    FREE_STATE
+} ue_processing_state;
+
 /* @todo put into the main struct */
 typedef struct {
 	ue_x509_certificate *signed_certificate;
@@ -56,8 +61,9 @@ typedef struct {
 	ue_tls_session *tls_session;
 	ue_socket_client_connection *connection;
 	ue_thread_id *read_thread, *write_thread;
-	ue_thread_mutex *mutex;
-	ue_thread_cond *cond;
+	ue_processing_state csr_processing_state;
+	ue_thread_mutex *mutex, *csr_mutex;
+	ue_thread_cond *cond, *csr_cond;
 	ue_data_transmission_state transmission_state;
 	bool running;
 	ue_byte_stream *new_message;

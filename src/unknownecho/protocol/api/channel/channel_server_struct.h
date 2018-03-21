@@ -44,7 +44,7 @@ typedef struct {
 	ue_tls_session *tls_session;
     ue_channel **channels;
     int channels_number;
-    ue_thread_id *csr_server_thread, *tls_server_thread;
+    ue_thread_id *csr_server_thread, *csr_process_all_thread, *tls_server_thread, *tls_process_all_thread;
     bool signal_caught;
     char *keystore_password;
     ue_pkcs12_keystore *csr_keystore, *tls_keystore, *cipher_keystore, *signer_keystore;

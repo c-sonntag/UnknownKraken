@@ -52,6 +52,19 @@ See [INSTALL](INSTALL).
 
 ***
 
+# Examples
+
+* Start the server with : ./bin/release/examples/channel_server_protocol_example
+* When the server has finished to generate certificates, copy the certificate folder from out/server/certificate to out,
+  in order to allow the client to use them (image that's the server certificates provided after application installation).
+* Start the client with : ./bin/release/examples/channel_client_protocol_example
+* Connect to a channel with : @channel_connection 0
+  which connect to channel n°0.
+* After that, you can connect other clients in this same channel start communicate.
+
+***
+
+
 # Other dependencies
 * Make, CMake for compilation.
 * Valgrind for memory debugging/memory leak detection.

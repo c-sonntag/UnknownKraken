@@ -56,4 +56,6 @@ void ue_byte_stream_print_hex(ue_byte_stream *stream, FILE *fd);
 
 void ue_byte_stream_print_string(ue_byte_stream *stream, FILE *fd);
 
+ue_byte_stream *ue_byte_stream_copy(ue_byte_stream *stream);
+
 #endif

@@ -32,9 +32,11 @@
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/container/string_vector.h>
 #include <unknownecho/container/byte_vector.h>
+#include <unknownecho/container/queue.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
 #include <unknownecho/network/api/tls/tls_connection.h>
+#include <unknownecho/thread/thread_id_struct.h>
 
 typedef enum {
 	UNKNOWNECHO_CONNECTION_FREE_STATE,
@@ -45,6 +47,8 @@ typedef enum {
 typedef struct {
 	int fd;
 	ue_byte_stream *received_message, *message_to_send, *tmp_stream;
+	ue_queue *received_messages, *messages_to_send;
+	ue_thread_id *read_messages_consumer_thread, *write_messages_consumer_thread;
 	ue_connection_state state;
 	char *nickname;
 	ue_byte_vector *split_message, *all_messages, *tmp_message, *current_message;

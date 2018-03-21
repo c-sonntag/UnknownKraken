@@ -228,7 +228,7 @@ bool ue_x509_certificate_print(ue_x509_certificate *certificate, FILE *out_fd) {
 	return true;
 }
 
-char *ue_x509_certificate_to_pem_string(ue_x509_certificate *certificate) {
+char *ue_x509_certificate_to_pem_string(ue_x509_certificate *certificate, size_t *result_size) {
     BIO *bio;
     char *pem, *error_buffer;
 	size_t size;
@@ -239,6 +239,7 @@ char *ue_x509_certificate_to_pem_string(ue_x509_certificate *certificate) {
 	bio = NULL;
 	pem = NULL;
 	error_buffer = NULL;
+    *result_size = 0;
 
     if (!(bio = BIO_new(BIO_s_mem()))) {
 		ue_openssl_error_handling(error_buffer, "Failed to alloc new BIO");
@@ -274,6 +275,8 @@ char *ue_x509_certificate_to_pem_string(ue_x509_certificate *certificate) {
 	}
 
     BIO_free_all(bio);
+
+    *result_size = size;
 
 	return pem;
 }

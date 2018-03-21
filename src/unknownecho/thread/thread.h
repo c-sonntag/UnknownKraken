@@ -45,6 +45,8 @@ ue_thread_id *ue_thread_create(void *function, void *arg);
 
 bool ue_thread_join(ue_thread_id *ti, void **result);
 
+bool ue_thread_detach(ue_thread_id *ti);
+
 #if defined(_WIN32) || defined(_WIN64)
     #define ue_get_current_thread_id() GetCurrentThreadId()
 #else

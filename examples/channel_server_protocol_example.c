@@ -70,13 +70,13 @@ int main() {
 
     /* Get the user keystore password. If it's fail, it will add an error message to the stacktrace. */
     if (!(keystore_password = ue_input_string("Keystore password : "))) {
-        ue_stacktrace_push_msg("Specified nickname isn't valid");
+        ue_stacktrace_push_msg("Specified keystore password isn't valid");
         goto end;
     }
 
     /* Get the user private keys password. If it's fail, it will add an error message to the stacktrace. */
     if (!(key_password = ue_input_string("Key password : "))) {
-        ue_stacktrace_push_msg("Specified nickname isn't valid");
+        ue_stacktrace_push_msg("Specified key password isn't valid");
         goto end;
     }
 

@@ -167,6 +167,7 @@ unsigned char *ue_csr_build_server_response(ue_private_key *csr_private_key, ue_
     ue_sym_encrypter *sym_encrypter;
     ue_x509_csr *csr;
     char *string_pem_certificate;
+    size_t string_pem_certificate_size;
 
     decipher_data = NULL;
     server_response = NULL;
@@ -178,6 +179,7 @@ unsigned char *ue_csr_build_server_response(ue_private_key *csr_private_key, ue_
     string_pem_certificate = NULL;
     key_data = NULL;
     iv = NULL;
+    string_pem_certificate_size = 0;
 
     ue_check_parameter_or_return(csr_private_key);
     ue_check_parameter_or_return(ca_certificate);
@@ -249,13 +251,13 @@ unsigned char *ue_csr_build_server_response(ue_private_key *csr_private_key, ue_
         goto clean_up;
     }
 
-    if (!(string_pem_certificate = ue_x509_certificate_to_pem_string(*signed_certificate))) {
+    if (!(string_pem_certificate = ue_x509_certificate_to_pem_string(*signed_certificate, &string_pem_certificate_size))) {
         ue_stacktrace_push_msg("Failed to convert certificate to PEM string");
         goto clean_up;
     }
 
     sym_encrypter = ue_sym_encrypter_default_create(key);
-	if (!ue_sym_encrypter_encrypt(sym_encrypter, (unsigned char *)string_pem_certificate, strlen(string_pem_certificate), iv, &server_response, server_response_size)) {
+    if (!ue_sym_encrypter_encrypt(sym_encrypter, (unsigned char *)string_pem_certificate, string_pem_certificate_size, iv, &server_response, server_response_size)) {
 		ue_stacktrace_push_msg("Failed to encrypt csr content");
 		goto clean_up;
 	}

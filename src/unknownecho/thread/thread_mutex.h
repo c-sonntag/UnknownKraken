@@ -46,6 +46,9 @@ typedef struct {
 
 ue_thread_mutex *ue_thread_mutex_create();
 
+/**
+ * @todo In UNIX impl, detect EBUSY and try to destroy the mutex with a timeout.
+ */
 bool ue_thread_mutex_destroy(ue_thread_mutex *m);
 
 bool ue_thread_mutex_lock(ue_thread_mutex *m);

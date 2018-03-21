@@ -4,3 +4,10 @@
 /doc/src
 /doc/test
 /out
+
+# Qt Creator config files
+*.user
+LibUnknownEcho.config
+LibUnknownEcho.creator
+LibUnknownEcho.files
+LibUnknownEcho.includes

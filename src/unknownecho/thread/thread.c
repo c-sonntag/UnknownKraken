@@ -104,7 +104,7 @@ bool ue_thread_join(ue_thread_id *ti, void **result) {
     return true;
 }
 
-bool thread_detach(ue_thread_id *ti) {
+bool ue_thread_detach(ue_thread_id *ti) {
     #if defined(_WIN32) || defined(_WIN64)
         char *error_buffer;
     #endif
@@ -119,7 +119,7 @@ bool thread_detach(ue_thread_id *ti) {
         }
     #else
         if (!pthread_detach(ti->id) != 0) {
-            ue_stacktrace_push_errno();
+            //ue_stacktrace_push_errno();
             return false;
         }
     #endif

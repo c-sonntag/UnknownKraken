@@ -233,7 +233,8 @@ bool ue_socket_server_accept(ue_socket_server *server) {
                     certificate = ue_tls_connection_get_peer_certificate(peer_tls);
                     if (ue_x509_certificate_equals(certificate, server->connections[i]->peer_certificate)) {
                         ue_logger_info("Client already connected");
-                        ue_socket_send_string(new_socket, "ALREADY_CONNECTED", peer_tls);
+                        /* @todo response to client he's already connected ? */
+                        /* ue_socket_send_sync_string(new_socket, "ALREADY_CONNECTED", peer_tls); */
                         ue_x509_certificate_destroy(certificate);
                         ue_tls_connection_destroy(peer_tls);
                         return false;
@@ -370,10 +371,10 @@ void ue_socket_server_process_polling(ue_socket_server *server) {
 
         if ((r = select(max_fd + 1, &read_set, &write_set, NULL, NULL)) == -1) {
             if (errno == 0) {
-                ue_logger_debug("select() failed with error code : %d, but errno is set to 0", r);
+                ue_logger_warn("select() failed with error code : %d, but errno is set to 0", r);
             } else {
                 error_buffer = strerror(errno);
-                ue_logger_debug("select() failed with error code : %d and error message : '%s'", r, error_buffer);
+                ue_logger_warn("select() failed with error code : %d and error message : '%s'", r, error_buffer);
             }
         }
         else {

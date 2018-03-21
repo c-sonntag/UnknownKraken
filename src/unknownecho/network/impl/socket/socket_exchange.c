@@ -17,40 +17,46 @@
  *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
-#include <unknownecho/time/sleep.h>
+#include <unknownecho/network/api/socket/socket_exchange.h>
+#include <unknownecho/network/api/socket/socket_send.h>
+#include <unknownecho/network/api/socket/socket_receive.h>
+#include <unknownecho/errorHandling/stacktrace.h>
+#include <unknownecho/errorHandling/check_parameter.h>
+#include <unknownecho/errorHandling/logger.h>
 
-#if defined(WIN32)
-    #include <windows.h>
-#else
-    #include <unistd.h>
-    #include <time.h>
-#endif
+bool ue_socket_exchange_send(ue_socket_client_connection *connection) {
+    /*bool result;
+    size_t sent, receive;
 
-int ue_millisleep(unsigned ms) {
-	#if defined(WIN32)
-		SetLastError(0);
-		Sleep(ms);
-		return GetLastError() ? -1 : 0;
+    ue_check_parameter_or_return(connection->fd > 0);
+    ue_check_parameter_or_return(ue_byte_stream_get_size(connection->message_to_send) > 0);
 
-	#elif _POSIX_C_SOURCE >= 199309L
-		/* prefer to use nanosleep() */
-		const struct timespec ts = {
-			ms / 1000, /* seconds */
-			(ms % 1000) * 1000 * 1000 /* nano seconds */
-		};
+    result = false;
 
-		return nanosleep(&ts, NULL);
+    if ((sent = ue_socket_send_sync(connection)) <= 0) {
+        ue_stacktrace_push_msg("Failed to send specified data in synchronous socket");
+        return false;
+    }
 
-	#elif _BSD_SOURCE || \
-		(_XOPEN_SOURCE >= 500 || \
-		_XOPEN_SOURCE && _XOPEN_SOURCE_EXTENDED) && \
-		!(_POSIX_C_SOURCE >= 200809L || _XOPEN_SOURCE >= 700)
+    ue_logger_trace("%d bytes sent, waiting for an ACK");
 
-		/* else fallback to obsolte usleep() */
-		return usleep(1000 * ms);
+    if (receive = ue_socket_receive_sync()) {
 
-	#else
-		#error("No millisecond sleep available for this platform!")
-		return -1;
-	#endif
+    }
+
+    result = true;
+
+    return result;*/
+
+    return false;
+}
+
+bool ue_socket_exchange_receive(ue_socket_client_connection *connection) {
+    bool result;
+
+    result = false;
+
+    result = true;
+
+    return result;
 }

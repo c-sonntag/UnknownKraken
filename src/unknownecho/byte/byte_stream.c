@@ -131,3 +131,16 @@ void ue_byte_stream_print_string(ue_byte_stream *stream, FILE *fd) {
     }
     fprintf(fd, "\n");
 }
+
+ue_byte_stream *ue_byte_stream_copy(ue_byte_stream *stream) {
+	ue_byte_stream *new_stream;
+
+	ue_safe_alloc(new_stream, ue_byte_stream, 1);
+	ue_safe_alloc(new_stream->bytes, unsigned char, stream->size);
+	memcpy(new_stream->bytes, stream->bytes, stream->size * sizeof(unsigned char));
+	new_stream->limit = stream->limit;
+	new_stream->position = stream->position;
+	new_stream->size = stream->size;
+
+	return new_stream;
+}

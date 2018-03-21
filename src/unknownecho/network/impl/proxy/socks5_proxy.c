@@ -21,6 +21,8 @@
 
 #include <unknownecho/network/api/proxy/socks5_proxy.h>
 #include <unknownecho/network/api/socket/socket.h>
+#include <unknownecho/network/api/socket/socket_receive.h>
+#include <unknownecho/network/api/socket/socket_send.h>
 #include <unknownecho/bool.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/stacktrace.h>
@@ -38,7 +40,7 @@ static bool send_all(int socket_fd, unsigned char *data, size_t data_size) {
     ue_check_parameter_or_return(data);
     ue_check_parameter_or_return(data_size > 0);
 
-	ue_socket_send_data(socket_fd, data, data_size, NULL);
+	//ue_socket_send_sync(socket_fd, data, data_size, NULL);
 	return true;
 }
 
@@ -50,7 +52,7 @@ static bool recv_all(int socket_fd, unsigned char *data, size_t data_size) {
     ue_check_parameter_or_return(data);
     ue_check_parameter_or_return(data_size > 0);
 
-	ue_socket_receive_all_bytes_sync(socket_fd, &bytes, data_size, NULL);
+	ue_socket_receive_all_sync(socket_fd, &bytes, data_size, NULL);
 	for (i = 0; i < data_size; i++) {
 		data[i] = bytes[i];
 	}

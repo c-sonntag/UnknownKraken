@@ -39,7 +39,7 @@
 #define DECIPHER_ID 2
 
 void print_usage(char *name) {
-    printf("%s <data>\n", name);
+    printf("%s <data> <public_key> <private_key>\n", name);
 }
 
 int main(int argc, char **argv) {
@@ -58,8 +58,8 @@ int main(int argc, char **argv) {
     private_key = NULL;
     asym_key = NULL;
 
-    if (argc == 1) {
-        fprintf(stderr, "[FATAL] An argument is required.\n");
+    if (argc != 4) {
+        fprintf(stderr, "[FATAL] Three arguments are required.\n");
         print_usage(argv[0]);
         exit(EXIT_FAILURE);
     }

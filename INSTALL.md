@@ -3,6 +3,9 @@
 * libcrypto 1.1.0 for encryption support.
 * libz 1.2.11 for compression support.
 
+***
+
+
 # Installation from sources
 * Install libssl version 1.10 (that contains also libcrypto 1.10) :
     * wget https://www.openssl.org/source/openssl-1.1.0.tar.gz
@@ -25,6 +28,17 @@
     * Clean all : ./clean.sh
 The static lib will appear in bin folder, and all the examples in bin/debug/examples or bin/release/examples according to the compilation mode.
 
+***
+
+
 # Other dependencies
 * Make, CMake for compilation.
 * Valgrind for memory debugging/memory leak detection.
+
+***
+
+
+# Common errors
+* Could NOT find PkgConfig (missing: PKG_CONFIG_EXECUTABLE)
+On Debian distributions, you can fix this by installating pgk-config packet with :
+sudo apt-get install pkg-config
