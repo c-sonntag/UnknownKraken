@@ -30,6 +30,8 @@
 #include <unknownecho/crypto/api/keystore/pkcs12_keystore.h>
 #include <unknownecho/crypto/api/key/sym_key.h>
 #include <unknownecho/crypto/api/key/private_key.h>
+#include <unknownecho/container/queue.h>
+#include <unknownecho/input.h>
 
 #include <stdio.h>
 #include <stddef.h>
@@ -62,8 +64,9 @@ typedef struct {
 	ue_socket_client_connection *connection;
 	ue_thread_id *read_thread, *write_thread;
 	ue_processing_state csr_processing_state;
-	ue_thread_mutex *mutex, *csr_mutex;
-	ue_thread_cond *cond, *csr_cond;
+    ue_thread_mutex *mutex;
+    ue_thread_cond *cond;
+    ue_queue *push_mode_queue;
 	ue_data_transmission_state transmission_state;
 	bool running;
 	ue_byte_stream *new_message;
@@ -95,6 +98,7 @@ typedef struct {
 	bool (*connection_end_callback)(void *user_context);
 	char *(*user_input_callback)(void *user_context);
 	const char *cipher_name, *digest_name;
+    ue_user_input_mode user_input_mode;
 } ue_channel_client;
 
 #endif

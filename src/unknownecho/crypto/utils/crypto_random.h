@@ -31,6 +31,21 @@
 
 #include <stddef.h>
 
+/**
+ * @brief ue_crypto_seed_prng
+ * @return true if PRNG is seeded, false otherwise
+ * @todo test on Windows
+ *
+ * OpenSSL makes sure that the PRNG state is unique for each thread.
+ * On systems that provide /dev/urandom, the randomness device is used to seed the PRNG transparently.
+ * However, on all other systems, the application is responsible for seeding the PRNG by calling RAND_add(),
+ * RAND_egd(3) or RAND_load_file(3).
+ *
+ * source : https://wiki.openssl.org/index.php/Manual:RAND_add(3),
+ *    https://wiki.openssl.org/index.php/Random_Numbers
+ */
+bool ue_crypto_random_seed_prng();
+
 bool ue_crypto_random_bytes(unsigned char *buffer, size_t buffer_length);
 
 #endif

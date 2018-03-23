@@ -50,6 +50,7 @@ ue_channel_client_parameters *ue_channel_client_parameters_create(char *nickname
     parameters->user_input_callback = NULL;
     parameters->cipher_name = NULL;
     parameters->digest_name = NULL;
+    parameters->user_input_mode = UNKNOWNECHO_STDIN_INPUT;
 
     return parameters;
 }
@@ -148,6 +149,11 @@ bool ue_channel_client_parameters_set_digest_name(ue_channel_client_parameters *
     return true;
 }
 
+bool ue_channel_client_parameters_set_user_input_mode(ue_channel_client_parameters *parameters, ue_user_input_mode user_input_mode) {
+    parameters->user_input_mode = user_input_mode;
+    return true;
+}
+
 ue_channel_client *ue_channel_client_parameters_build(ue_channel_client_parameters *parameters) {
     ue_channel_client *channel_client;
 
@@ -187,7 +193,8 @@ ue_channel_client *ue_channel_client_parameters_build(ue_channel_client_paramete
     	parameters->tls_server_host, parameters->tls_server_port, parameters->keystore_password, parameters->server_certificates_path,
         parameters->user_context, parameters->write_callback, parameters->initialization_begin_callback, parameters->initialization_end_callback,
         parameters->uninitialization_begin_callback, parameters->uninitialization_end_callback, parameters->connection_begin_callback,
-    	parameters->connection_end_callback, parameters->user_input_callback, parameters->cipher_name, parameters->digest_name);
+        parameters->connection_end_callback, parameters->user_input_callback, parameters->cipher_name, parameters->digest_name,
+        parameters->user_input_mode);
 
     return channel_client;
 }

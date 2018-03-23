@@ -394,7 +394,8 @@ static bool load_certs_keys_p12(ue_pkcs12_keystore *keystore, const PKCS12 *p12,
         if (!load_certs_pkeys_bags(keystore, bags, passphrase, passphrase_len, enc)) {
             sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
             ue_logger_warn("Failed to load certs bags of PKCS7 num %d", i);
-            continue;
+            ue_stacktrace_push_msg("Failed to decrypt PKCS7, incorrect password ?");
+            goto clean_up;
         }
         sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
         bags = NULL;
@@ -402,6 +403,7 @@ static bool load_certs_keys_p12(ue_pkcs12_keystore *keystore, const PKCS12 *p12,
 
     result = true;
 
+clean_up:
     sk_PKCS7_pop_free(asafes, PKCS7_free);
     return result;
 }
@@ -413,8 +415,8 @@ static bool load_certs_pkeys_bags(ue_pkcs12_keystore *keystore, const STACK_OF(P
 
     for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
         if (!load_certs_pkeys_bag(keystore, sk_PKCS12_SAFEBAG_value(bags, i), passphrase, passphrase_len, enc)) {
-            ue_logger_trace("Failed to load certs and keys of bag '%d'", i);
-            // return false ?;
+            ue_stacktrace_push_msg("Failed to load certs and keys of bag '%d'", i);
+            return false;
         }
     }
 
@@ -499,8 +501,11 @@ static bool load_certs_pkeys_bag(ue_pkcs12_keystore *keystore, const PKCS12_SAFE
             break;
 
         case NID_safeContentsBag:
-            return load_certs_pkeys_bags(keystore, PKCS12_SAFEBAG_get0_safes(bag), passphrase, passphrase_len, enc);
-
+            if (!load_certs_pkeys_bags(keystore, PKCS12_SAFEBAG_get0_safes(bag), passphrase, passphrase_len, enc)) {
+                ue_stacktrace_push_msg("Failed to load bags");
+                return false;
+            }
+            return true;
         default:
             ue_logger_warn("Warning unsupported bag type : '%s'", PKCS12_SAFEBAG_get0_type(bag));
             return true;

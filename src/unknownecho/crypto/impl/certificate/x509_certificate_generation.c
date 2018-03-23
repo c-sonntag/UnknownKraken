@@ -19,6 +19,7 @@
 
 #include <unknownecho/crypto/api/certificate/x509_certificate_generation.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
+#include <unknownecho/crypto/utils/crypto_random.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/errorHandling/logger.h>
@@ -153,7 +154,7 @@ clean_up_failed:
 }
 
 bool ue_x509_certificate_print_pair(ue_x509_certificate *certificate, ue_private_key *private_key, char *certificate_file_name,
-	char *private_key_file_name) {
+    char *private_key_file_name, unsigned char *passphrase, size_t passphrase_size) {
 
 	bool result;
 	FILE *private_key_fd, *certificate_fd;
@@ -182,7 +183,7 @@ bool ue_x509_certificate_print_pair(ue_x509_certificate *certificate, ue_private
 		goto clean_up;
 	}
 
-    if (!ue_private_key_print(private_key, private_key_fd)) {
+    if (!ue_private_key_print(private_key, private_key_fd, passphrase, passphrase_size)) {
 		ue_stacktrace_push_msg("Failed to print private key to '%s' file", private_key_file_name);
 		goto clean_up;
 	}
@@ -243,6 +244,11 @@ static RSA *rsa_keypair_gen(int bits) {
 
     if (bits != 2048 && bits != 4096) {
     	return NULL;
+    }
+
+    if (!ue_crypto_random_seed_prng()) {
+        ue_stacktrace_push_msg("Failed to seed PRNG");
+        return NULL;
     }
 
 	if (!(ue_rsa_key_pair = RSA_new())) {

@@ -21,6 +21,7 @@
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/check_parameter.h>
+#include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/string/string_utility.h>
 
 #include <string.h>
@@ -93,30 +94,33 @@ void ue_socket_client_connection_destroy(ue_socket_client_connection *connection
 }
 
 void ue_socket_client_connection_clean_up(ue_socket_client_connection *connection) {
-	if (connection) {
-		ue_socket_close(connection->fd);
-		connection->fd = -1;
-		ue_safe_free(connection->nickname);
-		ue_byte_vector_clean_up(connection->all_messages);
-		ue_byte_vector_clean_up(connection->current_message);
-		ue_byte_vector_clean_up(connection->tmp_message);
-		ue_byte_stream_clean_up(connection->received_message);
-		ue_byte_stream_clean_up(connection->message_to_send);
-		ue_byte_vector_clean_up(connection->split_message);
-		connection->state = UNKNOWNECHO_CONNECTION_FREE_STATE;
-		if (connection->peer_certificate) {
-			ue_x509_certificate_destroy(connection->peer_certificate);
-			connection->peer_certificate = NULL;
-		}
-		ue_byte_stream_clean_up(connection->received_message_stream);
-		ue_byte_stream_clean_up(connection->tmp_stream);
-		connection->tls = NULL;
-		connection->peer_certificate = NULL;
-		connection->established = false;
-		connection->optional_data = NULL;
-		ue_queue_clean_up(connection->received_messages);
-		ue_queue_clean_up(connection->messages_to_send);
-	}
+    if (!connection) {
+        ue_logger_warn("Specified connection ptr is null");
+        return;
+    }
+
+    ue_socket_close(connection->fd);
+    connection->fd = -1;
+    ue_safe_free(connection->nickname);
+    ue_byte_vector_clean_up(connection->all_messages);
+    ue_byte_vector_clean_up(connection->current_message);
+    ue_byte_vector_clean_up(connection->tmp_message);
+    ue_byte_stream_clean_up(connection->received_message);
+    ue_byte_stream_clean_up(connection->message_to_send);
+    ue_byte_vector_clean_up(connection->split_message);
+    connection->state = UNKNOWNECHO_CONNECTION_FREE_STATE;
+    if (connection->peer_certificate) {
+        ue_x509_certificate_destroy(connection->peer_certificate);
+        connection->peer_certificate = NULL;
+    }
+    ue_byte_stream_clean_up(connection->received_message_stream);
+    ue_byte_stream_clean_up(connection->tmp_stream);
+    connection->tls = NULL;
+    connection->peer_certificate = NULL;
+    connection->established = false;
+    connection->optional_data = NULL;
+    ue_queue_clean_up(connection->received_messages);
+    ue_queue_clean_up(connection->messages_to_send);
 }
 
 bool ue_socket_client_connection_is_available(ue_socket_client_connection *connection) {

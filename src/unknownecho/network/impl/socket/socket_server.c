@@ -203,36 +203,48 @@ bool ue_socket_server_accept(ue_socket_server *server) {
         return false;
     }
 
+    ue_logger_info("Tryging to accept new socket client to server...");
+
     if (server->tls_session) {
+        ue_logger_info("Server have a TLS session");
+
         peer_tls = ue_tls_connection_create(server->tls_session->ctx);
 		if (!peer_tls) {
 			ue_stacktrace_push_msg("Failed to create TLS peer connection");
 			return false;
 		}
+        ue_logger_trace("Peer have a TLS connection");
+
         if (!ue_tls_connection_set_fd(peer_tls, new_socket)) {
             ue_stacktrace_push_msg("Failed to set new socket file descriptor to peer TLS connection");
             ue_tls_connection_destroy(peer_tls);
             return false;
         }
+        ue_logger_trace("File descriptor set to peer TLS connection");
 
         if (!ue_tls_connection_accept(peer_tls)) {
             ue_stacktrace_push_msg("Failed to accept new socket file descriptor into the TLS connection");
             ue_tls_connection_destroy(peer_tls);
             return false;
         }
+        ue_logger_trace("Peer accepted");
 
 		if (server->tls_session->verify_peer) {
+            ue_logger_trace("Verify peer...");
+
             if (!ue_tls_connection_verify_peer_certificate(peer_tls)) {
 				ue_stacktrace_push_msg("Client certificate verification failed");
                 ue_tls_connection_destroy(peer_tls);
                 return false;
 			}
+            ue_logger_trace("Peer TLS connection verified successfully");
 
+            ue_logger_trace("Check if client is already connected");
             for (i = 0; i < server->connections_number; i++) {
                 if (server->connections[i] && server->connections[i]->peer_certificate) {
                     certificate = ue_tls_connection_get_peer_certificate(peer_tls);
                     if (ue_x509_certificate_equals(certificate, server->connections[i]->peer_certificate)) {
-                        ue_logger_info("Client already connected");
+                        ue_logger_warn("Client already connected");
                         /* @todo response to client he's already connected ? */
                         /* ue_socket_send_sync_string(new_socket, "ALREADY_CONNECTED", peer_tls); */
                         ue_x509_certificate_destroy(certificate);
@@ -242,9 +254,11 @@ bool ue_socket_server_accept(ue_socket_server *server) {
                     ue_x509_certificate_destroy(certificate);
                 }
             }
+            ue_logger_trace("TLS client isn't already connected");
 		}
     }
 
+    ue_logger_trace("Search an available slot for accepted connection");
     for (i = 0; i < server->connections_number; i++) {
         if (ue_socket_client_connection_is_available(server->connections[i])) {
             if (!ue_socket_client_connection_establish(server->connections[i], new_socket)) {
@@ -279,10 +293,13 @@ void ue_socket_server_process_connection(ue_socket_server *server, ue_socket_cli
 
     switch (connection->state) {
         case UNKNOWNECHO_CONNECTION_FREE_STATE:
+            ue_logger_trace("Connection state : [FREE]");
         break;
 
         case UNKNOWNECHO_CONNECTION_READ_STATE:
+            ue_logger_trace("Connection state : [READ]");
             if (FD_ISSET(connection->fd, read_set)) {
+                ue_logger_trace("Have stuff to read");
                 if (!server->read_consumer(connection)) {
                     ue_logger_warn("An error occurred while processing read_consumer()");
                     if (ue_stacktrace_is_filled()) {
@@ -296,7 +313,9 @@ void ue_socket_server_process_connection(ue_socket_server *server, ue_socket_cli
         break;
 
         case UNKNOWNECHO_CONNECTION_WRITE_STATE:
+            ue_logger_trace("Connection state : [WRITE]");
             if (FD_ISSET(connection->fd, write_set)) {
+                ue_logger_trace("Have stuff to write");
                 if (!server->write_consumer(connection)) {
                     ue_logger_warn("An error occurred while processing write_consumer()");
                     if (ue_stacktrace_is_filled()) {
@@ -430,4 +449,19 @@ bool ue_socket_bind_s(int ue_socket_fd, const char *domain, const char *port) {
     }
 
     return true;
+}
+
+bool ue_socket_server_disconnect(ue_socket_server *server, ue_socket_client_connection *connection) {
+    int i;
+
+    for (i = 0; i < server->connections_number; i++) {
+        if (server->connections[i] == connection) {
+            ue_socket_client_connection_clean_up(server->connections[i]);
+            return true;
+        }
+    }
+
+    ue_logger_warn("Cannot disconnect client from server because client was not found.");
+
+    return false;
 }

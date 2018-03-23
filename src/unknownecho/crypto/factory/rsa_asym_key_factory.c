@@ -18,11 +18,12 @@
  *******************************************************************************/
 
 #include <unknownecho/crypto/factory/rsa_asym_key_factory.h>
+#include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
+#include <unknownecho/crypto/utils/crypto_random.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
@@ -77,6 +78,11 @@ static RSA *rsa_keypair_gen(int bits) {
 
     if (bits != 2048 && bits != 4096) {
     	return NULL;
+    }
+
+    if (!ue_crypto_random_seed_prng()) {
+        ue_stacktrace_push_msg("Failed to seed PRNG");
+        return NULL;
     }
 
 	if (!(ue_rsa_key_pair = RSA_new())) {

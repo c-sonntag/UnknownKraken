@@ -28,19 +28,18 @@
 
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/alloc.h>
+#include <unknownecho/string/string_utility.h>
+#include <unknownecho/defines.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
-#define LEVEL_NAME_MAX_SIZE 5
-static const char *level_names[] = {
-    "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
-};
+#define LEVEL_NAME_MAX_SIZE  7
 
-static const char *level_colors[] = {
-    "\x1b[94m", "\x1b[36m", "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m"
+static const char *level_names[] = {
+    "TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "FATAL"
 };
 
 ue_logger *ue_logger_create() {
@@ -49,11 +48,22 @@ ue_logger *ue_logger_create() {
     ue_safe_alloc(log, ue_logger, 1);
     log->print_level = 0;
     log->file_level = 0;
-    log->quiet = false;
     log->fp = NULL;
     log->mutex = ue_thread_mutex_create();
     log->colored = true;
-    log->details = false;
+    log->details = true;
+    log->padding = false;
+    log->message_color_as_level_color = false;
+
+    ue_safe_alloc(log->level_colors, char *, 6);
+    log->level_colors[UNKNOWNECHO_LOG_TRACE] = ue_string_create_from(UNKNOWNECHO_SKY_BLUE_COLOR);
+    log->level_colors[UNKNOWNECHO_LOG_DEBUG] = ue_string_create_from(UNKNOWNECHO_TURQUOISE_BLUE_COLOR);
+    log->level_colors[UNKNOWNECHO_LOG_INFO] = ue_string_create_from(UNKNOWNECHO_GREEN_COLOR);
+    log->level_colors[UNKNOWNECHO_LOG_WARNING] = ue_string_create_from(UNKNOWNECHO_YELLOW_COLOR);
+    log->level_colors[UNKNOWNECHO_LOG_ERROR] = ue_string_create_from(UNKNOWNECHO_RED_COLOR);
+    log->level_colors[UNKNOWNECHO_LOG_FATAL] = ue_string_create_from(UNKNOWNECHO_PURPLE_COLOR);
+
+    log->message_color = ue_string_create_from(UNKNOWNECHO_WHITE_COLOR);
 
     return log;
 }
@@ -61,6 +71,13 @@ ue_logger *ue_logger_create() {
 void ue_logger_destroy(ue_logger *log) {
     if (log) {
         ue_thread_mutex_destroy(log->mutex);
+        ue_safe_free(log->level_colors[UNKNOWNECHO_LOG_TRACE]);
+        ue_safe_free(log->level_colors[UNKNOWNECHO_LOG_DEBUG]);
+        ue_safe_free(log->level_colors[UNKNOWNECHO_LOG_INFO]);
+        ue_safe_free(log->level_colors[UNKNOWNECHO_LOG_WARNING]);
+        ue_safe_free(log->level_colors[UNKNOWNECHO_LOG_ERROR]);
+        ue_safe_free(log->level_colors[UNKNOWNECHO_LOG_FATAL]);
+        ue_safe_free(log->level_colors);
         ue_safe_free(log);
     }
 }
@@ -85,10 +102,6 @@ int ue_logger_get_file_level(ue_logger *log) {
     return  log->file_level;
 }
 
-void ue_logger_set_quiet(ue_logger *log, bool enable) {
-    log->quiet = enable ? true : false;
-}
-
 void ue_logger_set_colored(ue_logger *log, bool enable) {
     log->colored = enable;
 }
@@ -97,15 +110,28 @@ void ue_logger_set_details(ue_logger *log, bool enable) {
     log->details = enable;
 }
 
+void ue_logger_set_padding(ue_logger *log, bool enable) {
+    log->padding = enable;
+}
+
+void ue_logger_set_message_color(ue_logger *log, const char *color) {
+    ue_safe_free(log->message_color);
+    log->message_color = ue_string_create_from(color);
+}
+
+void ue_logger_set_message_color_as_level_color(ue_logger *log, bool enable) {
+    log->message_color_as_level_color = enable;
+}
+
 bool ue_logger_record(ue_logger *log, int level, const char *file, int line, const char *fmt, ...) {
     time_t rawtime;
     struct tm *timeinfo;
     va_list args;
     char *date_time;
-    unsigned short int padding;
+    unsigned short int padding_size;
+    char *message_color;
 
     if (!log) {
-        ue_stacktrace_push_msg("Specified log ptr is null");
         return false;
     }
 
@@ -118,38 +144,57 @@ bool ue_logger_record(ue_logger *log, int level, const char *file, int line, con
     date_time = asctime(timeinfo);
     date_time[strlen(date_time) - 1] = '\0';
 
-    //padding = LEVEL_NAME_MAX_SIZE - strlen(level_names[level]);
-    padding = 0;
+    if (log->padding) {
+        padding_size = LEVEL_NAME_MAX_SIZE - strlen(level_names[level]);
+    } else {
+        padding_size = 0;
+    }
+
+    if (log->message_color_as_level_color) {
+        message_color = log->level_colors[level];
+    } else {
+        message_color = log->message_color;
+    }
 
     /* Log to stdout */
     if (level >= log->print_level) {
         if (log->colored) {
-            fprintf(stdout, "%s[%s%*s]\x1b[0m \x1b[90m", level_colors[level], level_names[level], padding, "");
+            if (log->details) {
+                fprintf(stdout, "%s[%s] [%s:%d] ", log->level_colors[level], date_time, file, line);
+            }
+
+            fprintf(stdout, "%s[%s]%*s%s %s", log->level_colors[level], level_names[level], padding_size,
+                "", UNKNOWNECHO_WHITE_COLOR, message_color);
         } else {
-            fprintf(stdout, "[%s%*s] ", level_names[level], padding, "");
+            if (log->details) {
+                fprintf(stdout, "[%s] [%s:%d] ", date_time, file, line);
+            }
+
+            fprintf(stdout, "[%s]%*s ", level_names[level], padding_size, "");
         }
 
         va_start(args, fmt);
         vfprintf(stdout, fmt, args);
         va_end(args);
         if (log->colored) {
-            fprintf(stdout, "\x1b[0m");
+            fprintf(stdout, "%s", UNKNOWNECHO_WHITE_COLOR);
         }
         fprintf(stdout, "\n");
     }
 
     /* Log to file */
     if (log->fp != NULL && level >= log->file_level) {
-        fprintf(log->fp, "[%s%*s] ", level_names[level], padding, "");
+        if (log->details) {
+            fprintf(log->fp, "[%s] [%s:%d] ", date_time, file, line);
+        }
+
+        fprintf(log->fp, "[%s]%*s ", level_names[level], padding_size, "");
 
         va_start(args, fmt);
         vfprintf(log->fp, fmt, args);
         va_end(args);
-        if (log->details) {
-            fprintf(log->fp, " %s:%d at %s\n", file, line, date_time);
-        } else {
-            fprintf(log->fp, "\n");
-        }
+
+        fprintf(log->fp, "\n");
     }
 
     fflush(log->fp);
@@ -165,10 +210,10 @@ static void record_stacktrace(FILE *fp, ue_stacktrace *stacktrace) {
 }
 
 bool ue_logger_record_stacktrace(ue_logger *log, ue_stacktrace *stacktrace, const char *message, const char *file, int line) {
-    unsigned short int padding;
+    unsigned short int padding_size;
     time_t rawtime;
     struct tm *timeinfo;
-    char *date_time;
+    char *date_time, *message_color;
 
     if (!log) {
         ue_stacktrace_push_msg("Specified log ptr is null");
@@ -184,20 +229,38 @@ bool ue_logger_record_stacktrace(ue_logger *log, ue_stacktrace *stacktrace, cons
     date_time = asctime(timeinfo);
     date_time[strlen(date_time) - 1] = '\0';
 
-    //padding = LEVEL_NAME_MAX_SIZE - strlen(level_names[LOG_ERROR]);
-    padding = 0;
+    if (log->padding) {
+        padding_size = LEVEL_NAME_MAX_SIZE - strlen(level_names[UNKNOWNECHO_LOG_WARNING]);
+    } else {
+        padding_size = 0;
+    }
 
     /* Log to stdout */
-    if (LOG_ERROR >= log->print_level) {
-        if (log->colored) {
-            fprintf(stdout, "%s[%s%*s]\x1b[0m \x1b[90m", level_colors[LOG_ERROR], level_names[LOG_ERROR], padding, "");
+    if (UNKNOWNECHO_LOG_ERROR >= log->print_level) {
+        if (log->message_color_as_level_color) {
+            message_color = log->level_colors[UNKNOWNECHO_LOG_ERROR];
         } else {
-            fprintf(stdout, "[%s%*s] ", level_names[LOG_ERROR], padding, "");
+            message_color = log->message_color;
+        }
+
+        if (log->colored) {
+            if (log->details) {
+                fprintf(stdout, "%s[%s] [%s:%d] ", log->level_colors[UNKNOWNECHO_LOG_ERROR], date_time, file, line);
+            }
+
+            fprintf(stdout, "%s[%s]%*s%s %s", log->level_colors[UNKNOWNECHO_LOG_ERROR], level_names[UNKNOWNECHO_LOG_ERROR], padding_size,
+                "", UNKNOWNECHO_WHITE_COLOR, message_color);
+        } else {
+            if (log->details) {
+                fprintf(stdout, "[%s] [%s:%d] ", date_time, file, line);
+            }
+
+            fprintf(stdout, "[%s]%*s ", level_names[UNKNOWNECHO_LOG_ERROR], padding_size, "");
         }
 
         fprintf(stdout, "%s", message);
         if (log->colored) {
-            fprintf(stdout, "\x1b[0m");
+            fprintf(stdout, "%s", UNKNOWNECHO_WHITE_COLOR);
         }
         fprintf(stdout, "\n");
         record_stacktrace(stdout, stacktrace);
@@ -205,16 +268,14 @@ bool ue_logger_record_stacktrace(ue_logger *log, ue_stacktrace *stacktrace, cons
     }
 
     /* Log to file */
-    if (log->fp != NULL && LOG_ERROR >= log->file_level) {
-        fprintf(log->fp, "[%s%*s] ", level_names[LOG_ERROR], padding, "");
-
-        fprintf(log->fp, "%s", message);
+    if (log->fp != NULL && UNKNOWNECHO_LOG_ERROR >= log->file_level) {
         if (log->details) {
-            fprintf(log->fp, " %s:%d at %s", file, line, date_time);
+            fprintf(log->fp, " [%s] [%s:%d] ", date_time, file, line);
         }
-        fprintf(log->fp, "\n");
+
+        fprintf(log->fp, "[%s]%*s %s\n", level_names[UNKNOWNECHO_LOG_ERROR], padding_size, "", message);
+
         record_stacktrace(log->fp, stacktrace);
-        //fflush(log->fp);
     }
 
     /* Release lock */

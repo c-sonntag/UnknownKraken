@@ -308,6 +308,11 @@ static RSA *rsa_keypair_gen(int bits) {
     	return NULL;
     }
 
+    if (!ue_crypto_random_seed_prng()) {
+        ue_stacktrace_push_msg("Failed to seed PRNG");
+        return NULL;
+    }
+
 	if (!(ue_rsa_key_pair = RSA_new())) {
         ue_openssl_error_handling(error_buffer, "RSA_new");
         return NULL;

@@ -52,4 +52,6 @@ void ue_socket_server_destroy(ue_socket_server *server);
 
 void ue_socket_server_process_polling(ue_socket_server *server);
 
+bool ue_socket_server_disconnect(ue_socket_server *server, ue_socket_client_connection *connection);
+
 #endif

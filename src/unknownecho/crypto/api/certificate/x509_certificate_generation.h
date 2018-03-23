@@ -35,8 +35,11 @@
 #include <unknownecho/crypto/api/certificate/x509_certificate_parameters.h>
 #include <unknownecho/crypto/api/key/private_key.h>
 
+#include <stddef.h>
+
 bool ue_x509_certificate_generate(ue_x509_certificate_parameters *parameters, ue_x509_certificate **certificate, ue_private_key **private_key);
 
-bool ue_x509_certificate_print_pair(ue_x509_certificate *certificate, ue_private_key *private_key, char *certificate_file_name, char *private_key_file_name);
+bool ue_x509_certificate_print_pair(ue_x509_certificate *certificate, ue_private_key *private_key,
+    char *certificate_file_name, char *private_key_file_name, unsigned char *passphrase, size_t passphrase_size);
 
 #endif

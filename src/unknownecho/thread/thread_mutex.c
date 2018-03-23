@@ -109,7 +109,6 @@ bool ue_thread_mutex_lock(ue_thread_mutex *m) {
         }
     #else
         if (pthread_mutex_lock(&m->lock) != 0) {
-            ue_logger_debug("errno value : %d", errno);
             ue_stacktrace_push_errno();
             return false;
         }

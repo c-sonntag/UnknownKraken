@@ -32,6 +32,7 @@
 #include <unknownecho/bool.h>
 
 #include <stdio.h>
+#include <stddef.h>
 
 typedef struct {
     ue_public_key *pk;
@@ -46,6 +47,6 @@ void ue_asym_key_destroy_all(ue_asym_key *akey);
 
 bool ue_asym_key_is_valid(ue_asym_key *akey);
 
-bool ue_asym_key_print(ue_asym_key *akey, FILE *out_fd);
+bool ue_asym_key_print(ue_asym_key *akey, FILE *out_fd, unsigned char *passphrase, size_t passphrase_size);
 
 #endif

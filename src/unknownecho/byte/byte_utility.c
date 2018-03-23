@@ -58,7 +58,7 @@ int ue_bytes_to_int(unsigned char *bytes) {
 	return n;
 }
 
-bool bytes_starts_with(unsigned char *data, size_t data_size, unsigned char *target, size_t target_size) {
+bool ue_bytes_starts_with(unsigned char *data, size_t data_size, unsigned char *target, size_t target_size) {
 	ue_check_parameter_or_return(data);
 	ue_check_parameter_or_return(data_size > 0);
 	ue_check_parameter_or_return(target);
@@ -72,7 +72,7 @@ bool bytes_starts_with(unsigned char *data, size_t data_size, unsigned char *tar
 	return memcmp(data, target, target_size) == 0;
 }
 
-bool bytes_contains(unsigned char *data, size_t data_size, unsigned char *target, size_t target_size) {
+bool ue_bytes_contains(unsigned char *data, size_t data_size, unsigned char *target, size_t target_size) {
 	size_t i, counter;
 
 	ue_check_parameter_or_return(data);

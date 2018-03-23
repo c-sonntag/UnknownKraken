@@ -27,6 +27,8 @@
 #ifndef UNKNOWNECHO_BOOL_H
 #define UNKNOWNECHO_BOOL_H
 
+#ifndef __cplusplus
+
 /* C99 */
 #if __STDC_VERSION__ >= 199901L
 
@@ -38,6 +40,8 @@ typedef enum {
     false,
     true
 } bool;
+
+#endif
 
 #endif
 

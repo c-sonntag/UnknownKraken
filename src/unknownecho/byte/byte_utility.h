@@ -39,8 +39,8 @@ void ue_int_to_bytes(int n, unsigned char *bytes);
 
 int ue_bytes_to_int(unsigned char *bytes);
 
-bool bytes_starts_with(unsigned char *data, size_t data_size, unsigned char *target, size_t target_size);
+bool ue_bytes_starts_with(unsigned char *data, size_t data_size, unsigned char *target, size_t target_size);
 
-bool bytes_contains(unsigned char *data, size_t data_size, unsigned char *target, size_t target_size);
+bool ue_bytes_contains(unsigned char *data, size_t data_size, unsigned char *target, size_t target_size);
 
 #endif

@@ -65,8 +65,8 @@ int main() {
     key_password = NULL;
 
     /* Set log levels for the screen and the log file */
-	ue_logger_set_file_level(ue_logger_manager_get_logger(), LOG_TRACE);
-	ue_logger_set_print_level(ue_logger_manager_get_logger(), LOG_TRACE);
+    ue_logger_set_file_level(ue_logger_manager_get_logger(), UNKNOWNECHO_LOG_TRACE);
+    ue_logger_set_print_level(ue_logger_manager_get_logger(), UNKNOWNECHO_LOG_TRACE);
 
     /* Get the user keystore password. If it's fail, it will add an error message to the stacktrace. */
     if (!(keystore_password = ue_input_string("Keystore password : "))) {

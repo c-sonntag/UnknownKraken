@@ -50,13 +50,13 @@ bool ue_asym_key_is_valid(ue_asym_key *akey){
 		ue_private_key_is_valid(akey->sk);
 }
 
-bool ue_asym_key_print(ue_asym_key *akey, FILE *out_fd) {
+bool ue_asym_key_print(ue_asym_key *akey, FILE *out_fd, unsigned char *passphrase, size_t passphrase_size) {
 	if (!akey || !akey->pk || !akey->sk) {
 		return false;
 	}
 
 	ue_public_key_print(akey->pk, out_fd);
-	ue_private_key_print(akey->sk, out_fd);
+    ue_private_key_print(akey->sk, out_fd, passphrase, passphrase_size);
 
 	return true;
 }

@@ -54,4 +54,15 @@
 #define UNKNOWNECHO_DEFAULT_TLS_SERVER_PORT          5001
 #define UNKNOWNECHO_DEFAULT_CLIENT_CHANNELS_NUMBER   3
 
+/* Colors use in logger */
+
+#define UNKNOWNECHO_SKY_BLUE_COLOR                   "\x1b[94m"
+#define UNKNOWNECHO_TURQUOISE_BLUE_COLOR             "\x1b[36m"
+#define UNKNOWNECHO_GREEN_COLOR                      "\x1b[32m"
+#define UNKNOWNECHO_YELLOW_COLOR                     "\x1b[33m"
+#define UNKNOWNECHO_RED_COLOR                        "\x1b[31m"
+#define UNKNOWNECHO_PURPLE_COLOR                     "\x1b[35m"
+#define UNKNOWNECHO_GRAY_COLOR                       "\x1b[90m"
+#define UNKNOWNECHO_WHITE_COLOR                      "\x1b[0m"
+
 #endif

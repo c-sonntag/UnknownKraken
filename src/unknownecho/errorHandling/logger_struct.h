@@ -34,21 +34,24 @@
 #include <stdio.h>
 
 typedef enum {
-    LOG_TRACE = 0,
-    LOG_DEBUG,
-    LOG_INFO,
-    LOG_WARN,
-    LOG_ERROR,
-    LOG_FATAL
+    UNKNOWNECHO_LOG_TRACE = 0,
+    UNKNOWNECHO_LOG_DEBUG,
+    UNKNOWNECHO_LOG_INFO,
+    UNKNOWNECHO_LOG_WARNING,
+    UNKNOWNECHO_LOG_ERROR,
+    UNKNOWNECHO_LOG_FATAL
 } ue_logger_type;
 
 typedef struct {
     int print_level, file_level;
-    bool quiet;
     bool colored;
     bool details;
+    bool padding;
+    bool message_color_as_level_color;
     FILE *fp;
     ue_thread_mutex *mutex;
+    char **level_colors;
+    char *message_color;
 } ue_logger;
 
 #endif

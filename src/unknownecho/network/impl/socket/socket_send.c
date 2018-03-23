@@ -53,8 +53,6 @@ size_t ue_socket_send_sync(ue_socket_client_connection *connection) {
         char *error_buffer;
     #endif
 
-    ue_logger_debug("%s", (char *)__func__);
-
     ue_check_parameter_or_return(connection->fd > 0);
     ue_check_parameter_or_return(ue_byte_stream_get_size(connection->message_to_send) > 0);
 
@@ -66,9 +64,7 @@ size_t ue_socket_send_sync(ue_socket_client_connection *connection) {
         #if defined(__unix__)
             sent = 0;
             do {
-                ue_logger_debug("Before write");
                 bytes = write(connection->fd, data + sent, size - sent);
-                ue_logger_debug("bytes : %ld", bytes);
                 if (bytes < 0) {
                     ue_stacktrace_push_errno();
                     return -1;
@@ -93,6 +89,10 @@ size_t ue_socket_send_sync(ue_socket_client_connection *connection) {
     }
 
     ue_logger_trace("%lu bytes sent", sent);
+    /*for (size_t i = 0; i < sent; i++) {
+        printf("%02X ", ue_byte_stream_get_data(connection->message_to_send)[i]);
+    }
+    printf("\n");*/
 
     return sent;
 }

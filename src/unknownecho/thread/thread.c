@@ -65,7 +65,10 @@ bool ue_thread_join(ue_thread_id *ti, void **result) {
         int r;
     #endif
 
-    ue_check_parameter_or_return(ti);
+    if (!ti) {
+        ue_logger_warn("Specified thread is is null. Maybe thread is already terminated.");
+        return true;
+    }
 
     #if defined(_WIN32) || defined(_WIN64)
         r = WaitForSingleObject(ti->id, INFINITE);

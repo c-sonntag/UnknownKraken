@@ -110,8 +110,8 @@ int main(int argc, char **argv) {
     child_pid = -1;
 
     /* Set log levels for the screen and the log file */
-	ue_logger_set_file_level(ue_logger_manager_get_logger(), LOG_TRACE);
-    ue_logger_set_print_level(ue_logger_manager_get_logger(), LOG_TRACE);
+    ue_logger_set_file_level(ue_logger_manager_get_logger(), UNKNOWNECHO_LOG_TRACE);
+    ue_logger_set_print_level(ue_logger_manager_get_logger(), UNKNOWNECHO_LOG_TRACE);
 
     /**
      * Get the user nickname.

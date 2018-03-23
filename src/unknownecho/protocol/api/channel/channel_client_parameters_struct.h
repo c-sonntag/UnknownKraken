@@ -22,6 +22,7 @@
 
 #include <unknownecho/bool.h>
 #include <unknownecho/byte/byte_stream.h>
+#include <unknownecho/input.h>
 
 typedef struct {
     char *persistent_path;
@@ -42,6 +43,7 @@ typedef struct {
 	bool (*connection_end_callback)(void *user_context);
     char *(*user_input_callback)(void *user_context);
     const char *cipher_name, *digest_name;
+    ue_user_input_mode user_input_mode;
 } ue_channel_client_parameters;
 
 #endif

@@ -19,9 +19,10 @@
 
 #include <unknownecho/crypto/api/crypto_init.h>
 #include <unknownecho/crypto/impl/openssl_init.h>
+#include <unknownecho/crypto/utils/crypto_random.h>
 
 bool ue_crypto_init() {
-	return ue_openssl_init();
+    return (ue_openssl_init() ? (ue_crypto_random_seed_prng() ? true : false) : false);
 }
 
 void ue_crypto_uninit() {

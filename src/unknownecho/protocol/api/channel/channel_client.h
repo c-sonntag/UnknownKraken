@@ -23,6 +23,9 @@
 #include <unknownecho/bool.h>
 #include <unknownecho/protocol/api/channel/channel_client_struct.h>
 #include <unknownecho/byte/byte_stream.h>
+#include <unknownecho/input.h>
+
+#include <stddef.h>
 
 bool ue_channel_client_init(int channel_clients_number);
 
@@ -34,12 +37,16 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 	bool (*initialization_end_callback)(void *user_context), bool (*uninitialization_begin_callback)(void *user_context),
 	bool (*uninitialization_end_callback)(void *user_context), bool (*connection_begin_callback)(void *user_context),
 	bool (*connection_end_callback)(void *user_context), char *(*user_input_callback)(void *user_context),
-	const char *cipher_name, const char *digest_name);
+    const char *cipher_name, const char *digest_name, ue_user_input_mode user_input_mode);
 
 void ue_channel_client_destroy(ue_channel_client *channel_client);
 
 bool ue_channel_client_start(ue_channel_client *channel_client);
 
 void ue_channel_client_shutdown_signal_callback(int sig);
+
+bool ue_channel_client_set_user_input_mode(ue_channel_client *channel_client, ue_user_input_mode mode);
+
+bool ue_channel_client_push_message(ue_channel_client *channel_client, unsigned char *data, size_t data_size);
 
 #endif

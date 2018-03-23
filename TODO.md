@@ -24,7 +24,6 @@
 * Set date logging more readable.
 * Clean-up examples.
 * Clean-up CMakeLists.txt and scripts.
-* Update LICENCE lib description.
 
 ## Portability
 * Make all sources compatible with Windows.

@@ -61,6 +61,8 @@ bool ue_channel_client_parameters_set_cipher_name(ue_channel_client_parameters *
 
 bool ue_channel_client_parameters_set_digest_name(ue_channel_client_parameters *parameters, const char *digest_name);
 
+bool ue_channel_client_parameters_set_user_input_mode(ue_channel_client_parameters *parameters, ue_user_input_mode user_input_mode);
+
 ue_channel_client *ue_channel_client_parameters_build(ue_channel_client_parameters *parameters);
 
 #endif

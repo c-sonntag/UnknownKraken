@@ -118,6 +118,10 @@
     }
 
     ue_logger_trace("%ld bytes received", received);
+    /*for (size_t i = 0; i < received; i++) {
+        printf("%02X ", ue_byte_stream_get_data(connection->received_message)[i]);
+    }
+    printf("\n");*/
 
     return received;
 }

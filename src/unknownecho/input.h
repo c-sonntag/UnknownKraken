@@ -20,6 +20,11 @@
 #ifndef UNKNOWNECHO_INPUT_H
 #define UNKNOWNECHO_INPUT_H
 
+typedef enum {
+    UNKNOWNECHO_STDIN_INPUT,
+    UNKNOWNECHO_PUSH_INPUT
+} ue_user_input_mode;
+
 char *ue_input_string(char *prefix);
 
 #endif

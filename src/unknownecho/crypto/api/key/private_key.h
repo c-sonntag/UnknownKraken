@@ -30,6 +30,7 @@
 #include <unknownecho/bool.h>
 
 #include <stdio.h>
+#include <stddef.h>
 
 typedef enum {
 	RSA_PRIVATE_KEY
@@ -51,6 +52,6 @@ void *ue_private_key_get_impl(ue_private_key *sk);
 
 void *ue_private_key_get_rsa_impl(ue_private_key *sk);
 
-bool ue_private_key_print(ue_private_key *sk, FILE *out_fd);
+bool ue_private_key_print(ue_private_key *sk, FILE *out_fd, unsigned char *passphrase, size_t passphrase_size);
 
 #endif

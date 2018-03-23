@@ -21,6 +21,7 @@
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/time/processor_timestamp.h>
 #include <unknownecho/alloc.h>
+#include <unknownecho/errorHandling/logger.h>
 
 #include <openssl/err.h>
 #include <openssl/rand.h>
@@ -46,12 +47,12 @@ unsigned char *ut_byte_to_long(unsigned long long nb) {
         i--;
         buf[i] = nb % 10 + '0';
         nb = nb/10;
-    }while (nb > 0);
+    } while (nb > 0);
 
     /* the number is stored from buf[i] to buf[21] */
 
     /* shifting the string to buf[0] : buf[21-i] */
-    for(j = 0 ; j < 21 && i < 21 ; j++ , i++) {
+    for (j = 0 ; j < 21 && i < 21 ; j++ , i++) {
         buf[j] = buf[i];
     }
     buf[j] = '\0';
@@ -59,52 +60,66 @@ unsigned char *ut_byte_to_long(unsigned long long nb) {
     return buf;
 }
 
-bool ue_crypto_random_bytes(unsigned char *buffer, size_t buffer_length) {
-    int attempts, fd;
-    char *error_buffer;
+bool ue_crypto_random_seed_prng() {
+    bool result, seed_needed;
+    int fd, attempts, max_attempts;
     unsigned char *seed;
-    bool seed_needed;
 
-    attempts = 0;
-    error_buffer = NULL;
+    result = false;
     fd = -1;
+    attempts = 0;
+    max_attempts = 5;
     seed = NULL;
     seed_needed = false;
 
     /**
-     * TOTEST
+     * @todo test
      */
-    if (!RAND_status()) {
-        /**
-         * OpenSSL makes sure that the PRNG state is unique for each thread.
-         * On systems that provide /dev/urandom, the randomness device is used to seed the PRNG transparently.
-         * However, on all other systems, the application is responsible for seeding the PRNG by calling RAND_add(),
-         * RAND_egd(3) or RAND_load_file(3).
-         *
-         * source : https://wiki.openssl.org/index.php/Manual:RAND_add(3),
-         *    https://wiki.openssl.org/index.php/Random_Numbers
-         */
-        #if defined(__unix__) || defined(UNIX)
-            fd = open("/dev/urandom", S_IRUSR);
-            if (fd < 0) {
-                seed_needed = true;
-            } else {
-                close(fd);
-            }
-        #else
-            seed_needed = true;
-            if (!RAND_status()) {
+    while (!result && attempts < max_attempts) {
+        if (!(result = RAND_status())) {
+            #if defined(__unix__) || defined(UNIX)
+                fd = open("/dev/urandom", S_IRUSR);
+                if (fd < 0) {
+                    seed_needed = true;
+                } else {
+                    close(fd);
+                }
+            #elif defined(_WIN32) || defined(_WIN64)
+                /**
+                 * @todo add this Windows-only functions to increase the entropy
+                 * source : https://www.openssl.org/docs/man1.0.2/crypto/RAND_status.html
+                 * RAND_event() for mouse movement and other user interactions
+                 * RAND_screen() for collect screen content
+                 */
+            #endif
 
+            if (seed_needed) {
+                seed = ut_byte_to_long(ue_processor_timestamp());
+                ue_safe_realloc(seed, unsigned char, 22, 16);
+                RAND_seed(seed, 16);
+                ue_safe_free(seed);
             }
-        #endif
-
-        if (seed_needed) {
-            seed = ut_byte_to_long(ue_processor_timestamp());
-            ue_safe_realloc(seed, unsigned char, 22, 16);
-            RAND_seed(seed, 16);
-            ue_safe_free(seed);
+            attempts++;
         }
     }
+
+    if (!result) {
+        ue_stacktrace_push_msg("Failed to seed PRNG of Openssl with %d attempts", attempts);
+    } else {
+        ue_logger_info("PRNG seeded");
+    }
+
+    return result;
+}
+
+bool ue_crypto_random_bytes(unsigned char *buffer, size_t buffer_length) {
+    int attempts;
+    char *error_buffer;
+
+    attempts = 0;
+    error_buffer = NULL;
+
+    ue_crypto_random_seed_prng();
 
     while (RAND_bytes(buffer, buffer_length) != 1 && ++attempts != 5);
 
