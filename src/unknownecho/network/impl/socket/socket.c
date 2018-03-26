@@ -285,7 +285,7 @@ int ue_socket_open_tcp() {
 bool ue_socket_close(int fd) {
 #if defined(_WIN32) || defined(_WIN64)
     char *error_buffer;
-#elif
+#else
     int error_code;
 #endif
 
