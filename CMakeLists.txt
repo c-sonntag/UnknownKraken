@@ -82,19 +82,22 @@ endif ()
 # --- SEARCH LIB ---
 
 if (SEARCH_LIB)
-        #find_package(PkgConfig REQUIRED)
-
-        # Search OpenSSL
-
-        #pkg_search_module(OPENSSL REQUIRED openssl)
-        find_package(OPENSSL REQUIRED)
+	# Search OpenSSL
+	if (UNIX)
+        	find_package(PkgConfig REQUIRED)
+		pkg_search_module(OPENSSL REQUIRED openssl)
+	elseif (WIN32)
+		find_package(OPENSSL REQUIRED)
+	endif ()
         include_directories(${OPENSSL_INCLUDE_DIR})
         message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
 
 	# Search ZLib
-
-        #pkg_search_module(ZLIB REQUIRED zlib)
-        find_package(ZLIB REQUIRED)
+	if (UNIX)
+		pkg_search_module(ZLIB REQUIRED zlib)
+	elseif (WIN32)
+		find_package(ZLIB REQUIRED)
+	endif ()
         include_directories(${ZLIB_INCLUDE_DIRS})
         message(STATUS "Using ZLib ${ZLIB_VERSION}")
 endif ()
