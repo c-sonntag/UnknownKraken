@@ -213,7 +213,12 @@ bool ue_x509_certificate_equals(ue_x509_certificate *c1, ue_x509_certificate *c2
 	return c1 && c2 && X509_cmp(c1->impl, c2->impl) == 0;
 }
 
+/* Since I only experimented the applink error in Windows */
+#if defined(_WIN32) || defined(_WIN64)
+
 #include <openssl/applink.c>
+
+#endif
 
 bool ue_x509_certificate_print(ue_x509_certificate *certificate, FILE *out_fd) {
 	char *error_buffer;
