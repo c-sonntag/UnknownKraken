@@ -1,21 +1,44 @@
 language: c
 sudo: required
 
+# Only on Linux for now
+os:
+  - linux
+
 compiler:
-- gcc
+  - gcc
 
 addons:
   apt:
     packages:
       - gcc
       - cmake
-      - pkg-config
-      - openssl
-      - zlib1g-dev
-  
+      - pkg-config # To find libraries in CMake with Unix systems
+ 
+
+before_install:
+  # Download, compile and install the last version of Openssl (1.1.0)
+  - wget https://www.openssl.org/source/openssl-1.1.0.tar.gz
+  - sudo apt-get update -qq
+  - tar -zxvf openssl-1.1.0.tar.gz
+  - cd openssl-1.1.0
+  - ./config
+  - make
+  - sudo make install
+  - cd ..
+  # Download, compile and install the last version of Zlib (1.2.11)
+  - wget https://zlib.net/zlib-1.2.11.tar.gz
+  - tar -zxvf zlib-1.2.11.tar.gz
+  - cd zlib-1.2.11
+  - ./configure
+  - make
+  - sudo make install
+  - cd ..
+
+# Compile with CMake in release mode
 script:
-- ./build_release.sh
+  - ./build_release.sh
 
 branches:
     only:
-    - master
+      - master
