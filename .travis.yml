@@ -1,0 +1,20 @@
+language: c
+sudo: required
+
+compiler:
+- gcc
+
+addons:
+  apt:
+    packages:
+      - gcc
+      - cmake
+      - openssl
+      - zlib
+  
+script:
+- ./build_release.sh
+
+branches:
+    only:
+    - master
