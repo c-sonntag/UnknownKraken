@@ -31,9 +31,14 @@
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+
+#if defined(__unix__)
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+#elif defined(_WIN32) || defined(_WIN64)
+    #include <windows.h>
+#endif
 
 static bool send_all(int socket_fd, unsigned char *data, size_t data_size) {
     ue_check_parameter_or_return(socket_fd > 0);

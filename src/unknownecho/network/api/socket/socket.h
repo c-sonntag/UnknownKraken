@@ -47,4 +47,18 @@ bool ue_socket_destroy(int fd);
 
 bool ue_socket_is_valid(int fd);
 
+/**
+ * @brief change the blocking mode of a socket
+ * @param fd the file descriptor of the socket
+ * @param is_blocking true if you want to set the socket
+ *  in blocking mode, false otherwise
+ * @note windows sockets are created in blocking mode by default
+ *  currently on windows, there is no easy way to obtain the socket's current blocking mode since WSAIsBlocking was deprecated
+ * @return true if the socket change his blocking mode state
+ * @author Stephen Dunn from https://stackoverflow.com/questions/5489562/in-win32-is-there-a-way-to-test-if-a-socket-is-non-blocking
+ * @date 10/12/15 initial version from Stephen Dunn
+ * @date 24/03/18 inspired version from Charly Lamothe
+ */
+bool ue_socket_set_blocking_mode(int fd, bool is_blocking);
+
 #endif

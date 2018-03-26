@@ -40,10 +40,7 @@
     #include <unistd.h>
     #include <sys/select.h>
 #elif defined(_WIN32) || defined(_WIN64)
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
     #include <windows.h>
-    #pragma comment(lib,"ws2_32.lib")
 #else
     #error "OS not supported"
 #endif
@@ -175,7 +172,12 @@ bool ue_socket_listen(ue_socket_server *server) {
 
 int ue_socket_accept(int ue_socket_fd, struct sockaddr_in *sa) {
     int new_socket;
+
+#if defined(__unix__)
     socklen_t addrlen;
+#elif defined(_WIN32) || defined(_WIN64)
+    int addrlen;
+#endif
 
     addrlen = sizeof(struct sockaddr_in);
 
@@ -425,16 +427,10 @@ bool ue_socket_bind(int ue_socket_fd, int domain, unsigned short int port) {
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(port);
 
-    #if defined(__unix__)
-        if (bind(ue_socket_fd, (struct sockaddr *)&serv_addr , sizeof(serv_addr)) < 0) {
-            ue_stacktrace_push_errno();
-            return false;
-        }
-    #elif defined(_WIN32) || defined(_WIN64)
-        #error "OS not supported"
-    #else
-        #error "OS not supported"
-    #endif
+    if (bind(ue_socket_fd, (struct sockaddr *)&serv_addr , sizeof(serv_addr)) < 0) {
+        ue_stacktrace_push_errno();
+        return false;
+    }
 
     return true;
 }

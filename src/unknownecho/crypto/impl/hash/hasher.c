@@ -58,7 +58,10 @@ bool ue_hasher_init(ue_hasher *h, const char *digest_name) {
 		return false;
 	}
 
-	h->type = EVP_get_digestbyname(digest_name);
+    if (!(h->type = EVP_get_digestbyname(digest_name))) {
+        ue_openssl_error_handling(error_buffer, "Digest wasn't found");
+        return false;
+    }
 
 	return true;
 }
@@ -97,7 +100,10 @@ unsigned char *ue_hasher_digest(ue_hasher *h, const unsigned char *message, size
 	unsigned char *digest;
 	unsigned int digest_len_tmp;
 
-	digest = build_digest(h, message, message_len, &digest_len_tmp);
+    if (!(digest = build_digest(h, message, message_len, &digest_len_tmp))) {
+        ue_stacktrace_push_msg("Failed to build digest");
+        return NULL;
+    }
 	*digest_len = (size_t)digest_len_tmp;
 
 	return digest;

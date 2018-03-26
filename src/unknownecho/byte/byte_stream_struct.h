@@ -31,7 +31,7 @@
 #ifndef UNKNOWNECHO_BYTE_STREAM_STRUCT_H
 #define UNKNOWNECHO_BYTE_STREAM_STRUCT_H
 
-#include <stddef.h>
+#include <stdint.h>
 
 /**
  * @brief   stream of bytes
@@ -45,9 +45,9 @@
  */
 typedef struct {
 	unsigned char *bytes; /** bytes of the stream */
-	size_t limit; /** limit of the bytes field */
-	size_t position; /** current position of the bytes field */
-	size_t size; /** current max size of the stream */
+    uint64_t limit; /** limit of the bytes field */
+    uint64_t position; /** current position of the bytes field */
+    uint64_t size; /** current max size of the stream */
 } ue_byte_stream;
 
 #endif

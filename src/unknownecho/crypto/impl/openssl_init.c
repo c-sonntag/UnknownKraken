@@ -112,7 +112,6 @@ static void dealloc_mutexes() {
 bool ue_openssl_init() {
 	SSL_library_init();
 	OpenSSL_add_all_algorithms();
-	OpenSSL_add_all_ciphers();
 
 	/* Load the strings and init the library */
 	SSL_load_error_strings();

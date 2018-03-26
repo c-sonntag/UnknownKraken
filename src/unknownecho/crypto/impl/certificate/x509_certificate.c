@@ -21,6 +21,7 @@
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/check_parameter.h>
+#include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/alloc.h>
 
 #include <openssl/x509.h>
@@ -212,6 +213,8 @@ bool ue_x509_certificate_equals(ue_x509_certificate *c1, ue_x509_certificate *c2
 	return c1 && c2 && X509_cmp(c1->impl, c2->impl) == 0;
 }
 
+#include <openssl/applink.c>
+
 bool ue_x509_certificate_print(ue_x509_certificate *certificate, FILE *out_fd) {
 	char *error_buffer;
 
@@ -220,7 +223,7 @@ bool ue_x509_certificate_print(ue_x509_certificate *certificate, FILE *out_fd) {
 
 	error_buffer = NULL;
 
-	if (PEM_write_X509(out_fd, certificate->impl) == 0) {
+    if (PEM_write_X509(out_fd, certificate->impl) == 0) {
 		ue_openssl_error_handling(error_buffer, "PEM_write_PrivateKey");
 		return false;
 	}

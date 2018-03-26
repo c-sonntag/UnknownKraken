@@ -17,23 +17,42 @@
  *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
-#include <unknownecho/time/clock_time_posix.h>
+#include <unknownecho/time/current_time.h>
+#include <unknownecho/errorHandling/stacktrace.h>
 
-#include <time.h>
-#include <sys/time.h>
+#if defined(_WIN32) || defined(_WIN64)
 
-/**
- * Source : https://stackoverflow.com/a/37920181
- */
-unsigned long long ue_get_posix_clock_time() {
-    struct timespec ts;
-    struct timeval tv;
+#include <windows.h>
 
-    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-        return (unsigned long long) (ts.tv_sec * 1000000 + ts.tv_nsec / 1000);
-    } else if (gettimeofday(&tv, NULL) == 0) {
-        return (unsigned long long) (tv.tv_sec * 1000000 + tv.tv_usec);
-    } else {
-        return 0;
+#endif
+
+bool ue_time_of_day(struct timeval* p) {
+#if defined(_WIN32) || defined(_WIN64)
+    ULARGE_INTEGER ul; // As specified on MSDN.
+    FILETIME ft;
+
+    // Returns a 64-bit value representing the number of
+    // 100-nanosecond intervals since January 1, 1601 (UTC).
+    GetSystemTimeAsFileTime(&ft);
+
+    // Fill ULARGE_INTEGER low and high parts.
+    ul.LowPart = ft.dwLowDateTime;
+    ul.HighPart = ft.dwHighDateTime;
+    // Convert to microseconds.
+    ul.QuadPart /= 10ULL;
+    // Remove Windows to UNIX Epoch delta.
+    ul.QuadPart -= 11644473600000000ULL;
+    // Modulo to retrieve the microseconds.
+    p->tv_usec = (long) (ul.QuadPart % 1000000LL);
+    // Divide to retrieve the seconds.
+    p->tv_sec = (long) (ul.QuadPart / 1000000LL);
+#elif defined(__linux__)
+    if (gettimeofday(p , NULL) == -1) {
+        ue_stacktrace_push_errno();
+        return false;
     }
+#endif
+
+    return true;
 }
+

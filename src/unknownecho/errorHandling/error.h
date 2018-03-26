@@ -53,7 +53,7 @@ typedef struct {
         NULL, \
         code, \
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), \
-        (LPTSTR)&buffer_error, \
+        (LPTSTR)&error_buffer, \
         0, \
         NULL); \
 

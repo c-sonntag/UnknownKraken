@@ -28,6 +28,7 @@
 #include <ctype.h> /* for isspace() */
 #include <errno.h>
 #include <limits.h>
+#include <stdint.h>
 
 void ue_remove_last_char(char *str) {
 	if (!str) {
@@ -48,7 +49,7 @@ char *ue_strcat_variadic(const char *format, ...) {
 	char c, *src, *concatenated;
 	int d;
 	double f;
-	long long int L;
+    int64_t L;
 	long int l;
 	unsigned int u;
 
@@ -95,7 +96,14 @@ char *ue_strcat_variadic(const char *format, ...) {
 		case 'L':
 			L = va_arg(ap, long long int);
 			ue_safe_alloc(src, char, 20);
-			sprintf(src, "%lld", L);
+#if defined(_WIN32) || defined(_WIN64)
+            _Pragma("GCC diagnostic push")
+            _Pragma("GCC diagnostic ignored \"-Wformat\"")
+                sprintf(src, "%I64d", L);
+            _Pragma("GCC diagnostic pop")
+#else
+            sprintf(src, "%lld", L);
+#endif
 			if (!ue_string_builder_append(s, src, strlen(src))) {
 				break;
 			}

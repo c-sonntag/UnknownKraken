@@ -24,8 +24,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <stdint.h>
 
-bool ue_byte_writer_append_bytes(ue_byte_stream *stream, unsigned char *bytes, size_t bytes_len) {
+bool ue_byte_writer_append_bytes(ue_byte_stream *stream, unsigned char *bytes, long bytes_len) {
 	ue_check_parameter_or_return(stream);
     ue_check_parameter_or_return(bytes);
     ue_check_parameter_or_return(bytes_len > 0 && bytes_len != 18446744073709551615UL);
@@ -43,7 +44,7 @@ bool ue_byte_writer_append_bytes(ue_byte_stream *stream, unsigned char *bytes, s
 }
 
 bool ue_byte_writer_append_string(ue_byte_stream *stream, char *string) {
-    size_t string_len;
+    long string_len;
 
     ue_check_parameter_or_return(stream);
     ue_check_parameter_or_return(string);
@@ -93,7 +94,7 @@ bool ue_byte_writer_append_int(ue_byte_stream *stream, int n) {
     return true;
 }
 
-bool ue_byte_writer_append_long(ue_byte_stream *stream, long n) {
+bool ue_byte_writer_append_long(ue_byte_stream *stream, long int n) {
    ue_check_parameter_or_return(stream);
 
     if ((8 + stream->position) > stream->size) {
@@ -101,18 +102,15 @@ bool ue_byte_writer_append_long(ue_byte_stream *stream, long n) {
         stream->size += 8;
     }
 
-    stream->bytes[stream->position++] = (n >> 56) & 0xFF;
-    stream->bytes[stream->position++] = (n >> 48) & 0xFF;
-    stream->bytes[stream->position++] = (n >> 40) & 0xFF;
-    stream->bytes[stream->position++] = (n >> 32) & 0xFF;
-    stream->bytes[stream->position++] = (n >> 24) & 0xFF;
-    stream->bytes[stream->position++] = (n >> 16) & 0xFF;
-    stream->bytes[stream->position++] = (n >> 8) & 0xFF;
-    stream->bytes[stream->position++] = n & 0xFF;
+    stream->bytes[stream->position++] = ((uint64_t)n >> 56) & 0xFF;
+    stream->bytes[stream->position++] = ((uint64_t)n >> 48) & 0xFF;
+    stream->bytes[stream->position++] = ((uint64_t)n >> 40) & 0xFF;
+    stream->bytes[stream->position++] = ((uint64_t)n >> 32) & 0xFF;
+    stream->bytes[stream->position++] = ((uint64_t)n >> 24) & 0xFF;
+    stream->bytes[stream->position++] = ((uint64_t)n >> 16) & 0xFF;
+    stream->bytes[stream->position++] = ((uint64_t)n >> 8) & 0xFF;
+    stream->bytes[stream->position++] = (uint64_t)n & 0xFF;
 
     return true;
 }
 
-bool ue_byte_writer_append_size_t(ue_byte_stream *stream, size_t n) {
-	return false;
-}

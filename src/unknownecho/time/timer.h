@@ -31,7 +31,7 @@
 #include <unknownecho/time/timer_struct.h>
 #include <unknownecho/time/timer_measure_struct.h>
 #include <unknownecho/time/timer_measure.h>
-#include <unknownecho/time/clock_time_posix.h>
+#include <unknownecho/time/real_current_time.h>
 #include <unknownecho/bool.h>
 #include <unknownecho/thread/thread_storage.h>
 
@@ -59,10 +59,10 @@ bool ue_timer_set_unity_impl(ue_timer *tm, unsigned int id, char *unity);
 	ue_timer_set_unity_impl(ue_thread_storage_get_timer(), id, unity); \
 
 #define ue_timer_start(id) \
-	ue_timer_start_impl(ue_thread_storage_get_timer(), id, ue_get_posix_clock_time()); \
+    ue_timer_start_impl(ue_thread_storage_get_timer(), id, ue_get_real_current_time()); \
 
 #define ue_timer_stop(id) \
-	ue_timer_stop_impl(ue_thread_storage_get_timer(), id, ue_get_posix_clock_time()); \
+    ue_timer_stop_impl(ue_thread_storage_get_timer(), id, ue_get_real_current_time()); \
 
 #define ue_timer_average(id, result) \
 	ue_timer_average_impl(ue_thread_storage_get_timer(), id, &result); \

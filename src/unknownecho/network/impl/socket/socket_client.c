@@ -37,10 +37,7 @@
     #include <unistd.h>
     #include <arpa/inet.h>
 #elif defined(_WIN32) || defined(_WIN64)
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
     #include <windows.h>
-    #pragma comment(lib,"ws2_32.lib")
 #else
     #error "OS not supported"
 #endif
@@ -69,17 +66,11 @@ ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *h
     serv_addr.sin_family = domain;
     serv_addr.sin_port = htons(port);
 
-    #if defined(__unix__)
-        /* Connect the socket */
-        if (connect(fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) != UNKNOWNECHO_SUCCESS) {
-            ue_stacktrace_push_errno();
-            return NULL;
-        }
-    #elif defined(_WIN32) || defined(_WIN64)
-
-    #else
-        #error "OS not supported"
-    #endif
+    /* Connect the socket */
+    if (connect(fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) != UNKNOWNECHO_SUCCESS) {
+        ue_stacktrace_push_errno();
+        return NULL;
+    }
 
     if (tls_session) {
         ue_logger_info("Keystore manager isn't null, so it will create a TLS connection");

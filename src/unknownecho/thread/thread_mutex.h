@@ -36,12 +36,12 @@
 #endif
 
 typedef struct {
-    #if defined(_WIN32) || defined(_WIN64)
-        /* HANDLE lock; */
+#if defined(_WIN32) || defined(_WIN64)
+        //HANDLE lock;
         CRITICAL_SECTION lock;
-    #else
+#else
         pthread_mutex_t lock;
-    #endif
+#endif
 } ue_thread_mutex;
 
 ue_thread_mutex *ue_thread_mutex_create();

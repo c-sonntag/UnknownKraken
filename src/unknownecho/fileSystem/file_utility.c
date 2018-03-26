@@ -33,26 +33,26 @@
 #include <string.h>
 
 bool ue_is_file_exists(const char *file_name) {
-    #if defined(__unix__)
-        struct stat st;
-    #elif defined(_WIN32) || defined(_WIN64)
-        DWORD dw_attrib;
-    #else
-        #error "OS not supported"
-    #endif
+#if defined(__unix__)
+    struct stat st;
+#elif defined(_WIN32) || defined(_WIN64)
+    DWORD dw_attrib;
+#else
+    #error "OS not supported"
+#endif
 
-    #if defined(__unix__)
-        if (stat(file_name, &st) == 0) {
-            return S_ISREG(st.st_mode);
-        }
-        return false;
-    #elif defined(_WIN32) || defined(_WIN64)
-        dw_attrib = GetFileAttributesA(file_name);
-        if (dw_attrib != INVALID_FILE_ATTRIBUTES &&
-            dw_attrib != FILE_ATTRIBUTE_DIRECTORY) {
-            return true;
-        }
-    #endif
+#if defined(__unix__)
+    if (stat(file_name, &st) == 0) {
+        return S_ISREG(st.st_mode);
+    }
+    return false;
+#elif defined(_WIN32) || defined(_WIN64)
+    dw_attrib = GetFileAttributesA(file_name);
+    if (dw_attrib != INVALID_FILE_ATTRIBUTES &&
+        dw_attrib != FILE_ATTRIBUTE_DIRECTORY) {
+        return true;
+    }
+#endif
 
     return false;
 }

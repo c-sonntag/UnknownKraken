@@ -18,40 +18,15 @@
  *******************************************************************************/
 
 /**
- *  @file      thread_cond.h
- *  @brief     Portable structure of thread condition variable.
+ *  @file      clock_time_posix.h
+ *  @brief     Safe and accurate way to getting clock time of POSIX systems.
  *  @author    Charly Lamothe
  *  @copyright GNU Public License.
  */
 
-#ifndef UNKNOWNECHO_THREAD_COND_H
-#define UNKNOWNECHO_THREAD_COND_H
+#ifndef UNKNOWNECHO_REAL_CURRENT_TIME_H
+#define UNKNOWNECHO_REAL_CURRENT_TIME_H
 
-#include <unknownecho/bool.h>
-#include <unknownecho/thread/thread_mutex.h>
-
-#if defined(_WIN32) || defined(_WIN64)
-    #include <Windows.h>
-#elif defined(__unix__)
-    #include <pthread.h>
-#endif
-
-typedef struct {
-#if defined(_WIN32) || defined(_WIN64)
-        CONDITION_VARIABLE data;
-#elif defined(__unix__)
-	    pthread_cond_t data;
-#endif
-} ue_thread_cond;
-
-ue_thread_cond *ue_thread_cond_create();
-
-void ue_thread_cond_destroy(ue_thread_cond *cond);
-
-bool ue_thread_cond_wait(ue_thread_cond *cond, ue_thread_mutex *mutex);
-
-bool ue_thread_cond_signal(ue_thread_cond *cond);
-
-bool ue_thread_cond_broadcast(ue_thread_cond *cond);
+unsigned long long ue_get_real_current_time();
 
 #endif

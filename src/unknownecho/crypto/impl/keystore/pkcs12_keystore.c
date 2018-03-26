@@ -89,28 +89,40 @@ ue_pkcs12_keystore *ue_pkcs12_keystore_load(const char *file_name, char *passphr
     error_buffer = NULL;
     p12 = NULL;
 
+    ue_logger_debug("1");
+
     if (!ue_is_file_exists(file_name)) {
         ue_stacktrace_push_msg("Specified keystore file '%s' doesn't exists", file_name);
         return NULL;
     }
+
+    ue_logger_debug("2");
 
     if (!(bio = BIO_new_file(file_name, "rb"))) {
         ue_openssl_error_handling(error_buffer, "BIO_new_file");
         goto clean_up;
     }
 
+    ue_logger_debug("3");
+
     if (!(p12 = d2i_PKCS12_bio(bio, NULL))) {
         ue_openssl_error_handling(error_buffer, "d2i_PKCS12_bio");
         goto clean_up;
     }
 
+    ue_logger_debug("4");
+
     keystore = ue_pkcs12_keystore_create_empty();
+
+    ue_logger_debug("5");
 
     if (!load_certs_keys_p12(keystore, p12, passphrase, (int)strlen(passphrase), EVP_des_ede3_cbc())) {
         ue_pkcs12_keystore_destroy(keystore);
         keystore = NULL;
         ue_stacktrace_push_msg("Failed to load certs from keystore '%s'", file_name);
     }
+
+    ue_logger_debug("6");
 
 clean_up:
     BIO_free(bio);
@@ -392,12 +404,12 @@ static bool load_certs_keys_p12(ue_pkcs12_keystore *keystore, const PKCS12 *p12,
         }
 
         if (!load_certs_pkeys_bags(keystore, bags, passphrase, passphrase_len, enc)) {
-            sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
+            //sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
             ue_logger_warn("Failed to load certs bags of PKCS7 num %d", i);
             ue_stacktrace_push_msg("Failed to decrypt PKCS7, incorrect password ?");
             goto clean_up;
         }
-        sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
+        //sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
         bags = NULL;
     }
 
@@ -481,22 +493,24 @@ static bool load_certs_pkeys_bag(ue_pkcs12_keystore *keystore, const PKCS12_SAFE
                 return false;
 
             name = PKCS12_get_friendlyname((PKCS12_SAFEBAG *)bag);
-            if (keystore->friendly_name) {
-                if (keystore->other_certificates) {
-                    ue_safe_realloc(keystore->other_certificates, ue_x509_certificate *, keystore->other_certificates_number, 1);
+            if (name) {
+                if (keystore->friendly_name) {
+                    if (keystore->other_certificates) {
+                        ue_safe_realloc(keystore->other_certificates, ue_x509_certificate *, keystore->other_certificates_number, 1);
+                    } else {
+                        ue_safe_alloc(keystore->other_certificates, ue_x509_certificate *, 1);
+                    }
+                    X509_alias_set1(x509, (const unsigned char *)name, strlen(name));
+                    //ue_safe_free(name);
+                    other_certificate = ue_x509_certificate_create_empty();
+                    ue_x509_certificate_set_impl(other_certificate, x509);
+                    keystore->other_certificates[keystore->other_certificates_number] = other_certificate;
+                    keystore->other_certificates_number++;
                 } else {
-                    ue_safe_alloc(keystore->other_certificates, ue_x509_certificate *, 1);
+                    keystore->friendly_name = name;
+                    keystore->certificate = ue_x509_certificate_create_empty();
+                    ue_x509_certificate_set_impl(keystore->certificate, x509);
                 }
-                X509_alias_set1(x509, (const unsigned char *)name, strlen(name));
-                ue_safe_free(name);
-                other_certificate = ue_x509_certificate_create_empty();
-                ue_x509_certificate_set_impl(other_certificate, x509);
-                keystore->other_certificates[keystore->other_certificates_number] = other_certificate;
-                keystore->other_certificates_number++;
-            } else {
-                keystore->friendly_name = name;
-                keystore->certificate = ue_x509_certificate_create_empty();
-                ue_x509_certificate_set_impl(keystore->certificate, x509);
             }
             break;
 

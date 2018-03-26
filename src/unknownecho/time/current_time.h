@@ -17,16 +17,13 @@
  *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
-/**
- *  @file      clock_time_posix.h
- *  @brief     Safe and accurate way to getting clock time of POSIX systems.
- *  @author    Charly Lamothe
- *  @copyright GNU Public License.
- */
+#ifndef UNKNOWNECHO_TIME_CURRENT_H
+#define UNKNOWNECHO_TIME_CURRENT_H
 
-#ifndef UNKNOWNECHO_CLOCK_TIME_POSIX_H
-#define UNKNOWNECHO_CLOCK_TIME_POSIX_H
+#include <unknownecho/bool.h>
 
-unsigned long long ue_get_posix_clock_time();
+#include <time.h>
+
+bool ue_time_of_day(struct timeval* p);
 
 #endif

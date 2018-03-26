@@ -27,7 +27,9 @@
 #ifndef UNKNOWNECHO_BOOL_H
 #define UNKNOWNECHO_BOOL_H
 
-#ifndef __cplusplus
+#include <unknownecho/defines.h>
+
+#ifdef UNKNOWNECHO_BOOL
 
 /* C99 */
 #if __STDC_VERSION__ >= 199901L

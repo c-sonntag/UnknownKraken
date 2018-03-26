@@ -70,6 +70,7 @@ bool ue_signer_sign_buffer(ue_signer *signer, const unsigned char *buf, size_t b
 
 	result = false;
 	error_buffer = NULL;
+    *signature = NULL;
 
 	if (EVP_DigestSignInit(signer->ctx, NULL, signer->md, NULL, ue_private_key_get_impl(signer->private_key)) != 1) {
 		ue_openssl_error_handling(error_buffer, "DigestSign initialisation");
@@ -101,6 +102,7 @@ bool ue_signer_sign_buffer(ue_signer *signer, const unsigned char *buf, size_t b
 clean_up:
 	if (*signature && !result) {
 		OPENSSL_free(*signature);
+        *signature = NULL;
 	}
 	return result;
 }

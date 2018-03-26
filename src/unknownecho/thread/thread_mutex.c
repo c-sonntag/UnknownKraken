@@ -30,41 +30,66 @@
 #include <errno.h>
 
 /*
+ * For Windows :
  * http://preshing.com/20111124/always-use-a-lightweight-mutex/
  */
-
 ue_thread_mutex *ue_thread_mutex_create() {
     ue_thread_mutex *m;
-    #if defined(_WIN32) || defined(_WIN64)
+/*#if defined(_WIN32) || defined(_WIN64)
         char *error_buffer;
-    #endif
+#endif*/
 
     ue_safe_alloc(m, ue_thread_mutex, 1);
 
-    #if defined(_WIN32) || defined(_WIN64)
-        if (!(m->lock = CreateMutex(NULL, FALSE, NULL))) {
+#if defined(_WIN32) || defined(_WIN64)
+        InitializeCriticalSection(&m->lock);
+        /*if (!(m->lock = CreateMutex(NULL, FALSE, NULL))) {
             ue_get_last_werror(error_buffer);
             ue_stacktrace_push_msg(error_buffer);
             ue_safe_free(error_buffer);
             ue_safe_free(m);
             return NULL;
-        }
-    #else
+        }*/
+#else
         if (pthread_mutex_init(&m->lock, NULL) != 0) {
             ue_safe_free(m);
             ue_stacktrace_push_errno();
             return NULL;
         }
-    #endif
+#endif
 
     return m;
 }
 
+#include <excpt.h>
+
+int filter(unsigned int code, struct _EXCEPTION_POINTERS *ep) {
+
+puts("in filter.");
+
+if (code == EXCEPTION_ACCESS_VIOLATION) {
+
+puts("caught AV as expected.");
+
+return EXCEPTION_EXECUTE_HANDLER;
+
+}
+
+else {
+
+puts("didn't catch AV, unexpected.");
+
+return EXCEPTION_CONTINUE_SEARCH;
+
+};
+
+}
+
 bool ue_thread_mutex_destroy(ue_thread_mutex *m) {
     bool state;
-    #ifdef _WIN32
+/*#if defined(_WIN32) || defined(_WIN64)
         char *error_buffer;
-    #endif
+#endif*/
 
     if (!m) {
         return true;
@@ -72,21 +97,20 @@ bool ue_thread_mutex_destroy(ue_thread_mutex *m) {
 
     state = true;
 
-    #if defined(_WIN32) || defined(_WIN64)
-        if (m->lock) {
-            if (!CloseHandle(m->lock)) {
-                ue_get_last_werror(error_buffer);
-                ue_stacktrace_push_msg(error_buffer);
-                ue_safe_free(error_buffer);
-                state = false;
-            }
-        }
-    #else
+#if defined(_WIN32) || defined(_WIN64)
+        DeleteCriticalSection(&m->lock);
+        /*if (!CloseHandle(m->lock)) {
+            ue_get_last_werror(error_buffer);
+            ue_stacktrace_push_msg(error_buffer);
+            ue_safe_free(error_buffer);
+            state = false;
+        }*/
+#else
         if (pthread_mutex_destroy(&m->lock) != 0) {
             ue_stacktrace_push_errno();
             state = false;
         }
-    #endif
+#endif
 
     ue_safe_free(m);
 
@@ -94,49 +118,51 @@ bool ue_thread_mutex_destroy(ue_thread_mutex *m) {
 }
 
 bool ue_thread_mutex_lock(ue_thread_mutex *m) {
-    #if defined(_WIN32) || defined(_WIN64)
+/*#if defined(_WIN32) || defined(_WIN64)
         char *error_buffer;
-    #endif
+#endif*/
 
     ue_check_parameter_or_return(m)
 
-    #if defined(_WIN32) || defined(_WIN64)
-        if (WaitForSingleObject(m->lock, INFINITE) == WAIT_FAILED) {
+#if defined(_WIN32) || defined(_WIN64)
+        TryEnterCriticalSection(&m->lock);
+        /*if (WaitForSingleObject(m->lock, INFINITE) == WAIT_FAILED) {
             ue_get_last_werror(error_buffer);
             ue_stacktrace_push_msg(error_buffer);
             ue_safe_free(error_buffer);
             return false;
-        }
-    #else
+        }*/
+#else
         if (pthread_mutex_lock(&m->lock) != 0) {
             ue_stacktrace_push_errno();
             return false;
         }
-    #endif
+#endif
 
     return true;
 }
 
 bool ue_thread_mutex_unlock(ue_thread_mutex *m) {
-    #if defined(_WIN32) || defined(_WIN64)
+/*#if defined(_WIN32) || defined(_WIN64)
         char *error_buffer;
-    #endif
+#endif*/
 
     ue_check_parameter_or_return(m);
 
-    #if defined(_WIN32) || defined(_WIN64)
-        if (!ReleaseMutex(m->lock)) {
+#if defined(_WIN32) || defined(_WIN64)
+        LeaveCriticalSection(&m->lock);
+        /*if (!ReleaseMutex(m->lock)) {
             ue_get_last_werror(error_buffer);
             ue_stacktrace_push_msg(error_buffer);
             ue_safe_free(error_buffer);
             return false;
-        }
-    #else
+        }*/
+#else
         if (pthread_mutex_unlock(&m->lock) != 0) {
             ue_stacktrace_push_errno();
             return false;
         }
-    #endif
+#endif
 
     return true;
 }

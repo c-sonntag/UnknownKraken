@@ -104,7 +104,8 @@ clean_up:
     ue_safe_free(iv);
     ue_safe_free(cipher_data_temp);
     ue_byte_stream_destroy(stream);
-    ue_safe_free(signature);
+    /* @todo fix seg fault if uncomment this following line */
+    //ue_safe_free(signature);
     ue_signer_destroy(signer);
     ue_safe_free(compressed);
     return result;

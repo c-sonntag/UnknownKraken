@@ -35,10 +35,7 @@
     #include <netinet/in.h>
     #include <unistd.h>
 #elif defined(_WIN32) || defined(_WIN64)
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
     #include <windows.h>
-    #pragma comment(lib,"ws2_32.lib")
 #else
     #error "OS not supported"
 #endif
@@ -75,7 +72,7 @@ size_t ue_socket_send_sync(ue_socket_client_connection *connection) {
                 sent += bytes;
             } while (sent < size);
         #elif defined(_WIN32) || defined(_WIN64)
-            if((sent = send((SOCKET)fd, data, size, 0)) < 0) {
+            if((sent = send((SOCKET)connection->fd, (char *)data, size, 0)) < 0) {
                 ue_get_last_wsa_error(error_buffer);
                 ue_stacktrace_push_msg(error_buffer);
                 ue_safe_free(error_buffer);

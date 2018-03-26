@@ -62,11 +62,16 @@ unsigned char *ut_byte_to_long(unsigned long long nb) {
 
 bool ue_crypto_random_seed_prng() {
     bool result, seed_needed;
-    int fd, attempts, max_attempts;
+    int attempts, max_attempts;
     unsigned char *seed;
+#if defined(__linux__)
+    int fd;
+#endif
 
     result = false;
+#if defined(__linux__)
     fd = -1;
+#endif
     attempts = 0;
     max_attempts = 5;
     seed = NULL;

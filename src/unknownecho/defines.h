@@ -56,6 +56,8 @@
 
 /* Colors use in logger */
 
+#if defined(__unix__)
+
 #define UNKNOWNECHO_SKY_BLUE_COLOR                   "\x1b[94m"
 #define UNKNOWNECHO_TURQUOISE_BLUE_COLOR             "\x1b[36m"
 #define UNKNOWNECHO_GREEN_COLOR                      "\x1b[32m"
@@ -64,5 +66,22 @@
 #define UNKNOWNECHO_PURPLE_COLOR                     "\x1b[35m"
 #define UNKNOWNECHO_GRAY_COLOR                       "\x1b[90m"
 #define UNKNOWNECHO_WHITE_COLOR                      "\x1b[0m"
+
+#elif defined(_WIN32) || defined(_WIN64)
+
+#define UNKNOWNECHO_SKY_BLUE_COLOR                   ""
+#define UNKNOWNECHO_TURQUOISE_BLUE_COLOR             ""
+#define UNKNOWNECHO_GREEN_COLOR                      ""
+#define UNKNOWNECHO_YELLOW_COLOR                     ""
+#define UNKNOWNECHO_RED_COLOR                        ""
+#define UNKNOWNECHO_PURPLE_COLOR                     ""
+#define UNKNOWNECHO_GRAY_COLOR                       ""
+#define UNKNOWNECHO_WHITE_COLOR                      ""
+
+#endif
+
+/* Optional defines */
+
+#define UNKNOWNECHO_BOOL
 
 #endif

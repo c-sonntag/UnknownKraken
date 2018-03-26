@@ -5,7 +5,7 @@
 # --- PROJECT ---
 
 PROJECT(unknownecho)
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 
 
 # --- GLOBAL OPTIONS ---
@@ -13,6 +13,14 @@ cmake_minimum_required(VERSION 3.5)
 set(CMAKE_VERBOSE_MAKEFILE off)
 set(SEARCH_LIB TRUE)
 
+if (WIN32)
+    # Uncomment and chance path for non conventional Openssl root path
+    set(OPENSSL_ROOT_DIR CACHE PATH "C:/OpenSSL-Win64")
+
+    # Change the path if it's different of yours
+    set(ZLIB_ROOT CACHE PATH "C:/zlib")
+    set(ZLIB_INCLUDE_DIR "C:/zlib/include")
+endif ()
 
 # --- PATH ---
 
@@ -21,11 +29,11 @@ set(SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(TESTS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 set(EXAMPLES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/examples")
 
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
 	set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/release")
 	set(EXAMPLES_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/release/examples")
 	set(TESTS_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/release/tests")
-elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+elseif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/debug")
 	set(EXAMPLES_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/debug/examples")
 	set(TESTS_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/debug/tests")
@@ -44,35 +52,51 @@ endif ()
 
 if (UNIX)
 	add_compile_options("-std=gnu99" "-pthread" "-ldl")
+elseif (WIN32)
+        add_compile_options("-std=c99" "-lkernel32" "-lntdll")
+        if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+            add_compile_options("-static-libgcc" "-static-libstdc++" "-ggdb")
+        endif ()
 else ()
-	add_compile_options("-std=c99")
+        add_compile_options("-std=c99")
 endif ()
 
 add_compile_options("-Wall" "-Werror" "-pedantic" "-fno-builtin")
+
+if (WIN32)
+    macro(get_WIN32_WINNT version)
+        if (WIN32 AND CMAKE_SYSTEM_VERSION)
+            set(ver ${CMAKE_SYSTEM_VERSION})
+            string(REPLACE "." "" ver ${ver})
+            string(REGEX REPLACE "([0-9])" "0\\1" ver ${ver})
+
+            set(${version} "0x${ver}")
+        endif()
+    endmacro()
+
+    get_WIN32_WINNT(ver)
+    add_definitions(-D_WIN32_WINNT=${ver})
+endif ()
 
 
 # --- SEARCH LIB ---
 
 if (SEARCH_LIB)
-	find_package(PkgConfig REQUIRED)
+        #find_package(PkgConfig REQUIRED)
 
-	# Search OpenSSL
-	pkg_search_module(OPENSSL REQUIRED openssl)
-	if (OPENSSL_FOUND)
-	    include_directories(${OPENSSL_INCLUDE_DIRS})
-	    message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
-	else ()
-	    # Error; with REQUIRED, pkg_search_module() will throw an error by it's own
-	endif ()
+        # Search OpenSSL
+
+        #pkg_search_module(OPENSSL REQUIRED openssl)
+        find_package(OPENSSL REQUIRED)
+        include_directories(${OPENSSL_INCLUDE_DIR})
+        message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
 
 	# Search ZLib
-	pkg_search_module(ZLIB REQUIRED zlib)
-	if (ZLIB_FOUND)
-	    include_directories(${ZLIB_INCLUDE_DIRS})
-	    message(STATUS "Using ZLib ${ZLIB_VERSION}")
-	else ()
-	    # Error; with REQUIRED, pkg_search_module() will throw an error by it's own
-	endif ()
+
+        #pkg_search_module(ZLIB REQUIRED zlib)
+        find_package(ZLIB REQUIRED)
+        include_directories(${ZLIB_INCLUDE_DIRS})
+        message(STATUS "Using ZLib ${ZLIB_VERSION}")
 endif ()
 
 # Search pthread
@@ -96,12 +120,19 @@ add_library(${PROJECT_NAME_SHARED} SHARED ${PROGRAM_TARGET_SRC_FILES})
 target_include_directories(${PROJECT_NAME_SHARED} PUBLIC "${SRC_PATH}")
 set_target_properties(${PROJECT_NAME_SHARED} PROPERTIES OUTPUT_NAME unknownecho)
 if (SEARCH_LIB)
-	target_link_libraries(${PROJECT_NAME_SHARED} ${OPENSSL_LIBRARIES})
+        target_link_libraries(${PROJECT_NAME_SHARED} ${OPENSSL_LIBRARIES})
 	target_link_libraries(${PROJECT_NAME_SHARED} ${ZLIB_LIBRARIES})
+        target_link_libraries(${PROJECT_NAME_SHARED} ws2_32 mswsock wsock32)
 else ()
-	target_link_libraries(${PROJECT_NAME_SHARED} "${CMAKE_SOURCE_DIR}/lib/libssl.so.1.1" -ldl)
-	target_link_libraries(${PROJECT_NAME_SHARED} "${CMAKE_SOURCE_DIR}/lib/libcrypto.so.1.1" -ldl)
-	target_link_libraries(${PROJECT_NAME_SHARED} "${CMAKE_SOURCE_DIR}/lib/libz.a"  -ldl)
+        if (LINUX)
+            target_link_libraries(${PROJECT_NAME_SHARED} "${CMAKE_SOURCE_DIR}/lib/linux/libssl.so.1.1" -ldl)
+            target_link_libraries(${PROJECT_NAME_SHARED} "${CMAKE_SOURCE_DIR}/lib/linux/libcrypto.so.1.1" -ldl)
+            target_link_libraries(${PROJECT_NAME_SHARED} "${CMAKE_SOURCE_DIR}/lib/linux/libz.a"  -ldl)
+        elseif (WIN32)
+            target_link_libraries(${PROJECT_NAME_SHARED} "${CMAKE_SOURCE_DIR}/lib/windows/libssl.lib" ws2_32 mswsock wsock32)
+            target_link_libraries(${PROJECT_NAME_SHARED} "${CMAKE_SOURCE_DIR}/lib/windows/libcrypto.lib" ws2_32 mswsock wsock32)
+            target_link_libraries(${PROJECT_NAME_SHARED} "${CMAKE_SOURCE_DIR}/lib/windows/libz.lib" ws2_32 mswsock wsock32)
+        endif ()
 endif ()
 target_link_libraries(${PROJECT_NAME_SHARED} ${CMAKE_THREAD_LIBS_INIT})
 
@@ -110,27 +141,37 @@ add_library(${PROJECT_NAME_STATIC} STATIC ${PROGRAM_TARGET_SRC_FILES})
 target_include_directories(${PROJECT_NAME_STATIC} PUBLIC "${SRC_PATH}")
 set_target_properties(${PROJECT_NAME_STATIC} PROPERTIES OUTPUT_NAME unknownecho)
 if (SEARCH_LIB)
-	target_link_libraries(${PROJECT_NAME_STATIC} ${OPENSSL_LIBRARIES})
+        target_link_libraries(${PROJECT_NAME_STATIC} ${OPENSSL_LIBRARIES})
 	target_link_libraries(${PROJECT_NAME_STATIC} ${ZLIB_LIBRARIES})
+        target_link_libraries(${PROJECT_NAME_STATIC} ws2_32 mswsock wsock32)
 else ()
-	target_link_libraries(${PROJECT_NAME_STATIC} "${CMAKE_SOURCE_DIR}/lib/libssl.so.1.1" -ldl)
-	target_link_libraries(${PROJECT_NAME_STATIC} "${CMAKE_SOURCE_DIR}/lib/libcrypto.so.1.1" -ldl)
-	target_link_libraries(${PROJECT_NAME_STATIC} "${CMAKE_SOURCE_DIR}/lib/libz.a"  -ldl)
+        if (LINUX)
+            target_link_libraries(${PROJECT_NAME_STATIC} "${CMAKE_SOURCE_DIR}/lib/linux/libssl.so.1.1" -ldl)
+            target_link_libraries(${PROJECT_NAME_STATIC} "${CMAKE_SOURCE_DIR}/lib/linux/libcrypto.so.1.1" -ldl)
+            target_link_libraries(${PROJECT_NAME_STATIC} "${CMAKE_SOURCE_DIR}/lib/linux/libz.a"  -ldl)
+        elseif (WIN32)
+            target_link_libraries(${PROJECT_NAME_STATIC} "${CMAKE_SOURCE_DIR}/lib/windows/libssl.lib" ws2_32 mswsock wsock32)
+            target_link_libraries(${PROJECT_NAME_STATIC} "${CMAKE_SOURCE_DIR}/lib/windows/libcrypto.lib" ws2_32 mswsock wsock32)
+            target_link_libraries(${PROJECT_NAME_STATIC} "${CMAKE_SOURCE_DIR}/lib/windows/libz.lib" ws2_32 mswsock wsock32)
+        endif ()
 endif ()
+
 target_link_libraries(${PROJECT_NAME_STATIC} ${CMAKE_THREAD_LIBS_INIT})
 
 
 # --- INSTALL ---
 
-# Copy includes
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION /usr/include
-          FILES_MATCHING PATTERN "*.h")
+if (UNIX)
+    # Copy includes
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION /usr/include
+              FILES_MATCHING PATTERN "*.h")
 
-# Copy static library
-install (TARGETS ${PROJECT_NAME_STATIC} ARCHIVE DESTINATION "/usr/lib")
+    # Copy static library
+    install (TARGETS ${PROJECT_NAME_STATIC} ARCHIVE DESTINATION "/usr/lib")
 
-# Copy shared library
-install (TARGETS ${PROJECT_NAME_SHARED} LIBRARY DESTINATION "/usr/lib")
+    # Copy shared library
+    install (TARGETS ${PROJECT_NAME_SHARED} LIBRARY DESTINATION "/usr/lib")
+endif ()
 
 # Build tests
 #file(GLOB_RECURSE PROGRAM_TARGET_TESTS_FILES "${TESTS_PATH}/*.c")
@@ -146,12 +187,18 @@ foreach (filePath ${files} )
 	message(STATUS "Build Program : ${executableName}")
 	add_executable(${executableName} ${filePath})
 	if (SEARCH_LIB)
-		target_link_libraries(${executableName} ${OPENSSL_LIBRARIES})
+                target_link_libraries(${executableName} ${OPENSSL_LIBRARIES})
 		target_link_libraries(${executableName} ${ZLIB_LIBRARIES})
+                target_link_libraries(${executableName} ws2_32 mswsock wsock32)
 	else ()
-		target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/libssl.so.1.1" -ldl)
-		target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/libcrypto.so.1.1" -ldl)
+                if (LINUX)
+                    target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/linux/libssl.so.1.1" -ldl)
+                    target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/linux/libcrypto.so.1.1" -ldl)
+                elseif (WIN32)
+                    target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/windows/libssl.lib" ws2_32 mswsock wsock32)
+                    target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/windows/libcrypto.lib" ws2_32 mswsock wsock32)
+                endif ()
 	endif ()
-	target_link_libraries(${executableName} ${PROJECT_NAME_STATIC})
-	set_target_properties(${executableName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${EXAMPLES_OUTPUT_PATH})
+        target_link_libraries(${executableName} ${PROJECT_NAME_STATIC})
+        #set_target_properties(${executableName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${EXAMPLES_OUTPUT_PATH})
 endforeach ()

@@ -34,11 +34,11 @@
 #endif
 
 typedef struct {
-    #if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32) || defined(_WIN64)
         HANDLE id;
-    #else
+#else
         pthread_t id;
-    #endif
+#endif
 } ue_thread_id;
 
 #endif

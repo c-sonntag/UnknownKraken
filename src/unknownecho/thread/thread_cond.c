@@ -21,6 +21,7 @@
 #include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/errorHandling/stacktrace.h>
+#include <unknownecho/errorHandling/logger.h>
 
 #include <errno.h>
 
@@ -29,21 +30,26 @@ ue_thread_cond *ue_thread_cond_create() {
 
 	ue_safe_alloc(cond, ue_thread_cond, 1);
 
-	if (pthread_cond_init(&cond->data, NULL) != 0) {
-		ue_stacktrace_push_errno();
-		goto clean_up;
-	}
+#if defined(_WIN32) || defined(_WIN64)
+    InitializeConditionVariable(&cond->data);
+#elif
+    if (pthread_cond_init(&cond->data, NULL) != 0) {
+        ue_stacktrace_push_errno();
+        ue_safe_free(cond);
+        return NULL;
+    }
+#endif
 
-	return cond;
-
-clean_up:
-	ue_safe_free(cond);
-	return NULL;
+    return cond;
 }
 
 void ue_thread_cond_destroy(ue_thread_cond *cond) {
 	if (cond) {
-		pthread_cond_destroy(&cond->data);
+#if defined(_WIN32) || defined(_WIN64)
+
+#elif
+            pthread_cond_destroy(&cond->data);
+#endif
 		ue_safe_free(cond);
 	}
 }
@@ -52,12 +58,16 @@ bool ue_thread_cond_wait(ue_thread_cond *cond, ue_thread_mutex *mutex) {
 	ue_check_parameter_or_return(cond);
 	ue_check_parameter_or_return(mutex);
 
-	if (pthread_cond_wait(&cond->data, &mutex->lock) != 0) {
-		if (errno != ETIMEDOUT) {
-			ue_stacktrace_push_errno();
-			return false;
-		}
-	}
+#if defined(_WIN32) || defined(_WIN64)
+    //SleepConditionVariableCS(&cond->data, &mutex->lock, INFINITE);
+#elif
+    if (pthread_cond_wait(&cond->data, &mutex->lock) != 0) {
+        if (errno != ETIMEDOUT) {
+            ue_stacktrace_push_errno();
+            return false;
+        }
+    }
+#endif
 
 	return true;
 }
@@ -65,10 +75,14 @@ bool ue_thread_cond_wait(ue_thread_cond *cond, ue_thread_mutex *mutex) {
 bool ue_thread_cond_signal(ue_thread_cond *cond) {
 	ue_check_parameter_or_return(cond);
 
+#if defined(_WIN32) || defined(_WIN64)
+    WakeConditionVariable(&cond->data);
+#elif
 	if (pthread_cond_signal(&cond->data) != 0) {
 		ue_stacktrace_push_errno();
 		return false;
 	}
+#endif
 
 	return true;
 }
@@ -76,10 +90,14 @@ bool ue_thread_cond_signal(ue_thread_cond *cond) {
 bool ue_thread_cond_broadcast(ue_thread_cond *cond) {
 	ue_check_parameter_or_return(cond);
 
+#if defined(_WIN32) || defined(_WIN64)
+    WakeAllConditionVariable(&cond->data);
+#elif
 	if (pthread_cond_broadcast(&cond->data) != 0) {
 		ue_stacktrace_push_errno();
 		return false;
 	}
+#endif
 
 	return true;
 }

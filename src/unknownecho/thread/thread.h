@@ -31,8 +31,8 @@
 #include <unknownecho/bool.h>
 
 #if defined(_WIN32) || defined(_WIN64)
-    #include <unknownecho/thread_result.h>
-    #include <unknownecho/error.h>
+    #include <unknownecho/thread/thread_result.h>
+    #include <unknownecho/errorHandling/error.h>
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -56,21 +56,21 @@ bool ue_thread_detach(ue_thread_id *ti);
 #define ue_thread_resolve_current_id(ti) ti->id = ue_get_current_thread_id();
 
 #if defined(_WIN32) || defined(_WIN64)
-    #define ue_thread_begin(type, name) {
-        type *name;
-        ue_thread_id *current;
+    #define ue_thread_begin(type, name) { type *name; ue_thread_id *current;
 #else
     #define ue_thread_begin(type, name) type *name; {
 #endif
 
+#define ue_thread_end_windows(r) \
+    ue_thread_resolve_current_id(current); \
+    if (!ue_thread_results_is_initialized()) { \
+        ue_thread_results_init(); \
+    } \
+    ue_thread_result_set(current, (void *)r); \
+    return NULL; \
+
 #if defined(_WIN32) || defined(_WIN64)
-    #define ue_thread_exit(r)
-        ue_thread_resolve_current_id(current);
-        if (!ue_thread_results_is_initialized()) {
-            ue_thread_results_init();
-        }
-        ue_thread_result_set(current, (void *)r);
-        return NULL;
+    #define ue_thread_exit(r) ue_thread_end_windows(r)
 #else
     #define ue_thread_end(r) pthread_exit(r); }
 #endif

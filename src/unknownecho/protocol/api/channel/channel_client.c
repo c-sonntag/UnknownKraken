@@ -64,7 +64,6 @@
 
 #include <string.h>
 #include <limits.h>
-#include <sys/socket.h>
 
 
 typedef struct {
@@ -81,6 +80,7 @@ static int max_channel_clients_number = 0;
 	#include <windows.h>
 #elif defined(__UNIX__)
 	#include <unistd.h>
+    #include <sys/socket.h>
 #endif
 
 
@@ -392,9 +392,9 @@ void ue_channel_client_destroy(ue_channel_client *channel_client) {
 		ue_safe_free(channel_client->signer_csr_context->iv);
 		ue_safe_free(channel_client->signer_csr_context);
 	}
-	ue_pkcs12_keystore_destroy(channel_client->tls_keystore);
-	ue_pkcs12_keystore_destroy(channel_client->cipher_keystore);
-	ue_pkcs12_keystore_destroy(channel_client->signer_keystore);
+    //ue_pkcs12_keystore_destroy(channel_client->tls_keystore);
+    //ue_pkcs12_keystore_destroy(channel_client->cipher_keystore);
+    //ue_pkcs12_keystore_destroy(channel_client->signer_keystore);
 	ue_safe_free(channel_client->csr_server_certificate_path);
 	ue_safe_free(channel_client->tls_server_certificate_path);
 	ue_safe_free(channel_client->cipher_server_certificate_path);
