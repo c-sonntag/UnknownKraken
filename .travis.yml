@@ -9,8 +9,9 @@ addons:
     packages:
       - gcc
       - cmake
+      - pkg-config
       - openssl
-      - zlib
+      - zlib1g-dev
   
 script:
 - ./build_release.sh
