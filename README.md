@@ -2,10 +2,7 @@
 
 LibUnknownEcho helps to put secure exchanges in the development of C client/server application.
 
-[![Build Status](https://travis-ci.org/swasun/LibUnknownEcho.svg?branch=master)](https://travis-ci.org/swasun/LibUnknownEcho) <a href="https://scan.coverity.com/projects/swasun-libunknownecho">
-  <img alt="Coverity Scan Build Status"
-       src="https://scan.coverity.com/projects/15324/badge.svg"/>
-</a>
+[![Build Status](https://travis-ci.org/swasun/LibUnknownEcho.svg?branch=master)](https://travis-ci.org/swasun/LibUnknownEcho)
 
 ***
 

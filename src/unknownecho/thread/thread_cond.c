@@ -32,7 +32,7 @@ ue_thread_cond *ue_thread_cond_create() {
 
 #if defined(_WIN32) || defined(_WIN64)
     InitializeConditionVariable(&cond->data);
-#elif
+#else
     if (pthread_cond_init(&cond->data, NULL) != 0) {
         ue_stacktrace_push_errno();
         ue_safe_free(cond);
@@ -47,7 +47,7 @@ void ue_thread_cond_destroy(ue_thread_cond *cond) {
 	if (cond) {
 #if defined(_WIN32) || defined(_WIN64)
 
-#elif
+#else
             pthread_cond_destroy(&cond->data);
 #endif
 		ue_safe_free(cond);
@@ -60,7 +60,7 @@ bool ue_thread_cond_wait(ue_thread_cond *cond, ue_thread_mutex *mutex) {
 
 #if defined(_WIN32) || defined(_WIN64)
     //SleepConditionVariableCS(&cond->data, &mutex->lock, INFINITE);
-#elif
+#else
     if (pthread_cond_wait(&cond->data, &mutex->lock) != 0) {
         if (errno != ETIMEDOUT) {
             ue_stacktrace_push_errno();
@@ -77,7 +77,7 @@ bool ue_thread_cond_signal(ue_thread_cond *cond) {
 
 #if defined(_WIN32) || defined(_WIN64)
     WakeConditionVariable(&cond->data);
-#elif
+#else
 	if (pthread_cond_signal(&cond->data) != 0) {
 		ue_stacktrace_push_errno();
 		return false;
@@ -92,8 +92,8 @@ bool ue_thread_cond_broadcast(ue_thread_cond *cond) {
 
 #if defined(_WIN32) || defined(_WIN64)
     WakeAllConditionVariable(&cond->data);
-#elif
-	if (pthread_cond_broadcast(&cond->data) != 0) {
+#else
+    if (pthread_cond_broadcast(&cond->data) != 0) {
 		ue_stacktrace_push_errno();
 		return false;
 	}

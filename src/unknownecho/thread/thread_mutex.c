@@ -61,30 +61,6 @@ ue_thread_mutex *ue_thread_mutex_create() {
     return m;
 }
 
-#include <excpt.h>
-
-int filter(unsigned int code, struct _EXCEPTION_POINTERS *ep) {
-
-puts("in filter.");
-
-if (code == EXCEPTION_ACCESS_VIOLATION) {
-
-puts("caught AV as expected.");
-
-return EXCEPTION_EXECUTE_HANDLER;
-
-}
-
-else {
-
-puts("didn't catch AV, unexpected.");
-
-return EXCEPTION_CONTINUE_SEARCH;
-
-};
-
-}
-
 bool ue_thread_mutex_destroy(ue_thread_mutex *m) {
     bool state;
 /*#if defined(_WIN32) || defined(_WIN64)

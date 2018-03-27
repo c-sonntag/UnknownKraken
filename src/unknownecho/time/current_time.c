@@ -21,12 +21,10 @@
 #include <unknownecho/errorHandling/stacktrace.h>
 
 #if defined(_WIN32) || defined(_WIN64)
-
-#include <windows.h>
-
+    #include <windows.h>
 #endif
 
-bool ue_time_of_day(struct timeval* p) {
+bool ue_time_of_day(struct timeval *p) {
 #if defined(_WIN32) || defined(_WIN64)
     ULARGE_INTEGER ul; // As specified on MSDN.
     FILETIME ft;

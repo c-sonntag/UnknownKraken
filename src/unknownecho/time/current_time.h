@@ -22,8 +22,12 @@
 
 #include <unknownecho/bool.h>
 
-#include <time.h>
+#if defined(__unix__)
+    #include <sys/time.h>
+#elif defined(_WIN32) || defined(_WIN64)
+    #include <time.h>
+#endif
 
-bool ue_time_of_day(struct timeval* p);
+bool ue_time_of_day(struct timeval *p);
 
 #endif

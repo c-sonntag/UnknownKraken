@@ -76,9 +76,9 @@ static ue_channel_client **channel_clients = NULL;
 static int max_channel_clients_number = 0;
 
 
-#if defined(WIN32)
+#if defined(_WIN32)
 	#include <windows.h>
-#elif defined(__UNIX__)
+#elif defined(__unix__)
 	#include <unistd.h>
     #include <sys/socket.h>
 #endif

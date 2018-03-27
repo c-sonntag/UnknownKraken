@@ -19,8 +19,6 @@
 
 #include <unknownecho/time/processor_timestamp.h>
 
-#include <intrin.h>
-
 /**
  * source : https://msdn.microsoft.com/en-us/library/twchhe95.aspx
  */
@@ -44,6 +42,8 @@
 #endif
 
 #elif defined(_WIN32) || defined(_WIN64)
+
+#include <intrin.h>
 
 static unsigned long long processor_timestamp_windows() {
     unsigned __int64 i;

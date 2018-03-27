@@ -50,7 +50,7 @@
 
 #if defined(_WIN32) || defined(_WIN64)
     char response[2048];
-#elif
+#else
     unsigned char response[2048];
 #endif
 
@@ -91,7 +91,7 @@
 
 #if defined(_WIN32) || defined(_WIN64)
             if ((bytes = recv((SOCKET)connection->fd, response, 2048, 0)) <= 0) {
-#elif
+#else
             if ((bytes = recv(connection->fd, response, 2048, 0)) <= 0) {
 #endif
                 /* if nothing was received then we want to wait a little before trying again, 1 ms */

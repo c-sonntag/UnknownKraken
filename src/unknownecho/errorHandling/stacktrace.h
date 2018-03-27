@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 void ue_stacktrace_create(ue_stacktrace **stack);
 
