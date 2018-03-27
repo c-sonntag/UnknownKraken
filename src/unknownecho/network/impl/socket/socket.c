@@ -32,6 +32,7 @@
     #include <netdb.h>
     #include <netinet/in.h>
     #include <unistd.h>
+    #include <fcntl.h>
 #elif defined(_WIN32) || defined(_WIN64)
     #include <windows.h>
 #else
