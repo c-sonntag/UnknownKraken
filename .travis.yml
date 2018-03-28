@@ -11,7 +11,7 @@ compiler:
 env:
   global:
     # COVERITY_SCAN_TOKEN
-    - secure: "9sswa_IQnoNIJdZrvTr90w"
+    - secure: "zqpbaOiJjRspRq35Bz_Bhw"
 
 addons:
   apt:
@@ -23,7 +23,7 @@ addons:
   coverity_scan:
     # GitHub project metadata
     project:
-      name: swasun/LibUnknownEcho
+      name: swasun/LibUnknownEcho-coverity
       version: 1.0
       description: LibUnknownEcho helps to put secure exchanges in the development of C client/server application.
 
@@ -36,7 +36,7 @@ addons:
     # Pattern to match selecting branches that will run analysis. We recommend leaving this set to 'coverity_scan'.
     # Take care in resource usage, and consider the build frequency allowances per
     #   https://scan.coverity.com/faq#frequency
-    branch_pattern: master      
+    branch_pattern: master
 
 before_install:
   # Download, compile and install the last version of Openssl (1.1.0)
