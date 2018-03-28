@@ -11,7 +11,7 @@ compiler:
 env:
   global:
     # COVERITY_SCAN_TOKEN
-    - secure: "zqpbaOiJjRspRq35Bz_Bhw"
+    - secure: "KSbWZFMsGBaL69y2OuuUvgQSl4a+yGPdRB8WOu45wyxvzN7AFjrgUN1odFFJZy7YDjTcYheOklYSwbugwWo8tWE2SrLuT/q9HbF1wsWtEoHg2oxdtX9Ql2ahThGebXHiS4ob4p9Xi20OHWY2tHFCszZ1bKLpUag2fKU+AtKywwfGeC64PjfPZQejcz4e8Aad/JwthK1kMdMSEjKWYmhzzunD7eCkOP6yu/qvUgHN8+tpBWbTs2ShdHs+u5l8XgSYF+DtgHzptfHTpXz2+FU5NfILOcIbnJs8xbwh+4r70N2km+G7Hz6Z01C33mpF3zLadlafHVcO9CjOv9KlBdxCcGF+faLgB1miKkAdUtJBBpk59Ika5Jr8x/YzbzqN//JsUvxchfZGoj4tHDqHTnqfLrkBgE95gjtZdpPCB4bJLcss9zBHeHxilEiUiLe843il2cYQmFY4TEsU+r4JPXWsF0x2kAhWq+iZjpLaW+F17mkXG2w9Ux1Nnd+dXJk8XS3NSNOiFEEIK8LQhmziGqccfk4Al3uMdelbY38WXQGqepJFR7X7BIjl7oTm8CBoFezP0R4mvMD5WFJGkQddg81NeuO4pMJ0+dpm+B8Pzbt89sOtSp/5yg2Y2cdPH051qVhwAw1J6kIclOZWzUEzV860+O/hc+VEYhHaDikzYu8OfSE="
 
 addons:
   apt:
@@ -23,7 +23,7 @@ addons:
   coverity_scan:
     # GitHub project metadata
     project:
-      name: swasun/LibUnknownEcho-coverity
+      name: swasun/LibUnknownEcho
       version: 1.0
       description: LibUnknownEcho helps to put secure exchanges in the development of C client/server application.
 
