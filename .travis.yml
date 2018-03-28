@@ -14,19 +14,18 @@ addons:
       - gcc
       - cmake
       - pkg-config # To find libraries in CMake with Unix systems
-      - libssl1.1.0
  
 
 before_install:
   # Download, compile and install the last version of Openssl (1.1.0)
-  #- wget https://www.openssl.org/source/openssl-1.1.0.tar.gz
-  #- sudo apt-get update -qq
-  #- tar -zxvf openssl-1.1.0.tar.gz
-  #- cd openssl-1.1.0
-  #- ./config
-  #- make
-  #- sudo make install
-  #- cd ..
+  - wget https://www.openssl.org/source/openssl-1.1.0.tar.gz
+  - sudo apt-get update -qq
+  - tar -zxvf openssl-1.1.0.tar.gz
+  - cd openssl-1.1.0
+  - ./config
+  - make
+  - sudo make install
+  - cd ..
   # Download, compile and install the last version of Zlib (1.2.11)
   - wget https://zlib.net/zlib-1.2.11.tar.gz
   - tar -zxvf zlib-1.2.11.tar.gz
