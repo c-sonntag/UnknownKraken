@@ -23,16 +23,16 @@ before_install:
   - tar -zxvf openssl-1.1.0.tar.gz
   - cd openssl-1.1.0
   - ./config
-  - make
-  - sudo make install
+  - make --silent
+  - sudo make --silent install
   - cd ..
   # Download, compile and install the last version of Zlib (1.2.11)
   - wget https://zlib.net/zlib-1.2.11.tar.gz
   - tar -zxvf zlib-1.2.11.tar.gz
   - cd zlib-1.2.11
   - ./configure
-  - make
-  - sudo make install
+  - make --silent
+  - sudo make --silent install
   - cd ..
 
 # Compile with CMake in release mode
