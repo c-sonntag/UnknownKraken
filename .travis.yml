@@ -20,15 +20,15 @@ addons:
       - cmake
       - pkg-config # To find libraries in CMake with Unix systems
       
-  coverity_scan:
+  #coverity_scan:
     # GitHub project metadata
-    project:
-      name: swasun/LibUnknownEcho
-      version: 1.0
-      description: LibUnknownEcho helps to put secure exchanges in the development of C client/server application.
-    build_command_prepend: "cov-configure --comptype gcc --compiler gcc-4.8"
-    build_command: "make VERBOSE=1"
-    branch_pattern: master
+    #project:
+      #name: swasun/LibUnknownEcho
+      #version: 1.0
+      #description: LibUnknownEcho helps to put secure exchanges in the development of C client/server application.
+    #build_command_prepend: "cov-configure --comptype gcc --compiler gcc-4.8"
+    #build_command: "make VERBOSE=1"
+    #branch_pattern: master
 
 before_install:
   # Download, compile and install the last version of Openssl (1.1.0)
@@ -50,7 +50,8 @@ before_install:
   - cd ..
 
 # Compile with CMake in release mode
-  script: if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then ./build_release.sh ; fi
+  #script: if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then ./build_release.sh ; fi
+  script: ./build_release.sh
 
 branches:
     only:
