@@ -31,7 +31,7 @@ addons:
     #build_command_prepend: ./configure
 
     # The command that will be added as an argument to "cov-build" to compile your project for analysis,
-    #build_command: make
+    build_command: ./build_release
 
     # Pattern to match selecting branches that will run analysis. We recommend leaving this set to 'coverity_scan'.
     # Take care in resource usage, and consider the build frequency allowances per
