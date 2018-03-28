@@ -11,8 +11,7 @@ compiler:
 env:
   global:
     # COVERITY_SCAN_TOKEN
-    # ** specific to your project **
-    - secure: "xxxx"
+    - secure: "9sswa_IQnoNIJdZrvTr90w"
 
 addons:
   apt:
@@ -20,8 +19,8 @@ addons:
       - gcc
       - cmake
       - pkg-config # To find libraries in CMake with Unix systems
+      
   coverity_scan:
-
     # GitHub project metadata
     project:
       name: swasun/LibUnknownEcho
