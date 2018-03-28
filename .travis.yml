@@ -26,16 +26,8 @@ addons:
       name: swasun/LibUnknownEcho
       version: 1.0
       description: LibUnknownEcho helps to put secure exchanges in the development of C client/server application.
-
-    # Commands to prepare for build_command
-    #build_command_prepend: ./configure
-
-    # The command that will be added as an argument to "cov-build" to compile your project for analysis,
-    build_command: ./build_release
-
-    # Pattern to match selecting branches that will run analysis. We recommend leaving this set to 'coverity_scan'.
-    # Take care in resource usage, and consider the build frequency allowances per
-    #   https://scan.coverity.com/faq#frequency
+    build_command_prepend: "cov-configure --comptype gcc --compiler gcc-4.8"
+    build_command: "make VERBOSE=1"
     branch_pattern: master
 
 before_install:
