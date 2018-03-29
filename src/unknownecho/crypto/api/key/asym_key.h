@@ -47,6 +47,6 @@ void ue_asym_key_destroy_all(ue_asym_key *akey);
 
 bool ue_asym_key_is_valid(ue_asym_key *akey);
 
-bool ue_asym_key_print(ue_asym_key *akey, FILE *out_fd, unsigned char *passphrase, size_t passphrase_size);
+bool ue_asym_key_print(ue_asym_key *akey, FILE *out_fd, char *passphrase);
 
 #endif

@@ -106,6 +106,7 @@ int main() {
     }
 
 end:
+    ue_logger_info("Cleaning...");
     /* Remove keystore and key passwords */
     ue_safe_free(keystore_password);
     ue_safe_free(key_password);

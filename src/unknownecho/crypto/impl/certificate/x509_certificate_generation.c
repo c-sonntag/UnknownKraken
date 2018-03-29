@@ -154,7 +154,7 @@ clean_up_failed:
 }
 
 bool ue_x509_certificate_print_pair(ue_x509_certificate *certificate, ue_private_key *private_key, char *certificate_file_name,
-    char *private_key_file_name, unsigned char *passphrase, size_t passphrase_size) {
+    char *private_key_file_name, char *passphrase) {
 
 	bool result;
 	FILE *private_key_fd, *certificate_fd;
@@ -183,7 +183,7 @@ bool ue_x509_certificate_print_pair(ue_x509_certificate *certificate, ue_private
 		goto clean_up;
 	}
 
-    if (!ue_private_key_print(private_key, private_key_fd, passphrase, passphrase_size)) {
+    if (!ue_private_key_print(private_key, private_key_fd, passphrase)) {
 		ue_stacktrace_push_msg("Failed to print private key to '%s' file", private_key_file_name);
 		goto clean_up;
 	}

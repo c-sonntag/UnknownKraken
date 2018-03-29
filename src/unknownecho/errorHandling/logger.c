@@ -78,6 +78,7 @@ void ue_logger_destroy(ue_logger *log) {
         ue_safe_free(log->level_colors[UNKNOWNECHO_LOG_ERROR]);
         ue_safe_free(log->level_colors[UNKNOWNECHO_LOG_FATAL]);
         ue_safe_free(log->level_colors);
+        ue_safe_free(log->message_color);
         ue_safe_free(log);
     }
 }

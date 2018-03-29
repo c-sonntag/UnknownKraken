@@ -135,7 +135,7 @@ void *ue_private_key_get_rsa_impl(ue_private_key *sk) {
 	return EVP_PKEY_get1_RSA(sk->impl);
 }
 
-bool ue_private_key_print(ue_private_key *sk, FILE *out_fd, unsigned char *passphrase, size_t passphrase_size) {
+bool ue_private_key_print(ue_private_key *sk, FILE *out_fd, char *passphrase) {
 	char *error_buffer;
 
 	error_buffer = NULL;
@@ -146,7 +146,7 @@ bool ue_private_key_print(ue_private_key *sk, FILE *out_fd, unsigned char *passp
             return false;
         }
     } else {
-        if (PEM_write_PrivateKey(out_fd, sk->impl, EVP_aes_256_cbc(), passphrase, (int)passphrase_size, NULL, NULL) == 0) {
+        if (PEM_write_PrivateKey(out_fd, sk->impl, EVP_aes_256_cbc(), (unsigned char *)passphrase, (int)strlen(passphrase), NULL, NULL) == 0) {
             ue_openssl_error_handling(error_buffer, "PEM_write_PrivateKey with passphrase");
             return false;
         }

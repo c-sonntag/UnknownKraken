@@ -45,9 +45,9 @@ void ue_uninit() {
 		ue_crypto_uninit();
 	}
 
+    ue_logger_manager_uninit();
+
 	if (ue_thread_storage_initialized) {
 		ue_thread_storage_uninit();
 	}
-
-	ue_logger_manager_uninit();
 }

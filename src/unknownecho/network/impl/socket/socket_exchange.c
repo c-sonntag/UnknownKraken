@@ -23,40 +23,75 @@
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/errorHandling/logger.h>
+#include <unknownecho/byte/byte_writer.h>
 
-bool ue_socket_exchange_send(ue_socket_client_connection *connection) {
-    /*bool result;
-    size_t sent, receive;
+#include <stddef.h>
+#include <string.h>
+
+bool ue_socket_exchange_send(ue_socket_client_connection *connection, ue_byte_stream *message_to_send) {
+    bool result;
+    size_t sent, received;
+    ue_byte_stream *received_message;
 
     ue_check_parameter_or_return(connection->fd > 0);
     ue_check_parameter_or_return(ue_byte_stream_get_size(connection->message_to_send) > 0);
 
     result = false;
+    received_message = ue_byte_stream_create();
 
-    if ((sent = ue_socket_send_sync(connection)) <= 0) {
+    if ((sent = ue_socket_send_sync(connection, message_to_send)) <= 0) {
         ue_stacktrace_push_msg("Failed to send specified data in synchronous socket");
-        return false;
+        goto clean_up;
     }
 
-    ue_logger_trace("%d bytes sent, waiting for an ACK");
+    ue_logger_trace("%d bytes sent, waiting for an ACK", sent);
 
-    if (receive = ue_socket_receive_sync()) {
+    if ((received = ue_socket_receive_sync(connection, received_message)) <= 0) {
+        ue_stacktrace_push_msg("Failed to receive ACK response, the connection was interrupted");
+        goto clean_up;
+    }
 
+    ue_logger_trace("%d bytes received for the ACK message", received);
+
+    if (memcmp(ue_byte_stream_get_data(received_message), "ACK", 3) != 0) {
+        ue_stacktrace_push_msg("Received message isn't an valid ACK response");
+        goto clean_up;
     }
 
     result = true;
 
-    return result;*/
-
-    return false;
+clean_up:
+    ue_byte_stream_destroy(received_message);
+    return result;
 }
 
-bool ue_socket_exchange_receive(ue_socket_client_connection *connection) {
+bool ue_socket_exchange_receive(ue_socket_client_connection *connection, ue_byte_stream *received_message) {
     bool result;
+    size_t received, sent;
+    ue_byte_stream *message_to_send;
 
     result = false;
+    message_to_send = ue_byte_stream_create();
+
+    if ((received = ue_socket_receive_sync(connection, received_message)) <= 0) {
+        ue_stacktrace_push_msg("Failed to receive ACK response, connection was interrupted");
+        goto clean_up;
+    }
+
+    ue_logger_trace("%d bytes received, sending ACK response...", received);
+
+    ue_byte_writer_append_string(message_to_send, "ACK");
+
+    if ((sent = ue_socket_send_sync(connection, message_to_send)) <= 0) {
+        ue_stacktrace_push_msg("Failed to send ACK repsonse, the connection was interrupted");
+        goto clean_up;
+    }
+
+    ue_logger_trace("%d bytes sent for the ACK response", sent);
 
     result = true;
 
+clean_up:
+    ue_byte_stream_destroy(message_to_send);
     return result;
 }

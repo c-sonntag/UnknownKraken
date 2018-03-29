@@ -47,7 +47,7 @@ int main() {
         goto clean_up;
     }
 
-    if (!ue_x509_certificate_print_pair(ca_certificate, ca_private_key, "out/ca_cert.pem", "out/ca_key.pem", NULL, -1)) {
+    if (!ue_x509_certificate_print_pair(ca_certificate, ca_private_key, "out/ca_cert.pem", "out/ca_key.pem", NULL)) {
         ue_logger_error("Failed to print ca certificate and private key to files");
         goto clean_up;
     }
@@ -62,7 +62,7 @@ int main() {
         goto clean_up;
     }
 
-    if (!ue_x509_certificate_print_pair(ca_certificate, ca_private_key, "out/cert.pem", "out/key.pem", NULL, -1)) {
+    if (!ue_x509_certificate_print_pair(ca_certificate, ca_private_key, "out/cert.pem", "out/key.pem", NULL)) {
         ue_logger_error("Failed to print signed certificate and private key to files");
         goto clean_up;
     }

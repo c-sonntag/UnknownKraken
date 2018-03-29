@@ -44,7 +44,7 @@ int main() {
         goto clean_up;
     }
 
-    if (!ue_x509_certificate_print_pair(certificate, private_key, "ca_out/cert.pem", "ca_out/key.pem", NULL, -1)) {
+    if (!ue_x509_certificate_print_pair(certificate, private_key, "ca_out/cert.pem", "ca_out/key.pem", NULL)) {
         ue_logger_error("Failed to print ca certificate and private key to files");
         goto clean_up;
     }

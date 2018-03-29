@@ -28,6 +28,7 @@
 #include <unknownecho/network/api/socket/socket_send.h>
 #include <unknownecho/network/api/socket/socket_receive.h>
 #include <unknownecho/network/api/socket/socket_client.h>
+#include <unknownecho/network/api/socket/socket_exchange.h>
 #include <unknownecho/network/api/tls/tls_session.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/thread/thread.h>
@@ -104,11 +105,9 @@ static size_t receive_cipher_message(ue_channel_client *channel_client, ue_socke
 
 static bool create_keystores(ue_channel_client *channel_client, const char *csr_server_host, unsigned short int csr_server_port, char *keystore_password);
 
-static bool send_csr(ue_channel_client *channel_client, ue_csr_context *context, int csr_sub_type);
+static bool process_csr_response(ue_channel_client *channel_client, ue_byte_stream *received_message);
 
-static bool csr_read_consumer(void *parameter);
-
-static bool csr_process_response(void *parameter);
+static bool process_csr_request(ue_channel_client *channel_client, ue_csr_context *context, int csr_sub_type);
 
 static bool process_user_input(ue_channel_client *channel_client, ue_socket_client_connection *connection,
     unsigned char *data, size_t data_size);
@@ -519,7 +518,7 @@ static bool send_message(ue_channel_client *channel_client, ue_socket_client_con
 
 	ue_thread_mutex_lock(channel_client->mutex);
 	channel_client->transmission_state = WRITING_STATE;
-	sent = ue_socket_send_sync(connection);
+    sent = ue_socket_send_sync(connection, message_to_send);
 	channel_client->transmission_state = READING_STATE;
 	ue_thread_cond_signal(channel_client->cond);
 	ue_thread_mutex_unlock(channel_client->mutex);
@@ -543,7 +542,7 @@ static size_t receive_message(ue_channel_client *channel_client, ue_socket_clien
     }
     ue_thread_mutex_unlock(channel_client->mutex);
 	ue_byte_stream_clean_up(connection->received_message);
-    received = ue_socket_receive_sync(connection);
+    received = ue_socket_receive_sync(connection, connection->received_message);
 
     return received;
 }
@@ -709,18 +708,12 @@ static bool create_keystores(ue_channel_client *channel_client, const char *csr_
 
 		channel_client->running = true;
 		channel_client->transmission_state = WRITING_STATE;
-		channel_client->connection->optional_data = channel_client;
-
-	    _Pragma("GCC diagnostic push")
-	    _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
-			channel_client->read_thread = ue_thread_create((void *)csr_read_consumer, (void *)channel_client->connection);
-			channel_client->connection->read_messages_consumer_thread = ue_thread_create((void *)csr_process_response, (void *)channel_client->connection);
-	    _Pragma("GCC diagnostic pop")
+        channel_client->connection->optional_data = channel_client;
 	}
 
 	if (!tls_keystore_exists) {
 		ue_logger_info("TLS keystore doesn't exists. A CSR will be built.");
-		if (!send_csr(channel_client, channel_client->tls_csr_context, CSR_TLS_REQUEST)) {
+        if (!process_csr_request(channel_client, channel_client->tls_csr_context, CSR_TLS_REQUEST)) {
 			ue_stacktrace_push_msg("Failed to process CSR exchange for TLS");
 			goto clean_up;
 		}
@@ -730,7 +723,7 @@ static bool create_keystores(ue_channel_client *channel_client, const char *csr_
 
 	if (!cipher_keystore_exists) {
 		ue_logger_info("Cipher keystore doesn't exists. A CSR will be built.");
-		if (!send_csr(channel_client, channel_client->cipher_csr_context, CSR_CIPHER_REQUEST)) {
+        if (!process_csr_request(channel_client, channel_client->cipher_csr_context, CSR_CIPHER_REQUEST)) {
 			ue_stacktrace_push_msg("Failed to process CSR exchange for cipher");
 			goto clean_up;
 		}
@@ -740,7 +733,7 @@ static bool create_keystores(ue_channel_client *channel_client, const char *csr_
 
 	if (!signer_keystore_exists) {
 		ue_logger_info("Signer keystore doesn't exists. A CSR will be built.");
-		if (!send_csr(channel_client, channel_client->signer_csr_context, CSR_SIGNER_REQUEST)) {
+        if (!process_csr_request(channel_client, channel_client->signer_csr_context, CSR_SIGNER_REQUEST)) {
 			ue_stacktrace_push_msg("Failed to process CSR exchange for signer");
 			goto clean_up;
 		}
@@ -749,8 +742,8 @@ static bool create_keystores(ue_channel_client *channel_client, const char *csr_
 	}
 
 	if (!tls_keystore_exists || !cipher_keystore_exists || !signer_keystore_exists) {
-		ue_thread_join(channel_client->read_thread, NULL);
-		ue_thread_join(channel_client->connection->read_messages_consumer_thread, NULL);
+        //ue_thread_join(channel_client->read_thread, NULL);
+        //ue_thread_join(channel_client->connection->read_messages_consumer_thread, NULL);
 
 		if (ue_stacktrace_is_filled()) {
 			ue_logger_stacktrace("An error occurred while processing read_consumer()");
@@ -838,7 +831,82 @@ clean_up:
 	return result;
 }
 
-static bool send_csr(ue_channel_client *channel_client, ue_csr_context *context, int csr_sub_type) {
+static bool process_csr_response(ue_channel_client *channel_client, ue_byte_stream *received_message) {
+    bool result;
+    int csr_sub_type, csr_response_size;
+    unsigned char *csr_response;
+
+    result = false;
+    csr_response = NULL;
+
+    ue_byte_stream_set_position(received_message, 0);
+
+    if (!ue_byte_read_next_int(received_message, &csr_sub_type)) {
+        ue_stacktrace_push_msg("Failed to read CSR sub type in response");
+        goto clean_up;
+    }
+
+    if (csr_sub_type != CSR_TLS_RESPONSE &&
+        csr_sub_type != CSR_CIPHER_RESPONSE &&
+        csr_sub_type != CSR_SIGNER_RESPONSE) {
+        ue_logger_warn("Invalid CSR sub type");
+        goto clean_up;
+    }
+
+    if (!ue_byte_read_next_int(received_message, &csr_response_size)) {
+        ue_stacktrace_push_msg("Failed to read CSR response size in response");
+        goto clean_up;
+    }
+    if (!ue_byte_read_next_bytes(received_message, &csr_response, (size_t)csr_response_size)) {
+        ue_stacktrace_push_msg("Failed to read CSR response in response");
+        goto clean_up;
+    }
+
+    if (csr_sub_type == CSR_TLS_RESPONSE) {
+        ue_logger_trace("Received CSR_TLS_RESPONSE");
+
+        if (!(channel_client->tls_csr_context->signed_certificate = ue_csr_process_server_response(csr_response,
+            (size_t)csr_response_size, channel_client->tls_csr_context->future_key, channel_client->tls_csr_context->iv,
+            channel_client->tls_csr_context->iv_size))) {
+
+            ue_stacktrace_push_msg("Failed to process CSR TLS response");
+        } else {
+            channel_client->tls_keystore_ok = true;
+        }
+    }
+    else if (csr_sub_type == CSR_CIPHER_RESPONSE) {
+        ue_logger_trace("Received CSR_CIPHER_RESPONSE");
+
+        if (!(channel_client->cipher_csr_context->signed_certificate = ue_csr_process_server_response(csr_response,
+            (size_t)csr_response_size, channel_client->cipher_csr_context->future_key, channel_client->cipher_csr_context->iv,
+            channel_client->cipher_csr_context->iv_size))) {
+
+            ue_stacktrace_push_msg("Failed to process CSR CIPHER response");
+        } else {
+            channel_client->cipher_keystore_ok = true;
+        }
+    }
+    else if (csr_sub_type == CSR_SIGNER_RESPONSE) {
+        ue_logger_trace("Received CSR_SIGNER_RESPONSE");
+
+        if (!(channel_client->signer_csr_context->signed_certificate = ue_csr_process_server_response(csr_response,
+            (size_t)csr_response_size, channel_client->signer_csr_context->future_key, channel_client->signer_csr_context->iv,
+            channel_client->signer_csr_context->iv_size))) {
+
+            ue_stacktrace_push_msg("Failed to process CSR SIGNER response");
+        } else {
+            channel_client->signer_keystore_ok = true;
+        }
+    }
+
+    result = true;
+
+clean_up:
+    ue_safe_free(csr_response);
+    return result;
+}
+
+static bool process_csr_request(ue_channel_client *channel_client, ue_csr_context *context, int csr_sub_type) {
 	bool result;
 	ue_x509_certificate *certificate;
 	size_t csr_request_size;
@@ -929,6 +997,17 @@ static bool send_csr(ue_channel_client *channel_client, ue_csr_context *context,
 		goto clean_up;
 	}
 
+    ue_byte_stream_clean_up(channel_client->connection->received_message);
+    if (!receive_message(channel_client, channel_client->connection)) {
+        ue_stacktrace_push_msg("Failed to receive CSR response from server, connection was interrupted");
+        goto clean_up;
+    }
+
+    if (!process_csr_response(channel_client, channel_client->connection->received_message)) {
+        ue_stacktrace_push_msg("Failed to process CSR response");
+        goto clean_up;
+    }
+
 	result = true;
 
 clean_up:
@@ -937,153 +1016,6 @@ clean_up:
 	ue_public_key_destroy(ca_public_key);
 	ue_x509_certificate_destroy(certificate);
 	return result;
-}
-
-static bool csr_read_consumer(void *parameter) {
-	size_t received;
-	bool result;
-	ue_socket_client_connection *connection;
-	ue_channel_client *channel_client;
-
-	result = true;
-	connection = (ue_socket_client_connection *)parameter;
-	channel_client = connection->optional_data;
-
-	if (connection->tls) {
-		ue_logger_error("TLS object of CSR connection isn't null but it should.");
-		return false;
-	}
-
-	while (channel_client->running) {
-		received = receive_message(channel_client, connection);
-		result = true;
-
-		// @todo set timeout in case of server lag or reboot
-		if (received < 0 || received == ULLONG_MAX) {
-			ue_logger_warn("Connection with server is interrupted. Stopping client...");
-			if (ue_stacktrace_is_filled()) {
-				ue_stacktrace_push_msg("Failed to receive server message");
-			}
-			channel_client->running = false;
-			result = false;
-		}
-		else if (received == 0) {
-            ue_logger_trace("Timeout 10ms...");
-			ue_millisleep(10);
-		}
-		else {
-			if (ue_byte_stream_get_size(connection->received_message) > 0) {
-				ue_queue_push_wait(connection->received_messages, (void *)connection->received_message);
-			} else {
-				ue_logger_warn("Received message is empty");
-			}
-		}
-
-		/* @todo convert to percent print */
-		ue_logger_debug("channel_client->tls_keystore_ok : %d", channel_client->tls_keystore_ok);
-		ue_logger_debug("channel_client->cipher_keystore_ok : %d", channel_client->cipher_keystore_ok);
-		ue_logger_debug("channel_client->signer_keystore_ok : %d", channel_client->signer_keystore_ok);
-
-		if (channel_client->tls_keystore_ok && channel_client->cipher_keystore_ok && channel_client->signer_keystore_ok) {
-			channel_client->running = false;
-		}
-	}
-
-	result = true;
-
-	return result;
-}
-
-static bool csr_process_response(void *parameter) {
-	int csr_sub_type, csr_response_size;
-	unsigned char *csr_response;
-	ue_socket_client_connection *connection;
-	ue_channel_client *channel_client;
-	ue_byte_stream *received_message;
-
-	csr_response = NULL;
-	connection = (ue_socket_client_connection *)parameter;
-	channel_client = connection->optional_data;
-	received_message = NULL;
-
-    while (!channel_client->tls_keystore_ok ||
-        !channel_client->cipher_keystore_ok ||
-		!channel_client->signer_keystore_ok) {
-
-		received_message = ue_queue_front_wait(connection->received_messages);
-
-		ue_byte_stream_set_position(received_message, 0);
-
-		if (!ue_byte_read_next_int(received_message, &csr_sub_type)) {
-			ue_stacktrace_push_msg("Failed to read CSR sub type in response");
-			goto clean_up;
-		}
-
-		if (csr_sub_type != CSR_TLS_RESPONSE &&
-			csr_sub_type != CSR_CIPHER_RESPONSE &&
-			csr_sub_type != CSR_SIGNER_RESPONSE) {
-			ue_logger_warn("Invalid CSR sub type");
-			goto clean_up;
-		}
-
-		if (!ue_byte_read_next_int(received_message, &csr_response_size)) {
-			ue_stacktrace_push_msg("Failed to read CSR response size in response");
-			goto clean_up;
-		}
-		if (!ue_byte_read_next_bytes(received_message, &csr_response, (size_t)csr_response_size)) {
-			ue_stacktrace_push_msg("Failed to read CSR response in response");
-			goto clean_up;
-		}
-
-		if (csr_sub_type == CSR_TLS_RESPONSE) {
-			ue_logger_trace("Received CSR_TLS_RESPONSE");
-
-			if (!(channel_client->tls_csr_context->signed_certificate = ue_csr_process_server_response(csr_response,
-				(size_t)csr_response_size, channel_client->tls_csr_context->future_key, channel_client->tls_csr_context->iv,
-				channel_client->tls_csr_context->iv_size))) {
-
-				ue_stacktrace_push_msg("Failed to process CSR TLS response");
-			} else {
-				channel_client->tls_keystore_ok = true;
-			}
-		}
-		else if (csr_sub_type == CSR_CIPHER_RESPONSE) {
-			ue_logger_trace("Received CSR_CIPHER_RESPONSE");
-
-			if (!(channel_client->cipher_csr_context->signed_certificate = ue_csr_process_server_response(csr_response,
-				(size_t)csr_response_size, channel_client->cipher_csr_context->future_key, channel_client->cipher_csr_context->iv,
-				channel_client->cipher_csr_context->iv_size))) {
-
-				ue_stacktrace_push_msg("Failed to process CSR CIPHER response");
-			} else {
-				channel_client->cipher_keystore_ok = true;
-			}
-		}
-		else if (csr_sub_type == CSR_SIGNER_RESPONSE) {
-			ue_logger_trace("Received CSR_SIGNER_RESPONSE");
-
-			if (!(channel_client->signer_csr_context->signed_certificate = ue_csr_process_server_response(csr_response,
-				(size_t)csr_response_size, channel_client->signer_csr_context->future_key, channel_client->signer_csr_context->iv,
-				channel_client->signer_csr_context->iv_size))) {
-
-				ue_stacktrace_push_msg("Failed to process CSR SIGNER response");
-			} else {
-				channel_client->signer_keystore_ok = true;
-			}
-		}
-
-clean_up:
-		ue_safe_free(csr_response);
-		if (ue_stacktrace_is_filled()) {
-			ue_stacktrace_push_msg("The processing of a client CSR failed");
-			/* @todo send a response to the client in case of error */
-			ue_logger_stacktrace("An error occured with the following stacktrace :");
-			ue_stacktrace_clean_up();
-		}
-		ue_queue_pop(connection->received_messages);
-	}
-
-	return true;
 }
 
 static bool process_user_input(ue_channel_client *channel_client, ue_socket_client_connection *connection,

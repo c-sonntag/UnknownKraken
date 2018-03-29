@@ -69,7 +69,7 @@ bool ue_thread_join(ue_thread_id *ti, void **result) {
 #endif
 
     if (!ti || !ti->id) {
-        ue_logger_warn("Specified thread is is null. Maybe thread is already terminated.");
+        ue_logger_warn("Specified thread ID is null. Maybe thread is already terminated.");
         return true;
     }
 

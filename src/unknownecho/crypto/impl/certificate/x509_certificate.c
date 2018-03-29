@@ -134,8 +134,8 @@ bool ue_x509_certificate_load_from_files(const char *cert_file_name, const char 
 		goto clean_up_failed;
 	}
 
+    EVP_PKEY_free(private_key_impl);
 	return true;
-	EVP_PKEY_free(private_key_impl);
 
 clean_up_failed:
 	X509_free(certificate_impl);
@@ -338,6 +338,7 @@ static bool load_certificate_pair(const char *cert_file_name, const char *privat
 	}
 
 	if (password) {
+        /* @todo fix memory leak here when server user exit with ctrl+c */
 		if (!(*private_key = PEM_read_bio_PrivateKey(bio, NULL, pass_cb, (void *)password))) {
 			ue_openssl_error_handling(error_buffer, "Failed to read BIO as PEM private key with a password");
 			goto clean_up;

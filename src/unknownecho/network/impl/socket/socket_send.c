@@ -40,7 +40,7 @@
     #error "OS not supported"
 #endif
 
-size_t ue_socket_send_sync(ue_socket_client_connection *connection) {
+size_t ue_socket_send_sync(ue_socket_client_connection *connection, ue_byte_stream *message_to_send) {
     size_t sent, size;
     unsigned char *data;
 
@@ -51,10 +51,10 @@ size_t ue_socket_send_sync(ue_socket_client_connection *connection) {
     #endif
 
     ue_check_parameter_or_return(connection->fd > 0);
-    ue_check_parameter_or_return(ue_byte_stream_get_size(connection->message_to_send) > 0);
+    ue_check_parameter_or_return(ue_byte_stream_get_size(message_to_send) > 0);
 
-    data = ue_byte_stream_get_data(connection->message_to_send);
-    size = ue_byte_stream_get_size(connection->message_to_send);
+    data = ue_byte_stream_get_data(message_to_send);
+    size = ue_byte_stream_get_size(message_to_send);
     sent = 0;
 
     if (!connection->tls) {
@@ -86,10 +86,6 @@ size_t ue_socket_send_sync(ue_socket_client_connection *connection) {
     }
 
     ue_logger_trace("%lu bytes sent", sent);
-    /*for (size_t i = 0; i < sent; i++) {
-        printf("%02X ", ue_byte_stream_get_data(connection->message_to_send)[i]);
-    }
-    printf("\n");*/
 
     return sent;
 }

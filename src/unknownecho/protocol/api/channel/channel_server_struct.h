@@ -45,9 +45,7 @@ typedef struct {
 	ue_tls_session *tls_session;
     ue_channel **channels;
     int channels_number;
-    ue_thread_id *csr_server_thread, *csr_process_all_thread, *tls_server_thread, *tls_process_all_thread,
-        **csr_connection_threads;
-    int csr_max_connections_number;
+    ue_thread_id *csr_server_thread, *tls_server_thread, *tls_process_all_thread;
     bool signal_caught;
     char *keystore_password;
     ue_pkcs12_keystore *csr_keystore, *tls_keystore, *cipher_keystore, *signer_keystore;
@@ -57,8 +55,7 @@ typedef struct {
         *cipher_server_key_path, *signer_server_certificate_path, *signer_server_key_path,
         *csr_keystore_path, *tls_keystore_path, *cipher_keystore_path,
         *signer_keystore_path, *csr_server_port, *tls_server_port, *logger_file_path;
-    unsigned char *key_passphrase;
-    size_t key_passphrase_size;
+    char *key_passphrase;
     void *user_context;
     bool (*initialization_begin_callback)(void *user_context);
 	bool (*initialization_end_callback)(void *user_context);

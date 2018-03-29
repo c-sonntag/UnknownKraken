@@ -86,9 +86,7 @@ static bool csr_server_read_consumer(ue_socket_client_connection *connection);
 
 static bool csr_server_write_consumer(ue_socket_client_connection *connection);
 
-static bool csr_server_process_all(void *parameter);
-
-static bool csr_server_process_request(void *parameter);
+static bool build_csr_response(ue_socket_client_connection *connection, ue_byte_stream *received_message);
 
 static bool record_client_certificate(ue_x509_certificate *signed_certificate, int csr_sub_type, unsigned char *friendly_name, size_t friendly_name_size);
 
@@ -151,7 +149,6 @@ bool ue_channel_server_create(char *persistent_path,
     channel_server->signer_server_certificate_path = NULL;
     channel_server->signer_server_key_path = NULL;
     channel_server->key_passphrase = NULL;
-    channel_server->key_passphrase_size = -1;
     channel_server->csr_keystore_path = NULL;
     channel_server->tls_keystore_path = NULL;
     channel_server->cipher_keystore_path = NULL;
@@ -165,7 +162,6 @@ bool ue_channel_server_create(char *persistent_path,
 	channel_server->digest_name = ue_string_create_from(digest_name);
     channel_server->csr_server_thread = NULL;
     channel_server->tls_server_thread = NULL;
-    channel_server->csr_connection_threads = NULL;
 
     if (channel_server->initialization_begin_callback) {
         channel_server->initialization_begin_callback(user_context);
@@ -238,8 +234,7 @@ bool ue_channel_server_create(char *persistent_path,
     channel_server->signer_server_key_path = ue_strcat_variadic("ss", channel_server->persistent_path, "/certificate/signer_server_key.pem");
 
     if (key_password) {
-        channel_server->key_passphrase = ue_bytes_create_from_string(key_password);
-        channel_server->key_passphrase_size = strlen(key_password);
+        channel_server->key_passphrase = ue_string_create_from(key_password);
     }
 
     if (!create_certificates()) {
@@ -319,7 +314,6 @@ void ue_channel_server_destroy() {
         if (channel_server->signal_caught) {
             ue_safe_free(channel_server->csr_server_thread);
             ue_safe_free(channel_server->tls_server_thread);
-            ue_safe_free(channel_server->csr_process_all_thread);
         }
         ue_safe_free(channel_server->keystore_password);
         ue_pkcs12_keystore_destroy(channel_server->csr_keystore);
@@ -349,12 +343,6 @@ void ue_channel_server_destroy() {
             channel_server->uninitialization_end_callback(channel_server->user_context);
         }
         ue_safe_fclose(channel_server->logs_file);
-        if (channel_server->csr_connection_threads) {
-            for (i = 0; i < channel_server->csr_max_connections_number; i++) {
-                ue_safe_free(channel_server->csr_connection_threads[i]);
-            }
-            ue_safe_free(channel_server->csr_connection_threads);
-        }
 	    ue_safe_free(channel_server)
 	}
 }
@@ -364,12 +352,10 @@ bool ue_channel_server_process() {
     _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
         channel_server->csr_server_thread = ue_thread_create((void *)ue_socket_server_process_polling, (void *)channel_server->csr_server);
         channel_server->tls_server_thread = ue_thread_create((void *)ue_socket_server_process_polling, (void *)channel_server->tls_server);
-        channel_server->csr_process_all_thread = ue_thread_create((void *)csr_server_process_all, (void *)channel_server->csr_server);
     _Pragma("GCC diagnostic pop")
 
     ue_thread_join(channel_server->csr_server_thread, NULL);
     ue_thread_join(channel_server->tls_server_thread, NULL);
-    ue_thread_join(channel_server->csr_process_all_thread, NULL);
     ue_thread_join(channel_server->tls_process_all_thread, NULL);
 
     return true;
@@ -387,7 +373,6 @@ void ue_channel_server_shutdown_signal_callback(int sig) {
     }
 
     ue_thread_cancel(channel_server->csr_server_thread);
-    ue_thread_cancel(channel_server->csr_process_all_thread);
     ue_thread_cancel(channel_server->tls_server_thread);
 }
 
@@ -438,7 +423,7 @@ static size_t send_cipher_message(ue_socket_client_connection *connection, ue_by
 
     ue_byte_stream_clean_up(connection->message_to_send);
     ue_byte_writer_append_bytes(connection->message_to_send, ue_byte_stream_get_data(message_stream), ue_byte_stream_get_size(message_stream));
-    sent = ue_socket_send_sync(connection);
+    sent = ue_socket_send_sync(connection, connection->message_to_send);
 
 clean_up:
     ue_safe_free(friendly_name);
@@ -468,7 +453,7 @@ static size_t receive_cipher_message(ue_socket_client_connection *connection) {
     }
 
     ue_byte_stream_clean_up(connection->received_message);
-    received = ue_socket_receive_sync(connection);
+    received = ue_socket_receive_sync(connection, connection->received_message);
 	if (received <= 0 || received == ULLONG_MAX) {
 		ue_logger_warn("Connection with client is interrupted.");
         goto clean_up;
@@ -523,7 +508,7 @@ static bool create_keystores() {
     signer_private_key = NULL;
 
     if (!ue_is_file_exists(channel_server->csr_keystore_path)) {
-        if (!ue_x509_certificate_load_from_files(channel_server->csr_server_certificate_path, channel_server->csr_server_key_path, (char *)channel_server->key_passphrase, &csr_certificate, &csr_private_key)) {
+        if (!ue_x509_certificate_load_from_files(channel_server->csr_server_certificate_path, channel_server->csr_server_key_path, channel_server->key_passphrase, &csr_certificate, &csr_private_key)) {
             ue_stacktrace_push_msg("Failed to load certificate and key from files '%s' and '%s'", channel_server->csr_server_certificate_path, channel_server->csr_server_key_path);
             goto end;
         }
@@ -550,7 +535,7 @@ static bool create_keystores() {
     }
 
     if (!ue_is_file_exists(channel_server->tls_keystore_path)) {
-        if (!ue_x509_certificate_load_from_files(channel_server->tls_server_certificate_path, channel_server->tls_server_key_path, (char *)channel_server->key_passphrase, &tls_certificate, &tls_private_key)) {
+        if (!ue_x509_certificate_load_from_files(channel_server->tls_server_certificate_path, channel_server->tls_server_key_path, channel_server->key_passphrase, &tls_certificate, &tls_private_key)) {
             ue_stacktrace_push_msg("Failed to load certificate and key from files '%s' and '%s'", channel_server->tls_server_certificate_path, channel_server->tls_server_key_path);
             goto end;
         }
@@ -566,9 +551,9 @@ static bool create_keystores() {
         }
 
         ue_logger_info("Removing the hard disk TLS private key.");
-        /*if (remove(channel_server->tls_server_key_path) != 0) {
+        if (remove(channel_server->tls_server_key_path) != 0) {
             ue_logger_warn("Failed to remove '%s' with error message '%s'.", channel_server->tls_server_key_path, strerror(errno));
-        }*/
+        }
     } else {
         if (!(channel_server->tls_keystore = ue_pkcs12_keystore_load(channel_server->tls_keystore_path, channel_server->keystore_password))) {
             ue_stacktrace_push_msg("Failed to load specified pkcs12 keystore");
@@ -577,7 +562,7 @@ static bool create_keystores() {
     }
 
     if (!ue_is_file_exists(channel_server->cipher_keystore_path)) {
-        if (!ue_x509_certificate_load_from_files(channel_server->cipher_server_certificate_path, channel_server->cipher_server_key_path, (char *)channel_server->key_passphrase, &cipher_certificate, &cipher_private_key)) {
+        if (!ue_x509_certificate_load_from_files(channel_server->cipher_server_certificate_path, channel_server->cipher_server_key_path, channel_server->key_passphrase, &cipher_certificate, &cipher_private_key)) {
             ue_stacktrace_push_msg("Failed to load certificate and key from files '%s' and '%s'", channel_server->cipher_server_certificate_path, channel_server->cipher_server_key_path);
             goto end;
         }
@@ -656,7 +641,7 @@ static bool create_certificates() {
         ue_logger_info("CSR pair successfully generated.");
 
         if (!ue_x509_certificate_print_pair(certificate, private_key, channel_server->csr_server_certificate_path,
-            channel_server->csr_server_key_path, channel_server->key_passphrase, channel_server->key_passphrase_size)) {
+            channel_server->csr_server_key_path, channel_server->key_passphrase)) {
 
             ue_stacktrace_push_msg("Failed to print ca certificate and private key to files");
             goto clean_up;
@@ -680,7 +665,7 @@ static bool create_certificates() {
         ue_logger_info("TLS pair successfully generated.");
 
         if (!ue_x509_certificate_print_pair(certificate, private_key, channel_server->tls_server_certificate_path,
-            channel_server->tls_server_key_path, channel_server->key_passphrase, channel_server->key_passphrase_size)) {
+            channel_server->tls_server_key_path, channel_server->key_passphrase)) {
 
             ue_stacktrace_push_msg("Failed to print ca certificate and private key to files");
             goto clean_up;
@@ -704,7 +689,7 @@ static bool create_certificates() {
         ue_logger_info("CIPHER pair successfully generated.");
 
         if (!ue_x509_certificate_print_pair(certificate, private_key, channel_server->cipher_server_certificate_path,
-            channel_server->cipher_server_key_path, channel_server->key_passphrase, channel_server->key_passphrase_size)) {
+            channel_server->cipher_server_key_path, channel_server->key_passphrase)) {
 
             ue_stacktrace_push_msg("Failed to print ca certificate and private key to files");
             goto clean_up;
@@ -728,7 +713,7 @@ static bool create_certificates() {
         ue_logger_info("SIGNER pair successfully generated.");
 
         if (!ue_x509_certificate_print_pair(certificate, private_key, channel_server->signer_server_certificate_path,
-            channel_server->signer_server_key_path, channel_server->key_passphrase, channel_server->key_passphrase_size)) {
+            channel_server->signer_server_key_path, channel_server->key_passphrase)) {
 
             ue_stacktrace_push_msg("Failed to print ca certificate and private key to files");
             goto clean_up;
@@ -746,16 +731,147 @@ clean_up:
     return result;
 }
 
+static bool build_csr_response(ue_socket_client_connection *connection, ue_byte_stream *received_message) {
+    bool result;
+    int csr_sub_type, nickname_size, csr_request_size, response_type;
+    ue_x509_certificate *ca_certificate, *signed_certificate;
+    ue_private_key *ca_private_key;
+    unsigned char *signed_certificate_data, *nickname, *csr_request, *friendly_name;
+    size_t signed_certificate_data_size, friendly_name_size;
+    ue_byte_stream *stream;
+
+    result = false;
+    ca_certificate = NULL;
+    ca_private_key = NULL;
+    signed_certificate = NULL;
+    signed_certificate_data = NULL;
+    signed_certificate_data_size = 0;
+    nickname = NULL;
+    csr_request = NULL;
+    friendly_name = NULL;
+
+    ue_byte_stream_clean_up(connection->tmp_stream);
+    if (!ue_byte_writer_append_bytes(connection->tmp_stream, ue_byte_stream_get_data(received_message),
+        ue_byte_stream_get_size(received_message))) {
+        ue_stacktrace_push_msg("Failed to split current message");
+        goto clean_up;
+    }
+
+    ue_byte_stream_set_position(connection->tmp_stream, 0);
+
+    if (!ue_byte_read_next_int(connection->tmp_stream, &csr_sub_type)) {
+        ue_stacktrace_push_msg("Failed to append CSR sub type in connection temp stream");
+        goto clean_up;
+    }
+
+    if (csr_sub_type == CSR_TLS_REQUEST ||
+        csr_sub_type == CSR_CIPHER_REQUEST ||
+        csr_sub_type == CSR_SIGNER_REQUEST) {
+
+        if (!ue_byte_read_next_int(connection->tmp_stream, &nickname_size)) {
+            ue_stacktrace_push_msg("Failed to read nickname size");
+            goto clean_up;
+        }
+        if (!ue_byte_read_next_bytes(connection->tmp_stream, &nickname, (size_t)nickname_size)) {
+            ue_stacktrace_push_msg("Failed to read nickname");
+            goto clean_up;
+        }
+        if (!ue_byte_read_next_int(connection->tmp_stream, &csr_request_size)) {
+            ue_stacktrace_push_msg("Failed to read CSR request size");
+            goto clean_up;
+        }
+        if (!ue_byte_read_next_bytes(connection->tmp_stream, &csr_request, (size_t)csr_request_size)) {
+            ue_stacktrace_push_msg("Failed to read CSR request");
+            goto clean_up;
+        }
+
+        ue_logger_trace("CSR server has receive a request");
+
+        if (csr_sub_type == CSR_TLS_REQUEST) {
+            ue_logger_trace("CSR_TLS_REQUEST");
+            ca_certificate = channel_server->tls_keystore->certificate;
+            ca_private_key = channel_server->tls_keystore->private_key;
+            if (!(friendly_name = ue_friendly_name_build(nickname, (size_t)nickname_size, "TLS", &friendly_name_size))) {
+                ue_stacktrace_push_msg("Failed to build friendly name for TLS keystore");
+                goto clean_up;
+            }
+            response_type = CSR_TLS_RESPONSE;
+        }
+        else if (csr_sub_type == CSR_CIPHER_REQUEST) {
+            ue_logger_trace("CSR_CIPHER_REQUEST");
+            ca_certificate = channel_server->cipher_keystore->certificate;
+            ca_private_key = channel_server->cipher_keystore->private_key;
+            if (!(friendly_name = ue_friendly_name_build(nickname, (size_t)nickname_size, "CIPHER", &friendly_name_size))) {
+                ue_stacktrace_push_msg("Failed to build friendly name for CIPHER keystore");
+                goto clean_up;
+            }
+            response_type = CSR_CIPHER_RESPONSE;
+        }
+        else if (csr_sub_type == CSR_SIGNER_REQUEST) {
+            ue_logger_trace("CSR_SIGNER_REQUEST");
+            ca_certificate = channel_server->signer_keystore->certificate;
+            ca_private_key = channel_server->signer_keystore->private_key;
+            if (!(friendly_name = ue_friendly_name_build(nickname, (size_t)nickname_size, "SIGNER", &friendly_name_size))) {
+                ue_stacktrace_push_msg("Failed to build friendly name for SIGNER keystore");
+                goto clean_up;
+            }
+            response_type = CSR_SIGNER_RESPONSE;
+        }
+        else {
+            ue_stacktrace_push_msg("Unknown CSR sub type '%d'", csr_sub_type);
+            goto clean_up;
+        }
+
+        if (!(signed_certificate_data = ue_csr_build_server_response(channel_server->csr_keystore->private_key, ca_certificate, ca_private_key,
+            csr_request, (size_t)csr_request_size, &signed_certificate_data_size, &signed_certificate, channel_server->cipher_name, channel_server->digest_name))) {
+
+            ue_stacktrace_push_msg("Failed to process CSR response");
+            goto clean_up;
+        }
+
+        if (!record_client_certificate(signed_certificate, csr_sub_type, friendly_name, friendly_name_size)) {
+            ue_stacktrace_push_msg("Failed to record signed certificate");
+            ue_x509_certificate_destroy(signed_certificate);
+            goto clean_up;
+        }
+
+        if (!distribute_client_certificate(signed_certificate, friendly_name, friendly_name_size)) {
+            ue_stacktrace_push_msg("Failed to distribute client certificate");
+            goto clean_up;
+        }
+
+        stream = ue_byte_stream_create();
+        if (!ue_byte_writer_append_int(stream, response_type)) {
+            ue_stacktrace_push_msg("Failed to write response type to message to send");
+            goto clean_up;
+        }
+        if (!ue_byte_writer_append_int(stream, (size_t)signed_certificate_data_size)) {
+            ue_stacktrace_push_msg("Failed to write signed certificate data size to message to send");
+            goto clean_up;
+        }
+        if (!ue_byte_writer_append_bytes(stream, signed_certificate_data, signed_certificate_data_size)) {
+            ue_stacktrace_push_msg("Failed to write signed certificate data to message to send");
+            goto clean_up;
+        }
+        ue_queue_push_wait(connection->messages_to_send, stream);
+        connection->state = UNKNOWNECHO_CONNECTION_WRITE_STATE;
+        result = true;
+    }
+
+clean_up:
+    ue_safe_free(nickname);
+    return result;
+}
+
 static bool csr_server_read_consumer(ue_socket_client_connection *connection) {
     size_t received;
-    ue_byte_stream *stream;
 
     if (!channel_server->csr_server->running) {
         return false;
     }
 
     ue_byte_stream_clean_up(connection->received_message);
-    received = ue_socket_receive_sync(connection);
+    received = ue_socket_receive_sync(connection, connection->received_message);
 
     if (received == 0) {
         ue_logger_info("Client has disconnected.");
@@ -767,13 +883,7 @@ static bool csr_server_read_consumer(ue_socket_client_connection *connection) {
         return false;
     }
     else {
-        if (ue_byte_stream_get_size(connection->received_message) > 0) {
-            stream = ue_byte_stream_create();
-            ue_byte_writer_append_bytes(stream, ue_byte_stream_get_data(connection->received_message), ue_byte_stream_get_size(connection->received_message));
-            ue_queue_push_wait(connection->received_messages, (void *)stream);
-        } else {
-            ue_logger_warn("Received message is empty");
-        }
+        build_csr_response(connection, connection->received_message);
     }
 
     connection->state = UNKNOWNECHO_CONNECTION_WRITE_STATE;
@@ -807,7 +917,7 @@ static bool csr_server_write_consumer(ue_socket_client_connection *connection) {
             ue_byte_stream_clean_up(connection->message_to_send);
             ue_byte_writer_append_bytes(connection->message_to_send, ue_byte_stream_get_data(message_to_send),
                 ue_byte_stream_get_size(message_to_send));
-            sent = ue_socket_send_sync(connection);
+            sent = ue_socket_send_sync(connection, connection->message_to_send);
             if (sent == 0) {
                 ue_logger_warn("Client has disconnected.");
             }
@@ -825,180 +935,6 @@ static bool csr_server_write_consumer(ue_socket_client_connection *connection) {
     connection->state = UNKNOWNECHO_CONNECTION_READ_STATE;
 
     return true;
-}
-
-static bool csr_server_process_all(void *parameter) {
-    bool result;
-    ue_socket_server *csr_server;
-    int i;
-
-    csr_server = (ue_socket_server *)parameter;
-    result = false;
-    ue_safe_alloc(channel_server->csr_connection_threads, ue_thread_id *, csr_server->connections_number);
-    channel_server->csr_max_connections_number = csr_server->connections_number;
-
-    for (i = 0; i < csr_server->connections_number; i++) {
-        _Pragma("GCC diagnostic push")
-        _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
-            /* @todo fix memory leak when user stopped server with ctrl+c */
-            channel_server->csr_connection_threads[i] = ue_thread_create((void *)csr_server_process_request, (void *)csr_server->connections[i]);
-        _Pragma("GCC diagnostic pop")
-    }
-
-    for (i = 0; i < csr_server->connections_number; i++) {
-        ue_thread_join(channel_server->csr_connection_threads[i], NULL);
-        channel_server->csr_connection_threads[i] = NULL;
-    }
-
-    result = true;
-
-    return result;
-}
-
-static bool csr_server_process_request(void *parameter) {
-    bool result;
-    ue_socket_client_connection *connection;
-    int csr_sub_type, nickname_size, csr_request_size, response_type;
-    ue_x509_certificate *ca_certificate, *signed_certificate;
-    ue_private_key *ca_private_key;
-    unsigned char *signed_certificate_data, *nickname, *csr_request, *friendly_name;
-    size_t signed_certificate_data_size, friendly_name_size;
-    ue_byte_stream *received_message, *stream;
-
-    connection = (ue_socket_client_connection *)parameter;
-    result = false;
-    ca_certificate = NULL;
-    ca_private_key = NULL;
-    signed_certificate = NULL;
-    signed_certificate_data = NULL;
-    signed_certificate_data_size = 0;
-    nickname = NULL;
-    csr_request = NULL;
-    friendly_name = NULL;
-    received_message = NULL;
-
-    while (channel_server->csr_server->running) {
-        received_message = ue_queue_front_wait(connection->received_messages);
-
-        ue_byte_stream_clean_up(connection->tmp_stream);
-        if (!ue_byte_writer_append_bytes(connection->tmp_stream, ue_byte_stream_get_data(received_message), ue_byte_stream_get_size(received_message))) {
-            ue_stacktrace_push_msg("Failed to split current message");
-            goto clean_up;
-        }
-
-        ue_byte_stream_set_position(connection->tmp_stream, 0);
-
-        if (!ue_byte_read_next_int(connection->tmp_stream, &csr_sub_type)) {
-            ue_stacktrace_push_msg("Failed to append CSR sub type in connection temp stream");
-            goto clean_up;
-        }
-
-        if (csr_sub_type == CSR_TLS_REQUEST ||
-            csr_sub_type == CSR_CIPHER_REQUEST ||
-            csr_sub_type == CSR_SIGNER_REQUEST) {
-
-            if (!ue_byte_read_next_int(connection->tmp_stream, &nickname_size)) {
-                ue_stacktrace_push_msg("Failed to read nickname size");
-                goto clean_up;
-            }
-            if (!ue_byte_read_next_bytes(connection->tmp_stream, &nickname, (size_t)nickname_size)) {
-                ue_stacktrace_push_msg("Failed to read nickname");
-                goto clean_up;
-            }
-            if (!ue_byte_read_next_int(connection->tmp_stream, &csr_request_size)) {
-                ue_stacktrace_push_msg("Failed to read CSR request size");
-                goto clean_up;
-            }
-            if (!ue_byte_read_next_bytes(connection->tmp_stream, &csr_request, (size_t)csr_request_size)) {
-                ue_stacktrace_push_msg("Failed to read CSR request");
-                goto clean_up;
-            }
-
-            ue_logger_trace("CSR server has receive a request");
-
-            if (csr_sub_type == CSR_TLS_REQUEST) {
-                ue_logger_trace("CSR_TLS_REQUEST");
-                ca_certificate = channel_server->tls_keystore->certificate;
-                ca_private_key = channel_server->tls_keystore->private_key;
-                if (!(friendly_name = ue_friendly_name_build(nickname, (size_t)nickname_size, "TLS", &friendly_name_size))) {
-                    ue_stacktrace_push_msg("Failed to build friendly name for TLS keystore");
-                    goto clean_up;
-                }
-                response_type = CSR_TLS_RESPONSE;
-            }
-            else if (csr_sub_type == CSR_CIPHER_REQUEST) {
-                ue_logger_trace("CSR_CIPHER_REQUEST");
-                ca_certificate = channel_server->cipher_keystore->certificate;
-                ca_private_key = channel_server->cipher_keystore->private_key;
-                if (!(friendly_name = ue_friendly_name_build(nickname, (size_t)nickname_size, "CIPHER", &friendly_name_size))) {
-                    ue_stacktrace_push_msg("Failed to build friendly name for CIPHER keystore");
-                    goto clean_up;
-                }
-                response_type = CSR_CIPHER_RESPONSE;
-            }
-            else if (csr_sub_type == CSR_SIGNER_REQUEST) {
-                ue_logger_trace("CSR_SIGNER_REQUEST");
-                ca_certificate = channel_server->signer_keystore->certificate;
-                ca_private_key = channel_server->signer_keystore->private_key;
-                if (!(friendly_name = ue_friendly_name_build(nickname, (size_t)nickname_size, "SIGNER", &friendly_name_size))) {
-                    ue_stacktrace_push_msg("Failed to build friendly name for SIGNER keystore");
-                    goto clean_up;
-                }
-                response_type = CSR_SIGNER_RESPONSE;
-            }
-            else {
-                ue_stacktrace_push_msg("Unknown CSR sub type '%d'", csr_sub_type);
-                goto clean_up;
-            }
-
-            if (!(signed_certificate_data = ue_csr_build_server_response(channel_server->csr_keystore->private_key, ca_certificate, ca_private_key,
-                csr_request, (size_t)csr_request_size, &signed_certificate_data_size, &signed_certificate, channel_server->cipher_name, channel_server->digest_name))) {
-
-                ue_stacktrace_push_msg("Failed to process CSR response");
-                goto clean_up;
-            }
-
-            if (!record_client_certificate(signed_certificate, csr_sub_type, friendly_name, friendly_name_size)) {
-                ue_stacktrace_push_msg("Failed to record signed certificate");
-                ue_x509_certificate_destroy(signed_certificate);
-                goto clean_up;
-            }
-
-            if (!distribute_client_certificate(signed_certificate, friendly_name, friendly_name_size)) {
-                ue_stacktrace_push_msg("Failed to distribute client certificate");
-                goto clean_up;
-            }
-
-            stream = ue_byte_stream_create();
-            if (!ue_byte_writer_append_int(stream, response_type)) {
-                ue_stacktrace_push_msg("Failed to write response type to message to send");
-                goto clean_up;
-            }
-            if (!ue_byte_writer_append_int(stream, (size_t)signed_certificate_data_size)) {
-                ue_stacktrace_push_msg("Failed to write signed certificate data size to message to send");
-                goto clean_up;
-            }
-            if (!ue_byte_writer_append_bytes(stream, signed_certificate_data, signed_certificate_data_size)) {
-                ue_stacktrace_push_msg("Failed to write signed certificate data to message to send");
-                goto clean_up;
-            }
-            ue_queue_push_wait(connection->messages_to_send, stream);
-            connection->state = UNKNOWNECHO_CONNECTION_WRITE_STATE;
-            result = true;
-clean_up:
-            if (ue_stacktrace_is_filled()) {
-                /* @todo send a response to the client in case of error */
-                ue_logger_stacktrace("An error occured with the following stacktrace :");
-                ue_stacktrace_clean_up();
-            }
-            ue_safe_free(nickname);
-        } else {
-            ue_logger_warn("Received invalid data from client.");
-        }
-        ue_queue_pop(connection->received_messages);
-    }
-
-    return result;
 }
 
 static bool record_client_certificate(ue_x509_certificate *signed_certificate, int csr_sub_type, unsigned char *friendly_name, size_t friendly_name_size) {
@@ -1116,7 +1052,6 @@ static bool tls_server_read_consumer(ue_socket_client_connection *connection) {
     if (channel_server->signal_caught) {
         ue_thread_cancel(channel_server->tls_server_thread);
         ue_thread_cancel(channel_server->csr_server_thread);
-        ue_thread_cancel(channel_server->csr_process_all_thread);
     }
 
     received = 0;
@@ -1128,7 +1063,7 @@ static bool tls_server_read_consumer(ue_socket_client_connection *connection) {
     if (connection->nickname) {
         received = receive_cipher_message(connection);
     } else {
-        received = ue_socket_receive_sync(connection);
+        received = ue_socket_receive_sync(connection, connection->received_message);
     }
 
     if (received == 0) {

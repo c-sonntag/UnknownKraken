@@ -43,7 +43,7 @@
     #error "OS not supported"
 #endif
 
- size_t ue_socket_receive_sync(ue_socket_client_connection *connection) {
+ size_t ue_socket_receive_sync(ue_socket_client_connection *connection, ue_byte_stream *received_message) {
     struct timeval begin, now;
     double timediff;
     int timeout, received, total, bytes;
@@ -101,7 +101,7 @@
                 received += bytes;
                 /* reset beginning time  */
                 ue_time_of_day(&begin);
-                if (!ue_byte_writer_append_bytes(connection->received_message, (unsigned char *)response, bytes)) {
+                if (!ue_byte_writer_append_bytes(received_message, (unsigned char *)response, bytes)) {
                     ue_stacktrace_push_msg("Failed to append in byte stream socket response");
                     return -1;
                 }
@@ -114,7 +114,7 @@
             return -1;
         }
     } else {
-        received = ue_tls_connection_read_sync(connection->tls, connection->received_message);
+        received = ue_tls_connection_read_sync(connection->tls, received_message);
     }
 
     ue_logger_trace("%ld bytes received", received);

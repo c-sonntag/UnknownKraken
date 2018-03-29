@@ -111,7 +111,7 @@ bool ue_crypto_random_seed_prng() {
     if (!result) {
         ue_stacktrace_push_msg("Failed to seed PRNG of Openssl with %d attempts", attempts);
     } else {
-        ue_logger_info("PRNG seeded");
+        ue_logger_trace("PRNG seeded");
     }
 
     return result;

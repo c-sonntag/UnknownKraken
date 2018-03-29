@@ -26,7 +26,7 @@
 
 #include <stddef.h>
 
-size_t ue_socket_receive_sync(ue_socket_client_connection *connection);
+size_t ue_socket_receive_sync(ue_socket_client_connection *connection, ue_byte_stream *received_message);
 
 size_t ue_socket_receive_all_sync(int fd, unsigned char **bytes, size_t size, ue_tls_connection *tls);
 
