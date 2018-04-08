@@ -84,4 +84,9 @@
 
 #define UNKNOWNECHO_BOOL
 
+/* Communication */
+
+/* By default, network communications use SOCKET */
+#define UNKNOWNECHO_DEFAULT_COMMUNICATION_TYPE       "SOCKET"
+
 #endif

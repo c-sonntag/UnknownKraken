@@ -23,6 +23,7 @@
 #include <unknownecho/alloc.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/defines.h>
+#include <unknownecho/network/factory/communication_factory.h>
 
 ue_channel_client_parameters *ue_channel_client_parameters_create(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ue_byte_stream *printer)) {
     ue_channel_client_parameters *parameters;
@@ -51,6 +52,7 @@ ue_channel_client_parameters *ue_channel_client_parameters_create(char *nickname
     parameters->cipher_name = NULL;
     parameters->digest_name = NULL;
     parameters->user_input_mode = UNKNOWNECHO_STDIN_INPUT;
+    parameters->communication_type = NULL;
 
     return parameters;
 }
@@ -65,6 +67,7 @@ void ue_channel_client_parameters_destroy(ue_channel_client_parameters *paramete
         ue_safe_free(parameters->server_certificates_path);
         ue_safe_free(parameters->cipher_name);
         ue_safe_free(parameters->digest_name);
+        ue_safe_free(parameters->communication_type);
         ue_safe_free(parameters);
     }
 }
@@ -154,6 +157,11 @@ bool ue_channel_client_parameters_set_user_input_mode(ue_channel_client_paramete
     return true;
 }
 
+bool ue_channel_client_parameters_set_communication_type(ue_channel_client_parameters *parameters, const char *communication_type) {
+    parameters->communication_type = ue_string_create_from(communication_type);
+    return true;
+}
+
 ue_channel_client *ue_channel_client_parameters_build(ue_channel_client_parameters *parameters) {
     ue_channel_client *channel_client;
 
@@ -189,12 +197,16 @@ ue_channel_client *ue_channel_client_parameters_build(ue_channel_client_paramete
         parameters->digest_name = ue_string_create_from(UNKNOWNECHO_DEFAULT_DIGEST_NAME);
     }
 
+    if (!parameters->communication_type) {
+        parameters->communication_type = ue_string_create_from(ue_communication_get_default_type());
+    }
+
     channel_client = ue_channel_client_create(parameters->persistent_path, parameters->nickname, parameters->csr_server_host, parameters->csr_server_port,
         parameters->csl_server_host, parameters->csl_server_port, parameters->keystore_password, parameters->server_certificates_path,
         parameters->user_context, parameters->write_callback, parameters->initialization_begin_callback, parameters->initialization_end_callback,
         parameters->uninitialization_begin_callback, parameters->uninitialization_end_callback, parameters->connection_begin_callback,
         parameters->connection_end_callback, parameters->user_input_callback, parameters->cipher_name, parameters->digest_name,
-        parameters->user_input_mode);
+        parameters->user_input_mode, parameters->communication_type);
 
     return channel_client;
 }

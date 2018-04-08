@@ -114,12 +114,11 @@ static bool process_get_certificate_request(void *connection, ue_byte_stream *re
 static bool check_suggest_nickname(const char *nickname);
 
 
-bool ue_channel_server_create(char *persistent_path,
-    int csr_server_port, int csl_server_port,
+bool ue_channel_server_create(char *persistent_path, int csr_server_port, int csl_server_port,
     char *keystore_password, int channels_number, char *key_password, void *user_context,
     bool (*initialization_begin_callback)(void *user_context), bool (*initialization_end_callback)(void *user_context),
     bool (*uninitialization_begin_callback)(void *user_context), bool (*uninitialization_end_callback)(void *user_context),
-    const char *cipher_name, const char *digest_name) {
+    const char *cipher_name, const char *digest_name, const char *communication_type) {
 
     bool result;
     int i;
@@ -167,7 +166,7 @@ bool ue_channel_server_create(char *persistent_path,
 	channel_server->digest_name = ue_string_create_from(digest_name);
     channel_server->csr_server_thread = NULL;
     channel_server->csl_server_thread = NULL;
-    channel_server->communication_context = ue_communication_build_socket();
+    channel_server->communication_context = ue_communication_build_from_type(communication_type);
 
     if (channel_server->initialization_begin_callback) {
         channel_server->initialization_begin_callback(user_context);

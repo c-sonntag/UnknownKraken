@@ -49,6 +49,8 @@ bool ue_channel_server_parameters_set_cipher_name(ue_channel_server_parameters *
 
 bool ue_channel_server_parameters_set_digest_name(ue_channel_server_parameters *parameters, const char *digest_name);
 
+bool ue_channel_server_parameters_set_communication_type(ue_channel_server_parameters *parameters, const char *communication_type);
+
 bool ue_channel_server_parameters_build(ue_channel_server_parameters *parameters);
 
 #endif

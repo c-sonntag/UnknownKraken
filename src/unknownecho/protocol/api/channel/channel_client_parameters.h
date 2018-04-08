@@ -63,6 +63,8 @@ bool ue_channel_client_parameters_set_digest_name(ue_channel_client_parameters *
 
 bool ue_channel_client_parameters_set_user_input_mode(ue_channel_client_parameters *parameters, ue_user_input_mode user_input_mode);
 
+bool ue_channel_client_parameters_set_communication_type(ue_channel_client_parameters *parameters, const char *communication_type);
+
 ue_channel_client *ue_channel_client_parameters_build(ue_channel_client_parameters *parameters);
 
 #endif

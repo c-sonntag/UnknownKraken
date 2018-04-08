@@ -19,6 +19,7 @@
 
 #include <unknownecho/protocol/api/channel/channel_server_parameters.h>
 #include <unknownecho/protocol/api/channel/channel_server.h>
+#include <unknownecho/network/factory/communication_factory.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/defines.h>
@@ -58,6 +59,7 @@ void ue_channel_server_parameters_destroy(ue_channel_server_parameters *paramete
         ue_safe_free(parameters->key_password);
         ue_safe_free(parameters->cipher_name);
         ue_safe_free(parameters->digest_name);
+        ue_safe_free(parameters->communication_type);
         ue_safe_free(parameters);
     }
 }
@@ -117,6 +119,11 @@ bool ue_channel_server_parameters_set_digest_name(ue_channel_server_parameters *
     return true;
 }
 
+bool ue_channel_server_parameters_set_communication_type(ue_channel_server_parameters *parameters, const char *communication_type) {
+    parameters->communication_type = ue_string_create_from(communication_type);
+    return true;
+}
+
 bool ue_channel_server_parameters_build(ue_channel_server_parameters *parameters) {
     if (!parameters->persistent_path) {
         parameters->persistent_path = ue_string_create_from(UNKNOWNECHO_DEFAULT_SERVER_PERSISTENT_PATH);
@@ -142,9 +149,14 @@ bool ue_channel_server_parameters_build(ue_channel_server_parameters *parameters
         parameters->digest_name = ue_string_create_from(UNKNOWNECHO_DEFAULT_DIGEST_NAME);
     }
 
+    if (!parameters->communication_type) {
+        parameters->communication_type = ue_string_create_from(UNKNOWNECHO_DEFAULT_COMMUNICATION_TYPE);
+    }
+
     return ue_channel_server_create(parameters->persistent_path, parameters->csr_server_port,
         parameters->csl_server_port, parameters->keystore_password, parameters->channels_number,
         parameters->key_password, parameters->user_context, parameters->initialization_begin_callback,
         parameters->initialization_end_callback, parameters->uninitialization_begin_callback,
-        parameters->uninitialization_end_callback, parameters->cipher_name, parameters->digest_name);
+        parameters->uninitialization_end_callback, parameters->cipher_name, parameters->digest_name,
+        parameters->communication_type);
 }

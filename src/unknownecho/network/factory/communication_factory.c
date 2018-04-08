@@ -31,6 +31,7 @@
 #include <unknownecho/bool.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/check_parameter.h>
+#include <unknownecho/defines.h>
 
 #include <stddef.h>
 #include <string.h>
@@ -179,4 +180,8 @@ void *ue_communication_build_server_parameters(ue_communication_context *context
     }
 
     return parameters;
+}
+
+const char *ue_communication_get_default_type() {
+    return UNKNOWNECHO_DEFAULT_COMMUNICATION_TYPE;
 }

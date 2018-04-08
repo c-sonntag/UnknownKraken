@@ -12,7 +12,7 @@ cmake_minimum_required(VERSION 3.8)
 
 set(CMAKE_VERBOSE_MAKEFILE off)
 
-# Set as TRUE to link with openssl dependecies in lib folder. Set to FALSE otherwise.
+# Set as TRUE to link with openssl dependecies in lib folder. Set to FALSE otherwise.
 set(OPENSSL_LOCAL_LINK TRUE)
 
 if (WIN32)
@@ -81,6 +81,13 @@ if (WIN32)
     add_definitions(-D_WIN32_WINNT=${ver})
 endif ()
 
+# CCache
+
+find_program(CCACHE_FOUND "ccache")
+if(CCACHE_FOUND)
+        set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "ccache")
+        set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "ccache")
+endif(CCACHE_FOUND)
 
 # --- SEARCH LIB ---
 

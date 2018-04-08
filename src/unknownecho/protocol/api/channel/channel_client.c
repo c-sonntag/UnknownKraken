@@ -176,7 +176,7 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 	bool (*initialization_end_callback)(void *user_context), bool (*uninitialization_begin_callback)(void *user_context),
 	bool (*uninitialization_end_callback)(void *user_context), bool (*connection_begin_callback)(void *user_context),
 	bool (*connection_end_callback)(void *user_context), char *(*user_input_callback)(void *user_context),
-    const char *cipher_name, const char *digest_name, ue_user_input_mode user_input_mode) {
+    const char *cipher_name, const char *digest_name, ue_user_input_mode user_input_mode, const char *communication_type) {
 
 	ue_channel_client *channel_client;
 	bool result;
@@ -240,7 +240,7 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 	channel_client->user_context = user_context;
 	channel_client->csr_processing_state = FREE_STATE;
     channel_client->user_input_mode = user_input_mode;
-    channel_client->communication_context = ue_communication_build_socket();
+    channel_client->communication_context = ue_communication_build_from_type(communication_type);
     channel_client->received_message = ue_byte_stream_create();
     channel_client->message_to_send = ue_byte_stream_create();
     channel_client->tmp_stream = ue_byte_stream_create();

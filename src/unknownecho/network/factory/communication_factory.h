@@ -30,4 +30,6 @@ void *ue_communication_build_client_connection_parameters(ue_communication_conte
 
 void *ue_communication_build_server_parameters(ue_communication_context *context,  int count, ...);
 
+const char *ue_communication_get_default_type();
+
 #endif

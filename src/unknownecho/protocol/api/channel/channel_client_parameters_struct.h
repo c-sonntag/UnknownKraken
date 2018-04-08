@@ -44,6 +44,7 @@ typedef struct {
     char *(*user_input_callback)(void *user_context);
     const char *cipher_name, *digest_name;
     ue_user_input_mode user_input_mode;
+    const char *communication_type;
 } ue_channel_client_parameters;
 
 #endif
