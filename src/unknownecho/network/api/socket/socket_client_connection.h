@@ -36,20 +36,15 @@
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
 #include <unknownecho/network/api/tls/tls_connection.h>
+#include <unknownecho/network/api/communication/communication_connection_state.h>
 #include <unknownecho/thread/thread_id_struct.h>
-
-typedef enum {
-	UNKNOWNECHO_CONNECTION_FREE_STATE,
-	UNKNOWNECHO_CONNECTION_READ_STATE,
-	UNKNOWNECHO_CONNECTION_WRITE_STATE
-} ue_connection_state;
 
 typedef struct {
 	int fd;
 	ue_byte_stream *received_message, *message_to_send, *tmp_stream;
 	ue_queue *received_messages, *messages_to_send;
 	ue_thread_id *read_messages_consumer_thread, *write_messages_consumer_thread;
-	ue_connection_state state;
+    ue_communication_connection_state state;
 	char *nickname;
 	ue_byte_vector *split_message, *all_messages, *tmp_message, *current_message;
 	ue_tls_connection *tls;
@@ -70,5 +65,25 @@ bool ue_socket_client_connection_is_available(ue_socket_client_connection *conne
 bool ue_socket_client_connection_establish(ue_socket_client_connection *connection, int ue_socket_fd);
 
 bool ue_socket_client_connection_is_established(ue_socket_client_connection *connection);
+
+void *ue_socket_client_connection_get_user_data(ue_socket_client_connection *connection);
+
+bool ue_socket_client_connection_set_user_data(ue_socket_client_connection *connection, void *user_data);
+
+char *ue_socket_client_connection_get_nickname(ue_socket_client_connection *connection);
+
+bool ue_socket_client_connection_set_nickname(ue_socket_client_connection *connection, char *nickname);
+
+ue_byte_stream *ue_socket_client_connection_get_received_message(ue_socket_client_connection *connection);
+
+ue_byte_stream *ue_socket_client_connection_get_message_to_send(ue_socket_client_connection *connection);
+
+ue_queue *ue_socket_client_connection_get_received_messages(ue_socket_client_connection *connection);
+
+ue_queue *ue_socket_client_connection_get_messages_to_send(ue_socket_client_connection *connection);
+
+ue_communication_connection_state ue_socket_client_connection_get_state(ue_socket_client_connection *connection);
+
+bool ue_socket_client_connection_set_state(ue_socket_client_connection *connection, ue_communication_connection_state state);
 
 #endif

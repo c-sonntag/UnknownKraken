@@ -19,6 +19,7 @@
 
 #include <unknownecho/network/api/socket/socket_client_connection.h>
 #include <unknownecho/network/api/socket/socket.h>
+#include <unknownecho/network/api/communication/communication_connection_state.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/errorHandling/logger.h>
@@ -38,7 +39,7 @@ ue_socket_client_connection *ue_socket_client_connection_init() {
 	ue_socket_client_connection *connection;
 
 	ue_safe_alloc(connection, ue_socket_client_connection, 1);
-	connection->state = UNKNOWNECHO_CONNECTION_FREE_STATE;
+    connection->state = UNKNOWNECHO_COMMUNICATION_CONNECTION_FREE_STATE;
 	connection->fd = -1;
 	connection->nickname = NULL;
 	connection->split_message = ue_byte_vector_create_empty();
@@ -108,7 +109,7 @@ void ue_socket_client_connection_clean_up(ue_socket_client_connection *connectio
     ue_byte_stream_clean_up(connection->received_message);
     ue_byte_stream_clean_up(connection->message_to_send);
     ue_byte_vector_clean_up(connection->split_message);
-    connection->state = UNKNOWNECHO_CONNECTION_FREE_STATE;
+    connection->state = UNKNOWNECHO_COMMUNICATION_CONNECTION_FREE_STATE;
     if (connection->peer_certificate) {
         ue_x509_certificate_destroy(connection->peer_certificate);
         connection->peer_certificate = NULL;
@@ -124,19 +125,82 @@ void ue_socket_client_connection_clean_up(ue_socket_client_connection *connectio
 }
 
 bool ue_socket_client_connection_is_available(ue_socket_client_connection *connection) {
-	return connection && connection->state == UNKNOWNECHO_CONNECTION_FREE_STATE;
+    ue_logger_debug("Connection state : %d", connection->state);
+    return connection && connection->state == UNKNOWNECHO_COMMUNICATION_CONNECTION_FREE_STATE;
 }
 
 bool ue_socket_client_connection_establish(ue_socket_client_connection *connection, int ue_socket_fd) {
 	ue_check_parameter_or_return(connection);
 
 	connection->fd = ue_socket_fd;
-	connection->state = UNKNOWNECHO_CONNECTION_READ_STATE;
+    connection->state = UNKNOWNECHO_COMMUNICATION_CONNECTION_READ_STATE;
 	connection->established = true;
 
 	return true;
 }
 
 bool ue_socket_client_connection_is_established(ue_socket_client_connection *connection) {
+    ue_check_parameter_or_return(connection);
+
 	return connection->established;
+}
+
+void *ue_socket_client_connection_get_user_data(ue_socket_client_connection *connection) {
+    ue_check_parameter_or_return(connection);
+
+    return connection->optional_data;
+}
+
+bool ue_socket_client_connection_set_user_data(ue_socket_client_connection *connection, void *user_data) {
+    ue_check_parameter_or_return(connection);
+
+    connection->optional_data = user_data;
+    return true;
+}
+
+char *ue_socket_client_connection_get_nickname(ue_socket_client_connection *connection) {
+    ue_check_parameter_or_return(connection);
+
+    return connection->nickname;
+}
+
+bool ue_socket_client_connection_set_nickname(ue_socket_client_connection *connection, char *nickname) {
+    ue_check_parameter_or_return(connection);
+
+    connection->nickname = nickname;
+
+    return true;
+}
+
+ue_byte_stream *ue_socket_client_connection_get_received_message(ue_socket_client_connection *connection) {
+    ue_check_parameter_or_return(connection);
+
+    return connection->received_message;
+}
+
+ue_byte_stream *ue_socket_client_connection_get_message_to_send(ue_socket_client_connection *connection) {
+    ue_check_parameter_or_return(connection);
+
+    return connection->message_to_send;
+}
+
+ue_queue *ue_socket_client_connection_get_received_messages(ue_socket_client_connection *connection) {
+    ue_check_parameter_or_return(connection);
+
+    return connection->received_messages;
+}
+
+ue_queue *ue_socket_client_connection_get_messages_to_send(ue_socket_client_connection *connection) {
+    ue_check_parameter_or_return(connection);
+
+    return connection->messages_to_send;
+}
+
+ue_communication_connection_state ue_socket_client_connection_get_state(ue_socket_client_connection *connection) {
+    return connection->state;
+}
+
+bool ue_socket_client_connection_set_state(ue_socket_client_connection *connection, ue_communication_connection_state state) {
+    connection->state = state;
+    return true;
 }

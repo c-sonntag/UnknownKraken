@@ -84,7 +84,7 @@ ue_channel_client *ue_channel_client_create_default_remote(char *nickname, char 
 
     parameters = ue_channel_client_parameters_create(nickname, keystore_password, write_callback);
 
-    ue_channel_client_parameters_set_tls_host(parameters, host);
+    ue_channel_client_parameters_set_csl_host(parameters, host);
 
     ue_channel_client_parameters_set_csr_host(parameters, host);
 

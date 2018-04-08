@@ -32,7 +32,7 @@ bool ue_channel_client_init(int channel_clients_number);
 void ue_channel_client_uninit();
 
 ue_channel_client *ue_channel_client_create(char *persistent_path, char *nickname, const char *csr_server_host, int csr_server_port,
-	const char *tls_server_host, int tls_server_port, char *keystore_password, const char *server_certificates_path, void *user_context,
+    const char *csl_server_host, int csl_server_port, char *keystore_password, const char *server_certificates_path, void *user_context,
 	bool (*write_callback)(void *user_context, ue_byte_stream *printer), bool (*initialization_begin_callback)(void *user_context),
 	bool (*initialization_end_callback)(void *user_context), bool (*uninitialization_begin_callback)(void *user_context),
 	bool (*uninitialization_end_callback)(void *user_context), bool (*connection_begin_callback)(void *user_context),

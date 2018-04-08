@@ -25,7 +25,7 @@
 typedef struct {
     char *persistent_path;
     int csr_server_port;
-    int tls_server_port;
+    int csl_server_port;
     char *keystore_password;
     int channels_number;
     char *key_password;

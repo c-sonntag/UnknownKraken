@@ -43,6 +43,7 @@ endif ()
 
 
 # --- COMPILE OPTIONS ---
+
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")     ## (not debug)
    if(CMAKE_COMPILER_IS_GNUCXX)               ## (GNU COMMAND)
       add_compile_options("-O3")              ### No Optimization

@@ -32,7 +32,7 @@ ue_channel_server_parameters *ue_channel_server_parameters_create(char *keystore
     ue_safe_alloc(parameters, ue_channel_server_parameters, 1);
     parameters->persistent_path = NULL;
     parameters->csr_server_port = -1;
-    parameters->tls_server_port = -1;
+    parameters->csl_server_port = -1;
     parameters->keystore_password = ue_string_create_from(keystore_password);
     parameters->channels_number = -1;
     if (key_password) {
@@ -73,7 +73,7 @@ bool ue_channel_server_parameters_set_csr_port(ue_channel_server_parameters *par
 }
 
 bool ue_channel_server_parameters_set_tls_port(ue_channel_server_parameters *parameters, int port) {
-    parameters->tls_server_port = port;
+    parameters->csl_server_port = port;
     return true;
 }
 
@@ -126,8 +126,8 @@ bool ue_channel_server_parameters_build(ue_channel_server_parameters *parameters
         parameters->csr_server_port = UNKNOWNECHO_DEFAULT_CSR_SERVER_PORT;
     }
 
-    if (parameters->tls_server_port == -1) {
-        parameters->tls_server_port = UNKNOWNECHO_DEFAULT_TLS_SERVER_PORT;
+    if (parameters->csl_server_port == -1) {
+        parameters->csl_server_port = UNKNOWNECHO_DEFAULT_CSL_SERVER_PORT;
     }
 
     if (parameters->channels_number == -1) {
@@ -143,7 +143,7 @@ bool ue_channel_server_parameters_build(ue_channel_server_parameters *parameters
     }
 
     return ue_channel_server_create(parameters->persistent_path, parameters->csr_server_port,
-        parameters->tls_server_port, parameters->keystore_password, parameters->channels_number,
+        parameters->csl_server_port, parameters->keystore_password, parameters->channels_number,
         parameters->key_password, parameters->user_context, parameters->initialization_begin_callback,
         parameters->initialization_end_callback, parameters->uninitialization_begin_callback,
         parameters->uninitialization_end_callback, parameters->cipher_name, parameters->digest_name);

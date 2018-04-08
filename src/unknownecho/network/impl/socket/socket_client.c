@@ -42,41 +42,41 @@
     #error "OS not supported"
 #endif
 
-ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *host, unsigned short int port, ue_tls_session *tls_session) {
+ue_socket_client_connection *ue_socket_connect(ue_socket_client_connection_parameters *parameter) {
     struct sockaddr_in serv_addr;
     ue_socket_client_connection *connection;
     ue_tls_connection *tls;
 
     tls = NULL;
 
-    if (ue_socket_is_valid(fd) <= 0) {
+    if (ue_socket_is_valid(parameter->fd) <= 0) {
         ue_stacktrace_push_msg("Specified socket fd isn't valid");
         return NULL;
     }
 
-    if (!ue_socket_is_valid_domain(domain)) {
+    if (!ue_socket_is_valid_domain(parameter->domain)) {
         ue_stacktrace_push_msg("Specified domain isn't valid");
         return NULL;
     }
 
-    ue_check_parameter_or_return(host);
-    ue_check_parameter_or_return(port > 0);
+    ue_check_parameter_or_return(parameter->host);
+    ue_check_parameter_or_return(parameter->port > 0);
 
-    serv_addr.sin_addr.s_addr = inet_addr(host);
-    serv_addr.sin_family = domain;
-    serv_addr.sin_port = htons(port);
+    serv_addr.sin_addr.s_addr = inet_addr(parameter->host);
+    serv_addr.sin_family = parameter->domain;
+    serv_addr.sin_port = htons(parameter->port);
 
     /* Connect the socket */
-    if (connect(fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) != UNKNOWNECHO_SUCCESS) {
+    if (connect(parameter->fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) != UNKNOWNECHO_SUCCESS) {
         ue_stacktrace_push_errno();
         return NULL;
     }
 
-    if (tls_session) {
+    if (parameter->tls_session) {
         ue_logger_info("Keystore manager isn't null, so it will create a TLS connection");
 
         ue_logger_info("Creating TLS connection...");
-        tls = ue_tls_connection_create(tls_session->ctx);
+        tls = ue_tls_connection_create(parameter->tls_session->ctx);
     	if (!tls) {
             ue_logger_error("Failed to create TLS connection");
             ue_stacktrace_push_msg("Failed to create tls connection");
@@ -85,8 +85,8 @@ ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *h
         }
         ue_logger_info("TLS connection created");
 
-        ue_logger_info("Setting socket file descriptor %d to TLS connection...", fd);
-        if (!ue_tls_connection_set_fd(tls, fd)) {
+        ue_logger_info("Setting socket file descriptor %d to TLS connection...", parameter->fd);
+        if (!ue_tls_connection_set_fd(tls, parameter->fd)) {
             ue_stacktrace_push_msg("Failed to set socket fd to tls connection");
             ue_tls_connection_destroy(tls);
             return NULL;
@@ -101,12 +101,12 @@ ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *h
         }
         ue_logger_info("TLS connection established");
 
-        if (tls_session->verify_peer && !ue_tls_connection_verify_peer_certificate(tls)) {
+        if (parameter->tls_session->verify_peer && !ue_tls_connection_verify_peer_certificate(tls)) {
             ue_logger_error("Verify peer is enable but peer certificate isn't valid");
             ue_stacktrace_push_msg("Peer certificate verification failed");
             ue_tls_connection_destroy(tls);
             return NULL;
-        } else if (tls_session->verify_peer) {
+        } else if (parameter->tls_session->verify_peer) {
             ue_logger_info("Verify peer is enable and peer certificate is valid");
         }
     } else {
@@ -119,17 +119,17 @@ ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *h
         return NULL;
     }
 
-    if (!ue_socket_client_connection_establish(connection, fd)) {
+    if (!ue_socket_client_connection_establish(connection, parameter->fd)) {
         ue_stacktrace_push_msg("Failed to establish socket connection");
         ue_socket_client_connection_destroy(connection);
         ue_tls_connection_destroy(tls);
         return NULL;
     }
 
-    if (tls_session) {
+    if (parameter->tls_session) {
         connection->tls = tls;
-        tls_session->tls = tls;
-        if (tls_session->verify_peer) {
+        parameter->tls_session->tls = tls;
+        if (parameter->tls_session->verify_peer) {
             connection->peer_certificate = ue_tls_connection_get_peer_certificate(connection->tls);
         }
     }
@@ -139,10 +139,14 @@ ue_socket_client_connection *ue_socket_connect(int fd, int domain, const char *h
     return connection;
 }
 
-ue_socket_client_connection *ue_socket_connect_s(int fd, const char *domain, const char *host, const char *port, ue_tls_session *tls_session) {
+ue_socket_client_connection *ue_socket_connect_s(ue_socket_client_connection_parameters *parameter) {
 	ue_socket_client_connection *connection;
 
-    if ((connection = ue_socket_connect(fd, ue_socket_str_to_domain(domain), host, atoi(port), tls_session)) == NULL) {
+    parameter->domain = atoi(parameter->domain_s);
+    parameter->port = atoi(parameter->port_s);
+
+    if ((connection = ue_socket_connect(parameter)) == NULL) {
+
         ue_stacktrace_push_msg("Failed to connect socket from str parameters");
         return NULL;
     }

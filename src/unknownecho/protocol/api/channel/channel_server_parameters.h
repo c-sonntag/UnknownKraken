@@ -31,7 +31,7 @@ bool ue_channel_server_parameters_set_persistent_path(ue_channel_server_paramete
 
 bool ue_channel_server_parameters_set_csr_port(ue_channel_server_parameters *parameters, int port);
 
-bool ue_channel_server_parameters_set_tls_port(ue_channel_server_parameters *parameters, int port);
+bool ue_channel_server_parameters_set_csl_port(ue_channel_server_parameters *parameters, int port);
 
 bool ue_channel_server_parameters_set_channels_number(ue_channel_server_parameters *parameters, int channels_number);
 

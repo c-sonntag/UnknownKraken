@@ -33,12 +33,12 @@ typedef enum {
     CHANNEL_KEY_CREATOR_STATE   = 10,
     WAIT_CHANNEL_KEY_STATE      = 11,
     MESSAGE                     = 12,
-    CSR_TLS_REQUEST             = 13,
+    CSR_CSL_REQUEST             = 13,
     CSR_CIPHER_REQUEST          = 14,
     CSR_SIGNER_REQUEST          = 15,
     CERTIFICATE_RESPONSE        = 16,
     NICKNAME_RESPONSE           = 17,
-    CSR_TLS_RESPONSE            = 18,
+    CSR_CSL_RESPONSE            = 18,
     CSR_CIPHER_RESPONSE         = 19,
     CSR_SIGNER_RESPONSE         = 20
 } ue_channel_message_type;

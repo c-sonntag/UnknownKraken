@@ -17,33 +17,17 @@
  *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
-#ifndef UNKNOWNECHO_CHANNEL_CLIENT_PARAMETERS_STRUCT_H
-#define UNKNOWNECHO_CHANNEL_CLIENT_PARAMETERS_STRUCT_H
+#ifndef UNKNOWNECHO_COMMUNICATION_FACTORY_H
+#define UNKNOWNECHO_COMMUNICATION_FACTORY_H
 
-#include <unknownecho/bool.h>
-#include <unknownecho/byte/byte_stream.h>
-#include <unknownecho/input.h>
+#include <unknownecho/network/api/communication/communication_context.h>
 
-typedef struct {
-    char *persistent_path;
-    char *nickname;
-    const char *csr_server_host;
-    int csr_server_port;
-    const char *csl_server_host;
-    int csl_server_port;
-    char *keystore_password;
-    const char *server_certificates_path;
-    void *user_context;
-    bool (*write_callback)(void *user_context, ue_byte_stream *printer);
-    bool (*initialization_begin_callback)(void *user_context);
-	bool (*initialization_end_callback)(void *user_context);
-    bool (*uninitialization_begin_callback)(void *user_context);
-	bool (*uninitialization_end_callback)(void *user_context);
-    bool (*connection_begin_callback)(void *user_context);
-	bool (*connection_end_callback)(void *user_context);
-    char *(*user_input_callback)(void *user_context);
-    const char *cipher_name, *digest_name;
-    ue_user_input_mode user_input_mode;
-} ue_channel_client_parameters;
+ue_communication_context *ue_communication_build_from_type(const char *communication_type);
+
+ue_communication_context *ue_communication_build_socket();
+
+void *ue_communication_build_client_connection_parameters(ue_communication_context *context,  int count, ...);
+
+void *ue_communication_build_server_parameters(ue_communication_context *context,  int count, ...);
 
 #endif

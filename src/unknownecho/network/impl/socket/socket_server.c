@@ -61,10 +61,7 @@ void ue_socket_server_process_connection(ue_socket_server *server, ue_socket_cli
 void init_select(ue_socket_server *server, int *max_fd, fd_set *read_set, fd_set *write_set);
 
 
-ue_socket_server *ue_socket_server_create(unsigned short int port,
-    bool (*read_consumer)(ue_socket_client_connection *connection),
-    bool (*write_consumer)(ue_socket_client_connection *connection),
-	ue_tls_session *tls_session) {
+ue_socket_server *ue_socket_server_create(ue_socket_server_parameters *parameters) {
 
     ue_socket_server *server;
     int i;
@@ -73,15 +70,15 @@ ue_socket_server *ue_socket_server_create(unsigned short int port,
 
     ue_safe_alloc_or_goto(server, ue_socket_server, 1, clean_up);
 
-    server->tls_session = tls_session;
+    server->tls_session = parameters->tls_session;
     if ((server->ue_socket_fd = ue_socket_open_tcp()) == -1) {
         ue_stacktrace_push_msg("Failed to create main socket context");
         goto clean_up;
     }
     server->connections_number = DEFAULT_CONNECTIONS_NUMBER;
     server->simultaneous_connections_number = DEFAULT_SIMULTANEOUS_CONNECTIONS_NUMBER;
-    server->read_consumer = read_consumer;
-    server->write_consumer = write_consumer;
+    server->read_consumer = parameters->read_consumer;
+    server->write_consumer = parameters->write_consumer;
     ue_safe_alloc_or_goto(server->connections, ue_socket_client_connection *, server->connections_number, clean_up);
     for (i = 0; i < server->connections_number; i++) {
         if ((server->connections[i] = ue_socket_client_connection_init()) == NULL) {
@@ -90,7 +87,7 @@ ue_socket_server *ue_socket_server_create(unsigned short int port,
         }
     }
 
-    if (!ue_socket_bind(server->ue_socket_fd, AF_INET, port)) {
+    if (!ue_socket_bind(server->ue_socket_fd, AF_INET, parameters->port)) {
         ue_stacktrace_push_msg("Failed to bind socket to this port");
         goto clean_up;
     }
@@ -160,6 +157,10 @@ bool ue_socket_server_is_valid(ue_socket_server *server) {
     }
 
     return true;
+}
+
+bool ue_socket_server_is_running(ue_socket_server *server) {
+    return server && server->running;
 }
 
 bool ue_socket_listen(ue_socket_server *server) {
@@ -261,7 +262,9 @@ bool ue_socket_server_accept(ue_socket_server *server) {
     }
 
     ue_logger_trace("Search an available slot for accepted connection");
+    ue_logger_debug("server->connections_number : %d", server->connections_number);
     for (i = 0; i < server->connections_number; i++) {
+        ue_logger_debug("current connection checked : %d", i);
         if (ue_socket_client_connection_is_available(server->connections[i])) {
             if (!ue_socket_client_connection_establish(server->connections[i], new_socket)) {
                 ue_stacktrace_push_msg("Failed to established connection");
@@ -294,11 +297,11 @@ void ue_socket_server_process_connection(ue_socket_server *server, ue_socket_cli
     }
 
     switch (connection->state) {
-        case UNKNOWNECHO_CONNECTION_FREE_STATE:
+        case UNKNOWNECHO_COMMUNICATION_CONNECTION_FREE_STATE:
             ue_logger_trace("Connection state : [FREE]");
         break;
 
-        case UNKNOWNECHO_CONNECTION_READ_STATE:
+        case UNKNOWNECHO_COMMUNICATION_CONNECTION_READ_STATE:
             ue_logger_trace("Connection state : [READ]");
             if (FD_ISSET(connection->fd, read_set)) {
                 ue_logger_trace("Have stuff to read");
@@ -314,7 +317,7 @@ void ue_socket_server_process_connection(ue_socket_server *server, ue_socket_cli
             }
         break;
 
-        case UNKNOWNECHO_CONNECTION_WRITE_STATE:
+        case UNKNOWNECHO_COMMUNICATION_CONNECTION_WRITE_STATE:
             ue_logger_trace("Connection state : [WRITE]");
             if (FD_ISSET(connection->fd, write_set)) {
                 ue_logger_trace("Have stuff to write");
@@ -354,16 +357,16 @@ void init_select(ue_socket_server *server, int *max_fd, fd_set *read_set, fd_set
     for (i = 0; i < server->connections_number; i++) {
         connection = server->connections[i];
 
-        if (connection->state == UNKNOWNECHO_CONNECTION_FREE_STATE) {
+        if (connection->state == UNKNOWNECHO_COMMUNICATION_CONNECTION_FREE_STATE) {
             continue;
         }
 
         /* If the socket is in read state */
-        if (connection->state == UNKNOWNECHO_CONNECTION_READ_STATE) {
+        if (connection->state == UNKNOWNECHO_COMMUNICATION_CONNECTION_READ_STATE) {
             FD_SET(connection->fd, read_set);
         }
         /* Else if the socket is in write state */
-        else if (connection->state == UNKNOWNECHO_CONNECTION_WRITE_STATE) {
+        else if (connection->state == UNKNOWNECHO_COMMUNICATION_CONNECTION_WRITE_STATE) {
             FD_SET(connection->fd, write_set);
         }
 
@@ -374,14 +377,14 @@ void init_select(ue_socket_server *server, int *max_fd, fd_set *read_set, fd_set
     }
 }
 
-void ue_socket_server_process_polling(ue_socket_server *server) {
+bool ue_socket_server_process_polling(ue_socket_server *server) {
     int max_fd, i, r;
     fd_set read_set, write_set;
     char *error_buffer;
 
     if (!ue_socket_server_is_valid(server)) {
         ue_logger_error("Specified server isn't correctly initialized");
-        return;
+        return false;
     }
 
     r = 0;
@@ -401,11 +404,13 @@ void ue_socket_server_process_polling(ue_socket_server *server) {
         else {
             if (FD_ISSET(server->ue_socket_fd, &read_set)) {
                 if (!ue_socket_server_accept(server)) {
-                    ue_logger_warn("Failed to accept a new client");
                     if (ue_stacktrace_is_filled()) {
+                        ue_logger_warn("Failed to accept a new client");
                         ue_logger_trace("Stacktrace is filled :");
                         ue_stacktrace_print();
                         ue_stacktrace_clean_up();
+                    } else {
+                        ue_logger_warn("Failed to accept a new client, but no error was detected. There's probably no such slot available.");
                     }
                 }
             }
@@ -415,6 +420,8 @@ void ue_socket_server_process_polling(ue_socket_server *server) {
             ue_socket_server_process_connection(server, server->connections[i], &read_set, &write_set);
         }
     }
+
+    return true;
 }
 
 bool ue_socket_bind(int ue_socket_fd, int domain, unsigned short int port) {
@@ -460,4 +467,35 @@ bool ue_socket_server_disconnect(ue_socket_server *server, ue_socket_client_conn
     ue_logger_warn("Cannot disconnect client from server because client was not found.");
 
     return false;
+}
+
+bool ue_socket_server_stop(ue_socket_server *server) {
+    ue_check_parameter_or_return(server);
+
+    server->running = false;
+
+    return true;
+}
+
+int ue_socket_server_get_connections_number(ue_socket_server *server)  {
+    if (!server) {
+        ue_stacktrace_push_msg("Specified server ptr is null");
+        return -1;
+    }
+
+    return server->connections_number;
+}
+
+ue_socket_client_connection *ue_socket_server_get_connection(ue_socket_server *server, int index) {
+    if (!server) {
+        ue_stacktrace_push_msg("Specified server ptr is null");
+        return NULL;
+    }
+
+    if (index < 0 || index >= server->connections_number) {
+        ue_stacktrace_push_msg("Specified index %d is out of range", index);
+        return NULL;
+    }
+
+    return server->connections[index];
 }

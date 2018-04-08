@@ -17,33 +17,13 @@
  *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
-#ifndef UNKNOWNECHO_CHANNEL_CLIENT_PARAMETERS_STRUCT_H
-#define UNKNOWNECHO_CHANNEL_CLIENT_PARAMETERS_STRUCT_H
+#ifndef UNKNOWNECHO_COMMUNICATION_CONNECTION_STATE_H
+#define UNKNOWNECHO_COMMUNICATION_CONNECTION_STATE_H
 
-#include <unknownecho/bool.h>
-#include <unknownecho/byte/byte_stream.h>
-#include <unknownecho/input.h>
-
-typedef struct {
-    char *persistent_path;
-    char *nickname;
-    const char *csr_server_host;
-    int csr_server_port;
-    const char *csl_server_host;
-    int csl_server_port;
-    char *keystore_password;
-    const char *server_certificates_path;
-    void *user_context;
-    bool (*write_callback)(void *user_context, ue_byte_stream *printer);
-    bool (*initialization_begin_callback)(void *user_context);
-	bool (*initialization_end_callback)(void *user_context);
-    bool (*uninitialization_begin_callback)(void *user_context);
-	bool (*uninitialization_end_callback)(void *user_context);
-    bool (*connection_begin_callback)(void *user_context);
-	bool (*connection_end_callback)(void *user_context);
-    char *(*user_input_callback)(void *user_context);
-    const char *cipher_name, *digest_name;
-    ue_user_input_mode user_input_mode;
-} ue_channel_client_parameters;
+typedef enum {
+    UNKNOWNECHO_COMMUNICATION_CONNECTION_FREE_STATE,
+    UNKNOWNECHO_COMMUNICATION_CONNECTION_READ_STATE,
+    UNKNOWNECHO_COMMUNICATION_CONNECTION_WRITE_STATE
+} ue_communication_connection_state;
 
 #endif

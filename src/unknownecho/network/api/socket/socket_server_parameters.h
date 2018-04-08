@@ -17,33 +17,23 @@
  *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
-#ifndef UNKNOWNECHO_CHANNEL_CLIENT_PARAMETERS_STRUCT_H
-#define UNKNOWNECHO_CHANNEL_CLIENT_PARAMETERS_STRUCT_H
+#ifndef UNKNOWNECHO_SOCKET_SERVER_PARAMETERS_H
+#define UNKNOWNECHO_SOCKET_SERVER_PARAMETERS_H
 
 #include <unknownecho/bool.h>
-#include <unknownecho/byte/byte_stream.h>
-#include <unknownecho/input.h>
+#include <unknownecho/network/api/socket/socket_client.h>
+#include <unknownecho/network/api/tls/tls_session.h>
 
 typedef struct {
-    char *persistent_path;
-    char *nickname;
-    const char *csr_server_host;
-    int csr_server_port;
-    const char *csl_server_host;
-    int csl_server_port;
-    char *keystore_password;
-    const char *server_certificates_path;
-    void *user_context;
-    bool (*write_callback)(void *user_context, ue_byte_stream *printer);
-    bool (*initialization_begin_callback)(void *user_context);
-	bool (*initialization_end_callback)(void *user_context);
-    bool (*uninitialization_begin_callback)(void *user_context);
-	bool (*uninitialization_end_callback)(void *user_context);
-    bool (*connection_begin_callback)(void *user_context);
-	bool (*connection_end_callback)(void *user_context);
-    char *(*user_input_callback)(void *user_context);
-    const char *cipher_name, *digest_name;
-    ue_user_input_mode user_input_mode;
-} ue_channel_client_parameters;
+    unsigned short int port;
+    bool (*read_consumer)(ue_socket_client_connection *connection);
+    bool (*write_consumer)(ue_socket_client_connection *connection);
+    ue_tls_session *tls_session;
+} ue_socket_server_parameters;
+
+ue_socket_server_parameters *ue_socket_server_parameters_build(unsigned short int port,
+    bool (*read_consumer)(ue_socket_client_connection *connection),
+    bool (*write_consumer)(ue_socket_client_connection *connection),
+    ue_tls_session *tls_session);
 
 #endif

@@ -23,13 +23,9 @@
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/network/api/socket/socket_client_connection.h>
-#include <unknownecho/network/api/socket/socket.h>
-#include <unknownecho/network/api/socket/socket_send.h>
-#include <unknownecho/network/api/socket/socket_receive.h>
-#include <unknownecho/network/api/socket/socket_client.h>
-#include <unknownecho/network/api/socket/socket_exchange.h>
-#include <unknownecho/network/api/tls/tls_session.h>
+#include <unknownecho/network/api/communication/communication.h>
+#include <unknownecho/network/api/communication/communication_secure_layer.h>
+#include <unknownecho/network/factory/communication_factory.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/thread/thread.h>
 #include <unknownecho/thread/thread_id_struct.h>
@@ -86,22 +82,22 @@ static int max_channel_clients_number = 0;
 
 
 #define CSR_SERVER_CERTIFICATE_FILE_NAME    "csr_server.pem"
-#define TLS_SERVER_CERTIFICATE_FILE_NAME    "tls_server.pem"
+#define CSL_SERVER_CERTIFICATE_FILE_NAME    "csl_server.pem"
 #define CIPHER_SERVER_CERTIFICATE_FILE_NAME "cipher_server.pem"
 #define SIGNER_SERVER_CERTIFICATE_FILE_NAME "signer_server.pem"
-#define TLS_KEYSTORE_PATH              		"/keystore/tls_client_keystore.p12"
+#define CSL_KEYSTORE_PATH              		"/keystore/csl_client_keystore.p12"
 #define CIPHER_KEYSTORE_PATH    	    	"/keystore/cipher_client_keystore.p12"
 #define SIGNER_KEYSTORE_PATH           		"/keystore/signer_client_keystore.p12"
 #define LOGGER_FILE_NAME               		"logs.txt"
 
 
-static bool send_message(ue_channel_client *channel_client, ue_socket_client_connection *connection, ue_byte_stream *message_to_send);
+static bool send_message(ue_channel_client *channel_client, void *connection, ue_byte_stream *message_to_send);
 
-static size_t receive_message(ue_channel_client *channel_client, ue_socket_client_connection *connection);
+static size_t receive_message(ue_channel_client *channel_client, void *connection);
 
-static bool send_cipher_message(ue_channel_client *channel_client, ue_socket_client_connection *connection, ue_byte_stream *message_to_send);
+static bool send_cipher_message(ue_channel_client *channel_client, void *connection, ue_byte_stream *message_to_send);
 
-static size_t receive_cipher_message(ue_channel_client *channel_client, ue_socket_client_connection *connection);
+static size_t receive_cipher_message(ue_channel_client *channel_client, void *connection);
 
 static bool create_keystores(ue_channel_client *channel_client, const char *csr_server_host, unsigned short int csr_server_port, char *keystore_password);
 
@@ -109,24 +105,24 @@ static bool process_csr_response(ue_channel_client *channel_client, ue_byte_stre
 
 static bool process_csr_request(ue_channel_client *channel_client, ue_csr_context *context, int csr_sub_type);
 
-static bool process_user_input(ue_channel_client *channel_client, ue_socket_client_connection *connection,
+static bool process_user_input(ue_channel_client *channel_client, void *connection,
     unsigned char *data, size_t data_size);
 
-static bool tls_read_consumer(void *parameter);
+static bool csl_read_consumer(void *parameter);
 
-static bool tls_write_consumer_stdin(void *parameter);
+static bool csl_write_consumer_stdin(void *parameter);
 
-static bool tls_write_consumer_push(void *parameter);
+static bool csl_write_consumer_push(void *parameter);
 
 static bool process_get_certificate_request(ue_channel_client *channel_client, ue_pkcs12_keystore *keystore,
-	ue_socket_client_connection *connection, const unsigned char *friendly_name, size_t friendly_name_size);
+    void *connection, const unsigned char *friendly_name, size_t friendly_name_size);
 
-static bool process_channel_key_request(ue_channel_client *channel_client, ue_socket_client_connection *connection,
+static bool process_channel_key_request(ue_channel_client *channel_client, void *connection,
 	ue_byte_stream *request);
 
-static bool send_nickname_request(ue_channel_client *channel_client, ue_socket_client_connection *connection);
+static bool send_nickname_request(ue_channel_client *channel_client, void *connection);
 
-static bool process_message_request(ue_channel_client *channel_client, ue_socket_client_connection *connection,
+static bool process_message_request(ue_channel_client *channel_client, void *connection,
     unsigned char *data, size_t data_size);
 
 static bool process_nickname_response(ue_channel_client *channel_client, ue_byte_stream *response);
@@ -137,7 +133,7 @@ static bool process_message_response(ue_channel_client *channel_client, ue_byte_
 
 static bool process_certificate_response(ue_channel_client *channel_client, ue_byte_stream *response);
 
-static bool process_channel_key_response(ue_channel_client *channel_client, ue_socket_client_connection *connection,
+static bool process_channel_key_response(ue_channel_client *channel_client, void *connection,
 	ue_byte_stream *response);
 
 static bool generate_certificate(ue_x509_certificate **certificate, ue_private_key **private_key);
@@ -175,7 +171,7 @@ static int get_available_channel_client_index() {
 }
 
 ue_channel_client *ue_channel_client_create(char *persistent_path, char *nickname, const char *csr_server_host, int csr_server_port,
-	const char *tls_server_host, int tls_server_port, char *keystore_password, const char *server_certificates_path, void *user_context,
+    const char *csl_server_host, int csl_server_port, char *keystore_password, const char *server_certificates_path, void *user_context,
 	bool (*write_callback)(void *user_context, ue_byte_stream *printer), bool (*initialization_begin_callback)(void *user_context),
 	bool (*initialization_end_callback)(void *user_context), bool (*uninitialization_begin_callback)(void *user_context),
 	bool (*uninitialization_end_callback)(void *user_context), bool (*connection_begin_callback)(void *user_context),
@@ -194,10 +190,10 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 	if (csr_server_port <= 1024) {
 		ue_logger_warn("CSR server port set to %d but it would be better if it > 1024");
 	}
-	ue_check_parameter_or_return(tls_server_host);
-	ue_check_parameter_or_return(tls_server_port > 0);
-	if (tls_server_port <= 1024) {
-		ue_logger_warn("TLS server port set to %d but it would be better if it > 1024");
+    ue_check_parameter_or_return(csl_server_host);
+    ue_check_parameter_or_return(csl_server_port > 0);
+    if (csl_server_port <= 1024) {
+        ue_logger_warn("CSL server port set to %d but it would be better if it > 1024");
 	}
 
 	result = false;
@@ -212,30 +208,29 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 
 	ue_safe_alloc(channel_clients[available_channel_client_index], ue_channel_client, 1);
 	channel_client = channel_clients[available_channel_client_index];
-    channel_client->fd = -1;
     channel_client->connection = NULL;
     channel_client->new_message = NULL;
     channel_client->running = false;
     channel_client->nickname = NULL;
     channel_client->read_thread = NULL;
     channel_client->write_thread = NULL;
-    channel_client->tls_session = NULL;
+    channel_client->communication_secure_layer_session = NULL;
 	channel_client->channel_id = -1;
 	channel_client->keystore_password = NULL;
-	channel_client->tls_keystore_ok = false;
+    channel_client->csl_keystore_ok = false;
 	channel_client->cipher_keystore_ok = false;
 	channel_client->signer_keystore_ok = false;
-	channel_client->tls_csr_context = NULL;
+    channel_client->csl_csr_context = NULL;
 	channel_client->cipher_csr_context = NULL;
 	channel_client->signer_csr_context = NULL;
-	channel_client->tls_keystore = NULL;
+    channel_client->csl_keystore = NULL;
 	channel_client->cipher_keystore = NULL;
     channel_client->signer_keystore = NULL;
 	channel_client->channel_key = NULL;
 	channel_client->channel_iv = NULL;
 	channel_client->channel_iv_size = 0;
 	channel_client->persistent_path = NULL;
-	channel_client->tls_server_host = NULL;
+    channel_client->csl_server_host = NULL;
 	channel_client->write_callback = write_callback;
 	channel_client->initialization_begin_callback = initialization_begin_callback;
 	channel_client->initialization_end_callback = initialization_end_callback;
@@ -245,6 +240,10 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 	channel_client->user_context = user_context;
 	channel_client->csr_processing_state = FREE_STATE;
     channel_client->user_input_mode = user_input_mode;
+    channel_client->communication_context = ue_communication_build_socket();
+    channel_client->received_message = ue_byte_stream_create();
+    channel_client->message_to_send = ue_byte_stream_create();
+    channel_client->tmp_stream = ue_byte_stream_create();
 
 	if (channel_client->initialization_begin_callback) {
 		channel_client->initialization_begin_callback(channel_client->user_context);
@@ -267,8 +266,8 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 
 	channel_client->nickname = ue_string_create_from(nickname);
 	channel_client->persistent_path = ue_string_create_from(persistent_path);
-	channel_client->tls_server_host = ue_string_create_from(tls_server_host);
-	channel_client->tls_server_port = tls_server_port;
+    channel_client->csl_server_host = ue_string_create_from(csl_server_host);
+    channel_client->csl_server_port = csl_server_port;
 	channel_client->cipher_name = ue_string_create_from(cipher_name);
 	channel_client->digest_name = ue_string_create_from(digest_name);
 
@@ -287,10 +286,10 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
     //ue_logger_set_details(ue_logger_manager_get_logger(), true);
 
 	channel_client->csr_server_certificate_path = ue_strcat_variadic("sss", server_certificates_path, "/", CSR_SERVER_CERTIFICATE_FILE_NAME);
-	channel_client->tls_server_certificate_path = ue_strcat_variadic("sss", server_certificates_path, "/", TLS_SERVER_CERTIFICATE_FILE_NAME);
+    channel_client->csl_server_certificate_path = ue_strcat_variadic("sss", server_certificates_path, "/", CSL_SERVER_CERTIFICATE_FILE_NAME);
 	channel_client->cipher_server_certificate_path = ue_strcat_variadic("sss", server_certificates_path, "/", CIPHER_SERVER_CERTIFICATE_FILE_NAME);
 	channel_client->signer_server_certificate_path = ue_strcat_variadic("sss", server_certificates_path, "/", SIGNER_SERVER_CERTIFICATE_FILE_NAME);
-	channel_client->tls_keystore_path = ue_strcat_variadic("ss", full_persistent_path, TLS_KEYSTORE_PATH);
+    channel_client->csl_keystore_path = ue_strcat_variadic("ss", full_persistent_path, CSL_KEYSTORE_PATH);
 	channel_client->cipher_keystore_path = ue_strcat_variadic("ss", full_persistent_path, CIPHER_KEYSTORE_PATH);
 	channel_client->signer_keystore_path = ue_strcat_variadic("ss", full_persistent_path, SIGNER_KEYSTORE_PATH);
 
@@ -313,8 +312,8 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 		goto clean_up;
 	}
 
-	if (!ue_x509_certificate_load_from_file(channel_client->tls_server_certificate_path, &channel_client->tls_server_certificate)) {
-		ue_stacktrace_push_msg("Failed to load TLS server certificate from path '%s'", channel_client->tls_server_certificate_path);
+    if (!ue_x509_certificate_load_from_file(channel_client->csl_server_certificate_path, &channel_client->csl_server_certificate)) {
+        ue_stacktrace_push_msg("Failed to load CSL server certificate from path '%s'", channel_client->csl_server_certificate_path);
 		goto clean_up;
 	}
 
@@ -360,26 +359,23 @@ void ue_channel_client_destroy(ue_channel_client *channel_client) {
 	ue_safe_free(channel_client->write_thread)
 	ue_thread_mutex_destroy(channel_client->mutex);
 	ue_thread_cond_destroy(channel_client->cond);
-	if (channel_client->tls_session) {
-		ue_tls_session_destroy(channel_client->tls_session);
+    if (channel_client->communication_secure_layer_session) {
+        ue_communication_secure_layer_destroy(channel_client->communication_context, channel_client->communication_secure_layer_session);
 	}
 	ue_byte_stream_destroy(channel_client->new_message);
 	ue_safe_str_free(channel_client->nickname)
 	ue_safe_str_free(channel_client->keystore_password);
 	if (channel_client->connection) {
-		ue_socket_client_connection_destroy(channel_client->connection);
-	}
-	else {
-		ue_socket_close(channel_client->fd);
-	}
+        ue_communication_client_connection_destroy(channel_client->communication_context, channel_client->connection);
+    }
 	ue_x509_certificate_destroy(channel_client->csr_server_certificate);
-	ue_x509_certificate_destroy(channel_client->tls_server_certificate);
+    ue_x509_certificate_destroy(channel_client->csl_server_certificate);
 	ue_x509_certificate_destroy(channel_client->cipher_server_certificate);
 	ue_x509_certificate_destroy(channel_client->signer_server_certificate);
-	if (channel_client->tls_csr_context) {
-		ue_sym_key_destroy(channel_client->tls_csr_context->future_key);
-		ue_safe_free(channel_client->tls_csr_context->iv);
-		ue_safe_free(channel_client->tls_csr_context);
+    if (channel_client->csl_csr_context) {
+        ue_sym_key_destroy(channel_client->csl_csr_context->future_key);
+        ue_safe_free(channel_client->csl_csr_context->iv);
+        ue_safe_free(channel_client->csl_csr_context);
 	}
 	if (channel_client->cipher_csr_context) {
 		ue_sym_key_destroy(channel_client->cipher_csr_context->future_key);
@@ -391,23 +387,27 @@ void ue_channel_client_destroy(ue_channel_client *channel_client) {
 		ue_safe_free(channel_client->signer_csr_context->iv);
 		ue_safe_free(channel_client->signer_csr_context);
 	}
-    //ue_pkcs12_keystore_destroy(channel_client->tls_keystore);
+    //ue_pkcs12_keystore_destroy(channel_client->csl_keystore);
     //ue_pkcs12_keystore_destroy(channel_client->cipher_keystore);
     //ue_pkcs12_keystore_destroy(channel_client->signer_keystore);
 	ue_safe_free(channel_client->csr_server_certificate_path);
-	ue_safe_free(channel_client->tls_server_certificate_path);
+    ue_safe_free(channel_client->csl_server_certificate_path);
 	ue_safe_free(channel_client->cipher_server_certificate_path);
 	ue_safe_free(channel_client->signer_server_certificate_path);
-	ue_safe_free(channel_client->tls_keystore_path);
+    ue_safe_free(channel_client->csl_keystore_path);
 	ue_safe_free(channel_client->cipher_keystore_path);
 	ue_safe_free(channel_client->signer_keystore_path);
 	ue_sym_key_destroy(channel_client->channel_key);
 	ue_safe_free(channel_client->channel_iv);
 	ue_safe_free(channel_client->persistent_path);
-	ue_safe_free(channel_client->tls_server_host);
+    ue_safe_free(channel_client->csl_server_host);
 	ue_safe_free(channel_client->cipher_name);
 	ue_safe_free(channel_client->digest_name);
     ue_queue_destroy(channel_client->push_mode_queue);
+    ue_byte_stream_destroy(channel_client->received_message);
+    ue_byte_stream_destroy(channel_client->message_to_send);
+    ue_byte_stream_destroy(channel_client->tmp_stream);
+    ue_communication_destroy(channel_client->communication_context);
 	if (channel_client->uninitialization_end_callback) {
 		channel_client->uninitialization_end_callback(channel_client->user_context);
 	}
@@ -417,21 +417,28 @@ void ue_channel_client_destroy(ue_channel_client *channel_client) {
 }
 
 bool ue_channel_client_start(ue_channel_client *channel_client) {
+    void *client_connection_parameters;
+    ue_x509_certificate **ca_certificates;
 
-	ue_check_parameter_or_return(channel_client->tls_server_host);
-	ue_check_parameter_or_return(channel_client->tls_server_port > 0);
+    ue_check_parameter_or_return(channel_client->csl_server_host);
+    ue_check_parameter_or_return(channel_client->csl_server_port > 0);
 
-    ue_x509_certificate **ca_certificates = NULL;
+    ca_certificates = NULL;
+    client_connection_parameters = NULL;
+
     ue_safe_alloc(ca_certificates, ue_x509_certificate *, 1);
-    ca_certificates[0] = channel_client->tls_server_certificate;
+    ca_certificates[0] = channel_client->csl_server_certificate;
 
 	if (channel_client->connection_begin_callback) {
 		channel_client->connection_begin_callback(channel_client->user_context);
 	}
 
 	/* @todo pass keystore ptr instead of path */
-	if (!(channel_client->tls_session = ue_tls_session_create_client((char *)channel_client->tls_keystore_path, channel_client->keystore_password, ca_certificates, 1))) {
-		ue_stacktrace_push_msg("Failed to create TLS session");
+    if (!(channel_client->communication_secure_layer_session = ue_communication_secure_layer_build_client(
+        channel_client->communication_context, 4, (char *)channel_client->csl_keystore_path,
+        channel_client->keystore_password, ca_certificates, 1))) {
+
+        ue_stacktrace_push_msg("Failed to create CSL session");
 		if (channel_client->connection_end_callback) {
 			channel_client->connection_end_callback(channel_client->user_context);
 		}
@@ -440,28 +447,43 @@ bool ue_channel_client_start(ue_channel_client *channel_client) {
 
 	ue_safe_free(ca_certificates);
 
-    channel_client->fd = ue_socket_open_tcp();
-    if (!(channel_client->connection = ue_socket_connect(channel_client->fd, AF_INET, channel_client->tls_server_host, channel_client->tls_server_port, channel_client->tls_session))) {
+    if (!(client_connection_parameters = ue_communication_build_client_connection_parameters(
+        channel_client->communication_context, 3, channel_client->csl_server_host,
+        channel_client->csl_server_port, channel_client->communication_secure_layer_session))) {
+
+        ue_stacktrace_push_msg("Failed to build client connection parameters context");
+        if (channel_client->connection_end_callback) {
+            channel_client->connection_end_callback(channel_client->user_context);
+        }
+        return false;
+    }
+
+    if (!(channel_client->connection = ue_communication_connect(channel_client->communication_context,
+        client_connection_parameters))) {
+
         ue_stacktrace_push_msg("Failed to connect socket to server");
 		if (channel_client->connection_end_callback) {
 			channel_client->connection_end_callback(channel_client->user_context);
 		}
+        ue_safe_free(client_connection_parameters);
         return false;
     }
+    ue_safe_free(client_connection_parameters);
 
 	channel_client->running = true;
 	channel_client->transmission_state = WRITING_STATE;
 	channel_client->new_message = ue_byte_stream_create();
 	channel_client->channel_id = -1;
-	channel_client->connection->optional_data = channel_client;
+    ue_communication_client_connection_set_user_data(channel_client->communication_context,
+        channel_client->connection, channel_client);
 
     _Pragma("GCC diagnostic push")
     _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
-		channel_client->read_thread = ue_thread_create((void *)tls_read_consumer, (void *)channel_client->connection);
+        channel_client->read_thread = ue_thread_create((void *)csl_read_consumer, (void *)channel_client);
         if (channel_client->user_input_mode == UNKNOWNECHO_STDIN_INPUT) {
-            channel_client->write_thread = ue_thread_create((void *)tls_write_consumer_stdin, (void *)channel_client->connection);
+            channel_client->write_thread = ue_thread_create((void *)csl_write_consumer_stdin, (void *)channel_client);
         } else if (channel_client->user_input_mode == UNKNOWNECHO_PUSH_INPUT) {
-            channel_client->write_thread = ue_thread_create((void *)tls_write_consumer_push, (void *)channel_client->connection);
+            channel_client->write_thread = ue_thread_create((void *)csl_write_consumer_push, (void *)channel_client);
         } else {
             ue_stacktrace_push_msg("Unknown user input mode");
             return false;
@@ -508,17 +530,16 @@ bool ue_channel_client_push_message(ue_channel_client *channel_client, unsigned 
     return ue_queue_push_wait(channel_client->push_mode_queue, &message);
 }
 
-static bool send_message(ue_channel_client *channel_client, ue_socket_client_connection *connection, ue_byte_stream *message_to_send) {
+static bool send_message(ue_channel_client *channel_client, void *connection, ue_byte_stream *message_to_send) {
 	size_t sent;
 
 	ue_check_parameter_or_return(connection);
-	ue_check_parameter_or_return(connection->fd > 0);
 	ue_check_parameter_or_return(message_to_send);
 	ue_check_parameter_or_return(ue_byte_stream_get_size(message_to_send) > 0);
 
 	ue_thread_mutex_lock(channel_client->mutex);
 	channel_client->transmission_state = WRITING_STATE;
-    sent = ue_socket_send_sync(connection, message_to_send);
+    sent = ue_communication_send_sync(channel_client->communication_context, connection, message_to_send);
 	channel_client->transmission_state = READING_STATE;
 	ue_thread_cond_signal(channel_client->cond);
 	ue_thread_mutex_unlock(channel_client->mutex);
@@ -533,7 +554,7 @@ static bool send_message(ue_channel_client *channel_client, ue_socket_client_con
 	return true;
 }
 
-static size_t receive_message(ue_channel_client *channel_client, ue_socket_client_connection *connection) {
+static size_t receive_message(ue_channel_client *channel_client, void *connection) {
 	size_t received;
 
 	ue_thread_mutex_lock(channel_client->mutex);
@@ -541,13 +562,14 @@ static size_t receive_message(ue_channel_client *channel_client, ue_socket_clien
         ue_thread_cond_wait(channel_client->cond, channel_client->mutex);
     }
     ue_thread_mutex_unlock(channel_client->mutex);
-	ue_byte_stream_clean_up(connection->received_message);
-    received = ue_socket_receive_sync(connection, connection->received_message);
+    ue_byte_stream_clean_up(channel_client->received_message);
+    received = ue_communication_receive_sync(channel_client->communication_context, connection,
+        channel_client->received_message);
 
     return received;
 }
 
-static bool send_cipher_message(ue_channel_client *channel_client, ue_socket_client_connection *connection, ue_byte_stream *message_to_send) {
+static bool send_cipher_message(ue_channel_client *channel_client, void *connection, ue_byte_stream *message_to_send) {
 	bool result;
 	unsigned char *cipher_data;
 	size_t cipher_data_size;
@@ -576,14 +598,14 @@ static bool send_cipher_message(ue_channel_client *channel_client, ue_socket_cli
         goto clean_up;
     }
 
-	ue_byte_stream_clean_up(connection->message_to_send);
+    ue_byte_stream_clean_up(channel_client->message_to_send);
 
-	if (!ue_byte_writer_append_bytes(connection->message_to_send, cipher_data, cipher_data_size)) {
+    if (!ue_byte_writer_append_bytes(channel_client->message_to_send, cipher_data, cipher_data_size)) {
 		ue_stacktrace_push_msg("Failed to write cipher data to message to send");
 		goto clean_up;
 	}
 
-	if (!send_message(channel_client, connection, connection->message_to_send)) {
+    if (!send_message(channel_client, connection, channel_client->message_to_send)) {
 		ue_stacktrace_push_msg("Failed to send cipher message");
 		goto clean_up;
 	}
@@ -596,7 +618,7 @@ clean_up:
 	return result;
 }
 
-static size_t receive_cipher_message(ue_channel_client *channel_client, ue_socket_client_connection *connection) {
+static size_t receive_cipher_message(ue_channel_client *channel_client, void *connection) {
 	unsigned char *plain_data;
     size_t received, plain_data_size;
 	ue_x509_certificate *server_certificate;
@@ -624,17 +646,19 @@ static size_t receive_cipher_message(ue_channel_client *channel_client, ue_socke
         goto clean_up;
     }
 
-	if (!ue_decipher_cipher_data(ue_byte_stream_get_data(connection->received_message), ue_byte_stream_get_size(connection->received_message),
-		channel_client->cipher_keystore->private_key, server_public_key, &plain_data, &plain_data_size, channel_client->cipher_name, channel_client->digest_name)) {
+    if (!ue_decipher_cipher_data(ue_byte_stream_get_data(channel_client->received_message),
+        ue_byte_stream_get_size(channel_client->received_message), channel_client->cipher_keystore->private_key,
+        server_public_key, &plain_data, &plain_data_size, channel_client->cipher_name,
+        channel_client->digest_name)) {
 
 		received = -1;
 		ue_stacktrace_push_msg("Failed decipher message data");
 		goto clean_up;
 	}
 
-	ue_byte_stream_clean_up(connection->received_message);
+    ue_byte_stream_clean_up(channel_client->received_message);
 
-	if (!ue_byte_writer_append_bytes(connection->received_message, plain_data, plain_data_size)) {
+    if (!ue_byte_writer_append_bytes(channel_client->received_message, plain_data, plain_data_size)) {
 		received = -1;
 		ue_stacktrace_push_msg("Failed to write plain data to received message");
 		goto clean_up;
@@ -647,27 +671,29 @@ clean_up:
 }
 
 static bool create_keystores(ue_channel_client *channel_client, const char *csr_server_host, unsigned short int csr_server_port, char *keystore_password) {
-	bool result;
-	bool tls_keystore_exists, cipher_keystore_exists, signer_keystore_exists;
+    bool result, csl_keystore_exists, cipher_keystore_exists, signer_keystore_exists;
+    void *client_connection_parameters;
 
 	ue_check_parameter_or_return(csr_server_host);
 	ue_check_parameter_or_return(csr_server_port > 0);
 	ue_check_parameter_or_return(keystore_password);
 
 	result = false;
+    client_connection_parameters = NULL;
 
-	tls_keystore_exists = ue_is_file_exists(channel_client->tls_keystore_path);
+    csl_keystore_exists = ue_is_file_exists(channel_client->csl_keystore_path);
 	cipher_keystore_exists = ue_is_file_exists(channel_client->cipher_keystore_path);
 	signer_keystore_exists = ue_is_file_exists(channel_client->signer_keystore_path);
 
-	if (!tls_keystore_exists) {
-		ue_safe_alloc(channel_client->tls_csr_context, ue_csr_context, 1);
-		channel_client->tls_csr_context->signed_certificate = NULL;
-		channel_client->tls_csr_context->private_key = NULL;
-		channel_client->tls_csr_context->future_key = NULL;
-		channel_client->tls_csr_context->iv = NULL;
+    if (!csl_keystore_exists) {
+        ue_safe_alloc(channel_client->csl_csr_context, ue_csr_context, 1);
+        channel_client->csl_csr_context->signed_certificate = NULL;
+        channel_client->csl_csr_context->private_key = NULL;
+        channel_client->csl_csr_context->future_key = NULL;
+        channel_client->csl_csr_context->iv = NULL;
 	} else {
-		if (!(channel_client->tls_keystore = ue_pkcs12_keystore_load(channel_client->tls_keystore_path, channel_client->keystore_password))) {
+        if (!(channel_client->csl_keystore = ue_pkcs12_keystore_load(channel_client->csl_keystore_path,
+            channel_client->keystore_password))) {
 	        ue_stacktrace_push_msg("Failed to load cipher pkcs12 keystore");
 	        goto clean_up;
 	    }
@@ -699,26 +725,35 @@ static bool create_keystores(ue_channel_client *channel_client, const char *csr_
 		}
 	}
 
-	if (!tls_keystore_exists || !cipher_keystore_exists || !signer_keystore_exists) {
-		channel_client->fd = ue_socket_open_tcp();
-		if (!(channel_client->connection = ue_socket_connect(channel_client->fd, AF_INET, csr_server_host, csr_server_port, NULL))) {
+    if (!csl_keystore_exists || !cipher_keystore_exists || !signer_keystore_exists) {
+        if (!(client_connection_parameters = ue_communication_build_client_connection_parameters(channel_client->communication_context, 2,
+            csr_server_host, csr_server_port))) {
+            ue_stacktrace_push_msg("Failed to create client connection parameters context");
+            goto clean_up;
+        }
+
+        if (!(channel_client->connection = ue_communication_connect(channel_client->communication_context,
+            client_connection_parameters))) {
 			ue_stacktrace_push_msg("Failed to connect socket to server");
+            ue_safe_free(client_connection_parameters);
 			goto clean_up;
 		}
+        ue_safe_free(client_connection_parameters);
 
 		channel_client->running = true;
 		channel_client->transmission_state = WRITING_STATE;
-        channel_client->connection->optional_data = channel_client;
+        ue_communication_client_connection_set_user_data(channel_client->communication_context,
+            channel_client->connection, channel_client);
 	}
 
-	if (!tls_keystore_exists) {
-		ue_logger_info("TLS keystore doesn't exists. A CSR will be built.");
-        if (!process_csr_request(channel_client, channel_client->tls_csr_context, CSR_TLS_REQUEST)) {
-			ue_stacktrace_push_msg("Failed to process CSR exchange for TLS");
+    if (!csl_keystore_exists) {
+        ue_logger_info("CSL keystore doesn't exists. A CSR will be built.");
+        if (!process_csr_request(channel_client, channel_client->csl_csr_context, CSR_CSL_REQUEST)) {
+            ue_stacktrace_push_msg("Failed to process CSR exchange for CSL");
 			goto clean_up;
 		}
 	} else {
-		channel_client->tls_keystore_ok = true;
+        channel_client->csl_keystore_ok = true;
 	}
 
 	if (!cipher_keystore_exists) {
@@ -741,7 +776,7 @@ static bool create_keystores(ue_channel_client *channel_client, const char *csr_
 		channel_client->signer_keystore_ok = true;
 	}
 
-	if (!tls_keystore_exists || !cipher_keystore_exists || !signer_keystore_exists) {
+    if (!csl_keystore_exists || !cipher_keystore_exists || !signer_keystore_exists) {
         //ue_thread_join(channel_client->read_thread, NULL);
         //ue_thread_join(channel_client->connection->read_messages_consumer_thread, NULL);
 
@@ -752,27 +787,36 @@ static bool create_keystores(ue_channel_client *channel_client, const char *csr_
 		}
 	}
 
-	if (!tls_keystore_exists) {
-		if (ue_x509_certificate_verify(channel_client->tls_csr_context->signed_certificate, channel_client->tls_server_certificate)) {
+    if (!csl_keystore_exists) {
+        if (ue_x509_certificate_verify(channel_client->csl_csr_context->signed_certificate,
+            channel_client->csl_server_certificate)) {
+
 			ue_logger_info("Certificate is correctly signed by the CA");
 		} else {
 			ue_stacktrace_push_msg("Certificate isn't correctly signed by the CA");
 			goto clean_up;
 		}
 
-		if (!(channel_client->tls_keystore = ue_pkcs12_keystore_create(channel_client->tls_csr_context->signed_certificate, channel_client->tls_csr_context->private_key, "TLS_CLIENT"))) {
+        if (!(channel_client->csl_keystore = ue_pkcs12_keystore_create(
+            channel_client->csl_csr_context->signed_certificate,
+            channel_client->csl_csr_context->private_key, "CSL_CLIENT"))) {
+
 			ue_stacktrace_push_msg("Failed to create keystore from specified signed certificate and private key");
 			goto clean_up;
 		}
 
-		ue_pkcs12_keystore_add_certificate_from_file(channel_client->tls_keystore, channel_client->tls_server_certificate_path, (const unsigned char *)"TLS_SERVER", strlen("TLS_SERVER"));
+        ue_pkcs12_keystore_add_certificate_from_file(channel_client->csl_keystore,
+            channel_client->csl_server_certificate_path, (const unsigned char *)"CSL_SERVER",
+            strlen("CSL_SERVER"));
 
-		if (!ue_pkcs12_keystore_write(channel_client->tls_keystore, channel_client->tls_keystore_path, keystore_password)) {
-			ue_stacktrace_push_msg("Failed to write keystore to '%s'", channel_client->tls_keystore_path);
+        if (!ue_pkcs12_keystore_write(channel_client->csl_keystore, channel_client->csl_keystore_path,
+            keystore_password)) {
+
+            ue_stacktrace_push_msg("Failed to write keystore to '%s'", channel_client->csl_keystore_path);
 			goto clean_up;
 		}
 
-		ue_logger_info("TLS keystore created.");
+        ue_logger_info("CSL keystore created.");
 	}
 
 	if (!cipher_keystore_exists) {
@@ -846,7 +890,7 @@ static bool process_csr_response(ue_channel_client *channel_client, ue_byte_stre
         goto clean_up;
     }
 
-    if (csr_sub_type != CSR_TLS_RESPONSE &&
+    if (csr_sub_type != CSR_CSL_RESPONSE &&
         csr_sub_type != CSR_CIPHER_RESPONSE &&
         csr_sub_type != CSR_SIGNER_RESPONSE) {
         ue_logger_warn("Invalid CSR sub type");
@@ -862,16 +906,16 @@ static bool process_csr_response(ue_channel_client *channel_client, ue_byte_stre
         goto clean_up;
     }
 
-    if (csr_sub_type == CSR_TLS_RESPONSE) {
-        ue_logger_trace("Received CSR_TLS_RESPONSE");
+    if (csr_sub_type == CSR_CSL_RESPONSE) {
+        ue_logger_trace("Received CSR_CSL_RESPONSE");
 
-        if (!(channel_client->tls_csr_context->signed_certificate = ue_csr_process_server_response(csr_response,
-            (size_t)csr_response_size, channel_client->tls_csr_context->future_key, channel_client->tls_csr_context->iv,
-            channel_client->tls_csr_context->iv_size))) {
+        if (!(channel_client->csl_csr_context->signed_certificate = ue_csr_process_server_response(csr_response,
+            (size_t)csr_response_size, channel_client->csl_csr_context->future_key,
+            channel_client->csl_csr_context->iv, channel_client->csl_csr_context->iv_size))) {
 
-            ue_stacktrace_push_msg("Failed to process CSR TLS response");
+            ue_stacktrace_push_msg("Failed to process CSR CSL response");
         } else {
-            channel_client->tls_keystore_ok = true;
+            channel_client->csl_keystore_ok = true;
         }
     }
     else if (csr_sub_type == CSR_CIPHER_RESPONSE) {
@@ -917,11 +961,7 @@ static bool process_csr_request(ue_channel_client *channel_client, ue_csr_contex
 	ue_check_parameter_or_return(channel_client);
 	ue_check_parameter_or_return(channel_client->connection);
 	ue_check_parameter_or_return(context);
-	ue_check_parameter_or_return(csr_sub_type == CSR_TLS_REQUEST || csr_sub_type == CSR_CIPHER_REQUEST || csr_sub_type == CSR_SIGNER_REQUEST);
-	if (channel_client->connection->tls) {
-		ue_stacktrace_push_msg("TLS object of CSR connection isn't null but it should.");
-		return false;
-	}
+    ue_check_parameter_or_return(csr_sub_type == CSR_CSL_REQUEST || csr_sub_type == CSR_CIPHER_REQUEST || csr_sub_type == CSR_SIGNER_REQUEST);
 
 	result = false;
 	certificate = NULL;
@@ -985,25 +1025,25 @@ static bool process_csr_request(ue_channel_client *channel_client, ue_csr_contex
 		goto clean_up;
 	}
 
-	ue_byte_stream_clean_up(channel_client->connection->message_to_send);
-	if (!ue_byte_writer_append_bytes(channel_client->connection->message_to_send, ue_byte_stream_get_data(stream), ue_byte_stream_get_size(stream))) {
+    ue_byte_stream_clean_up(channel_client->message_to_send);
+    if (!ue_byte_writer_append_bytes(channel_client->message_to_send, ue_byte_stream_get_data(stream), ue_byte_stream_get_size(stream))) {
 		ue_stacktrace_push_msg("Failed to write stream data to message to send");
 		goto clean_up;
 	}
 
 	ue_logger_info("Sending CSR...");
-	if (!send_message(channel_client, channel_client->connection, channel_client->connection->message_to_send)) {
+    if (!send_message(channel_client, channel_client->connection, channel_client->message_to_send)) {
 		ue_stacktrace_push_msg("Failed to send message to send");
 		goto clean_up;
 	}
 
-    ue_byte_stream_clean_up(channel_client->connection->received_message);
+    ue_byte_stream_clean_up(channel_client->received_message);
     if (!receive_message(channel_client, channel_client->connection)) {
         ue_stacktrace_push_msg("Failed to receive CSR response from server, connection was interrupted");
         goto clean_up;
     }
 
-    if (!process_csr_response(channel_client, channel_client->connection->received_message)) {
+    if (!process_csr_response(channel_client, channel_client->received_message)) {
         ue_stacktrace_push_msg("Failed to process CSR response");
         goto clean_up;
     }
@@ -1018,7 +1058,7 @@ clean_up:
 	return result;
 }
 
-static bool process_user_input(ue_channel_client *channel_client, ue_socket_client_connection *connection,
+static bool process_user_input(ue_channel_client *channel_client, void *connection,
     unsigned char *data, size_t data_size) {
 
     bool result;
@@ -1029,18 +1069,18 @@ static bool process_user_input(ue_channel_client *channel_client, ue_socket_clie
     channel_id = -1;
     string_data = NULL;
 
-    ue_byte_stream_clean_up(connection->message_to_send);
-    if (!ue_byte_writer_append_int(connection->message_to_send, channel_client->channel_id)) {
+    ue_byte_stream_clean_up(channel_client->message_to_send);
+    if (!ue_byte_writer_append_int(channel_client->message_to_send, channel_client->channel_id)) {
         ue_stacktrace_push_msg("Failed to write channel id to message to send");
         goto clean_up;
     }
 
     if (memcmp(data, "-q", data_size) == 0) {
-        if (!ue_byte_writer_append_int(connection->message_to_send, DISCONNECTION_NOW_REQUEST)) {
+        if (!ue_byte_writer_append_int(channel_client->message_to_send, DISCONNECTION_NOW_REQUEST)) {
             ue_stacktrace_push_msg("Failed to write DISCONNECTION_NOW_REQUEST type to message to send");
             goto clean_up;
         }
-        if (!(result = send_cipher_message(channel_client, connection, connection->message_to_send))) {
+        if (!(result = send_cipher_message(channel_client, connection, channel_client->message_to_send))) {
             ue_stacktrace_push_msg("Failed to send cipher message");
             goto clean_up;
         }
@@ -1055,16 +1095,16 @@ static bool process_user_input(ue_channel_client *channel_client, ue_socket_clie
             ue_logger_warn("Specified channel id is invalid. It have to be >= 0");
         }
         else {
-            if (!ue_byte_writer_append_int(connection->message_to_send, CHANNEL_CONNECTION_REQUEST)) {
+            if (!ue_byte_writer_append_int(channel_client->message_to_send, CHANNEL_CONNECTION_REQUEST)) {
                 ue_stacktrace_push_msg("Failed to write CHANNEL_CONNECTION_REQUEST type to message to send");
                 goto clean_up;
             }
-            if (!ue_byte_writer_append_int(connection->message_to_send, channel_id)) {
+            if (!ue_byte_writer_append_int(channel_client->message_to_send, channel_id)) {
                 ue_stacktrace_push_msg("Failed to write channel id to message to send");
                 goto clean_up;
             }
 
-            if (!(result = send_cipher_message(channel_client, connection, connection->message_to_send))) {
+            if (!(result = send_cipher_message(channel_client, connection, channel_client->message_to_send))) {
                 ue_stacktrace_push_msg("Failed to send cipher message");
                 goto clean_up;
             }
@@ -1084,16 +1124,16 @@ clean_up:
     return result;
 }
 
-static bool tls_read_consumer(void *parameter) {
+static bool csl_read_consumer(void *parameter) {
 	bool result;
 	size_t received;
 	int type;
-	ue_socket_client_connection *connection;
+    void *connection;
 	ue_channel_client *channel_client;
 
 	result = true;
-	connection = (ue_socket_client_connection *)parameter;
-	channel_client = connection->optional_data;
+    channel_client = (ue_channel_client *)parameter;
+    connection = channel_client->connection;
 
 	while (channel_client->running) {
 		received = receive_cipher_message(channel_client, connection);
@@ -1110,14 +1150,16 @@ static bool tls_read_consumer(void *parameter) {
 			result = false;
 		}
 		else {
-			ue_byte_stream_clean_up(connection->tmp_stream);
-			if (!ue_byte_writer_append_bytes(connection->tmp_stream, ue_byte_stream_get_data(connection->received_message), ue_byte_stream_get_size(connection->received_message))) {
+            ue_byte_stream_clean_up(channel_client->tmp_stream);
+            if (!ue_byte_writer_append_bytes(channel_client->tmp_stream, ue_byte_stream_get_data(
+                channel_client->received_message), ue_byte_stream_get_size(channel_client->received_message))) {
+
 				ue_logger_error("Failed to write received message to working stream");
 				continue;
 			}
-			ue_byte_stream_set_position(connection->tmp_stream, 0);
+            ue_byte_stream_set_position(channel_client->tmp_stream, 0);
 
-			ue_byte_read_next_int(connection->tmp_stream, &type);
+            ue_byte_read_next_int(channel_client->tmp_stream, &type);
 
 			if (type == ALREADY_CONNECTED_RESPONSE) {
 				ue_logger_warn("Already connected");
@@ -1125,33 +1167,33 @@ static bool tls_read_consumer(void *parameter) {
 				result = false;
 			}
 			else if (type == NICKNAME_RESPONSE) {
-				result = process_nickname_response(channel_client, connection->tmp_stream);
+                result = process_nickname_response(channel_client, channel_client->tmp_stream);
 				ue_logger_trace("Server has accepted this nickname.");
 			}
 			else if (type == CHANNEL_CONNECTION_RESPONSE) {
 				ue_logger_trace("CHANNEL_CONNECTION_RESPONSE");
-				result = process_channel_connection_response(channel_client, connection->tmp_stream);
+                result = process_channel_connection_response(channel_client, channel_client->tmp_stream);
 			}
 			else if (type == MESSAGE && !channel_client->channel_key) {
 				ue_logger_warn("Cannot decipher received message for now, because we doesn't have to channel key");
 			}
 			else if (type == MESSAGE && channel_client->channel_key) {
 				ue_logger_trace("MESSAGE received");
-				result = process_message_response(channel_client, connection->tmp_stream);
+                result = process_message_response(channel_client, channel_client->tmp_stream);
 			}
 			else if (type == CERTIFICATE_RESPONSE) {
-				result = process_certificate_response(channel_client, connection->tmp_stream);
+                result = process_certificate_response(channel_client, channel_client->tmp_stream);
 			}
 			else if (type == CHANNEL_KEY_RESPONSE) {
 				ue_logger_trace("CHANNEL_KEY_RESPONSE");
-				result = process_channel_key_response(channel_client, connection, connection->tmp_stream);
+                result = process_channel_key_response(channel_client, connection, channel_client->tmp_stream);
 			}
 			else if (type == CHANNEL_KEY_REQUEST && !channel_client->channel_key) {
 				ue_logger_warn("Receive a channel key request but we doesn't have it");
 			}
 			else if (type == CHANNEL_KEY_REQUEST && channel_client->channel_key) {
 				ue_logger_trace("CHANNEL_KEY_REQUEST");
-				result = process_channel_key_request(channel_client, connection, connection->tmp_stream);
+                result = process_channel_key_request(channel_client, connection, channel_client->tmp_stream);
 			}
 			else if (channel_client->channel_id >= 0 && !channel_client->channel_key) {
 				ue_logger_warn("Cannot decrypt server data because we don't know channel key for now");
@@ -1172,18 +1214,18 @@ static bool tls_read_consumer(void *parameter) {
 	return result;
 }
 
-static bool tls_write_consumer_stdin(void *parameter) {
+static bool csl_write_consumer_stdin(void *parameter) {
 	bool result;
 	char *input;
-	ue_socket_client_connection *connection;
+    void *connection;
 	ue_channel_client *channel_client;
     unsigned char *bytes_input;
 
 	result = true;
 	input = NULL;
     bytes_input = NULL;
-	connection = (ue_socket_client_connection *)parameter;
-	channel_client = connection->optional_data;
+    channel_client = (ue_channel_client *)parameter;
+    connection = channel_client->connection;
 
     if (!send_nickname_request(channel_client, connection)) {
         ue_stacktrace_push_msg("Failed to send nickname request");
@@ -1225,13 +1267,13 @@ static bool tls_write_consumer_stdin(void *parameter) {
 	return result;
 }
 
-static bool tls_write_consumer_push(void *parameter) {
-    ue_socket_client_connection *connection;
+static bool csl_write_consumer_push(void *parameter) {
+    void *connection;
     ue_channel_client *channel_client;
     pushed_message *message;
 
-    connection = (ue_socket_client_connection *)parameter;
-    channel_client = connection->optional_data;
+    channel_client = (ue_channel_client *)parameter;
+    connection = channel_client->connection;
 
     if (!send_nickname_request(channel_client, connection)) {
         ue_stacktrace_push_msg("Failed to send nickname request");
@@ -1255,7 +1297,7 @@ static bool tls_write_consumer_push(void *parameter) {
 }
 
 static bool process_get_certificate_request(ue_channel_client *channel_client, ue_pkcs12_keystore *keystore,
-	ue_socket_client_connection *connection, const unsigned char *friendly_name, size_t friendly_name_size) {
+    void *connection, const unsigned char *friendly_name, size_t friendly_name_size) {
 	bool result;
 	ue_byte_stream *request, *response;
 	unsigned char *certificate_data;
@@ -1293,13 +1335,14 @@ static bool process_get_certificate_request(ue_channel_client *channel_client, u
 		goto clean_up;
 	}
 
-	connection->state = READING_STATE;
 	if (receive_cipher_message(channel_client, connection) <= 0) {
 		ue_stacktrace_push_msg("Failed to receive cipher message response of GET_CERTIFICATE request");
 		goto clean_up;
 	}
 
-	if (!ue_byte_writer_append_bytes(response, ue_byte_stream_get_data(connection->received_message), ue_byte_stream_get_size(connection->received_message))) {
+    if (!ue_byte_writer_append_bytes(response, ue_byte_stream_get_data(channel_client->received_message),
+        ue_byte_stream_get_size(channel_client->received_message))) {
+
 		ue_stacktrace_push_msg("Failed to write received message to response");
 		goto clean_up;
 	}
@@ -1339,7 +1382,7 @@ clean_up:
 	return result;
 }
 
-static bool process_channel_key_request(ue_channel_client *channel_client, ue_socket_client_connection *connection,
+static bool process_channel_key_request(ue_channel_client *channel_client, void *connection,
 	ue_byte_stream *request) {
 	bool result;
 	unsigned char *cipher_data, *friendly_name, *nickname;
@@ -1468,28 +1511,30 @@ clean_up:
 	return result;
 }
 
-static bool send_nickname_request(ue_channel_client *channel_client, ue_socket_client_connection *connection) {
+static bool send_nickname_request(ue_channel_client *channel_client, void *connection) {
 	ue_check_parameter_or_return(connection);
 
-	ue_byte_stream_clean_up(connection->message_to_send);
-	if (!ue_byte_writer_append_int(connection->message_to_send, channel_client->channel_id)) {
+    ue_byte_stream_clean_up(channel_client->message_to_send);
+    if (!ue_byte_writer_append_int(channel_client->message_to_send, channel_client->channel_id)) {
 		ue_stacktrace_push_msg("Failed to write channel id to message to send");
 		return false;
 	}
-	if (!ue_byte_writer_append_int(connection->message_to_send, NICKNAME_REQUEST)) {
+    if (!ue_byte_writer_append_int(channel_client->message_to_send, NICKNAME_REQUEST)) {
 		ue_stacktrace_push_msg("Failed to write NICKNAME_REQUEST type to message to send");
 		return false;
 	}
-	if (!ue_byte_writer_append_int(connection->message_to_send, (int)strlen(channel_client->nickname))) {
+    if (!ue_byte_writer_append_int(channel_client->message_to_send, (int)strlen(channel_client->nickname))) {
 		ue_stacktrace_push_msg("Failed to write nickname size to message to send");
 		return false;
 	}
-	if (!ue_byte_writer_append_bytes(connection->message_to_send, (unsigned char *)channel_client->nickname, strlen(channel_client->nickname))) {
+    if (!ue_byte_writer_append_bytes(channel_client->message_to_send, (unsigned char *)channel_client->nickname,
+        strlen(channel_client->nickname))) {
+
 		ue_stacktrace_push_msg("Failed to write nickname to message to send");
 		return false;
 	}
 
-    if (!send_message(channel_client, connection, connection->message_to_send)) {
+    if (!send_message(channel_client, connection, channel_client->message_to_send)) {
         ue_stacktrace_push_msg("Failed to send nickname request");
         return false;
     }
@@ -1497,7 +1542,7 @@ static bool send_nickname_request(ue_channel_client *channel_client, ue_socket_c
 	return true;
 }
 
-static bool process_message_request(ue_channel_client *channel_client, ue_socket_client_connection *connection,
+static bool process_message_request(ue_channel_client *channel_client, void *connection,
     unsigned char *data, size_t data_size) {
 
 	bool result;
@@ -1515,9 +1560,9 @@ static bool process_message_request(ue_channel_client *channel_client, ue_socket
 	bytes_input = NULL;
 
 	if (channel_client->channel_id >= 0 && channel_client->channel_key) {
-		ue_byte_writer_append_int(connection->message_to_send, MESSAGE);
-		ue_byte_writer_append_int(connection->message_to_send, (int)strlen(channel_client->nickname));
-		ue_byte_writer_append_bytes(connection->message_to_send, (unsigned char *)channel_client->nickname, (int)strlen(channel_client->nickname));
+        ue_byte_writer_append_int(channel_client->message_to_send, MESSAGE);
+        ue_byte_writer_append_int(channel_client->message_to_send, (int)strlen(channel_client->nickname));
+        ue_byte_writer_append_bytes(channel_client->message_to_send, (unsigned char *)channel_client->nickname, (int)strlen(channel_client->nickname));
 
 		if (channel_client->channel_key) {
 			if (!(encrypter = ue_sym_encrypter_default_create(channel_client->channel_key))) {
@@ -1530,19 +1575,19 @@ static bool process_message_request(ue_channel_client *channel_client, ue_socket
 				ue_stacktrace_push_msg("Failed to encrypt this input");
 				goto clean_up;
 			}
-			else if (!ue_byte_writer_append_int(connection->message_to_send, (int)cipher_data_size)) {
+            else if (!ue_byte_writer_append_int(channel_client->message_to_send, (int)cipher_data_size)) {
 				ue_stacktrace_push_msg("Failed to append cipher data size");
 				goto clean_up;
 			}
-			else if (!ue_byte_writer_append_bytes(connection->message_to_send, cipher_data, cipher_data_size)) {
+            else if (!ue_byte_writer_append_bytes(channel_client->message_to_send, cipher_data, cipher_data_size)) {
 				ue_stacktrace_push_msg("Failed to append cipher data to message to send");
 				goto clean_up;
 			}
 		} else {
-            ue_byte_writer_append_bytes(connection->message_to_send, data, data_size);
+            ue_byte_writer_append_bytes(channel_client->message_to_send, data, data_size);
 		}
 
-		result = send_cipher_message(channel_client, connection, connection->message_to_send);
+        result = send_cipher_message(channel_client, connection, channel_client->message_to_send);
 	}
 	else if (channel_client->channel_id < 0) {
 		ue_logger_warn("Cannot send message because no channel is selected");
@@ -1771,7 +1816,7 @@ clean_up:
 	return result;
 }
 
-static bool process_channel_key_response(ue_channel_client *channel_client, ue_socket_client_connection *connection,
+static bool process_channel_key_response(ue_channel_client *channel_client, void *connection,
 	ue_byte_stream *response) {
 	bool result;
 	ue_x509_certificate *key_owner_certificate;

@@ -28,6 +28,7 @@
 #define UNKNOWNECHO_SOCKET_SERVER_H
 
 #include <unknownecho/network/api/socket/socket_client_connection.h>
+#include <unknownecho/network/api/socket/socket_server_parameters.h>
 #include <unknownecho/network/api/tls/tls_session.h>
 #include <unknownecho/bool.h>
 
@@ -41,17 +42,22 @@ typedef struct {
 	ue_tls_session *tls_session;
 } ue_socket_server;
 
-ue_socket_server *ue_socket_server_create(unsigned short int port,
-	bool (*read_consumer)(ue_socket_client_connection *connection),
-	bool (*write_consumer)(ue_socket_client_connection *connection),
-	ue_tls_session *tls_session);
+ue_socket_server *ue_socket_server_create(ue_socket_server_parameters *parameters);
 
 bool ue_socket_server_is_valid(ue_socket_server *server);
 
+bool ue_socket_server_is_running(ue_socket_server *server);
+
 void ue_socket_server_destroy(ue_socket_server *server);
 
-void ue_socket_server_process_polling(ue_socket_server *server);
+bool ue_socket_server_process_polling(ue_socket_server *server);
 
 bool ue_socket_server_disconnect(ue_socket_server *server, ue_socket_client_connection *connection);
+
+bool ue_socket_server_stop(ue_socket_server *server);
+
+int ue_socket_server_get_connections_number(ue_socket_server *server);
+
+ue_socket_client_connection *ue_socket_server_get_connection(ue_socket_server *server, int index);
 
 #endif

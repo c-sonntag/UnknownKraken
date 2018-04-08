@@ -35,9 +35,9 @@ bool ue_channel_client_parameters_set_csr_host(ue_channel_client_parameters *par
 
 bool ue_channel_client_parameters_set_csr_port(ue_channel_client_parameters *parameters, int port);
 
-bool ue_channel_client_parameters_set_tls_host(ue_channel_client_parameters *parameters, const char *host);
+bool ue_channel_client_parameters_set_csl_host(ue_channel_client_parameters *parameters, const char *host);
 
-bool ue_channel_client_parameters_set_tls_port(ue_channel_client_parameters *parameters, int port);
+bool ue_channel_client_parameters_set_csl_port(ue_channel_client_parameters *parameters, int port);
 
 bool ue_channel_client_parameters_set_certificates_path(ue_channel_client_parameters *parameters, const char *certificates_path);
 

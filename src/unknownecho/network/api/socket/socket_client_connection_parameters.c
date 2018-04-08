@@ -17,33 +17,39 @@
  *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
-#ifndef UNKNOWNECHO_CHANNEL_CLIENT_PARAMETERS_STRUCT_H
-#define UNKNOWNECHO_CHANNEL_CLIENT_PARAMETERS_STRUCT_H
+#include <unknownecho/network/api/socket/socket_client_connection_parameters.h>
+#include <unknownecho/alloc.h>
 
-#include <unknownecho/bool.h>
-#include <unknownecho/byte/byte_stream.h>
-#include <unknownecho/input.h>
+ue_socket_client_connection_parameters *ue_socket_client_connection_parameters_build(int fd, int domain,
+    const char *host, unsigned short int port, ue_tls_session *tls_session) {
 
-typedef struct {
-    char *persistent_path;
-    char *nickname;
-    const char *csr_server_host;
-    int csr_server_port;
-    const char *csl_server_host;
-    int csl_server_port;
-    char *keystore_password;
-    const char *server_certificates_path;
-    void *user_context;
-    bool (*write_callback)(void *user_context, ue_byte_stream *printer);
-    bool (*initialization_begin_callback)(void *user_context);
-	bool (*initialization_end_callback)(void *user_context);
-    bool (*uninitialization_begin_callback)(void *user_context);
-	bool (*uninitialization_end_callback)(void *user_context);
-    bool (*connection_begin_callback)(void *user_context);
-	bool (*connection_end_callback)(void *user_context);
-    char *(*user_input_callback)(void *user_context);
-    const char *cipher_name, *digest_name;
-    ue_user_input_mode user_input_mode;
-} ue_channel_client_parameters;
+    ue_socket_client_connection_parameters *parameters;
 
-#endif
+    ue_safe_alloc(parameters, ue_socket_client_connection_parameters, 1);
+    parameters->fd = fd;
+    parameters->domain = domain;
+    parameters->domain_s = NULL;
+    parameters->host = host;
+    parameters->port = port;
+    parameters->port_s = NULL;
+    parameters->tls_session = tls_session;
+
+    return parameters;
+}
+
+ue_socket_client_connection_parameters *ue_socket_client_connection_parameters_build_s(int fd, const char *domain,
+    const char *host, const char *port, ue_tls_session *tls_session) {
+
+    ue_socket_client_connection_parameters *parameters;
+
+    ue_safe_alloc(parameters, ue_socket_client_connection_parameters, 1);
+    parameters->fd = fd;
+    parameters->domain_s = domain;
+    parameters->domain = -1;
+    parameters->host = host;
+    parameters->port_s = port;
+    parameters->port = -1;
+    parameters->tls_session = tls_session;
+
+    return parameters;
+}
