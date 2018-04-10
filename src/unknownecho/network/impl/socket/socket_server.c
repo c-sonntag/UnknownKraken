@@ -262,9 +262,7 @@ bool ue_socket_server_accept(ue_socket_server *server) {
     }
 
     ue_logger_trace("Search an available slot for accepted connection");
-    ue_logger_debug("server->connections_number : %d", server->connections_number);
     for (i = 0; i < server->connections_number; i++) {
-        ue_logger_debug("current connection checked : %d", i);
         if (ue_socket_client_connection_is_available(server->connections[i])) {
             if (!ue_socket_client_connection_establish(server->connections[i], new_socket)) {
                 ue_stacktrace_push_msg("Failed to established connection");

@@ -125,7 +125,6 @@ void ue_socket_client_connection_clean_up(ue_socket_client_connection *connectio
 }
 
 bool ue_socket_client_connection_is_available(ue_socket_client_connection *connection) {
-    ue_logger_debug("Connection state : %d", connection->state);
     return connection && connection->state == UNKNOWNECHO_COMMUNICATION_CONNECTION_FREE_STATE;
 }
 
@@ -201,6 +200,10 @@ ue_communication_connection_state ue_socket_client_connection_get_state(ue_socke
 }
 
 bool ue_socket_client_connection_set_state(ue_socket_client_connection *connection, ue_communication_connection_state state) {
+    if (!connection->established) {
+        ue_logger_warn("Cannot update the state of an unestablished connection");
+        return false;
+    }
     connection->state = state;
     return true;
 }

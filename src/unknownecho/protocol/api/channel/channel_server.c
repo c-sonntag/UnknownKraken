@@ -113,6 +113,14 @@ static bool process_get_certificate_request(void *connection, ue_byte_stream *re
 
 static bool check_suggest_nickname(const char *nickname);
 
+static void disconnect_client_from_server(void *connection) {
+    ue_channels_remove_connection_by_nickname(channel_server->channels, channel_server->channels_number,
+        ue_communication_client_connection_get_uid(channel_server->communication_context, connection));
+    ue_communication_server_disconnect(channel_server->communication_context, channel_server->csl_server, connection);
+    ue_communication_server_disconnect(channel_server->communication_context, channel_server->csr_server, connection);
+    ue_socket_client_connection_clean_up(connection);
+}
+
 
 bool ue_channel_server_create(char *persistent_path, int csr_server_port, int csl_server_port,
     char *keystore_password, int channels_number, char *key_password, void *user_context,
@@ -429,8 +437,12 @@ static size_t send_cipher_message(void *connection, ue_byte_stream *message_to_s
 
     ue_check_parameter_or_return(connection);
 
+    if (!(nickname = ue_communication_client_connection_get_uid(channel_server->communication_context, connection))) {
+        ue_stacktrace_push_msg("Failed to get nickname from specified connection");
+        return 0;
+    }
+
     message_stream = ue_byte_stream_create();
-    nickname = ue_communication_client_connection_get_uid(channel_server->communication_context, connection);
 
     if (!(friendly_name = ue_friendly_name_build((unsigned char *)nickname, strlen(nickname), "CIPHER", &friendly_name_size))) {
         ue_stacktrace_push_msg("Failed to build friendly name for CIPHER keystore with connection->nickname : %s", nickname);
@@ -502,6 +514,7 @@ static size_t receive_cipher_message(void *connection) {
     received = ue_communication_receive_sync(channel_server->communication_context, connection, connection_received_message);
 	if (received <= 0 || received == ULLONG_MAX) {
 		ue_logger_warn("Connection with client is interrupted.");
+        disconnect_client_from_server(connection);
         goto clean_up;
 	}
 
@@ -1015,6 +1028,7 @@ static bool csr_server_write_consumer(void *connection) {
             sent = ue_communication_send_sync(channel_server->communication_context, connection, message_to_send);
             if (sent == 0) {
                 ue_logger_warn("Client has disconnected.");
+                disconnect_client_from_server(connection);
             }
             else if (sent < 0 || sent == ULLONG_MAX) {
                 ue_logger_error("Error while sending message");
@@ -1169,7 +1183,7 @@ static bool csl_server_read_consumer(void *connection) {
 
     if (received == 0) {
         ue_logger_info("Client has disconnected.");
-        ue_socket_client_connection_clean_up(connection);
+        disconnect_client_from_server(connection);
     }
     else if (received < 0 || received == ULLONG_MAX) {
         ue_stacktrace_push_msg("Error while receiving message")
@@ -1228,9 +1242,7 @@ bool csl_server_process_request(void *connection) {
     if (type == DISCONNECTION_NOW_REQUEST) {
         ue_logger_info("Client disconnection.");
         ue_queue_pop(received_messages);
-        ue_channels_remove_connection_by_nickname(channel_server->channels, channel_server->channels_number,
-            ue_communication_client_connection_get_uid(channel_server->communication_context, connection));
-        ue_communication_server_disconnect(channel_server->communication_context, channel_server->csl_server, connection);
+        disconnect_client_from_server(connection);
         return true;
     }
     else if (type == NICKNAME_REQUEST) {
@@ -1399,7 +1411,7 @@ static bool process_channel_connection_request(void *connection, ue_byte_stream 
                 goto clean_up;
             }
         }
-        /* Else we have to the key from another client */
+        /* Else we have to ask the key from another client */
         else {
             if (!(channel_key_owner_connection = ue_channel_get_availabe_connection_for_channel_key(channel_server->channels[channel_id], connection))) {
                 ue_stacktrace_push_msg("Failed to found channel key owner connection but connections_number of channel id %d is > 1 (%d)",
@@ -1422,7 +1434,10 @@ static bool process_channel_connection_request(void *connection, ue_byte_stream 
                 goto clean_up;
             }
 
-            send_cipher_message(channel_key_owner_connection, channel_key_owner_connection_message_to_send);
+            if (!send_cipher_message(channel_key_owner_connection, channel_key_owner_connection_message_to_send)) {
+                ue_stacktrace_push_msg("Failed to send channel CHANNEL_KEY_REQUEST in cipher message");
+                goto clean_up;
+            }
 
             if (!ue_byte_writer_append_int(message_to_send, WAIT_CHANNEL_KEY_STATE)) {
                 ue_stacktrace_push_msg("Failed to write WAIT_CHANNEL_KEY_STATE to message to send");
@@ -1547,7 +1562,7 @@ static bool process_message_request(void *connection, ue_byte_stream *request, i
         }
         if (sent == 0) {
             ue_logger_info("Client has disconnected.");
-            ue_socket_client_connection_clean_up(current_connection);
+            disconnect_client_from_server(current_connection);
             goto iteration_end;
         }
         else if (sent < 0 || sent == ULLONG_MAX) {

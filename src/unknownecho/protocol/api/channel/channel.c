@@ -32,7 +32,7 @@ ue_channel *ue_channel_create() {
     for (i = 0; i < channel->max_connections_number; i++) {
         channel->connections[i] = NULL;
     }
-    channel->connections_number = 0;;
+    channel->connections_number = 0;
 
     return channel;
 }
