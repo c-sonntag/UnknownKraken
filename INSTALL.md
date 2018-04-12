@@ -8,9 +8,14 @@
 # Installation
 
 ## Installation with Docker
-* git clone https://github.com/swasun/LibUnknownEcho.git
-* docker build -t libunknownecho-test-server .
-* docker run -d -p 5001:5002 -v app/libunknownecho-test-server
+
+### From Docker Hub
+* docker run -it -P swasun:libunknownecho bash
+
+### From Dockerfile
+* wget https://github.com/swasun/LibUnknownEcho/Dockerfile
+* docker build -t libunknownecho .
+* docker run -it -P libunknownecho bash
 
 ## Installation from sources
 * Install libssl version 1.10 (that contains also libcrypto 1.10) :
