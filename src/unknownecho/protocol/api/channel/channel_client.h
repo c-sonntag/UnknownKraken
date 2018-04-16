@@ -23,7 +23,7 @@
 #include <unknownecho/bool.h>
 #include <unknownecho/protocol/api/channel/channel_client_struct.h>
 #include <unknownecho/byte/byte_stream.h>
-#include <unknownecho/input.h>
+#include <unknownecho/console/input.h>
 
 #include <stddef.h>
 

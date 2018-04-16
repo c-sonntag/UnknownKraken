@@ -30,7 +30,7 @@
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/protocol/api/channel/channel_server.h>
 #include <unknownecho/protocol/factory/channel_server_factory.h>
-#include <unknownecho/input.h>
+#include <unknownecho/console/input.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/string/string_utility.h>
 

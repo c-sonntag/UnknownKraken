@@ -17,31 +17,27 @@
  *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
-#include <unknownecho/input.h>
-#include <unknownecho/string/string_utility.h>
+#include <unknownecho/console/console.h>
 
-#include <stdio.h>
+#ifdef _WINDOWS
+    #include <windows.h>
+#else
+    #include <sys/ioctl.h>
+#endif
 
-char *ue_input_string(char *prefix) {
-	char input[256], *result;
-	int i;
+int ue_console_get_width() {
+    int width;
 
-	result = NULL;
+#ifdef _WINDOWS
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+        width = csbi.srWindow.Right - csbi.srWindow.Left;
+#else
+        struct winsize win;
+        ioctl(0, TIOCGWINSZ, &win);
+        width = win.ws_col;
+#endif
 
-	printf("%s", prefix);
-
-  	if (fgets(input, 256, stdin)) {
-  		if (input[0] == 10) {
-  			return NULL;
-  		}
-  		for (i = 0; i < 256; i++) {
-  			if (input[i] != ' ') {
-  				result = ue_string_create_from(input);
-  				ue_remove_last_char(result);
-  				break;
-  			}
-  		}
-  	}
-
-  	return result;
+    return width;
 }
+

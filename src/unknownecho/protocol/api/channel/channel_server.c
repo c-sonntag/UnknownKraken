@@ -26,7 +26,7 @@
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/input.h>
+#include <unknownecho/console/input.h>
 #include <unknownecho/network/api/communication/communication.h>
 #include <unknownecho/network/api/communication/communication_secure_layer.h>
 #include <unknownecho/network/factory/communication_factory.h>

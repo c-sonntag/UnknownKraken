@@ -30,7 +30,7 @@
 #include <unknownecho/crypto/api/key/sym_key.h>
 #include <unknownecho/crypto/api/key/private_key.h>
 #include <unknownecho/container/queue.h>
-#include <unknownecho/input.h>
+#include <unknownecho/console/input.h>
 
 #include <stdio.h>
 #include <stddef.h>

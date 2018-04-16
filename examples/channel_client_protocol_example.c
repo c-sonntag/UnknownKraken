@@ -36,7 +36,7 @@
 #include <unknownecho/protocol/factory/channel_client_factory.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/input.h>
+#include <unknownecho/console/input.h>
 #include <unknownecho/bool.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/byte/byte_writer.h>
