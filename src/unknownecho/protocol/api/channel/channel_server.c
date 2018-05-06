@@ -118,7 +118,7 @@ static void disconnect_client_from_server(void *connection) {
         ue_communication_client_connection_get_uid(channel_server->communication_context, connection));
     ue_communication_server_disconnect(channel_server->communication_context, channel_server->csl_server, connection);
     ue_communication_server_disconnect(channel_server->communication_context, channel_server->csr_server, connection);
-    ue_socket_client_connection_clean_up(connection);
+    ue_communication_client_connection_clean_up(channel_server->communication_context, connection);
 }
 
 
@@ -402,7 +402,6 @@ bool ue_channel_server_process() {
 
     ue_thread_join(channel_server->csr_server_thread, NULL);
     ue_thread_join(channel_server->csl_server_thread, NULL);
-    ue_thread_join(channel_server->csl_process_all_thread, NULL);
 
     return true;
 }
@@ -977,11 +976,11 @@ static bool csr_server_read_consumer(void *connection) {
 
     if (received == 0) {
         ue_logger_info("Client has disconnected.");
-        ue_socket_client_connection_clean_up(connection);
+        ue_communication_client_connection_clean_up(channel_server->communication_context, connection);
     }
-    else if (received < 0 || received == ULLONG_MAX) {
+    else if (received == ULLONG_MAX) {
         ue_stacktrace_push_msg("Error while receiving message")
-        ue_socket_client_connection_clean_up(connection);
+        ue_communication_client_connection_clean_up(channel_server->communication_context, connection);
         return false;
     }
     else {
@@ -1005,7 +1004,7 @@ static bool csr_server_write_consumer(void *connection) {
         return false;
     }
 
-    if (ue_socket_client_connection_is_available(connection)) {
+    if (ue_communication_client_connection_is_available(channel_server->communication_context, connection)) {
         ue_logger_error("Client connection isn't available");
         return false;
     }
@@ -1014,6 +1013,9 @@ static bool csr_server_write_consumer(void *connection) {
     message_to_send = ue_communication_client_connection_get_message_to_send(channel_server->communication_context, connection);
     messages_to_send = ue_communication_client_connection_get_messages_to_send(channel_server->communication_context, connection);
 
+    /**
+     * @todo replace with atomic stuff
+     */
     while (ue_queue_empty(messages_to_send)) {
         ue_millisleep(1);
     }
@@ -1030,9 +1032,9 @@ static bool csr_server_write_consumer(void *connection) {
                 ue_logger_warn("Client has disconnected.");
                 disconnect_client_from_server(connection);
             }
-            else if (sent < 0 || sent == ULLONG_MAX) {
+            else if (sent == ULLONG_MAX) {
                 ue_logger_error("Error while sending message");
-                ue_socket_client_connection_clean_up(connection);
+                ue_communication_client_connection_clean_up(channel_server->communication_context, connection);
             }
         } else {
             ue_logger_warn("Received message is empty.");
@@ -1185,9 +1187,9 @@ static bool csl_server_read_consumer(void *connection) {
         ue_logger_info("Client has disconnected.");
         disconnect_client_from_server(connection);
     }
-    else if (received < 0 || received == ULLONG_MAX) {
+    else if (received == ULLONG_MAX) {
         ue_stacktrace_push_msg("Error while receiving message")
-        ue_socket_client_connection_clean_up(connection);
+        ue_communication_client_connection_clean_up(channel_server->communication_context, connection);
         return false;
     }
     else {
@@ -1534,7 +1536,7 @@ static bool process_message_request(void *connection, ue_byte_stream *request, i
         }
 
         /* Check that current connection is still established */
-        if (ue_socket_client_connection_is_available(current_connection)) {
+        if (ue_communication_client_connection_is_available(channel_server->communication_context, current_connection)) {
             goto iteration_end;
         }
 
@@ -1565,9 +1567,9 @@ static bool process_message_request(void *connection, ue_byte_stream *request, i
             disconnect_client_from_server(current_connection);
             goto iteration_end;
         }
-        else if (sent < 0 || sent == ULLONG_MAX) {
+        else if (sent == ULLONG_MAX) {
             ue_logger_warn("Error while sending message to client %d", i);
-            ue_socket_client_connection_clean_up(current_connection);
+            ue_communication_client_connection_clean_up(channel_server->communication_context, connection);
             goto iteration_end;
         }
 iteration_end:
@@ -1755,7 +1757,7 @@ static bool check_suggest_nickname(const char *nickname) {
     for (i = 0; i < ue_communication_server_get_connections_number(channel_server->communication_context, channel_server->csl_server); i++) {
         current_connection = ue_communication_server_get_connection(channel_server->communication_context, channel_server->csl_server, i);
 
-        if (ue_socket_client_connection_is_available(current_connection)) {
+        if (ue_communication_client_connection_is_available(channel_server->communication_context, current_connection)) {
             continue;
         }
 

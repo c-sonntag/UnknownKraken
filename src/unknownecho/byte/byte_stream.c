@@ -113,6 +113,10 @@ size_t ue_byte_stream_get_size(ue_byte_stream *stream) {
     return stream->position;
 }
 
+bool ue_byte_stream_is_empty(ue_byte_stream *stream) {
+    return stream->position <= 0;
+}
+
 void ue_byte_stream_print_hex(ue_byte_stream *stream, FILE *fd) {
     size_t i;
 

@@ -121,6 +121,26 @@ void ue_communication_destroy(ue_communication_context *context) {
     }
 }
 
+bool ue_communication_context_is_valid(ue_communication_context *context) {
+    ue_check_parameter_or_return(context);
+
+    ue_check_parameter_or_return(context->communication_type);
+    ue_check_parameter_or_return(context->communication_connect_impl);
+    ue_check_parameter_or_return(context->communication_client_connection_destroy_impl);
+    ue_check_parameter_or_return(context->communication_client_connection_clean_up_impl);
+
+    ue_check_parameter_or_return(context->communication_receive_sync_impl);
+    ue_check_parameter_or_return(context->communication_send_sync_impl);
+    ue_check_parameter_or_return(context->communication_server_create_impl);
+    ue_check_parameter_or_return(context->communication_server_is_valid_impl);
+    ue_check_parameter_or_return(context->communication_server_is_running_impl);
+    ue_check_parameter_or_return(context->communication_server_destroy_impl);
+    ue_check_parameter_or_return(context->communication_server_process_impl);
+    ue_check_parameter_or_return(context->communication_server_disconnect_impl);
+
+    return true;
+}
+
 /* Handle connection as a client */
 
 void *ue_communication_connect(ue_communication_context *context, void *parameter) {

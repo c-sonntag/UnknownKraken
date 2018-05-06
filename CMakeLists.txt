@@ -4,7 +4,7 @@
 
 # --- PROJECT ---
 
-PROJECT(unknownecho)
+PROJECT(unknownecho C)
 cmake_minimum_required(VERSION 3.8)
 
 

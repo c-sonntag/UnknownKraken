@@ -80,3 +80,27 @@ bool ue_byte_read_next_bytes(ue_byte_stream *stream, unsigned char **bytes, size
 
     return true;
 }
+
+/*bool ue_byte_read_remaining_bytes(ue_byte_stream *stream, unsigned char **bytes, size_t *len) {
+    size_t remaining_bytes_size;
+
+    if (!stream || !stream->bytes) {
+        return false;
+    }
+
+    ue_logger_debug("stream->size: %ld", stream->size);
+    ue_logger_debug("stream->position: %ld", stream->position);
+    ue_logger_debug("stream->size - stream->position: %ld", stream->size - stream->position);
+
+    if ((remaining_bytes_size = stream->size - stream->position) <= 0) {
+        ue_stacktrace_push_msg("There's no remaining bytes to read");
+        return false;
+    }
+
+    if (!ue_byte_read_next_bytes(stream, bytes, remaining_bytes_size)) {
+        ue_stacktrace_push_msg("Failed to read remaining bytes");
+        return false;
+    }
+
+    return true;
+}*/

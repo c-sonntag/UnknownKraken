@@ -45,7 +45,7 @@ typedef struct {
     void *communication_secure_layer_session;
     ue_channel **channels;
     int channels_number;
-    ue_thread_id *csr_server_thread, *csl_server_thread, *csl_process_all_thread;
+    ue_thread_id *csr_server_thread, *csl_server_thread;
     bool signal_caught;
     char *keystore_password;
     ue_pkcs12_keystore *csr_keystore, *csl_keystore, *cipher_keystore, *signer_keystore;

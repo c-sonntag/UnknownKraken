@@ -152,8 +152,15 @@ void *ue_communication_build_server_parameters(ue_communication_context *context
     bool (*write_consumer)(ue_socket_client_connection *connection);
     ue_tls_session *tls_session;
 
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(count > 0);
+    if (!context) {
+        ue_stacktrace_push_msg("Specified context object is null");
+        return false;
+    }
+
+    if (count <= 0) {
+        ue_stacktrace_push_msg("Specified parameter number is invalid");
+        return false;
+    }
 
     parameters = NULL;
 

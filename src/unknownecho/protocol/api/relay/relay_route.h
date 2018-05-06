@@ -2,9 +2,9 @@
 #define UNKNOWNECHO_ROUTE_H
 
 #include <unknownecho/protocol/api/relay/relay_route_struct.h>
+#include <unknownecho/protocol/api/relay/relay_step_struct.h>
 
-ue_relay_route *ue_relay_route_create(ue_relay_point **points, int point_number, ue_public_key *final_public_key ,const char *cipher_name,
-    const char *digest_name);
+ue_relay_route *ue_relay_route_create(ue_relay_step **steps, int steps_number);
 
 void ue_relay_route_destroy(ue_relay_route *route);
 

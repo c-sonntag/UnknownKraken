@@ -71,4 +71,6 @@ bool ue_byte_read_next_int(ue_byte_stream *stream, int *n);
  */
 bool ue_byte_read_next_bytes(ue_byte_stream *stream, unsigned char **bytes, size_t len);
 
+//bool ue_byte_read_remaining_bytes(ue_byte_stream *stream, unsigned char **bytes, size_t *len);
+
 #endif

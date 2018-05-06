@@ -57,6 +57,8 @@ ue_communication_context *ue_communication_create(const char *communication_type
 
 void ue_communication_destroy(ue_communication_context *context);
 
+bool ue_communication_context_is_valid(ue_communication_context *context);
+
 /* Handle connection as a client */
 
 void *ue_communication_connect(ue_communication_context *context, void *parameter);
