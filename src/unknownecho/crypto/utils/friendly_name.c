@@ -23,7 +23,7 @@
 
 #include <string.h>
 
-unsigned char *ue_friendly_name_build(unsigned char *nickname, size_t nickname_size, char *keystore_type, size_t *friendly_name_size) {
+unsigned char *ue_friendly_name_build(unsigned char *nickname, size_t nickname_size, const char *keystore_type, size_t *friendly_name_size) {
 	unsigned char *friendly_name;
 
 	ue_check_parameter_or_return(nickname);

@@ -19,6 +19,7 @@
 
 #include <unknownecho/crypto/api/certificate/x509_certificate_generation.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
+#include <unknownecho/crypto/impl/key/rsa_keypair_generation.h>
 #include <unknownecho/crypto/utils/crypto_random.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/check_parameter.h>
@@ -39,8 +40,6 @@
 
 
 static bool add_ext(X509 *cert, int nid, char *value);
-
-static RSA *rsa_keypair_gen(int bits);
 
 static bool set_serial_number(X509 *x, unsigned char *serial_bytes, int serial_bytes_length);
 
@@ -65,7 +64,7 @@ bool ue_x509_certificate_generate(ue_x509_certificate_parameters *parameters, ue
 		return false;
 	}
 
-    if (!(rsa = rsa_keypair_gen(ue_x509_certificate_parameters_get_bits(parameters)))) {
+    if (!(rsa = ue_rsa_keypair_gen(ue_x509_certificate_parameters_get_bits(parameters)))) {
 		ue_openssl_error_handling(error_buffer, "Failed to create new RSA keypair");
 		goto clean_up_failed;
 	}
@@ -194,91 +193,6 @@ clean_up:
 	ue_safe_fclose(certificate_fd);
 	ue_safe_fclose(private_key_fd);
 	return result;
-}
-
-/*static int genrsa_callback(int p, int n, BN_GENCB *cb)
-{
-    char c = '*';
-
-    if (p == 0) c = '.';
-    if (p == 1) c = '+';
-    if (p == 2) c = '*';
-    if (p == 3) c = '\n';
-    BIO_write(cb->arg, &c, 1);
-    (void)BIO_flush(cb->arg);
-    return 1;
-}*/
-
-/*static void callback(int p, int n, void *arg) {
-	char c = 'B';
-
-	if (p == 0) {
-        c = '.';
-    }
-	if (p == 1) {
-        c='+';
-    }
-	if (p == 2) {
-        c='*';
-    }
-	if (p == 3) {
-        c='\n';
-    }
-
-	fputc(c, ue_logger_get_fp(ue_logger_manager_get_logger()));
-}*/
-
-static RSA *rsa_keypair_gen(int bits) {
-	RSA *ue_rsa_key_pair;
-	unsigned long e;
-	int ret;
-	BIGNUM *bne;
-    char *error_buffer;
-    //BN_GENCB cb;
-
-	ue_rsa_key_pair = NULL;
-	bne = NULL;
-    e = RSA_F4;
-    error_buffer = NULL;
-    //BN_GENCB_set(&cb, callback, bio_err);
-
-    if (bits != 2048 && bits != 4096) {
-    	return NULL;
-    }
-
-    if (!ue_crypto_random_seed_prng()) {
-        ue_stacktrace_push_msg("Failed to seed PRNG");
-        return NULL;
-    }
-
-	if (!(ue_rsa_key_pair = RSA_new())) {
-        ue_openssl_error_handling(error_buffer, "RSA_new");
-        return NULL;
-    }
-
-	if (!(bne = BN_new())) {
-        ue_openssl_error_handling(error_buffer, "BN_new");
-        RSA_free(ue_rsa_key_pair);
-        return NULL;
-    }
-
-    if ((ret = BN_set_word(bne, e)) != 1) {
-        ue_openssl_error_handling(error_buffer, "BN_set_word");
-    	RSA_free(ue_rsa_key_pair);
-        BN_clear_free(bne);
-        return NULL;
-    }
-
-    if (!(ret = RSA_generate_key_ex(ue_rsa_key_pair, bits, bne, NULL))) {
-        ue_openssl_error_handling(error_buffer, "RSA_generate_key_ex");
-        RSA_free(ue_rsa_key_pair);
-        BN_clear_free(bne);
-        return NULL;
-    }
-
-    BN_clear_free(bne);
-
-	return ue_rsa_key_pair;
 }
 
 static bool add_ext(X509 *cert, int nid, char *value) {

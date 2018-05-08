@@ -18,11 +18,15 @@
  *******************************************************************************/
 
 #include <unknownecho/byte/byte_reader.h>
+#include <unknownecho/byte/byte_writer.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
+#include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/alloc.h>
+#include <unknownecho/string/string_utility.h>
 
 #include <string.h>
+#include <stddef.h>
 
 bool ue_byte_read_is_int(ue_byte_stream *stream, int position, int n) {
     int read;
@@ -77,6 +81,59 @@ bool ue_byte_read_next_bytes(ue_byte_stream *stream, unsigned char **bytes, size
     ue_safe_alloc(*bytes, unsigned char, len);
     memcpy(*bytes, stream->bytes + stream->position, len * sizeof(unsigned char));
     stream->position += len;
+
+    return true;
+}
+
+bool ue_byte_read_next_stream(ue_byte_stream *stream, ue_byte_stream *new_stream) {
+    int read_int;
+    unsigned char *read_bytes;
+
+    if (!stream || !stream->bytes) {
+        return false;
+    }
+
+    ue_check_parameter_or_return(new_stream);
+
+    if (!ue_byte_read_next_int(stream, &read_int)) {
+        ue_stacktrace_push_msg("Failed to read new stream size");
+        return false;
+    }
+
+    if (!ue_byte_read_next_bytes(stream, &read_bytes, (size_t)read_int)) {
+        ue_stacktrace_push_msg("Failed to read new stream content");
+        return false;
+    }
+
+    if (!ue_byte_writer_append_bytes(new_stream, read_bytes, (size_t)read_int)) {
+        ue_safe_free(read_bytes);
+        ue_stacktrace_push_msg("Failed to write new stream content");
+        return false;
+    }
+
+    ue_safe_free(read_bytes);
+
+    return true;
+}
+
+bool ue_byte_read_next_string(ue_byte_stream *stream, const char **string, size_t len) {
+    unsigned char *bytes;
+
+    ue_check_parameter_or_return(stream);
+    ue_check_parameter_or_return(len > 0);
+
+    if (!ue_byte_read_next_bytes(stream, &bytes, len)) {
+        ue_stacktrace_push_msg("Failed to read next %ld bytes", len);
+        return false;
+    }
+
+    if (!(*string = ue_string_create_from_bytes(bytes, len))) {
+        ue_stacktrace_push_msg("Failed to convert %ld bytes to string", len);
+        ue_safe_free(bytes);
+        return false;
+    }
+
+    ue_safe_free(bytes);
 
     return true;
 }

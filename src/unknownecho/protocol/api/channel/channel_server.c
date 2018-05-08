@@ -1210,6 +1210,10 @@ static bool csl_server_write_consumer(void *connection) {
         return false;
     }
 
+    /**
+     * @todo check if process all request in a while here is efficient
+     */
+
     return csl_server_process_request(connection);
 }
 

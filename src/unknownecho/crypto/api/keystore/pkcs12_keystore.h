@@ -41,11 +41,13 @@ typedef struct {
     char *friendly_name;
 } ue_pkcs12_keystore;
 
-ue_pkcs12_keystore *ue_pkcs12_keystore_create(ue_x509_certificate *certificate, ue_private_key *private_key, char *friendly_name);
+ue_pkcs12_keystore *ue_pkcs12_keystore_create(ue_x509_certificate *certificate, ue_private_key *private_key, const char *friendly_name);
 
-ue_pkcs12_keystore *ue_pkcs12_keystore_load(const char *file_name, char *passphrase);
+ue_pkcs12_keystore *ue_pkcs12_keystore_load(const char *file_name, const char *passphrase);
 
 void ue_pkcs12_keystore_destroy(ue_pkcs12_keystore *keystore);
+
+void ue_pkcs12_keystore_destroy_all(ue_pkcs12_keystore *keystore);
 
 bool ue_pkcs12_keystore_add_certificate(ue_pkcs12_keystore *keystore, ue_x509_certificate *certificate, const unsigned char *friendly_name, size_t friendly_name_size);
 
@@ -60,6 +62,6 @@ bool ue_pkcs12_keystore_remove_certificate(ue_pkcs12_keystore *keystore, const u
 
 ue_x509_certificate *ue_pkcs12_keystore_find_certificate_by_friendly_name(ue_pkcs12_keystore *keystore, const unsigned char *friendly_name, size_t friendly_name_size);
 
-bool ue_pkcs12_keystore_write(ue_pkcs12_keystore *keystore, const char *file_name, char *passphrase);
+bool ue_pkcs12_keystore_write(ue_pkcs12_keystore *keystore, const char *file_name, const char *passphrase);
 
 #endif

@@ -15,23 +15,23 @@
 #include <limits.h>
 
 
-static ue_relay_service *ue_relay_service_create(ue_communication_metadata *server_communication_metadata);
+ue_relay_service *ue_relay_service_create(ue_communication_metadata *server_communication_metadata);
 
-static void ue_relay_service_destroy(ue_relay_service *service);
+void ue_relay_service_destroy(ue_relay_service *service);
 
-static ue_relay_service_client *ue_relay_service_client_create(ue_relay_client *relay_client);
+ue_relay_service_client *ue_relay_service_client_create(ue_relay_client *relay_client);
 
-static void ue_relay_service_client_destroy(ue_relay_service_client *relay_service_client);
+void ue_relay_service_client_destroy(ue_relay_service_client *relay_service_client);
 
-static bool server_read_consumer(void *connection);
+bool server_read_consumer(void *connection);
 
-static bool server_write_consumer(void *connection);
+bool server_write_consumer(void *connection);
 
-static bool server_process_request(ue_byte_stream *request);
+bool server_process_request(ue_byte_stream *request);
 
-static bool client_read_consumer(void *parameter);
+bool client_read_consumer(void *parameter);
 
-static bool client_write_consumer(void *parameter);
+bool client_write_consumer(void *parameter);
 
 
 ue_relay_service *service = NULL;
@@ -181,8 +181,8 @@ bool ue_relay_service_attach_client(ue_relay_client *relay_client) {
     return true;
 }
 
-static ue_relay_service *ue_relay_service_create(ue_communication_metadata *server_communication_metadata) {
-    ue_relay_service *service;
+ue_relay_service *ue_relay_service_create(ue_communication_metadata *server_communication_metadata) {
+    /*ue_relay_service *service;
 
     ue_safe_alloc(service, ue_relay_service, 1);
     service->clients = NULL;
@@ -191,10 +191,14 @@ static ue_relay_service *ue_relay_service_create(ue_communication_metadata *serv
         server_write_consumer);
     service->running = false;
 
-    return service;
+    return service;*/
+
+    ue_stacktrace_push_msg("Not implemented");
+
+    return NULL;
 }
 
-static void ue_relay_service_destroy(ue_relay_service *service) {
+void ue_relay_service_destroy(ue_relay_service *service) {
     int i;
 
     if (service) {
@@ -209,7 +213,7 @@ static void ue_relay_service_destroy(ue_relay_service *service) {
     }
 }
 
-static ue_relay_service_client *ue_relay_service_client_create(ue_relay_client *relay_client) {
+ue_relay_service_client *ue_relay_service_client_create(ue_relay_client *relay_client) {
     ue_relay_service_client *relay_service_client;
 
     ue_safe_alloc(relay_service_client, ue_relay_service_client, 1);
@@ -221,7 +225,7 @@ static ue_relay_service_client *ue_relay_service_client_create(ue_relay_client *
     return relay_service_client;
 }
 
-static void ue_relay_service_client_destroy(ue_relay_service_client *relay_service_client) {
+void ue_relay_service_client_destroy(ue_relay_service_client *relay_service_client) {
     if (relay_service_client) {
         if (relay_service_client->running) {
             ue_logger_warn("Client still running. Cancelling consumer threads...");
@@ -232,7 +236,7 @@ static void ue_relay_service_client_destroy(ue_relay_service_client *relay_servi
     }
 }
 
-static bool server_read_consumer(void *connection) {
+bool server_read_consumer(void *connection) {
     ue_communication_context *server_communication_context;
     void *communication_server;
     size_t received;
@@ -268,7 +272,7 @@ static bool server_read_consumer(void *connection) {
     return true;
 }
 
-static bool server_write_consumer(void *connection) {
+bool server_write_consumer(void *connection) {
     /*ue_communication_context *server_communication_context;
     void *communication_server;
 
@@ -289,7 +293,7 @@ static bool server_write_consumer(void *connection) {
     return false;
 }
 
-static bool server_process_request(ue_byte_stream *request) {
+bool server_process_request(ue_byte_stream *request) {
     bool result;
 
     ue_check_parameter_or_return(request);
@@ -307,7 +311,7 @@ clean_up:
     return result;
 }
 
-static bool client_read_consumer(void *parameter) {
+bool client_read_consumer(void *parameter) {
     ue_relay_service_client *relay_service_client;
 
     ue_check_parameter_or_return(parameter);
@@ -321,7 +325,7 @@ static bool client_read_consumer(void *parameter) {
     return true;
 }
 
-static bool client_write_consumer(void *parameter) {
+bool client_write_consumer(void *parameter) {
     ue_relay_service_client *relay_service_client;
 
     ue_check_parameter_or_return(parameter);

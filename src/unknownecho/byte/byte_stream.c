@@ -114,6 +114,8 @@ size_t ue_byte_stream_get_size(ue_byte_stream *stream) {
 }
 
 bool ue_byte_stream_is_empty(ue_byte_stream *stream) {
+    ue_check_parameter_or_return(stream);
+
     return stream->position <= 0;
 }
 

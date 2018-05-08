@@ -33,4 +33,6 @@ ue_sym_key *ue_sym_key_create_random();
 
 ue_sym_key *ue_sym_key_create_from_file(char *file_path);
 
+ue_sym_key *ue_sym_key_create_from_string(const char *string);
+
 #endif

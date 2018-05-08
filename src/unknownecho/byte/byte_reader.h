@@ -71,6 +71,16 @@ bool ue_byte_read_next_int(ue_byte_stream *stream, int *n);
  */
 bool ue_byte_read_next_bytes(ue_byte_stream *stream, unsigned char **bytes, size_t len);
 
+/**
+ * @brief ue_byte_read_next_stream
+ * @param stream
+ * @param new_stream  needs to be allocated before
+ * @return
+ */
+bool ue_byte_read_next_stream(ue_byte_stream *stream, ue_byte_stream *new_stream);
+
+bool ue_byte_read_next_string(ue_byte_stream *stream, const char **string, size_t len);
+
 //bool ue_byte_read_remaining_bytes(ue_byte_stream *stream, unsigned char **bytes, size_t *len);
 
 #endif

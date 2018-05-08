@@ -70,6 +70,7 @@ ue_progress_bar *ue_progress_bar_create(unsigned long n, const char *description
     progress_bar->color_attribute = -1;
     progress_bar->color_foreground = -1;
     progress_bar->color_background = -1;
+    progress_bar->current_position = 0;
 
     return progress_bar;
 }
@@ -140,12 +141,12 @@ static bool ue_progress_bar_colored(ue_progress_bar *progress_bar) {
     return progress_bar->color_attribute != -1 || progress_bar->color_foreground != -1 || progress_bar->color_background != -1;
 }
 
-static void ue_progress_bar_print(ue_progress_bar *progress_bar, const char *space, const char *string) {
+static void ue_progress_bar_print(ue_progress_bar *progress_bar, const char *space, const char *string, bool color_if_possible) {
     char *colored_string;
 
     colored_string = NULL;
 
-    if (ue_progress_bar_colored(progress_bar)) {
+    if (color_if_possible && ue_progress_bar_colored(progress_bar)) {
         colored_string = ue_colorize_string(string, progress_bar->color_attribute,
             progress_bar->color_foreground, progress_bar->color_background);
         fprintf(progress_bar->fd, "%s%s", space, colored_string);
@@ -172,6 +173,8 @@ bool ue_progress_bar_update(ue_progress_bar *progress_bar, int idx) {
         return true;
     }
 
+    progress_bar->current_position = idx;
+
     /* Calculate the size of the progress bar */
     bar_size = ue_progress_bar_compute_length(progress_bar);
 
@@ -181,21 +184,21 @@ bool ue_progress_bar_update(ue_progress_bar *progress_bar, int idx) {
     /* Calculate the percentage value of a unit bar */
     percent_per_unit_bar = progress_bar->total_percentage / bar_size;
 
-    ue_progress_bar_print(progress_bar, "", progress_bar->description);
+    ue_progress_bar_print(progress_bar, "", progress_bar->description, false);
 
     /* Display progress bar */
 
-    ue_progress_bar_print(progress_bar, " ", progress_bar->left_delimiter);
+    ue_progress_bar_print(progress_bar, " ", progress_bar->left_delimiter, false);
 
     for (bar_length = 0; bar_length <= bar_size -1; bar_length++) {
         if (bar_length * percent_per_unit_bar < progress_percent) {
-            ue_progress_bar_print(progress_bar, "", progress_bar->unit_bar);
+            ue_progress_bar_print(progress_bar, "", progress_bar->unit_bar, true);
         } else {
-            ue_progress_bar_print(progress_bar, "", progress_bar->unit_space);
+            ue_progress_bar_print(progress_bar, "", progress_bar->unit_space, true);
         }
     }
 
-    ue_progress_bar_print(progress_bar, "", progress_bar->right_delimiter);
+    ue_progress_bar_print(progress_bar, "", progress_bar->right_delimiter, false);
     fprintf(progress_bar->fd, " %0.2lf%%", progress_percent);
     fprintf(progress_bar->fd, "\r");
     fflush(progress_bar->fd);
@@ -203,3 +206,20 @@ bool ue_progress_bar_update(ue_progress_bar *progress_bar, int idx) {
     return true;
 }
 
+bool ue_progress_bar_update_by_increasing(ue_progress_bar *progress_bar, int idx) {
+    if (!ue_progress_bar_update(progress_bar, progress_bar->current_position + idx)) {
+        ue_stacktrace_push_msg("Failed to update rpogress bar by increasing of %d", idx);
+        return false;
+    }
+
+    return true;
+}
+
+bool ue_progress_bar_finish(ue_progress_bar *progress_bar) {
+    ue_check_parameter_or_return(progress_bar);
+
+    ue_progress_bar_update(progress_bar, progress_bar->n);
+    fprintf(progress_bar->fd, "\n");
+
+    return true;
+}

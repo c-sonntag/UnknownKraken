@@ -20,6 +20,7 @@
 #include <unknownecho/crypto/api/certificate/x509_certificate_parameters.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate_generation.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
+#include <unknownecho/crypto/impl/key/rsa_keypair_generation.h>
 #include <unknownecho/crypto/utils/crypto_random.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/check_parameter.h>
@@ -38,8 +39,6 @@ static bool generate_key_csr(EVP_PKEY **key, char *CN, X509_REQ **req);
 
 /* Generates a 20 byte random serial number and sets in certificate. */
 static bool generate_set_random_serial(X509 *crt);
-
-static RSA *rsa_keypair_gen(int bits);
 
 
 bool ue_x509_certificate_generate_self_signed_ca(char *CN, ue_x509_certificate **certificate, ue_private_key **private_key) {
@@ -239,7 +238,7 @@ static bool generate_key_csr(EVP_PKEY **key, char *CN, X509_REQ **req) {
 	}
 
 	/* @todo get default bits length in defines */
-    if (!(rsa = rsa_keypair_gen(UNKNOWNECHO_DEFAULT_RSA_KEY_BITS))) {
+    if (!(rsa = ue_rsa_keypair_gen(UNKNOWNECHO_DEFAULT_RSA_KEY_BITS))) {
 		ue_stacktrace_push_msg("Failed to gen RSA keypair");
 		goto clean_up_failed;
 	}
@@ -288,57 +287,4 @@ static bool generate_set_random_serial(X509 *crt) {
 	ASN1_INTEGER_free(serial);
 	BN_free(bn);
 	return true;
-}
-
-static RSA *rsa_keypair_gen(int bits) {
-	RSA *ue_rsa_key_pair;
-	unsigned long e;
-	int ret;
-	BIGNUM *bne;
-    char *error_buffer;
-    //BN_GENCB cb;
-
-	ue_rsa_key_pair = NULL;
-	bne = NULL;
-    e = RSA_F4;
-    error_buffer = NULL;
-    //BN_GENCB_set(&cb, callback, bio_err);
-
-    if (bits != 2048 && bits != 4096) {
-    	return NULL;
-    }
-
-    if (!ue_crypto_random_seed_prng()) {
-        ue_stacktrace_push_msg("Failed to seed PRNG");
-        return NULL;
-    }
-
-	if (!(ue_rsa_key_pair = RSA_new())) {
-        ue_openssl_error_handling(error_buffer, "RSA_new");
-        return NULL;
-    }
-
-	if (!(bne = BN_new())) {
-        ue_openssl_error_handling(error_buffer, "BN_new");
-        RSA_free(ue_rsa_key_pair);
-        return NULL;
-    }
-
-    if ((ret = BN_set_word(bne, e)) != 1) {
-        ue_openssl_error_handling(error_buffer, "BN_set_word");
-    	RSA_free(ue_rsa_key_pair);
-        BN_clear_free(bne);
-        return NULL;
-    }
-
-    if (!(ret = RSA_generate_key_ex(ue_rsa_key_pair, bits, bne, NULL))) {
-        ue_openssl_error_handling(error_buffer, "RSA_generate_key_ex");
-        RSA_free(ue_rsa_key_pair);
-        BN_clear_free(bne);
-        return NULL;
-    }
-
-    BN_clear_free(bne);
-
-	return ue_rsa_key_pair;
 }

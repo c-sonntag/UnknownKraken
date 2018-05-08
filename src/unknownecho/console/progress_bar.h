@@ -60,6 +60,7 @@ typedef struct {
     char *unit_space;
     char *left_delimiter, *right_delimiter;
     int color_attribute, color_foreground, color_background;
+    int current_position;
 } ue_progress_bar;
 
 ue_progress_bar *ue_progress_bar_create(unsigned long n, const char *description, FILE *fd);
@@ -77,5 +78,9 @@ void ue_progress_bar_set_right_delimiter(ue_progress_bar *progress_bar, char *de
 void ue_progress_bar_set_colors(ue_progress_bar *progress_bar, int color_attribute, int color_foreground, int color_background);
 
 bool ue_progress_bar_update(ue_progress_bar *progress_bar, int idx);
+
+bool ue_progress_bar_update_by_increasing(ue_progress_bar *progress_bar, int idx);
+
+bool ue_progress_bar_finish(ue_progress_bar *progress_bar);
 
 #endif

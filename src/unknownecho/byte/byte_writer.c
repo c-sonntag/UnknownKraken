@@ -18,8 +18,10 @@
  *******************************************************************************/
 
 #include <unknownecho/byte/byte_writer.h>
+#include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/check_parameter.h>
+#include <unknownecho/errorHandling/logger.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -43,7 +45,7 @@ bool ue_byte_writer_append_bytes(ue_byte_stream *stream, unsigned char *bytes, l
     return true;
 }
 
-bool ue_byte_writer_append_string(ue_byte_stream *stream, char *string) {
+bool ue_byte_writer_append_string(ue_byte_stream *stream, const char *string) {
     long string_len;
 
     ue_check_parameter_or_return(stream);
@@ -114,3 +116,26 @@ bool ue_byte_writer_append_long(ue_byte_stream *stream, long int n) {
     return true;
 }
 
+bool ue_byte_writer_append_stream(ue_byte_stream *stream, ue_byte_stream *to_copy) {
+    ue_check_parameter_or_return(stream);
+    ue_check_parameter_or_return(to_copy);
+
+    if (ue_byte_stream_is_empty(to_copy)) {
+        ue_stacktrace_push_msg("Specified stream to copy is empty");
+        return false;
+    }
+
+    /* Set the virtual cursor of the byte stream to the begining for safety */
+
+    if (!ue_byte_writer_append_int(stream, (int)ue_byte_stream_get_size(to_copy))) {
+        ue_stacktrace_push_msg("Failed to write data size to destination stream");
+        return false;
+    }
+
+    if (!ue_byte_writer_append_bytes(stream, ue_byte_stream_get_data(to_copy), ue_byte_stream_get_size(to_copy))) {
+        ue_stacktrace_push_msg("Failed to copy data from stream to copy to destination stream");
+        return false;
+    }
+
+    return true;
+}

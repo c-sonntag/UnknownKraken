@@ -544,7 +544,7 @@ static bool send_message(ue_channel_client *channel_client, void *connection, ue
 	ue_thread_cond_signal(channel_client->cond);
 	ue_thread_mutex_unlock(channel_client->mutex);
 
-	if (sent < 0 || sent == ULLONG_MAX) {
+    if (sent == 0 || sent == ULLONG_MAX) {
 		ue_logger_info("Connection is interrupted.");
 		ue_stacktrace_push_msg("Failed to send message to server");
 		channel_client->running = false;

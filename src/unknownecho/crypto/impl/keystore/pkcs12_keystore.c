@@ -62,7 +62,7 @@ static ue_pkcs12_keystore *ue_pkcs12_keystore_create_empty() {
     return keystore;
 }
 
-ue_pkcs12_keystore *ue_pkcs12_keystore_create(ue_x509_certificate *certificate, ue_private_key *private_key, char *friendly_name) {
+ue_pkcs12_keystore *ue_pkcs12_keystore_create(ue_x509_certificate *certificate, ue_private_key *private_key, const char *friendly_name) {
     ue_pkcs12_keystore *keystore;
 
     ue_safe_alloc(keystore, ue_pkcs12_keystore, 1)
@@ -75,7 +75,7 @@ ue_pkcs12_keystore *ue_pkcs12_keystore_create(ue_x509_certificate *certificate, 
     return keystore;
 }
 
-ue_pkcs12_keystore *ue_pkcs12_keystore_load(const char *file_name, char *passphrase) {
+ue_pkcs12_keystore *ue_pkcs12_keystore_load(const char *file_name, const char *passphrase) {
     ue_pkcs12_keystore *keystore;
     BIO *bio;
     char *error_buffer;
@@ -120,6 +120,21 @@ clean_up:
 }
 
 void ue_pkcs12_keystore_destroy(ue_pkcs12_keystore *keystore) {
+    int i;
+
+    if (keystore) {
+        if (keystore->other_certificates) {
+            for (i = 0; i < keystore->other_certificates_number; i++) {
+                ue_x509_certificate_destroy(keystore->other_certificates[i]);
+            }
+            ue_safe_free(keystore->other_certificates);
+        }
+        ue_safe_free(keystore->friendly_name);
+        ue_safe_free(keystore);
+    }
+}
+
+void ue_pkcs12_keystore_destroy_all(ue_pkcs12_keystore *keystore) {
     int i;
 
     if (keystore) {
@@ -304,7 +319,7 @@ ue_x509_certificate *ue_pkcs12_keystore_find_certificate_by_friendly_name(ue_pkc
     return NULL;
 }
 
-bool ue_pkcs12_keystore_write(ue_pkcs12_keystore *keystore, const char *file_name, char *passphrase) {
+bool ue_pkcs12_keystore_write(ue_pkcs12_keystore *keystore, const char *file_name, const char *passphrase) {
     bool result;
     STACK_OF(X509) *other_certificates;
     int i;

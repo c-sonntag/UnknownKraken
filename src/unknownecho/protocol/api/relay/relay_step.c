@@ -1,6 +1,7 @@
 #include <unknownecho/protocol/api/relay/relay_step.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/check_parameter.h>
+#include <unknownecho/errorHandling/logger.h>
 
 #include <stdarg.h>
 
@@ -105,6 +106,16 @@ void ue_relay_step_print(ue_relay_step *step, FILE *fd) {
 }
 
 bool ue_relay_step_is_valid(ue_relay_step *step) {
-    return step && ue_communication_metadata_is_valid(step->our_communication_metadata) &&
-        ue_communication_metadata_is_valid(step->target_communication_metadata);
+    if (step && ue_communication_metadata_is_valid(step->our_communication_metadata) &&
+        ue_communication_metadata_is_valid(step->target_communication_metadata)) {
+
+        if (!step->target_crypto_metadata) {
+            ue_stacktrace_push_msg("Specified step doesn't provide target crypto metadata");
+            return false;
+        }
+
+        return true;
+    }
+
+    return false;
 }

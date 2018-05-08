@@ -18,11 +18,15 @@
  *******************************************************************************/
 
 #include <unknownecho/crypto/factory/sym_key_factory.h>
+#include <unknownecho/crypto/factory/hasher_factory.h>
 #include <unknownecho/crypto/utils/crypto_random.h>
+#include <unknownecho/crypto/api/hash/hasher.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/alloc.h>
+#include <unknownecho/byte/byte_utility.h>
 
 #include <stddef.h>
+#include <string.h>
 
 ue_sym_key *ue_sym_key_create_random() {
 	ue_sym_key *key;
@@ -49,4 +53,25 @@ ue_sym_key *ue_sym_key_create_random() {
 ue_sym_key *ue_sym_key_create_from_file(char *file_path) {
 	ue_stacktrace_push_msg("Not implemented");
 	return NULL;
+}
+
+ue_sym_key *ue_sym_key_create_from_string(const char *string) {
+    ue_sym_key *key;
+    unsigned char *buf, *digest;
+    ue_hasher *hasher;
+    size_t digest_len;
+
+    hasher = ue_hasher_default_create();
+
+    buf = ue_bytes_create_from_string(string);
+
+    digest = ue_hasher_digest(hasher, buf, strlen(string), &digest_len);
+
+    key = ue_sym_key_create(digest, digest_len);
+
+    ue_hasher_destroy(hasher);
+    ue_safe_free(buf);
+    ue_safe_free(digest);
+
+    return key;
 }

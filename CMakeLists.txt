@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 3.8)
 
 # --- GLOBAL OPTIONS ---
 
-set(CMAKE_VERBOSE_MAKEFILE off)
+set(CMAKE_VERBOSE_MAKEFILE on)
 
 # Set as TRUE to link with openssl dependecies in lib folder. Set to FALSE otherwise.
 set(OPENSSL_LOCAL_LINK TRUE)

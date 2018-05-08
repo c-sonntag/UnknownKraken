@@ -1,5 +1,8 @@
 #include <unknownecho/protocol/api/relay/relay_client.h>
 #include <unknownecho/protocol/api/relay/relay_step.h>
+#include <unknownecho/protocol/api/relay/relay_route.h>
+#include <unknownecho/protocol/api/relay/relay_message_encoder.h>
+#include <unknownecho/protocol/api/relay/relay_message_id.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/network/api/communication/communication.h>
 #include <unknownecho/network/factory/communication_factory.h>
@@ -7,15 +10,27 @@
 #include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/errorHandling/stacktrace.h>
+#include <unknownecho/byte/byte_stream.h>
 
-ue_relay_client *ue_relay_client_create(ue_relay_step *step) {
+ue_relay_client *ue_relay_client_create(ue_relay_route *route) {
     ue_relay_client *relay_client;
     void *client_connection_parameters;
     ue_communication_metadata *target_communication_metadata;
+    ue_relay_step *step;
+
+    if (!ue_relay_route_is_valid(route)) {
+        ue_stacktrace_push_msg("Specified route isn't valid");
+        return NULL;
+    }
+
+    if (!(step = ue_relay_route_get_sender(route))) {
+        ue_stacktrace_push_msg("Specified route seems valid but it returns a null sender step");
+        return NULL;
+    }
 
     /* Check if relay objet is valid, recursively */
     if (!ue_relay_step_is_valid(step)) {
-        ue_stacktrace_push_msg("Specified step is invalid");
+        ue_stacktrace_push_msg("Specified route seems valid but it returns an invalid sender step");
         return NULL;
     }
 
@@ -26,6 +41,7 @@ ue_relay_client *ue_relay_client_create(ue_relay_step *step) {
     ue_safe_alloc(relay_client, ue_relay_client, 1);
     relay_client->communication_context = NULL;
     relay_client->connection = NULL;
+    relay_client->route = route;
 
     /* Create the communication context from the type of communication specified in the metadata of target */
     relay_client->communication_context = ue_communication_build_from_type(ue_communication_metadata_get_type(target_communication_metadata));
@@ -88,4 +104,38 @@ void *ue_relay_client_get_connection(ue_relay_client *client) {
     }
 
     return client->connection;
+}
+
+bool ue_relay_client_send_message(ue_relay_client *client, ue_byte_stream *message) {
+    bool result;
+    ue_byte_stream *encoded_message;
+
+    result = false;
+    encoded_message = NULL;
+
+    if (!ue_relay_client_is_valid(client)) {
+        ue_stacktrace_push_msg("Specified client is invalid");
+        goto clean_up;
+    }
+
+    if (!message || ue_byte_stream_is_empty(message)) {
+        ue_stacktrace_push_msg("Specified message ptr is null or the message is empty");
+        goto clean_up;
+    }
+
+    if (!(encoded_message = ue_relay_message_encode(client->route, UNKNOWNECHO_RELAY_MESSAGE_ID_SEND, message))) {
+        ue_stacktrace_push_msg("Failed to encoded specified message");
+        goto clean_up;
+    }
+
+    if (!ue_communication_send_sync(client->communication_context, client->connection, encoded_message)) {
+        ue_stacktrace_push_msg("Failed to send encoded message in synchronous mode");
+        goto clean_up;
+    }
+
+    result = true;
+
+clean_up:
+    ue_byte_stream_destroy(encoded_message);
+    return result;
 }
