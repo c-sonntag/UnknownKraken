@@ -3,11 +3,13 @@
 
 #include <unknownecho/protocol/api/relay/relay_route_struct.h>
 #include <unknownecho/network/api/communication/communication_context.h>
+#include <unknownecho/byte/byte_stream_struct.h>
 
 typedef struct {
     ue_communication_context *communication_context;
     void *connection;
     ue_relay_route *route;
+    ue_byte_stream *encoded_route;
 } ue_relay_client;
 
 #endif

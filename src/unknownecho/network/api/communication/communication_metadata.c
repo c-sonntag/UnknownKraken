@@ -1,12 +1,14 @@
 #include <unknownecho/network/api/communication/communication_metadata.h>
-#include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/string/string_split.h>
 #include <unknownecho/container/string_vector.h>
+#include <unknownecho/alloc.h>
+#include <unknownecho/defines.h>
 
 #include <stdio.h>
+#include <string.h>
 
 ue_communication_metadata *ue_communication_metadata_create_empty() {
     ue_communication_metadata *metadata;
@@ -28,7 +30,7 @@ ue_communication_metadata *ue_communication_metadata_create_from_string(const ch
 
     ue_check_parameter_or_return(string);
 
-    if (!(vector = ue_string_split((char *)string, "|"))) {
+    if (!(vector = ue_string_split((char *)string, ":"))) {
         ue_stacktrace_push_msg("Failed to split strint metadata");
         return NULL;
     }
@@ -39,9 +41,9 @@ ue_communication_metadata *ue_communication_metadata_create_from_string(const ch
     }
 
     metadata = ue_communication_metadata_create_empty();
-    ue_communication_metadata_set_host(metadata, ue_string_vector_get(vector, 0));
-    ue_communication_metadata_set_port(metadata, atoi(ue_string_vector_get(vector, 1)));
-    ue_communication_metadata_set_type(metadata, ue_string_vector_get(vector, 2));
+    ue_communication_metadata_set_type(metadata, ue_string_vector_get(vector, 0));
+    ue_communication_metadata_set_host(metadata, ue_string_vector_get(vector, 1));
+    ue_communication_metadata_set_port(metadata, atoi(ue_string_vector_get(vector, 2)));
 
 clean_up:
     ue_string_vector_destroy(vector);
@@ -53,6 +55,13 @@ void ue_communication_metadata_destroy(ue_communication_metadata *metadata) {
         ue_safe_free(metadata->host);
         ue_safe_free(metadata->type);
         ue_safe_free(metadata);
+    }
+}
+
+void ue_communication_metadata_clean_up(ue_communication_metadata *metadata) {
+    if (metadata) {
+        ue_safe_free(metadata->host);
+        ue_safe_free(metadata->type);
     }
 }
 
@@ -102,7 +111,31 @@ bool ue_communication_metadata_set_type(ue_communication_metadata *metadata, con
 }
 
 bool ue_communication_metadata_is_valid(ue_communication_metadata *metadata) {
-    return metadata && metadata->host && metadata->type && metadata->port > 0;
+    if (!metadata) {
+        ue_stacktrace_push_msg("Specified metadata ptr is null");
+        return false;
+    }
+
+    if (!metadata->type) {
+        ue_stacktrace_push_msg("Specified metadata has null type");
+        return false;
+    }
+
+    if (strcmp(metadata->type, UNKNOWNECHO_COMMUNICATION_SOCKET) == 0) {
+        if (!metadata->host) {
+            ue_stacktrace_push_msg("The metadata type is of UNKNOWNECHO_COMMUNICATION_SOCKET but no host is provide");
+            return false;
+        }
+        if (metadata->port <= 0) {
+            ue_stacktrace_push_msg("The metadata type is of UNKNOWNECHO_COMMUNICATION_SOCKET but the port is invalid");
+            return false;
+        }
+    } else {
+        ue_stacktrace_push_msg("The type of communication of specified metadata is invalid");
+        return false;
+    }
+
+    return true;
 }
 
 const char *ue_communication_metadata_to_string(ue_communication_metadata *metadata) {
@@ -110,9 +143,14 @@ const char *ue_communication_metadata_to_string(ue_communication_metadata *metad
 
     ue_check_parameter_or_return(metadata);
 
-    string = ue_strcat_variadic("ssdss", ue_communication_metadata_get_host(metadata), "|",
-        ue_communication_metadata_get_port(metadata), "|",
-        ue_communication_metadata_get_type(metadata));
+    if (strcmp(metadata->type, UNKNOWNECHO_COMMUNICATION_SOCKET) == 0) {
+        string = ue_strcat_variadic("ssssd", ue_communication_metadata_get_type(metadata), ":",
+            ue_communication_metadata_get_host(metadata), ":",
+            ue_communication_metadata_get_port(metadata));
+    } else {
+        ue_stacktrace_push_msg("Unknown communication metadata type");
+        return NULL;
+    }
 
     return string;
 }
@@ -130,4 +168,24 @@ bool ue_communication_metadata_print(ue_communication_metadata *metadata, FILE *
     ue_safe_free(string);
 
     return true;
+}
+
+bool ue_communication_metadata_equals(ue_communication_metadata *m1, ue_communication_metadata *m2) {
+    if (!ue_communication_metadata_is_valid(m1)) {
+        ue_stacktrace_push_msg("First specified communication metadata ptr is invalid");
+        return false;
+    }
+
+    if (!ue_communication_metadata_is_valid(m2)) {
+        ue_stacktrace_push_msg("Second specified communication metadata ptr is invalid");
+        return false;
+    }
+
+    if (strcmp(m1->type, m2->type) == 0 && strcmp(m1->type, UNKNOWNECHO_COMMUNICATION_SOCKET) == 0) {
+        if (strcmp(m1->host, m2->host) == 0 && m1->port == m2->port) {
+            return true;
+        }
+    }
+
+    return false;
 }

@@ -32,9 +32,8 @@ static ue_relay_step *create_step_from_uid(ue_crypto_metadata *our_crypto_metada
         return NULL;
     }
 
-    if (!(step = ue_relay_step_create(ue_communication_metadata_create_socket_type("127.0.0.1", 5001),
-        ue_communication_metadata_create_socket_type("127.0.0.1", target_port), our_crypto_metadata,
-        target_crypto_metadata))) {
+    if (!(step = ue_relay_step_create(ue_communication_metadata_create_socket_type("127.0.0.1", target_port),
+        our_crypto_metadata, target_crypto_metadata))) {
 
         ue_crypto_metadata_destroy(target_crypto_metadata);
         ue_stacktrace_push_msg("Failed to create step with uid '%s'", target_uid);
@@ -44,7 +43,7 @@ static ue_relay_step *create_step_from_uid(ue_crypto_metadata *our_crypto_metada
     return step;
 }
 
-static ue_relay_route *create_route_from_args(ue_crypto_metadata *our_crypto_metadata, int argc, char **argv) {
+ue_relay_route *create_route_from_args(ue_crypto_metadata *our_crypto_metadata, int argc, char **argv) {
     ue_relay_route *route;
     ue_relay_step **steps;
     int step_number;
@@ -78,6 +77,47 @@ clean_up_fail:
         ue_safe_free(steps);
     }
     return NULL;
+}
+
+ue_relay_route *generate_simple_route(ue_crypto_metadata *our_crypto_metadata) {
+    ue_relay_route *route;
+    ue_crypto_metadata *b_crypto_metadata, *c_crypto_metadata;
+
+    if (!(b_crypto_metadata = ue_crypto_metadata_create_empty())) {
+        ue_stacktrace_push_msg("Failed to create empty crypto metadata object for target b");
+        return NULL;
+    }
+
+    if (!ue_crypto_metadata_read_certificates(b_crypto_metadata, "out/public", "server1_uid")) {
+        ue_crypto_metadata_destroy(b_crypto_metadata);
+        ue_stacktrace_push_msg("Failed to read certificates of target b");
+        return NULL;
+    }
+
+    if (!(c_crypto_metadata = ue_crypto_metadata_create_empty())) {
+        ue_stacktrace_push_msg("Failed to create empty crypto metadata object for target c");
+        return NULL;
+    }
+
+    if (!ue_crypto_metadata_read_certificates(c_crypto_metadata, "out/public", "server2_uid")) {
+        ue_crypto_metadata_destroy(c_crypto_metadata);
+        ue_stacktrace_push_msg("Failed to read certificates of target c");
+        return NULL;
+    }
+
+    if (!(route = ue_relay_route_create(
+        ue_relay_steps_create(
+            2,
+            ue_relay_step_create(ue_communication_metadata_create_socket_type("127.0.0.1", 5001), our_crypto_metadata, b_crypto_metadata),
+            ue_relay_step_create(ue_communication_metadata_create_socket_type("127.0.0.1", 5002), our_crypto_metadata, c_crypto_metadata)
+        ),
+        2))) {
+
+        ue_stacktrace_push_msg("Failed to create route A -> B -> C");
+        return NULL;
+    }
+
+    return route;
 }
 
 int main(int argc, char **argv) {
@@ -121,12 +161,14 @@ int main(int argc, char **argv) {
 
     route = create_route_from_args(our_crypto_metadata, argc, argv);
 
+    //route = generate_simple_route(our_crypto_metadata);
+
     if (!ue_relay_route_is_valid(route)) {
         ue_stacktrace_push_msg("New route is invalid");
         goto clean_up;
     }
 
-    if (!(client = ue_relay_client_create(route))) {
+    if (!(client = ue_relay_client_create_from_route(route))) {
         ue_stacktrace_push_msg("Failed to create new relay client");
         goto clean_up;
     }

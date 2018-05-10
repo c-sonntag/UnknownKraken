@@ -62,7 +62,7 @@ int main() {
     ue_logger_info("Creating route...");
 
     /**
-     * A: 192.168.0.1:5000
+     * A: 192.168.0.1
      * B: 192.168.0.2:5001
      * C: 192.168.0.3:5002
      * A -> B -> C
@@ -71,10 +71,10 @@ int main() {
     if (!(route = ue_relay_route_create(
         ue_relay_steps_create(
             step_number,
-            ue_relay_step_create(ue_communication_metadata_create_socket_type("192.168.0.1", 5000),
-                ue_communication_metadata_create_socket_type("192.168.0.2", 5001), our_crypto_metadata, b_crypto_metadata),
             ue_relay_step_create(ue_communication_metadata_create_socket_type("192.168.0.2", 5001),
-                ue_communication_metadata_create_socket_type("192.168.0.3", 5002), our_crypto_metadata, c_crypto_metadata)
+                our_crypto_metadata, b_crypto_metadata),
+            ue_relay_step_create(ue_communication_metadata_create_socket_type("192.168.0.3", 5002),
+                our_crypto_metadata, c_crypto_metadata)
         ),
         step_number))) {
 

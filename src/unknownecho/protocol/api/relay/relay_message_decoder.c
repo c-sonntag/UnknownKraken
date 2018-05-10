@@ -1,5 +1,5 @@
 #include <unknownecho/protocol/api/relay/relay_message_decoder.h>
-#include <unknownecho/protocol/api/relay/relay_plain_message.h>
+#include <unknownecho/protocol/api/relay/relay_received_message.h>
 #include <unknownecho/protocol/api/relay/relay_message_id.h>
 #include <unknownecho/protocol/api/relay/relay_route_decoder.h>
 #include <unknownecho/protocol/api/protocol_id.h>
@@ -15,7 +15,7 @@
 
 #include <stddef.h>
 
-bool read_seal_payload(ue_byte_stream *encoded_message, ue_crypto_metadata *our_crypto_metadata, ue_byte_stream *payload) {
+static bool read_seal_payload(ue_byte_stream *encoded_message, ue_crypto_metadata *our_crypto_metadata, ue_byte_stream *payload) {
     bool result;
     int cipher_data_size;
     unsigned char *cipher_data, *plain_data;
@@ -58,8 +58,8 @@ clean_up:
     return result;
 }
 
-ue_relay_plain_message *ue_relay_message_decode(ue_byte_stream *encoded_message, ue_crypto_metadata *our_crypto_metadata) {
-    ue_relay_plain_message *plain_message;
+ue_relay_received_message *ue_relay_message_decode(ue_byte_stream *encoded_message, ue_crypto_metadata *our_crypto_metadata) {
+    ue_relay_received_message *received_message;
     int read_int;
 
     ue_check_parameter_or_return(encoded_message);
@@ -71,7 +71,7 @@ ue_relay_plain_message *ue_relay_message_decode(ue_byte_stream *encoded_message,
         return NULL;
     }
 
-    plain_message = ue_relay_plain_message_create_empty();
+    received_message = ue_relay_received_message_create_empty();
 
     /* Set the virtual cursor of the encoded message stream to the begining */
     ue_byte_stream_set_position(encoded_message, 0);
@@ -79,9 +79,9 @@ ue_relay_plain_message *ue_relay_message_decode(ue_byte_stream *encoded_message,
     /* Check protocol id */
     ue_byte_read_next_int(encoded_message, &read_int);
     if (ue_protocol_id_is_valid(read_int)) {
-        plain_message->protocol_id = (ue_protocol_id)read_int;
+        received_message->protocol_id = (ue_protocol_id)read_int;
     } else {
-        ue_relay_plain_message_destroy(plain_message);
+        ue_relay_received_message_destroy(received_message);
         ue_stacktrace_push_msg("Specified protocol id '%d' is invalid", read_int);
         return NULL;
     }
@@ -90,56 +90,60 @@ ue_relay_plain_message *ue_relay_message_decode(ue_byte_stream *encoded_message,
     /* Check message id */
     ue_byte_read_next_int(encoded_message, &read_int);
     if (ue_relay_message_id_is_valid(read_int)) {
-        plain_message->message_id = (ue_relay_message_id)read_int;
+        received_message->message_id = (ue_relay_message_id)read_int;
     } else {
-        ue_relay_plain_message_destroy(plain_message);
+        ue_relay_received_message_destroy(received_message);
         ue_stacktrace_push_msg("Specified relay message id '%d' is invalid", read_int);
         return NULL;
     }
     ue_logger_trace("Message id: %d", read_int);
 
-    plain_message->remaining_encoded_route = ue_byte_stream_create();
+    received_message->remaining_encoded_route = ue_byte_stream_create();
 
     /* Read the encoded route */
-    if (!ue_byte_read_next_stream(encoded_message, plain_message->remaining_encoded_route)) {
-        ue_relay_plain_message_destroy(plain_message);
+    if (!ue_byte_read_next_stream(encoded_message, received_message->remaining_encoded_route)) {
+        ue_relay_received_message_destroy(received_message);
         ue_stacktrace_push_msg("Failed to read encoded route from encoded message");
         return NULL;
     }
 
     /* Decode the first step of the encoded route and get the remaining route */
-    if (!(plain_message->next_step = ue_relay_route_decode_pop_step(plain_message->remaining_encoded_route,
+    if (!(received_message->next_step = ue_relay_route_decode_pop_step(received_message->remaining_encoded_route,
         our_crypto_metadata))) {
 
-        ue_relay_plain_message_destroy(plain_message);
-        ue_stacktrace_push_msg("Failed to read encoded route from encoded message");
-        return NULL;
+        if (ue_stacktrace_is_filled()) {
+            ue_stacktrace_push_msg("Failed to pop next stpe");
+            ue_relay_received_message_destroy(received_message);
+            return NULL;
+        }
+
+        ue_logger_trace("Cannot pop next step - we're the end user of the route");
     }
 
     /* Check if there's a payload in the message */
-    if (plain_message->message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_SEND ||
-        plain_message->message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_RECEIVE) {
+    if (received_message->message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_SEND ||
+        received_message->message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_RECEIVE) {
 
-        if (!ue_byte_stream_is_empty(plain_message->remaining_encoded_route)) {
+        if (!ue_byte_stream_is_empty(received_message->remaining_encoded_route)) {
             ue_logger_trace("Remaining route isn't empty, so the message wasn't meant for us. We cannot unseal it, anyway.");
-            plain_message->payload = ue_byte_stream_create();
-            if (!ue_byte_read_next_stream(encoded_message, plain_message->payload)) {
-                ue_relay_plain_message_destroy(plain_message);
-                ue_stacktrace_push_msg("Failed to copy seal payload to plain message state");
+            received_message->payload = ue_byte_stream_create();
+            if (!ue_byte_read_next_stream(encoded_message, received_message->payload)) {
+                ue_relay_received_message_destroy(received_message);
+                ue_stacktrace_push_msg("Failed to copy seal payload to received message");
                 return NULL;
             }
         } else {
             ue_logger_trace("Remaining route is empty, so the message is meant for us. Trying to unseal it...");
             /* Read and unseal the payload */
-            plain_message->payload = ue_byte_stream_create();
-            if (!read_seal_payload(encoded_message, our_crypto_metadata, plain_message->payload)) {
-                ue_relay_plain_message_destroy(plain_message);
+            received_message->payload = ue_byte_stream_create();
+            if (!read_seal_payload(encoded_message, our_crypto_metadata, received_message->payload)) {
+                ue_relay_received_message_destroy(received_message);
                 ue_stacktrace_push_msg("Failed to read seal payload from encoded message");
                 return NULL;
             }
-            plain_message->unsealed_payload = true;
+            received_message->unsealed_payload = true;
         }
     }
 
-    return plain_message;
+    return received_message;
 }

@@ -6,8 +6,8 @@
 #include <unknownecho/protocol/api/relay/relay_message_encoder.h>
 #include <unknownecho/protocol/api/relay/relay_message_decoder.h>
 #include <unknownecho/protocol/api/relay/relay_message_id.h>
-#include <unknownecho/protocol/api/relay/relay_plain_message.h>
-#include <unknownecho/protocol/api/relay/relay_plain_message_struct.h>
+#include <unknownecho/protocol/api/relay/relay_received_message.h>
+#include <unknownecho/protocol/api/relay/relay_received_message_struct.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/network/factory/communication_metadata_factory.h>
 #include <unknownecho/crypto/factory/crypto_metadata_factory.h>
@@ -24,7 +24,7 @@ int main() {
     ue_relay_route *route;
     ue_crypto_metadata *our_crypto_metadata, *b_crypto_metadata, *c_crypto_metadata;
     ue_byte_stream *encoded_message, *message_payload;
-    ue_relay_plain_message *b_plain_message, *c_plain_message;
+    ue_relay_received_message *b_received_message, *c_received_message;
 
     step_number = 2;
     route = NULL;
@@ -32,8 +32,8 @@ int main() {
     b_crypto_metadata = NULL;
     c_crypto_metadata = NULL;
     encoded_message = NULL;
-    b_plain_message = NULL;
-    c_plain_message = NULL;
+    b_received_message = NULL;
+    c_received_message = NULL;
     message_payload = ue_byte_stream_create();
 
     if (!ue_init()) {
@@ -72,10 +72,10 @@ int main() {
     if (!(route = ue_relay_route_create(
         ue_relay_steps_create(
             step_number,
-            ue_relay_step_create(ue_communication_metadata_create_socket_type("192.168.0.1", 5000),
-                ue_communication_metadata_create_socket_type("192.168.0.2", 5001), our_crypto_metadata, b_crypto_metadata),
             ue_relay_step_create(ue_communication_metadata_create_socket_type("192.168.0.2", 5001),
-                ue_communication_metadata_create_socket_type("192.168.0.3", 5002), our_crypto_metadata, c_crypto_metadata)
+                our_crypto_metadata, b_crypto_metadata),
+            ue_relay_step_create(ue_communication_metadata_create_socket_type("192.168.0.3", 5002),
+                our_crypto_metadata, c_crypto_metadata)
         ),
         step_number))) {
 
@@ -97,7 +97,7 @@ int main() {
     ue_logger_info("Lets say we send through network the encoded message to B [...]");
 
     ue_logger_info("Decoding message as B...");
-    if (!(b_plain_message = ue_relay_message_decode(encoded_message, b_crypto_metadata))) {
+    if (!(b_received_message = ue_relay_message_decode(encoded_message, b_crypto_metadata))) {
         ue_stacktrace_push_msg("Failed to decode message with B crypto metadata");
         goto clean_up;
     }
@@ -108,7 +108,7 @@ int main() {
     ue_byte_stream_destroy(encoded_message);
 
     ue_logger_info("Encoding route and message for C...");
-    if (!(encoded_message = ue_relay_message_encode_relay(b_plain_message))) {
+    if (!(encoded_message = ue_relay_message_encode_relay(b_received_message))) {
         ue_stacktrace_push_msg("Failed to encode relay message for B");
         goto clean_up;
     }
@@ -116,19 +116,19 @@ int main() {
     ue_logger_info("Lets say B send through network the encoded message to C [...]");
 
     ue_logger_info("Decoding message as C...");
-    if (!(c_plain_message = ue_relay_message_decode(encoded_message, c_crypto_metadata))) {
+    if (!(c_received_message = ue_relay_message_decode(encoded_message, c_crypto_metadata))) {
         ue_stacktrace_push_msg("Failed to decode message with C crypto metadata");
         goto clean_up;
     }
 
-    if (!c_plain_message->unsealed_payload) {
+    if (!c_received_message->unsealed_payload) {
         ue_stacktrace_push_msg("Message payload isn't unsealed");
         goto clean_up;
     }
 
     ue_logger_info("Part of C decoded.");
     ue_logger_info("Print message payload of C:");
-    ue_byte_stream_print_string(c_plain_message->payload, stdout);
+    ue_byte_stream_print_string(c_received_message->payload, stdout);
 
 clean_up:
     ue_relay_route_destroy(route);
@@ -136,8 +136,8 @@ clean_up:
     ue_crypto_metadata_destroy_all(b_crypto_metadata);
     ue_crypto_metadata_destroy_all(c_crypto_metadata);
     ue_byte_stream_destroy(encoded_message);
-    ue_relay_plain_message_destroy(b_plain_message);
-    ue_relay_plain_message_destroy(c_plain_message);
+    ue_relay_received_message_destroy(b_received_message);
+    ue_relay_received_message_destroy(c_received_message);
     ue_byte_stream_destroy(message_payload);
     if (ue_stacktrace_is_filled()) {
         ue_logger_error("An error occurred with the following stacktrace :");

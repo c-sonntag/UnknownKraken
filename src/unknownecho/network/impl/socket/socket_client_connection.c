@@ -20,12 +20,17 @@
 #include <unknownecho/network/api/socket/socket_client_connection.h>
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/network/api/communication/communication_connection_state.h>
-#include <unknownecho/alloc.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/string/string_utility.h>
+#include <unknownecho/defines.h>
+#include <unknownecho/alloc.h>
 
 #include <string.h>
+
+#if defined(__unix__)
+    #include <arpa/inet.h>
+#endif
 
 static void *byte_stream_alloc_func(void *data) {
 	return ue_byte_stream_copy((ue_byte_stream *)data);
@@ -64,6 +69,7 @@ ue_socket_client_connection *ue_socket_client_connection_init() {
 	connection->optional_data = NULL;
 	connection->received_messages = ue_queue_create_mem(byte_stream_alloc_func, byte_stream_free_func);
 	connection->messages_to_send = ue_queue_create(byte_stream_alloc_func, byte_stream_free_func);
+    connection->communication_metadata = ue_communication_metadata_create_empty();
 
 	return connection;
 
@@ -90,6 +96,7 @@ void ue_socket_client_connection_destroy(ue_socket_client_connection *connection
 		ue_byte_stream_destroy(connection->tmp_stream);
 		ue_queue_destroy(connection->received_messages);
 		ue_queue_destroy(connection->messages_to_send);
+        ue_communication_metadata_destroy(connection->communication_metadata);
 		ue_safe_free(connection);
 	}
 }
@@ -122,6 +129,7 @@ void ue_socket_client_connection_clean_up(ue_socket_client_connection *connectio
     connection->optional_data = NULL;
     ue_queue_clean_up(connection->received_messages);
     ue_queue_clean_up(connection->messages_to_send);
+    //ue_communication_metadata_clean_up(connection->communication_metadata);
 }
 
 bool ue_socket_client_connection_is_available(ue_socket_client_connection *connection) {
@@ -196,14 +204,61 @@ ue_queue *ue_socket_client_connection_get_messages_to_send(ue_socket_client_conn
 }
 
 ue_communication_connection_state ue_socket_client_connection_get_state(ue_socket_client_connection *connection) {
+    ue_check_parameter_or_return(connection);
+
     return connection->state;
 }
 
 bool ue_socket_client_connection_set_state(ue_socket_client_connection *connection, ue_communication_connection_state state) {
+    ue_check_parameter_or_return(connection);
+
     if (!connection->established) {
         ue_logger_warn("Cannot update the state of an unestablished connection");
         return false;
     }
     connection->state = state;
     return true;
+}
+
+bool ue_socket_client_connection_build_communication_metadata(ue_socket_client_connection *connection, struct sockaddr *sa) {
+    void *sock_addr_in;
+    int inet_addr_len, family, port;
+    char *host;
+
+    ue_check_parameter_or_return(connection);
+    ue_check_parameter_or_return(sa);
+
+    if (sa->sa_family == AF_INET) {
+        sock_addr_in = &(((struct sockaddr_in *)sa)->sin_addr);
+        inet_addr_len = INET_ADDRSTRLEN;
+        family = AF_INET;
+        port = ((struct sockaddr_in *)sa)->sin_port;
+    } else {
+        sock_addr_in = &(((struct sockaddr_in6 *)sa)->sin6_addr);
+        inet_addr_len = INET6_ADDRSTRLEN;
+        family = AF_INET6;
+        port = ((struct sockaddr_in6 *)sa)->sin6_port;
+    }
+
+    ue_safe_alloc(host, char, inet_addr_len);
+
+    if (!inet_ntop(family, sock_addr_in, host, inet_addr_len)) {
+        ue_stacktrace_push_errno();
+        ue_safe_free(host);
+        return false;
+    }
+
+    ue_communication_metadata_clean_up(connection->communication_metadata);
+    ue_communication_metadata_set_host(connection->communication_metadata, host);
+    ue_safe_free(host);
+    ue_communication_metadata_set_port(connection->communication_metadata, port);
+    ue_communication_metadata_set_type(connection->communication_metadata, UNKNOWNECHO_COMMUNICATION_SOCKET);
+
+    return true;
+}
+
+ue_communication_metadata *ue_socket_client_connection_get_communication_metadata(ue_socket_client_connection *connection) {
+    ue_check_parameter_or_return(connection);
+
+    return connection->communication_metadata;
 }

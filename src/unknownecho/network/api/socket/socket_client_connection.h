@@ -37,7 +37,14 @@
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
 #include <unknownecho/network/api/tls/tls_connection.h>
 #include <unknownecho/network/api/communication/communication_connection_state.h>
+#include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/thread/thread_id_struct.h>
+
+#if defined(__unix__)
+    #include <netinet/in.h>
+#else
+    #include <windows.h>
+#endif
 
 typedef struct {
 	int fd;
@@ -52,6 +59,7 @@ typedef struct {
 	ue_byte_stream *received_message_stream;
 	bool established;
 	void *optional_data;
+    ue_communication_metadata *communication_metadata;
 } ue_socket_client_connection;
 
 ue_socket_client_connection *ue_socket_client_connection_init();
@@ -85,5 +93,9 @@ ue_queue *ue_socket_client_connection_get_messages_to_send(ue_socket_client_conn
 ue_communication_connection_state ue_socket_client_connection_get_state(ue_socket_client_connection *connection);
 
 bool ue_socket_client_connection_set_state(ue_socket_client_connection *connection, ue_communication_connection_state state);
+
+bool ue_socket_client_connection_build_communication_metadata(ue_socket_client_connection *connection, struct sockaddr *sa);
+
+ue_communication_metadata *ue_socket_client_connection_get_communication_metadata(ue_socket_client_connection *connection);
 
 #endif

@@ -13,17 +13,16 @@
 #include <stddef.h>
 #include <string.h>
 
-bool encode_step(ue_byte_stream *encoded_route, ue_relay_step *step, ue_byte_stream *payload,
-    ue_crypto_metadata *crypto_metadata) {
+bool encode_step(ue_byte_stream *encoded_route, ue_relay_step *step, ue_relay_step *next_step,
+    ue_byte_stream *payload, ue_crypto_metadata *crypto_metadata) {
 
     bool result;
     ue_crypto_metadata *target_crypto_metadata;
-    const char *current_communication_metadata_string, *target_communication_metadata_string;
+    const char *target_communication_metadata_string;
     unsigned char *cipher_data;
     size_t cipher_data_size;
 
     result = false;
-    current_communication_metadata_string = NULL;
     target_communication_metadata_string = NULL;
     cipher_data = NULL;
 
@@ -31,19 +30,19 @@ bool encode_step(ue_byte_stream *encoded_route, ue_relay_step *step, ue_byte_str
         ue_stacktrace_push_msg("Specified step doesn't contain target crypto metadata");
         return false;
     }
-    if (!(current_communication_metadata_string = ue_communication_metadata_to_string(ue_relay_step_get_our_communication_metadata(step)))) {
-        ue_stacktrace_push_msg("Failed to convert our communication metadata to string");
-        goto clean_up;
-    }
-    if (!(target_communication_metadata_string = ue_communication_metadata_to_string(ue_relay_step_get_target_communication_metadata(step)))) {
+
+    if (next_step && !(target_communication_metadata_string = ue_communication_metadata_to_string(ue_relay_step_get_target_communication_metadata(next_step)))) {
         ue_stacktrace_push_msg("Failed to convert target communication metadata to string");
         goto clean_up;
     }
 
-    ue_byte_writer_append_int(payload, (int)strlen(current_communication_metadata_string));
-    ue_byte_writer_append_int(payload, (int)strlen(target_communication_metadata_string));
-    ue_byte_writer_append_string(payload, (char *)current_communication_metadata_string);
-    ue_byte_writer_append_string(payload, (char *)target_communication_metadata_string);
+    if (next_step) {
+        ue_byte_writer_append_int(payload, 1);
+        ue_byte_writer_append_int(payload, (int)strlen(target_communication_metadata_string));
+        ue_byte_writer_append_string(payload, (char *)target_communication_metadata_string);
+    } else {
+        ue_byte_writer_append_int(payload, 0);
+    }
 
     if (!ue_byte_stream_is_empty(encoded_route)) {
         ue_byte_writer_append_int(payload, ue_byte_stream_get_size(encoded_route));
@@ -72,7 +71,6 @@ bool encode_step(ue_byte_stream *encoded_route, ue_relay_step *step, ue_byte_str
     result = true;
 
 clean_up:
-    ue_safe_free(current_communication_metadata_string);
     ue_safe_free(target_communication_metadata_string);
     ue_safe_free(cipher_data);
     ue_byte_stream_clean_up(payload);
@@ -82,7 +80,7 @@ clean_up:
 ue_byte_stream *ue_relay_route_encode(ue_relay_route *route) {
     ue_byte_stream *encoded_route;
     int i, j;
-    ue_relay_step *current_step;
+    ue_relay_step *current_step, *next_step;
     ue_byte_stream *payload;
     ue_crypto_metadata *our_crypto_metadata;
 
@@ -98,7 +96,12 @@ ue_byte_stream *ue_relay_route_encode(ue_relay_route *route) {
     for (i = route->steps_number - 1, j = 1; i >= 0; i--, j++) {
         ue_logger_trace("Relay route encoding iteration: %d", i);
         current_step = route->steps[i];
-        if (!encode_step(encoded_route, current_step, payload, our_crypto_metadata)) {
+        if (i != 0) {
+            next_step = NULL;
+        } else {
+            next_step = route->steps[i+1];
+        }
+        if (!encode_step(encoded_route, current_step, next_step, payload, our_crypto_metadata)) {
             ue_byte_stream_destroy(encoded_route);
             ue_byte_stream_destroy(payload);
             ue_stacktrace_push_msg("Failed to encode a step at iteration #%d", j);

@@ -21,6 +21,7 @@
 #define UNKNOWNECHO_COMMUNICATION_H
 
 #include <unknownecho/network/api/communication/communication_context.h>
+#include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/bool.h>
 
 #include <stddef.h>
@@ -41,6 +42,7 @@ ue_communication_context *ue_communication_create(const char *communication_type
     void *(*communication_client_connection_get_messages_to_send_impl)(void *connection),
     ue_communication_connection_state (*communication_client_connection_get_state_impl)(void *connection),
     bool (*communication_client_connection_set_state_impl)(void *connection, ue_communication_connection_state state),
+    ue_communication_metadata *communication_client_connection_get_communication_metadata(void *connection),
 
     size_t (*communication_receive_sync_impl)(void *connection, void *received_message),
     size_t (*communication_send_sync_impl)(void *connection, void *message_to_send),
@@ -90,6 +92,8 @@ void *ue_communication_client_connection_get_messages_to_send(ue_communication_c
 ue_communication_connection_state ue_communication_client_connection_get_state(ue_communication_context *context, void *connection);
 
 bool ue_communication_client_connection_set_state(ue_communication_context *context, void *connection, ue_communication_connection_state state);
+
+ue_communication_metadata *ue_communication_client_connection_get_communication_metadata(ue_communication_context *context, void *connection);
 
 /* Send and receive message for both client/server */
 

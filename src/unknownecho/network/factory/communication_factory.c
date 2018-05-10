@@ -19,6 +19,7 @@
 
 #include <unknownecho/network/factory/communication_factory.h>
 #include <unknownecho/network/api/communication/communication.h>
+#include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/network/api/socket/socket_client_connection.h>
 #include <unknownecho/network/api/socket/socket_receive.h>
@@ -82,6 +83,7 @@ ue_communication_context *ue_communication_build_socket() {
         (void *(*)(void *))ue_socket_client_connection_get_messages_to_send,
         (ue_communication_connection_state (*)(void *))ue_socket_client_connection_get_state,
         (bool (*)(void *, ue_communication_connection_state))ue_socket_client_connection_set_state,
+        (ue_communication_metadata *(*)(void *))ue_socket_client_connection_get_communication_metadata,
 
         (size_t (*)(void *connection, void *))ue_socket_receive_sync,
         (size_t (*)(void *, void *))ue_socket_send_sync,

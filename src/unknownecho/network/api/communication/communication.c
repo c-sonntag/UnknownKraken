@@ -40,6 +40,7 @@ ue_communication_context *ue_communication_create(const char *communication_type
     void *(*communication_client_connection_get_messages_to_send_impl)(void *connection),
     ue_communication_connection_state (*communication_client_connection_get_state_impl)(void *connection),
     bool (*communication_client_connection_set_state_impl)(void *connection, ue_communication_connection_state state),
+    ue_communication_metadata *communication_client_connection_get_communication_metadata(void *connection),
 
     size_t (*communication_receive_sync_impl)(void *connection, void *received_message),
     size_t (*communication_send_sync_impl)(void *connection, void *message_to_send),
@@ -97,6 +98,7 @@ ue_communication_context *ue_communication_create(const char *communication_type
     context->communication_client_connection_get_messages_to_send_impl = communication_client_connection_get_messages_to_send_impl;
     context->communication_client_connection_get_state_impl = communication_client_connection_get_state_impl;
     context->communication_client_connection_set_state_impl = communication_client_connection_set_state_impl;
+    context->communication_client_connection_get_communication_metadata_impl = communication_client_connection_get_communication_metadata;
 
     context->communication_receive_sync_impl = communication_receive_sync_impl;
     context->communication_send_sync_impl = communication_send_sync_impl;
@@ -255,36 +257,31 @@ bool ue_communication_client_connection_set_state(ue_communication_context *cont
     return context->communication_client_connection_set_state_impl(connection, state);
 }
 
+ue_communication_metadata *ue_communication_client_connection_get_communication_metadata(ue_communication_context *context, void *connection) {
+    ue_check_parameter_or_return(context);
+    ue_check_parameter_or_return(connection);
+
+    return context->communication_client_connection_get_communication_metadata_impl(connection);
+}
+
 /* Send and receive message for both client/server */
 
 size_t ue_communication_receive_sync(ue_communication_context *context, void *connection, void *received_message) {
-    size_t result;
-
     if (!context) {
         ue_stacktrace_push_code(UNKNOWNECHO_INVALID_PARAMETER);
         return 0;
     }
 
-    if ((result = context->communication_receive_sync_impl(connection, received_message)) == 0) {
-        ue_stacktrace_push_msg("communication_receive_sync_impl() returned 0. The communication was interrupted");
-    }
-
-    return result;
+    return context->communication_receive_sync_impl(connection, received_message);
 }
 
 size_t ue_communication_send_sync(ue_communication_context *context, void *connection, void *message_to_send) {
-    size_t result;
-
     if (!context) {
         ue_stacktrace_push_code(UNKNOWNECHO_INVALID_PARAMETER);
         return 0;
     }
 
-    if ((result = context->communication_send_sync_impl(connection, message_to_send)) == 0) {
-        ue_stacktrace_push_msg("communication_send_sync_impl() returned 0. The communication was interrupted");
-    }
-
-    return result;
+    return context->communication_send_sync_impl(connection, message_to_send);
 }
 
 /* Handle server functions */

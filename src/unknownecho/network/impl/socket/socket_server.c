@@ -20,6 +20,7 @@
 #include <unknownecho/network/api/socket/socket_server.h>
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/network/api/socket/socket_client_connection.h>
+#include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/network/api/tls/tls_connection.h>
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/errorHandling/logger.h>
@@ -50,7 +51,7 @@
 
 bool ue_socket_listen(ue_socket_server *server);
 
-int ue_socket_accept(int ue_socket_fd, struct sockaddr_in *sa);
+int ue_socket_accept(int ue_socket_fd, struct sockaddr *sa);
 
 bool ue_socket_bind(int ue_socket_fd, int domain, unsigned short int port);
 
@@ -171,7 +172,7 @@ bool ue_socket_listen(ue_socket_server *server) {
     return true;
 }
 
-int ue_socket_accept(int ue_socket_fd, struct sockaddr_in *sa) {
+int ue_socket_accept(int ue_socket_fd, struct sockaddr *sa) {
     int new_socket;
 
 #if defined(__unix__)
@@ -191,15 +192,17 @@ int ue_socket_accept(int ue_socket_fd, struct sockaddr_in *sa) {
 }
 
 bool ue_socket_server_accept(ue_socket_server *server) {
-    struct sockaddr_in sa;
+    struct sockaddr sa;
     int new_socket, i;
     bool established;
     ue_tls_connection *peer_tls;
     ue_x509_certificate *certificate;
+    const char *communication_metadata_string;
 
     established = false;
     peer_tls = NULL;
     certificate = NULL;
+    communication_metadata_string = NULL;
 
     if ((new_socket = ue_socket_accept(server->ue_socket_fd, &sa)) <= 0) {
         ue_stacktrace_push_msg("Failed to accept this socket");
@@ -261,7 +264,7 @@ bool ue_socket_server_accept(ue_socket_server *server) {
 		}
     }
 
-    ue_logger_trace("Search an available slot for accepted connection");
+    ue_logger_trace("Searching for an available slot for incoming connection");
     for (i = 0; i < server->connections_number; i++) {
         if (ue_socket_client_connection_is_available(server->connections[i])) {
             if (!ue_socket_client_connection_establish(server->connections[i], new_socket)) {
@@ -275,6 +278,16 @@ bool ue_socket_server_accept(ue_socket_server *server) {
 				server->connections[i]->tls = peer_tls;
                 server->connections[i]->peer_certificate = ue_tls_connection_get_peer_certificate(peer_tls);
 			}
+            if (ue_socket_client_connection_build_communication_metadata(server->connections[i], &sa)) {
+                if ((communication_metadata_string = ue_communication_metadata_to_string(ue_socket_client_connection_get_communication_metadata(server->connections[i])))) {
+                    ue_logger_trace("Client connected with communication metadata: %s", communication_metadata_string);
+                    ue_safe_free(communication_metadata_string);
+                } else {
+                    ue_logger_warn("Failed to get communication metadata string from new connected client");
+                }
+            } else {
+                ue_logger_warn("Failed to set sockaddr_in structure to client connection ptr");
+            }
             established = true;
             break;
         }

@@ -1,5 +1,5 @@
-#ifndef UNKNOWNECHO_RELAY_PLAIN_MESSAGE_STRUCT_H
-#define UNKNOWNECHO_RELAY_PLAIN_MESSAGE_STRUCT_H
+#ifndef UNKNOWNECHO_RELAY_RECEIVED_MESSAGE_STRUCT_H
+#define UNKNOWNECHO_RELAY_RECEIVED_MESSAGE_STRUCT_H
 
 #include <unknownecho/protocol/api/relay/relay_step_struct.h>
 #include <unknownecho/protocol/api/relay/relay_message_id.h>
@@ -14,6 +14,6 @@ typedef struct {
     ue_relay_message_id message_id;
     ue_byte_stream *remaining_encoded_route;
     bool unsealed_payload;
-} ue_relay_plain_message;
+} ue_relay_received_message;
 
 #endif

@@ -17,6 +17,8 @@ ue_communication_metadata *ue_communication_metadata_create_from_string(const ch
 
 void ue_communication_metadata_destroy(ue_communication_metadata *metadata);
 
+void ue_communication_metadata_clean_up(ue_communication_metadata *metadata);
+
 const char *ue_communication_metadata_get_host(ue_communication_metadata *metadata);
 
 bool ue_communication_metadata_set_host(ue_communication_metadata *metadata, const char *host);
@@ -34,5 +36,7 @@ bool ue_communication_metadata_is_valid(ue_communication_metadata *metadata);
 const char *ue_communication_metadata_to_string(ue_communication_metadata *metadata);
 
 bool ue_communication_metadata_print(ue_communication_metadata *metadata, FILE *fd);
+
+bool ue_communication_metadata_equals(ue_communication_metadata *m1, ue_communication_metadata *m2);
 
 #endif
