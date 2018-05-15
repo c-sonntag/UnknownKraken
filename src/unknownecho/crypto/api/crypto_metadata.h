@@ -55,6 +55,10 @@ const char *ue_crypto_metadata_get_digest_name(ue_crypto_metadata *metadata);
 
 bool ue_crypto_metadata_set_digest_name(ue_crypto_metadata *metadata, const char *digest_name);
 
+bool ue_crypto_metadata_certificates_exists(const char *folder_name, const char *uid);
+
+bool ue_crypto_metadata_exists(const char *folder_name, const char *uid);
+
 bool ue_crypto_metadata_write_certificates(ue_crypto_metadata *metadata, const char *folder_name, const char *uid);
 
 bool ue_crypto_metadata_read_certificates(ue_crypto_metadata *metadata, const char *folder_name, const char *uid);

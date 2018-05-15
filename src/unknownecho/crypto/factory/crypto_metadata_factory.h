@@ -5,4 +5,7 @@
 
 ue_crypto_metadata *ue_crypto_metadata_create_default();
 
+ue_crypto_metadata *ue_crypto_metadata_write_if_not_exist(const char *private_folder, const char *
+    certificates_folder, const char *uid, const char *password);
+
 #endif

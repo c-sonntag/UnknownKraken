@@ -27,6 +27,20 @@ void ue_relay_route_destroy(ue_relay_route *route) {
     }
 }
 
+void ue_relay_route_destroy_all(ue_relay_route *route) {
+    int i;
+
+    if (route) {
+        if (route->steps) {
+            for (i = 0; i < route->steps_number; i++) {
+                ue_relay_step_destroy_all(route->steps[i]);
+            }
+            ue_safe_free(route->steps);
+        }
+        ue_safe_free(route);
+    }
+}
+
 bool ue_relay_route_is_valid(ue_relay_route *route) {
     int i;
 

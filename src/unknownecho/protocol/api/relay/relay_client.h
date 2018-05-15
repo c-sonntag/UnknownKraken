@@ -11,7 +11,8 @@
 
 ue_relay_client *ue_relay_client_create_from_route(ue_relay_route *route);
 
-ue_relay_client *ue_relay_client_create_as_relay(ue_communication_metadata *target_communication_metadata);
+ue_relay_client *ue_relay_client_create_as_relay(ue_communication_metadata *target_communication_metadata,
+    ue_crypto_metadata *our_crypto_metadata);
 
 void ue_relay_client_destroy(ue_relay_client *client);
 
@@ -24,5 +25,7 @@ void *ue_relay_client_get_connection(ue_relay_client *client);
 bool ue_relay_client_send_message(ue_relay_client *client, ue_byte_stream *message);
 
 bool ue_relay_client_relay_message(ue_relay_client *client, ue_relay_received_message *received_message);
+
+bool ue_relay_client_receive_message(ue_relay_client *client, ue_byte_stream *message);
 
 #endif

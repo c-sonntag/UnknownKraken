@@ -2,8 +2,10 @@
 #include <unknownecho/protocol/api/relay/relay_step.h>
 #include <unknownecho/protocol/api/relay/relay_route.h>
 #include <unknownecho/protocol/api/relay/relay_message_encoder.h>
+#include <unknownecho/protocol/api/relay/relay_message_decoder.h>
 #include <unknownecho/protocol/api/relay/relay_message_id.h>
 #include <unknownecho/protocol/api/relay/relay_route_encoder.h>
+#include <unknownecho/protocol/api/relay/relay_received_message.h>
 #include <unknownecho/network/api/communication/communication.h>
 #include <unknownecho/network/factory/communication_factory.h>
 #include <unknownecho/crypto/api/crypto_metadata.h>
@@ -12,6 +14,10 @@
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
 #include <unknownecho/byte/byte_stream.h>
+#include <unknownecho/byte/byte_writer.h>
+
+#include <stddef.h>
+#include <limits.h>
 
 static ue_relay_client *ue_relay_client_create(ue_communication_metadata *target_communication_metadata) {
     ue_relay_client *relay_client;
@@ -25,6 +31,7 @@ static ue_relay_client *ue_relay_client_create(ue_communication_metadata *target
     relay_client->connection = NULL;
     relay_client->route = NULL;
     relay_client->encoded_route = NULL;
+    relay_client->our_crypto_metadata = NULL;
 
     /* Create the communication context from the type of communication specified in the metadata of target */
     relay_client->communication_context = ue_communication_build_from_type(ue_communication_metadata_get_type(target_communication_metadata));
@@ -74,7 +81,7 @@ ue_relay_client *ue_relay_client_create_from_route(ue_relay_route *route) {
         return NULL;
     }
 
-    /* Check if relay objet is valid, recursively */
+    /* Check if relay objet is valid */
     if (!ue_relay_step_is_valid(step)) {
         ue_stacktrace_push_msg("Specified route seems valid but it returns an invalid sender step");
         return NULL;
@@ -92,6 +99,7 @@ ue_relay_client *ue_relay_client_create_from_route(ue_relay_route *route) {
     }
 
     client->route = route;
+    client->our_crypto_metadata = ue_relay_step_get_our_crypto_metadata(step);
 
     if (!(client->encoded_route = ue_relay_route_encode(route))) {
         ue_relay_client_destroy(client);
@@ -102,13 +110,16 @@ ue_relay_client *ue_relay_client_create_from_route(ue_relay_route *route) {
     return client;
 }
 
-ue_relay_client *ue_relay_client_create_as_relay(ue_communication_metadata *target_communication_metadata) {
+ue_relay_client *ue_relay_client_create_as_relay(ue_communication_metadata *target_communication_metadata,
+    ue_crypto_metadata *our_crypto_metadata) {
+
     ue_relay_client *relay_client;
 
     if (!(relay_client = ue_relay_client_create(target_communication_metadata))) {
         ue_stacktrace_push_msg("Failed to create relay client with next step");
         return NULL;
     }
+    relay_client->our_crypto_metadata = our_crypto_metadata;
 
     return relay_client;
 }
@@ -117,6 +128,7 @@ void ue_relay_client_destroy(ue_relay_client *client) {
     if (client) {
         ue_communication_client_connection_destroy(client->communication_context, client->connection);
         ue_communication_destroy(client->communication_context);
+        ue_byte_stream_destroy(client->encoded_route);
         ue_safe_free(client);
     }
 }
@@ -225,5 +237,55 @@ bool ue_relay_client_relay_message(ue_relay_client *client, ue_relay_received_me
 
 clean_up:
     ue_byte_stream_destroy(encoded_message);
+    return result;
+}
+
+bool ue_relay_client_receive_message(ue_relay_client *client, ue_byte_stream *message) {
+    bool result;
+    size_t received;
+    ue_byte_stream *received_message;
+    ue_relay_received_message *decoded_message;
+
+    result = false;
+    received_message = NULL;
+    decoded_message = NULL;
+
+    if (!ue_relay_client_is_valid(client)) {
+        ue_stacktrace_push_msg("Specified client is invalid");
+        goto clean_up;
+    }
+
+    ue_check_parameter_or_return(message);
+
+    received_message = ue_byte_stream_create();
+
+    received = ue_communication_receive_sync(client->communication_context, client->connection, received_message);
+    if (received == 0) {
+        ue_stacktrace_push_msg("Failed to received bytes");
+        goto clean_up;
+    } else if (received == ULLONG_MAX) {
+        ue_stacktrace_push_msg("Failed to received bytes: connection was interrupted");
+        goto clean_up;
+    }
+
+    if (!(decoded_message = ue_relay_message_decode(received_message, client->our_crypto_metadata))) {
+        ue_stacktrace_push_msg("Failed to decode message");
+        goto clean_up;
+    }
+
+    if (!decoded_message->unsealed_payload) {
+        ue_stacktrace_push_msg("Decoded message doesn't contains the unsealed payload. Maybe the message wasn't meant for us");
+        goto clean_up;
+    }
+
+    ue_byte_stream_clean_up(message);
+    ue_byte_writer_append_bytes(message, ue_byte_stream_get_data(decoded_message->payload),
+        ue_byte_stream_get_size(decoded_message->payload));
+
+    result = true;
+
+clean_up:
+    ue_byte_stream_destroy(received_message);
+    ue_relay_received_message_destroy(decoded_message);
     return result;
 }

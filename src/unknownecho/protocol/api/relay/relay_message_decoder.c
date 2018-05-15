@@ -117,7 +117,7 @@ ue_relay_received_message *ue_relay_message_decode(ue_byte_stream *encoded_messa
             return NULL;
         }
 
-        ue_logger_trace("Cannot pop next step - we're the end user of the route");
+        ue_logger_trace("Cannot pop next step - maybe we're the end user of the route");
     }
 
     /* Check if there's a payload in the message */
@@ -143,6 +143,12 @@ ue_relay_received_message *ue_relay_message_decode(ue_byte_stream *encoded_messa
             }
             received_message->unsealed_payload = true;
         }
+    }
+
+    if (!received_message->unsealed_payload && !received_message->next_step) {
+        ue_relay_received_message_destroy(received_message);
+        ue_stacktrace_push_msg("The payload isn't unsealed and we doesn't know the next step");
+        return NULL;
     }
 
     return received_message;

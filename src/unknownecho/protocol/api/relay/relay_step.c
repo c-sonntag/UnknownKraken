@@ -16,6 +16,7 @@ ue_relay_step *ue_relay_step_create(ue_communication_metadata *target_communicat
     step->target_communication_metadata = target_communication_metadata;
     step->our_crypto_metadata = our_crypto_metadata;
     step->target_crypto_metadata = target_crypto_metadata;
+    step->destination_type = UNKNOWNECHO_RELAY_SERVER;
 
     return step;
 }
@@ -50,8 +51,8 @@ void ue_relay_step_destroy(ue_relay_step *step) {
 void ue_relay_step_destroy_all(ue_relay_step *step) {
     if (step) {
         ue_communication_metadata_destroy(step->target_communication_metadata);
-        ue_crypto_metadata_destroy(step->our_crypto_metadata);
-        ue_crypto_metadata_destroy(step->target_crypto_metadata);
+        ue_crypto_metadata_destroy_all(step->our_crypto_metadata);
+        ue_crypto_metadata_destroy_all(step->target_crypto_metadata);
         ue_safe_free(step);
     }
 }
@@ -90,14 +91,19 @@ void ue_relay_step_print(ue_relay_step *step, FILE *fd) {
 }
 
 bool ue_relay_step_is_valid(ue_relay_step *step) {
-    if (step && ue_communication_metadata_is_valid(step->target_communication_metadata)) {
-
-        if (!step->target_crypto_metadata) {
-            ue_logger_warn("Specified step doesn't provide target crypto metadata");
-        }
-
-        return true;
+    if (!step) {
+        ue_stacktrace_push_msg("Specified step ptr is null");
+        return false;
     }
 
-    return false;
+    if (!ue_communication_metadata_is_valid(step->target_communication_metadata)) {
+        ue_stacktrace_push_msg("The communication metadata of specified step is invalid");
+        return false;
+    }
+
+    if (!step->target_crypto_metadata) {
+        ue_logger_warn("Specified step doesn't provide target crypto metadata");
+    }
+
+    return true;
 }

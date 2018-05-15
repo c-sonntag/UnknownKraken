@@ -41,6 +41,8 @@ static void handle_signal(int sig, void (*h)(int), int options) {
     }
 }
 
+#include <unknownecho/string/string_utility.h>
+
 int main(int argc, char **argv) {
     ue_relay_server *server;
     ue_crypto_metadata *our_crypto_metadata;
@@ -60,18 +62,11 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    if (!(our_crypto_metadata = ue_crypto_metadata_create_default())) {
-        ue_stacktrace_push_msg("Faield to create random crypto metadata");
+    if (!(our_crypto_metadata = ue_crypto_metadata_write_if_not_exist("out/private", "out/public", argv[1], argv[2]))) {
+        ue_stacktrace_push_msg("Failed to get crypto metadata");
         goto clean_up;
     }
-    if (!ue_crypto_metadata_write(our_crypto_metadata, "out/private", argv[1], argv[2])) {
-        ue_stacktrace_push_msg("Failed to write our crypto metadata in private files");
-        goto clean_up;
-    }
-    if (!ue_crypto_metadata_write_certificates(our_crypto_metadata, "out/public", argv[1])) {
-        ue_stacktrace_push_msg("Failed to write our certificates");
-        goto clean_up;
-    }
+
     if (!(our_communication_metadata = ue_communication_metadata_create_socket_type("127.0.0.1", atoi(argv[3])))) {
         ue_stacktrace_push_msg("Failed to create our communication metadata");
         goto clean_up;

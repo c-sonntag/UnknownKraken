@@ -36,7 +36,8 @@ static void disconnect_client_from_server(void *connection);
 
 static ue_relay_client *find_relay_client(ue_communication_metadata *client_communication_metadata);
 
-static ue_relay_client *create_relay_client(ue_communication_metadata *target_communication_metadata);
+static ue_relay_client *create_relay_client(ue_communication_metadata *target_communication_metadata,
+    ue_crypto_metadata *our_crypto_metadata);
 
 
 ue_relay_server *ue_relay_server_create(ue_communication_metadata *communication_metadata, void *user_context,
@@ -378,7 +379,9 @@ static bool server_process_message(ue_byte_stream *message, void *connection) {
     } else {
         if (!(relay_client = find_relay_client(ue_relay_step_get_target_communication_metadata(received_message->next_step)))) {
             ue_logger_trace("No relay client with this communication metadata exists. Creating a new relay client...");
-            if (!(relay_client = create_relay_client(ue_relay_step_get_target_communication_metadata(received_message->next_step)))) {
+            if (!(relay_client = create_relay_client(ue_relay_step_get_target_communication_metadata(received_message->next_step),
+                    ue_relay_step_get_our_crypto_metadata(received_message->next_step)))) {
+
                 ue_stacktrace_push_msg("Failed to create new client to relay the received message");
                 goto clean_up;
             }
@@ -447,10 +450,12 @@ static ue_relay_client *find_relay_client(ue_communication_metadata *client_comm
     return NULL;
 }
 
-static ue_relay_client *create_relay_client(ue_communication_metadata *target_communication_metadata) {
+static ue_relay_client *create_relay_client(ue_communication_metadata *target_communication_metadata,
+    ue_crypto_metadata *our_crypto_metadata) {
+
     ue_relay_client *relay_client;
 
-    if (!(relay_client = ue_relay_client_create_as_relay(target_communication_metadata))) {
+    if (!(relay_client = ue_relay_client_create_as_relay(target_communication_metadata, our_crypto_metadata))) {
         ue_stacktrace_push_msg("Failed to create new relay client from received message next step");
         return NULL;
     }

@@ -171,13 +171,21 @@ bool ue_communication_metadata_print(ue_communication_metadata *metadata, FILE *
 }
 
 bool ue_communication_metadata_equals(ue_communication_metadata *m1, ue_communication_metadata *m2) {
-    if (!ue_communication_metadata_is_valid(m1)) {
+    /**
+     * @todo fix this issue
+     */
+
+    /*if (!ue_communication_metadata_is_valid(m1)) {
         ue_stacktrace_push_msg("First specified communication metadata ptr is invalid");
         return false;
     }
 
     if (!ue_communication_metadata_is_valid(m2)) {
         ue_stacktrace_push_msg("Second specified communication metadata ptr is invalid");
+        return false;
+    }*/
+
+    if (!m1 || !m2 || !m1->type || !m2->type || !m1->host || !m2->host) {
         return false;
     }
 

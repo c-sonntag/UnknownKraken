@@ -157,8 +157,6 @@ ue_byte_stream *ue_relay_message_encode_from_encoded_route(ue_byte_stream *encod
         }
     }
 
-    ue_byte_stream_destroy(encoded_route);
-
     return encoded_message;
 }
 

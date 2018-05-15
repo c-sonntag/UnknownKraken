@@ -35,8 +35,8 @@ static bool crypto_metadata_read_sym(ue_crypto_metadata *metadata, const char *f
     const char *password);
 
 static bool crypto_metadata_read_asym(ue_crypto_metadata *metadata, const char *folder_name, const char *uid,
-    const char *password, const char *keystore_type, ue_x509_certificate *certificate, ue_private_key *private_key,
-    ue_public_key *public_key);
+    const char *password, const char *keystore_type, ue_x509_certificate **certificate, ue_private_key **private_key,
+    ue_public_key **public_key);
 
 ue_crypto_metadata *ue_crypto_metadata_create_empty() {
     ue_crypto_metadata *metadata;
@@ -207,6 +207,91 @@ bool ue_crypto_metadata_set_digest_name(ue_crypto_metadata *metadata, const char
     metadata->digest_name = digest_name;
 
     return true;
+}
+
+bool ue_crypto_metadata_certificates_exists(const char *folder_name, const char *uid) {
+    bool result;
+    const char *cipher_certificate_file_name, *signer_certificate_file_name;
+
+    ue_check_parameter_or_return(folder_name);
+    ue_check_parameter_or_return(uid);
+
+    if (!ue_is_dir_exists(folder_name)) {
+        return false;
+    }
+
+    result = false;
+    cipher_certificate_file_name = NULL;
+    signer_certificate_file_name = NULL;
+
+    if (!(cipher_certificate_file_name = ue_strcat_variadic("ssss", folder_name, "/", uid, "_CIPHER.pem"))) {
+        ue_stacktrace_push_msg("Failed to build cipher certificate file name");
+        return false;
+    }
+
+    if (!(signer_certificate_file_name = ue_strcat_variadic("ssss", folder_name, "/", uid, "_SIGNER.pem"))) {
+        ue_stacktrace_push_msg("Failed to build signer certificate file name");
+        goto clean_up;
+    }
+
+    if (ue_is_file_exists(cipher_certificate_file_name) ||
+        ue_is_file_exists(signer_certificate_file_name)) {
+        result = true;
+    } else {
+        result = false;
+    }
+
+clean_up:
+    ue_safe_free(cipher_certificate_file_name);
+    ue_safe_free(signer_certificate_file_name);
+    return result;
+}
+
+bool ue_crypto_metadata_exists(const char *folder_name, const char *uid) {
+    bool result;
+    const char *sym_file_name, *asym_cipher_file_name, *asym_signer_file_name;
+
+    ue_check_parameter_or_return(folder_name);
+    ue_check_parameter_or_return(uid);
+
+    if (!ue_is_dir_exists(folder_name)) {
+        return false;
+    }
+
+    result = false;
+    sym_file_name = NULL;
+    asym_cipher_file_name = NULL;
+    asym_signer_file_name = NULL;
+
+    if (!(sym_file_name = ue_strcat_variadic("sss", folder_name, "/", uid, "_sym"))) {
+        ue_stacktrace_push_msg("Failed to build file name for sym crypto metadata");
+        goto clean_up;
+    }
+
+    if (!(asym_cipher_file_name = ue_strcat_variadic("ssss", folder_name, "/", uid, "_asym_CIPHER"))) {
+        ue_stacktrace_push_msg("Failed to build file name with name '%s' for keystore 'CIPHER'", uid);
+        goto clean_up;
+    }
+
+    if (!(asym_signer_file_name = ue_strcat_variadic("ssss", folder_name, "/", uid, "_asym_SIGNER"))) {
+        ue_stacktrace_push_msg("Failed to build file name with name '%s' for keystore 'SIGNER'", uid);
+        goto clean_up;
+    }
+
+    if (ue_is_file_exists(sym_file_name) ||
+        ue_is_file_exists(asym_cipher_file_name) ||
+        ue_is_file_exists(asym_signer_file_name)) {
+
+        result = true;
+    } else {
+        result = false;
+    }
+
+clean_up:
+    ue_safe_free(sym_file_name);
+    ue_safe_free(asym_cipher_file_name);
+    ue_safe_free(asym_signer_file_name);
+    return result;
 }
 
 bool ue_crypto_metadata_write_certificates(ue_crypto_metadata *metadata, const char *folder_name, const char *uid) {
@@ -408,14 +493,14 @@ bool ue_crypto_metadata_read(ue_crypto_metadata *metadata, const char *folder_na
     }
 
     if (!crypto_metadata_read_asym(metadata, folder_name, uid, password, "CIPHER",
-        metadata->cipher_certificate, metadata->cipher_sk, metadata->cipher_pk)) {
+        &metadata->cipher_certificate, &metadata->cipher_sk, &metadata->cipher_pk)) {
 
         ue_stacktrace_push_msg("Failed to read cipher asym crypto metadata at '%s'", folder_name);
         return false;
     }
 
     if (!crypto_metadata_read_asym(metadata, folder_name, uid, password, "SIGNER",
-        metadata->signer_certificate, metadata->signer_sk, metadata->signer_pk)) {
+        &metadata->signer_certificate, &metadata->signer_sk, &metadata->signer_pk)) {
 
         ue_stacktrace_push_msg("Failed to read signer asym crypto metadata at '%s'", folder_name);
         return false;
@@ -572,7 +657,7 @@ static bool crypto_metadata_write_asym(ue_crypto_metadata *metadata, const char 
         goto clean_up;
     }
 
-    if (!(file_name = ue_strcat_variadic("sssss", folder_name, "/", uid, "_sym_", keystore_type))) {
+    if (!(file_name = ue_strcat_variadic("sssss", folder_name, "/", uid, "_asym_", keystore_type))) {
         ue_stacktrace_push_msg("Failed to build file name with name '%s' for keystore '%s'", uid, keystore_type);
         goto clean_up;
     }
@@ -733,8 +818,8 @@ clean_up:
 }
 
 static bool crypto_metadata_read_asym(ue_crypto_metadata *metadata, const char *folder_name, const char *uid,
-    const char *password, const char *keystore_type, ue_x509_certificate *certificate, ue_private_key *private_key,
-    ue_public_key *public_key) {
+    const char *password, const char *keystore_type, ue_x509_certificate **certificate, ue_private_key **private_key,
+    ue_public_key **public_key) {
 
     bool result;
     unsigned char *friendly_name;
@@ -750,7 +835,7 @@ static bool crypto_metadata_read_asym(ue_crypto_metadata *metadata, const char *
     string_friendly_name = NULL;
     keystore = NULL;
 
-    if (!(file_name = ue_strcat_variadic("sssss", folder_name, "/", uid, "_sym_", keystore_type))) {
+    if (!(file_name = ue_strcat_variadic("sssss", folder_name, "/", uid, "_asym_", keystore_type))) {
         ue_stacktrace_push_msg("Failed to build file name with name '%s' for keystore '%s'", uid, keystore_type);
         goto clean_up;
     }
@@ -777,13 +862,19 @@ static bool crypto_metadata_read_asym(ue_crypto_metadata *metadata, const char *
         goto clean_up;
     }
 
-    certificate = keystore->certificate;
-    private_key = keystore->private_key;
+    if (!(*certificate = keystore->certificate)) {
+        ue_stacktrace_push_msg("Keystore is read but there is no certificate");
+        goto clean_up;
+    }
+    if (!(*private_key = keystore->private_key)) {
+        ue_stacktrace_push_msg("Keystore is read but there is no private key");
+        goto clean_up;
+    }
 
-    if (!(public_key = ue_rsa_public_key_from_x509_certificate(certificate))) {
+    if (!(*public_key = ue_rsa_public_key_from_x509_certificate(*certificate))) {
         ue_stacktrace_push_msg("Failed to extract RSA public key from specified certificate");
-        ue_x509_certificate_destroy(certificate);
-        ue_private_key_destroy(private_key);
+        ue_x509_certificate_destroy(*certificate);
+        ue_private_key_destroy(*private_key);
         goto clean_up;
     }
 

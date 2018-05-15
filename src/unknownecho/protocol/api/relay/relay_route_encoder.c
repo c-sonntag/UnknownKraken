@@ -96,7 +96,7 @@ ue_byte_stream *ue_relay_route_encode(ue_relay_route *route) {
     for (i = route->steps_number - 1, j = 1; i >= 0; i--, j++) {
         ue_logger_trace("Relay route encoding iteration: %d", i);
         current_step = route->steps[i];
-        if (i != 0) {
+        if (i == route->steps_number - 1 || route->steps_number == 1) {
             next_step = NULL;
         } else {
             next_step = route->steps[i+1];

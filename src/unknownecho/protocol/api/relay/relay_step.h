@@ -6,8 +6,7 @@
 
 #include <stdio.h>
 
-ue_relay_step *ue_relay_step_create(/*ue_communication_metadata *our_communication_metadata,*/
-    ue_communication_metadata *target_communication_metadata,
+ue_relay_step *ue_relay_step_create(ue_communication_metadata *target_communication_metadata,
     ue_crypto_metadata *our_crypto_metadata, ue_crypto_metadata *target_crypto_metadata);
 
 ue_relay_step **ue_relay_steps_create(int step_number, ...);
@@ -15,8 +14,6 @@ ue_relay_step **ue_relay_steps_create(int step_number, ...);
 void ue_relay_step_destroy(ue_relay_step *step);
 
 void ue_relay_step_destroy_all(ue_relay_step *step);
-
-//ue_communication_metadata *ue_relay_step_get_our_communication_metadata(ue_relay_step *step);
 
 ue_communication_metadata *ue_relay_step_get_target_communication_metadata(ue_relay_step *step);
 
