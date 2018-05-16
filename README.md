@@ -55,7 +55,7 @@ The server is now listening on two ports :
 ***
 
 # Installation from sources
-See [INSTALL.md](INSTALL).
+See [INSTALL](INSTALL.md).
 
 ***
 
