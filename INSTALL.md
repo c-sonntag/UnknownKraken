@@ -10,7 +10,7 @@
 ## Installation with Docker
 
 ### From Docker Hub
-* docker run -it -P swasun:libunknownecho bash
+* docker run -it -P swasun/libunknownecho bash
 
 ### From Dockerfile
 * wget https://github.com/swasun/LibUnknownEcho/Dockerfile
