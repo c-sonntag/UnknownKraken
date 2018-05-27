@@ -5,10 +5,16 @@
 
 #include <stdio.h>
 
+typedef enum {
+    UNKNOWNECHO_RELAY_SERVER,
+    UNKNOWNECHO_RELAY_CLIENT
+} ue_communication_destination_type;
+
 typedef struct {
     const char *host;
     unsigned int port;
     const char *type;
+    ue_communication_destination_type destination_type;
 } ue_communication_metadata;
 
 ue_communication_metadata *ue_communication_metadata_create_empty();

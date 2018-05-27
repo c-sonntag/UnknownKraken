@@ -16,7 +16,6 @@ ue_relay_step *ue_relay_step_create(ue_communication_metadata *target_communicat
     step->target_communication_metadata = target_communication_metadata;
     step->our_crypto_metadata = our_crypto_metadata;
     step->target_crypto_metadata = target_crypto_metadata;
-    step->destination_type = UNKNOWNECHO_RELAY_SERVER;
 
     return step;
 }
