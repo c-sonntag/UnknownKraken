@@ -21,9 +21,6 @@
 #define UNKNOWNECHO_CHANNEL_CLIENT_STRUCT_H
 
 #include <unknownecho/network/api/communication/communication_context.h>
-#include <unknownecho/thread/thread_id_struct.h>
-#include <unknownecho/thread/thread_mutex.h>
-#include <unknownecho/thread/thread_cond.h>
 #include <unknownecho/bool.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
 #include <unknownecho/crypto/api/keystore/pkcs12_keystore.h>
@@ -31,6 +28,8 @@
 #include <unknownecho/crypto/api/key/private_key.h>
 #include <unknownecho/container/queue.h>
 #include <unknownecho/console/input.h>
+
+#include <uv.h>
 
 #include <stdio.h>
 #include <stddef.h>
@@ -61,10 +60,10 @@ typedef struct {
 	char *nickname, *keystore_password;
     void *communication_secure_layer_session;
     void *connection;
-	ue_thread_id *read_thread, *write_thread;
+    uv_thread_t read_thread, write_thread;
 	ue_processing_state csr_processing_state;
-    ue_thread_mutex *mutex;
-    ue_thread_cond *cond;
+    uv_mutex_t mutex;
+    uv_cond_t cond;
     ue_queue *push_mode_queue;
 	ue_data_transmission_state transmission_state;
 	bool running;

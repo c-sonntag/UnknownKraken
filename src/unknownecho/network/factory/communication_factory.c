@@ -92,7 +92,7 @@ ue_communication_context *ue_communication_build_socket() {
         (bool (*)(void *))ue_socket_server_is_valid,
         (bool (*)(void *))ue_socket_server_is_running,
         (void (*)(void *))ue_socket_server_destroy,
-        (bool (*)(void *))ue_socket_server_process_polling,
+        (void (*)(void *))ue_socket_server_process_polling,
         (bool (*)(void *, void *))ue_socket_server_disconnect,
         (bool (*)(void *))ue_socket_server_stop,
         (int (*)(void *))ue_socket_server_get_connections_number,

@@ -13,7 +13,6 @@
 #include <unknownecho/errorHandling/check_parameter.h>
 #include <unknownecho/errorHandling/stacktrace.h>
 #include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/thread/thread.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/byte/byte_writer.h>
 #include <unknownecho/container/queue.h>
@@ -57,7 +56,7 @@ ue_relay_server *ue_relay_server_create(ue_communication_metadata *communication
     ue_safe_alloc(relay_server, ue_relay_server, 1);
     relay_server->communication_context = ue_communication_build_from_type(ue_communication_metadata_get_type(communication_metadata));
     relay_server->communication_server = NULL;
-    relay_server->server_thread = NULL;
+    //relay_server->server_thread = NULL;
     relay_server->user_received_callback = user_received_callback;
     relay_server->user_context = user_context;
     relay_server->signal_caught = false;
@@ -105,9 +104,9 @@ void ue_relay_server_destroy(ue_relay_server *relay_server) {
     if (relay_server) {
         ue_communication_server_destroy(relay_server->communication_context, relay_server->communication_server);
         ue_communication_destroy(relay_server->communication_context);
-        if (!relay_server->signal_caught) {
-            ue_safe_free(relay_server->server_thread);
-        }
+        //if (!relay_server->signal_caught) {
+            //ue_safe_free(relay_server->server_thread);
+        //}
         if (relay_server->relay_clients) {
             for (i = 0; i < relay_server->relay_clients_number; i++) {
                 ue_relay_client_destroy(relay_server->relay_clients[i]);
@@ -145,23 +144,15 @@ bool ue_relay_server_start(ue_relay_server *relay_server) {
         return false;
     }
 
-    /* Temporaly ignored -Wpedantic flag as it prevent cast of void * ptr */
-    _Pragma("GCC diagnostic push")
-    _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
-        /* Get the server process impl of communication context or record an error if it failed */
-        bool (*communication_server_process_impl)(void *);
-        communication_server_process_impl = NULL;
-        if (!ue_communication_server_get_process_impl(relay_server->communication_context, &communication_server_process_impl)) {
-            ue_stacktrace_push_msg("Failed to get server process impl");
-            return false;
-        }
+    /* Get the server process impl of communication context or record an error if it failed */
+    void (*communication_server_process_impl)(void *);
+    communication_server_process_impl = NULL;
+    if (!ue_communication_server_get_process_impl(relay_server->communication_context, &communication_server_process_impl)) {
+        ue_stacktrace_push_msg("Failed to get server process impl");
+        return false;
+    }
 
-        /* Start the server processing in another thread or record an error if it failed */
-        if (!(relay_server->server_thread = ue_thread_create((void *)communication_server_process_impl, (void *)relay_server->communication_server))) {
-            ue_stacktrace_push_msg("Failed to create server thread");
-            return false;
-        }
-    _Pragma("GCC diagnostic pop")
+    uv_thread_create(&relay_server->server_thread, communication_server_process_impl, relay_server->communication_server);
 
     return true;
 }
@@ -194,7 +185,7 @@ bool ue_relay_server_wait(ue_relay_server *relay_server) {
     }
 
     /* Wait the server thread finished */
-    ue_thread_join(relay_server->server_thread, NULL);
+    uv_thread_join(&relay_server->server_thread);
 
     return true;
 }
@@ -228,7 +219,7 @@ void ue_relay_server_shutdown_signal_callback(int sig) {
         ue_communication_server_stop(global_relay_server->communication_context, global_relay_server->communication_server);
     }
 
-    ue_thread_cancel(global_relay_server->server_thread);
+    /* @todo cancel the thread properly */
 }
 
 static bool read_consumer(void *connection) {

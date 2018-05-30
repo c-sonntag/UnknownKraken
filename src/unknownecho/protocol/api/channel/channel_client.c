@@ -27,10 +27,6 @@
 #include <unknownecho/network/api/communication/communication_secure_layer.h>
 #include <unknownecho/network/factory/communication_factory.h>
 #include <unknownecho/string/string_utility.h>
-#include <unknownecho/thread/thread.h>
-#include <unknownecho/thread/thread_id_struct.h>
-#include <unknownecho/thread/thread_mutex.h>
-#include <unknownecho/thread/thread_cond.h>
 #include <unknownecho/crypto/api/keystore/pkcs12_keystore.h>
 #include <unknownecho/crypto/api/key/public_key.h>
 #include <unknownecho/crypto/api/key/private_key.h>
@@ -58,6 +54,8 @@
 #include <unknownecho/fileSystem/file_utility.h>
 #include <unknownecho/fileSystem/folder_utility.h>
 #include <unknownecho/time/sleep.h>
+
+#include <uv.h>
 
 #include <string.h>
 #include <limits.h>
@@ -108,11 +106,11 @@ static bool process_csr_request(ue_channel_client *channel_client, ue_csr_contex
 static bool process_user_input(ue_channel_client *channel_client, void *connection,
     unsigned char *data, size_t data_size);
 
-static bool csl_read_consumer(void *parameter);
+static void csl_read_consumer(void *parameter);
 
-static bool csl_write_consumer_stdin(void *parameter);
+static void csl_write_consumer_stdin(void *parameter);
 
-static bool csl_write_consumer_push(void *parameter);
+static void csl_write_consumer_push(void *parameter);
 
 static bool process_get_certificate_request(ue_channel_client *channel_client, ue_pkcs12_keystore *keystore,
     void *connection, const unsigned char *friendly_name, size_t friendly_name_size);
@@ -212,8 +210,6 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
     channel_client->new_message = NULL;
     channel_client->running = false;
     channel_client->nickname = NULL;
-    channel_client->read_thread = NULL;
-    channel_client->write_thread = NULL;
     channel_client->communication_secure_layer_session = NULL;
 	channel_client->channel_id = -1;
 	channel_client->keystore_password = NULL;
@@ -249,15 +245,9 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 		channel_client->initialization_begin_callback(channel_client->user_context);
 	}
 
-	if (!(channel_client->mutex = ue_thread_mutex_create())) {
-		ue_stacktrace_push_msg("Failed to init channel_client->mutex");
-		goto clean_up;
-	}
+    uv_mutex_init(&channel_client->mutex);
 
-	if (!(channel_client->cond = ue_thread_cond_create())) {
-		ue_stacktrace_push_msg("Failed to init channel_client->cond");
-		goto clean_up;
-	}
+    uv_cond_init(&channel_client->cond);
 
     if (!(channel_client->push_mode_queue = ue_queue_create())) {
         ue_stacktrace_push_msg("Failed to create push mode queue");
@@ -355,10 +345,8 @@ void ue_channel_client_destroy(ue_channel_client *channel_client) {
 	if (channel_client->uninitialization_begin_callback) {
 		channel_client->uninitialization_begin_callback(channel_client->user_context);
 	}
-	ue_safe_free(channel_client->read_thread)
-	ue_safe_free(channel_client->write_thread)
-	ue_thread_mutex_destroy(channel_client->mutex);
-	ue_thread_cond_destroy(channel_client->cond);
+    uv_mutex_destroy(&channel_client->mutex);
+    uv_cond_destroy(&channel_client->cond);
     if (channel_client->communication_secure_layer_session) {
         ue_communication_secure_layer_destroy(channel_client->communication_context, channel_client->communication_secure_layer_session);
 	}
@@ -477,25 +465,22 @@ bool ue_channel_client_start(ue_channel_client *channel_client) {
     ue_communication_client_connection_set_user_data(channel_client->communication_context,
         channel_client->connection, channel_client);
 
-    _Pragma("GCC diagnostic push")
-    _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
-        channel_client->read_thread = ue_thread_create((void *)csl_read_consumer, (void *)channel_client);
-        if (channel_client->user_input_mode == UNKNOWNECHO_STDIN_INPUT) {
-            channel_client->write_thread = ue_thread_create((void *)csl_write_consumer_stdin, (void *)channel_client);
-        } else if (channel_client->user_input_mode == UNKNOWNECHO_PUSH_INPUT) {
-            channel_client->write_thread = ue_thread_create((void *)csl_write_consumer_push, (void *)channel_client);
-        } else {
-            ue_stacktrace_push_msg("Unknown user input mode");
-            return false;
-        }
-    _Pragma("GCC diagnostic pop")
+    uv_thread_create(&channel_client->read_thread, csl_read_consumer, channel_client);
+    if (channel_client->user_input_mode == UNKNOWNECHO_STDIN_INPUT) {
+        uv_thread_create(&channel_client->write_thread, csl_write_consumer_stdin, channel_client);
+    } else if (channel_client->user_input_mode == UNKNOWNECHO_PUSH_INPUT) {
+        uv_thread_create(&channel_client->write_thread, csl_write_consumer_push, channel_client);
+    } else {
+        ue_stacktrace_push_msg("Unknown user input mode");
+        return false;
+    }
 
 	if (channel_client->connection_end_callback) {
 		channel_client->connection_end_callback(channel_client->user_context);
 	}
 
-    ue_thread_join(channel_client->read_thread, NULL);
-    ue_thread_join(channel_client->write_thread, NULL);
+    uv_thread_join(&channel_client->read_thread);
+    uv_thread_join(&channel_client->write_thread);
 
     return true;
 }
@@ -512,8 +497,8 @@ void ue_channel_client_shutdown_signal_callback(int sig) {
 		ue_logger_info("Shuting down client #%d...", i);
 		channel_clients[i]->running = false;
 		channel_clients[i]->transmission_state = CLOSING_STATE;
-		ue_thread_cond_signal(channel_clients[i]->cond);
-		ue_thread_cancel(channel_clients[i]->read_thread);
+        uv_cond_signal(&channel_clients[i]->cond);
+        /* @todo check if thread needs a cancel */
 	}
 }
 
@@ -537,12 +522,12 @@ static bool send_message(ue_channel_client *channel_client, void *connection, ue
 	ue_check_parameter_or_return(message_to_send);
 	ue_check_parameter_or_return(ue_byte_stream_get_size(message_to_send) > 0);
 
-	ue_thread_mutex_lock(channel_client->mutex);
+    uv_mutex_lock(&channel_client->mutex);
 	channel_client->transmission_state = WRITING_STATE;
     sent = ue_communication_send_sync(channel_client->communication_context, connection, message_to_send);
 	channel_client->transmission_state = READING_STATE;
-	ue_thread_cond_signal(channel_client->cond);
-	ue_thread_mutex_unlock(channel_client->mutex);
+    uv_cond_signal(&channel_client->cond);
+    uv_mutex_unlock(&channel_client->mutex);
 
     if (sent == 0 || sent == ULLONG_MAX) {
 		ue_logger_info("Connection is interrupted.");
@@ -557,11 +542,11 @@ static bool send_message(ue_channel_client *channel_client, void *connection, ue
 static size_t receive_message(ue_channel_client *channel_client, void *connection) {
 	size_t received;
 
-	ue_thread_mutex_lock(channel_client->mutex);
+    uv_mutex_lock(&channel_client->mutex);
     while (channel_client->transmission_state == WRITING_STATE) {
-        ue_thread_cond_wait(channel_client->cond, channel_client->mutex);
+        uv_cond_wait(&channel_client->cond, &channel_client->mutex);
     }
-    ue_thread_mutex_unlock(channel_client->mutex);
+    uv_mutex_unlock(&channel_client->mutex);
     ue_byte_stream_clean_up(channel_client->received_message);
     received = ue_communication_receive_sync(channel_client->communication_context, connection,
         channel_client->received_message);
@@ -1124,7 +1109,7 @@ clean_up:
     return result;
 }
 
-static bool csl_read_consumer(void *parameter) {
+static void csl_read_consumer(void *parameter) {
 	bool result;
 	size_t received;
 	int type;
@@ -1210,18 +1195,14 @@ static bool csl_read_consumer(void *parameter) {
 			}
 		}
 	}
-
-	return result;
 }
 
-static bool csl_write_consumer_stdin(void *parameter) {
-	bool result;
+static void csl_write_consumer_stdin(void *parameter) {
 	char *input;
     void *connection;
 	ue_channel_client *channel_client;
     unsigned char *bytes_input;
 
-	result = true;
 	input = NULL;
     bytes_input = NULL;
     channel_client = (ue_channel_client *)parameter;
@@ -1229,7 +1210,7 @@ static bool csl_write_consumer_stdin(void *parameter) {
 
     if (!send_nickname_request(channel_client, connection)) {
         ue_stacktrace_push_msg("Failed to send nickname request");
-        return false;
+        return;
     }
 
 	while (channel_client->running) {
@@ -1263,11 +1244,9 @@ static bool csl_write_consumer_stdin(void *parameter) {
 
 	ue_safe_free(input);
     ue_safe_free(bytes_input);
-
-	return result;
 }
 
-static bool csl_write_consumer_push(void *parameter) {
+static void csl_write_consumer_push(void *parameter) {
     void *connection;
     ue_channel_client *channel_client;
     pushed_message *message;
@@ -1277,7 +1256,7 @@ static bool csl_write_consumer_push(void *parameter) {
 
     if (!send_nickname_request(channel_client, connection)) {
         ue_stacktrace_push_msg("Failed to send nickname request");
-        return false;
+        return;
     }
 
     while (channel_client->running) {
@@ -1292,8 +1271,6 @@ static bool csl_write_consumer_push(void *parameter) {
             ue_stacktrace_push_msg("Failed to process user input");
         }
     }
-
-    return true;
 }
 
 static bool process_get_certificate_request(ue_channel_client *channel_client, ue_pkcs12_keystore *keystore,

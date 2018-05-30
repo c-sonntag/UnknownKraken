@@ -63,7 +63,7 @@ typedef struct {
     bool (*communication_server_is_valid_impl)(void *server);
     bool (*communication_server_is_running_impl)(void *server);
     void (*communication_server_destroy_impl)(void *server);
-    bool (*communication_server_process_impl)(void *server);
+    void (*communication_server_process_impl)(void *server);
     bool (*communication_server_disconnect_impl)(void *server, void *connection);
     bool (*communication_server_stop_impl)(void *server);
     int (*communication_server_get_connections_number_impl)(void *server);

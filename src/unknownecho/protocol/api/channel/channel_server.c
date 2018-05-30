@@ -31,10 +31,6 @@
 #include <unknownecho/network/api/communication/communication_secure_layer.h>
 #include <unknownecho/network/factory/communication_factory.h>
 #include <unknownecho/string/string_utility.h>
-#include <unknownecho/thread/thread_id_struct.h>
-#include <unknownecho/thread/thread.h>
-#include <unknownecho/thread/thread_mutex.h>
-#include <unknownecho/thread/thread_cond.h>
 #include <unknownecho/crypto/api/key/public_key.h>
 #include <unknownecho/crypto/api/key/private_key.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
@@ -60,6 +56,8 @@
 #include <unknownecho/fileSystem/file_utility.h>
 #include <unknownecho/fileSystem/folder_utility.h>
 #include <unknownecho/time/sleep.h>
+
+#include <uv.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -172,8 +170,6 @@ bool ue_channel_server_create(char *persistent_path, int csr_server_port, int cs
     channel_server->uninitialization_end_callback = uninitialization_end_callback;
     channel_server->cipher_name = ue_string_create_from(cipher_name);
 	channel_server->digest_name = ue_string_create_from(digest_name);
-    channel_server->csr_server_thread = NULL;
-    channel_server->csl_server_thread = NULL;
     channel_server->communication_context = ue_communication_build_from_type(communication_type);
 
     if (channel_server->initialization_begin_callback) {
@@ -315,11 +311,11 @@ bool ue_channel_server_create(char *persistent_path, int csr_server_port, int cs
 
     ue_logger_info("CSL server waiting on port %d", csl_server_port);
 
-    channel_server->csl_server_mutex = ue_thread_mutex_create();
-    channel_server->csl_server_cond = ue_thread_cond_create();
+    uv_mutex_init(&channel_server->csl_server_mutex);
+    uv_cond_init(&channel_server->csl_server_cond);
     channel_server->csl_server_processing_state = FREE_STATE;
-    channel_server->csr_server_mutex = ue_thread_mutex_create();
-    channel_server->csr_server_cond = ue_thread_cond_create();
+    uv_mutex_init(&channel_server->csr_server_mutex);
+    uv_cond_init(&channel_server->csr_server_cond);
     channel_server->csr_server_processing_state = FREE_STATE;
     channel_server->signal_caught = false;
 
@@ -339,10 +335,10 @@ void ue_channel_server_destroy() {
         if (channel_server->uninitialization_begin_callback) {
             channel_server->uninitialization_begin_callback(channel_server->user_context);
         }
-        ue_thread_mutex_destroy(channel_server->csl_server_mutex);
-        ue_thread_mutex_destroy(channel_server->csr_server_mutex);
-        ue_thread_cond_destroy(channel_server->csl_server_cond);
-        ue_thread_cond_destroy(channel_server->csr_server_cond);
+        uv_mutex_destroy(&channel_server->csl_server_mutex);
+        uv_mutex_destroy(&channel_server->csr_server_mutex);
+        uv_cond_destroy(&channel_server->csl_server_cond);
+        uv_cond_destroy(&channel_server->csr_server_cond);
         ue_communication_server_destroy(channel_server->communication_context, channel_server->csl_server);
         ue_communication_server_destroy(channel_server->communication_context, channel_server->csr_server);
         ue_communication_secure_layer_destroy(channel_server->communication_context, channel_server->communication_secure_layer_session);
@@ -351,8 +347,7 @@ void ue_channel_server_destroy() {
         }
         ue_safe_free(channel_server->channels);
         if (channel_server->signal_caught) {
-            ue_safe_free(channel_server->csr_server_thread);
-            ue_safe_free(channel_server->csl_server_thread);
+            /* @todo free thread properly in case of shutdown before join */
         }
         ue_safe_free(channel_server->keystore_password);
         ue_pkcs12_keystore_destroy(channel_server->csr_keystore);
@@ -388,20 +383,17 @@ void ue_channel_server_destroy() {
 }
 
 bool ue_channel_server_process() {
-    _Pragma("GCC diagnostic push")
-    _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
-        bool (*communication_server_process_impl)(void *);
-        communication_server_process_impl = NULL;
-        if (!ue_communication_server_get_process_impl(channel_server->communication_context, &communication_server_process_impl)) {
-            ue_stacktrace_push_msg("Failed to get server process impl");
-            return false;
-        }
-        channel_server->csr_server_thread = ue_thread_create((void *)communication_server_process_impl, (void *)channel_server->csr_server);
-        channel_server->csl_server_thread = ue_thread_create((void *)communication_server_process_impl, (void *)channel_server->csl_server);
-    _Pragma("GCC diagnostic pop")
+    void (*communication_server_process_impl)(void *);
+    communication_server_process_impl = NULL;
+    if (!ue_communication_server_get_process_impl(channel_server->communication_context, &communication_server_process_impl)) {
+        ue_stacktrace_push_msg("Failed to get server process impl");
+        return false;
+    }
+    uv_thread_create(&channel_server->csr_server_thread, communication_server_process_impl, channel_server->csr_server);
+    uv_thread_create(&channel_server->csl_server_thread, communication_server_process_impl, channel_server->csl_server);
 
-    ue_thread_join(channel_server->csr_server_thread, NULL);
-    ue_thread_join(channel_server->csl_server_thread, NULL);
+    uv_thread_join(&channel_server->csr_server_thread);
+    uv_thread_join(&channel_server->csl_server_thread);
 
     return true;
 }
@@ -417,8 +409,7 @@ void ue_channel_server_shutdown_signal_callback(int sig) {
         ue_communication_server_stop(channel_server->communication_context, channel_server->csr_server);
     }
 
-    ue_thread_cancel(channel_server->csr_server_thread);
-    ue_thread_cancel(channel_server->csl_server_thread);
+    /* @todo cancel blocked threads due to shutdown before join */
 }
 
 static size_t send_cipher_message(void *connection, ue_byte_stream *message_to_send) {
@@ -1166,8 +1157,7 @@ static bool csl_server_read_consumer(void *connection) {
     }
 
     if (channel_server->signal_caught) {
-        ue_thread_cancel(channel_server->csl_server_thread);
-        ue_thread_cancel(channel_server->csr_server_thread);
+        /* @todo free thread properly in case of shutdown before join */
     }
 
     ue_check_parameter_or_return(connection);

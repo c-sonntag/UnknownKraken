@@ -31,6 +31,8 @@
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/defines.h>
 
+#include <uv.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,7 +51,7 @@ ue_logger *ue_logger_create() {
     log->print_level = 0;
     log->file_level = 0;
     log->fp = NULL;
-    log->mutex = ue_thread_mutex_create();
+    uv_mutex_init(&log->mutex);
     log->colored = true;
     log->details = true;
     log->padding = false;
@@ -70,7 +72,7 @@ ue_logger *ue_logger_create() {
 
 void ue_logger_destroy(ue_logger *log) {
     if (log) {
-        ue_thread_mutex_destroy(log->mutex);
+        uv_mutex_destroy(&log->mutex);
         ue_safe_free(log->level_colors[UNKNOWNECHO_LOG_TRACE]);
         ue_safe_free(log->level_colors[UNKNOWNECHO_LOG_DEBUG]);
         ue_safe_free(log->level_colors[UNKNOWNECHO_LOG_INFO]);
@@ -137,7 +139,7 @@ bool ue_logger_record(ue_logger *log, int level, const char *file, int line, con
     }
 
     /* Acquire lock */
-    ue_thread_mutex_lock(log->mutex);
+    uv_mutex_lock(&log->mutex);
 
     /* Get current time */
     time(&rawtime);
@@ -201,7 +203,7 @@ bool ue_logger_record(ue_logger *log, int level, const char *file, int line, con
     fflush(log->fp);
 
     /* Release lock */
-    ue_thread_mutex_unlock(log->mutex);
+    uv_mutex_unlock(&log->mutex);
 
     return true;
 }
@@ -222,7 +224,7 @@ bool ue_logger_record_stacktrace(ue_logger *log, ue_stacktrace *stacktrace, cons
     }
 
     /* Acquire lock */
-    ue_thread_mutex_lock(log->mutex);
+    uv_mutex_lock(&log->mutex);
 
     /* Get current time */
     time(&rawtime);
@@ -280,7 +282,7 @@ bool ue_logger_record_stacktrace(ue_logger *log, ue_stacktrace *stacktrace, cons
     }
 
     /* Release lock */
-    ue_thread_mutex_unlock(log->mutex);
+    uv_mutex_unlock(&log->mutex);
 
     return true;
 }

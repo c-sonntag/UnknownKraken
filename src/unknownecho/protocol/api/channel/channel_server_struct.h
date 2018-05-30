@@ -21,12 +21,11 @@
 #define UNKNOWNECHO_CHANNEL_SERVER_STRUCT_H
 
 #include <unknownecho/network/api/communication/communication_context.h>
-#include <unknownecho/thread/thread_mutex.h>
-#include <unknownecho/thread/thread_cond.h>
-#include <unknownecho/thread/thread_id_struct.h>
 #include <unknownecho/protocol/api/channel/channel.h>
 #include <unknownecho/crypto/api/keystore/pkcs12_keystore.h>
 #include <unknownecho/bool.h>
+
+#include <uv.h>
 
 #include <stdio.h>
 #include <stddef.h>
@@ -38,14 +37,14 @@ typedef enum {
 
 typedef struct {
     void *csr_server, *csl_server;
-    ue_thread_mutex *csr_server_mutex, *csl_server_mutex;
-    ue_thread_cond *csr_server_cond, *csl_server_cond;
+    uv_mutex_t csr_server_mutex, csl_server_mutex;
+    uv_cond_t csr_server_cond, csl_server_cond;
     ue_processing_state csr_server_processing_state, csl_server_processing_state;
     ue_communication_context *communication_context;
     void *communication_secure_layer_session;
     ue_channel **channels;
     int channels_number;
-    ue_thread_id *csr_server_thread, *csl_server_thread;
+    uv_thread_t csr_server_thread, csl_server_thread;
     bool signal_caught;
     char *keystore_password;
     ue_pkcs12_keystore *csr_keystore, *csl_keystore, *cipher_keystore, *signer_keystore;

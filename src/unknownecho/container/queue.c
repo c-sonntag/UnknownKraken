@@ -64,9 +64,9 @@ ue_queue *ue_queue_create() {
     queue->front = queue->rear = NULL;
     queue->count = 0;
     queue->user_print_func = NULL;
-    queue->mutex = ue_thread_mutex_create();
-    queue->read_cond = ue_thread_cond_create();
-    queue->write_cond = ue_thread_cond_create();
+    uv_mutex_init(&queue->mutex);
+    uv_cond_init(&queue->read_cond);
+    uv_cond_init(&queue->write_cond);
     queue->user_alloc_func = NULL;
     queue->user_free_func = NULL;
 
@@ -94,9 +94,9 @@ void ue_queue_destroy(ue_queue *queue) {
             ue_queue_pop(queue);
         }
 
-        ue_thread_mutex_destroy(queue->mutex);
-        ue_thread_cond_destroy(queue->read_cond);
-        ue_thread_cond_destroy(queue->write_cond);
+        uv_mutex_destroy(&queue->mutex);
+        uv_cond_destroy(&queue->read_cond);
+        uv_cond_destroy(&queue->write_cond);
 
         ue_safe_free(queue);
     }
@@ -118,11 +118,11 @@ bool ue_queue_push(ue_queue *queue, void *data) {
     ue_check_parameter_or_return(queue);
     ue_check_parameter_or_return(data);
 
-    ue_thread_mutex_lock(queue->mutex);
+    uv_mutex_lock(&queue->mutex);
 
     result = ue_queue_push_internal(queue, data, false);
 
-    ue_thread_mutex_unlock(queue->mutex);
+    uv_mutex_unlock(&queue->mutex);
 
     return result;
 }
@@ -133,11 +133,11 @@ bool ue_queue_push_wait(ue_queue *queue, void *data) {
     ue_check_parameter_or_return(queue);
     ue_check_parameter_or_return(data);
 
-    ue_thread_mutex_lock(queue->mutex);
+    uv_mutex_lock(&queue->mutex);
 
     result = ue_queue_push_internal(queue, data, true);
 
-    ue_thread_mutex_unlock(queue->mutex);
+    uv_mutex_unlock(&queue->mutex);
 
     return result;
 }
@@ -145,7 +145,7 @@ bool ue_queue_push_wait(ue_queue *queue, void *data) {
 bool ue_queue_pop(ue_queue *queue) {
     ue_check_parameter_or_return(queue);
 
-    ue_thread_mutex_lock(queue->mutex);
+    uv_mutex_lock(&queue->mutex);
 
     queue->front1 = queue->front;
 
@@ -176,9 +176,9 @@ bool ue_queue_pop(ue_queue *queue) {
         queue->count--;
     }
 
-    ue_thread_mutex_unlock(queue->mutex);
+    uv_mutex_unlock(&queue->mutex);
 
-    ue_thread_cond_signal(queue->write_cond);
+    uv_cond_signal(&queue->write_cond);
 
     return true;
 }
@@ -191,11 +191,11 @@ int ue_queue_size(ue_queue *queue) {
         return -1;
     }
 
-    ue_thread_mutex_lock(queue->mutex);
+    uv_mutex_lock(&queue->mutex);
 
     size = queue->count;
 
-    ue_thread_mutex_unlock(queue->mutex);
+    uv_mutex_unlock(&queue->mutex);
 
     return size;
 }
@@ -205,11 +205,11 @@ void *ue_queue_front(ue_queue *queue) {
 
     ue_check_parameter_or_return(queue);
 
-    ue_thread_mutex_lock(queue->mutex);
+    uv_mutex_lock(&queue->mutex);
 
     result = ue_queue_front_internal(queue, false);
 
-    ue_thread_mutex_unlock(queue->mutex);
+    uv_mutex_unlock(&queue->mutex);
 
     return result;
 }
@@ -219,11 +219,11 @@ void *ue_queue_front_wait(ue_queue *queue) {
 
     ue_check_parameter_or_return(queue);
 
-    ue_thread_mutex_lock(queue->mutex);
+    uv_mutex_lock(&queue->mutex);
 
     result = ue_queue_front_internal(queue, true);
 
-    ue_thread_mutex_unlock(queue->mutex);
+    uv_mutex_unlock(&queue->mutex);
 
     return result;
 }
@@ -233,11 +233,11 @@ bool ue_queue_empty(ue_queue *queue) {
 
     ue_check_parameter_or_return(queue);
 
-    ue_thread_mutex_lock(queue->mutex);
+    uv_mutex_lock(&queue->mutex);
 
     result = (queue->front == NULL) && (queue->rear == NULL);
 
-    ue_thread_mutex_unlock(queue->mutex);
+    uv_mutex_unlock(&queue->mutex);
 
     return result;
 }
@@ -248,7 +248,7 @@ bool ue_queue_print(ue_queue *queue, FILE *fd) {
     ue_check_parameter_or_return(queue);
     ue_check_parameter_or_return(fd);
 
-    ue_thread_mutex_lock(queue->mutex);
+    uv_mutex_lock(&queue->mutex);
 
     result = false;
     queue->front1 = queue->front;
@@ -274,7 +274,7 @@ bool ue_queue_print(ue_queue *queue, FILE *fd) {
     result = true;
 
 end:
-    ue_thread_mutex_unlock(queue->mutex);
+    uv_mutex_unlock(&queue->mutex);
     return result;
 }
 
@@ -322,7 +322,7 @@ static bool ue_queue_push_internal(ue_queue *queue, void *data, bool wait) {
 
     queue->count++;
 
-    ue_thread_cond_signal(queue->read_cond);
+    uv_cond_signal(&queue->read_cond);
 
     return true;
 }
@@ -333,7 +333,7 @@ static void *ue_queue_front_internal(ue_queue *queue, bool wait) {
     result = NULL;
 
     if (wait && queue->count == 0) {
-        ue_thread_cond_wait(queue->read_cond, queue->mutex);
+        uv_cond_wait(&queue->read_cond, &queue->mutex);
     } else if (queue->count == 0) {
         ue_stacktrace_push_msg("Queue is empty");
         return NULL;

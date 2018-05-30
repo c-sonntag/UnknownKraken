@@ -1,0 +1,11 @@
+[DONE] - Replace concurence (simple replacement)
+[CURRENT] - Replace network
+[TODO] - Replace time
+[TODO] - Replace thread storage (uv_key module ?)
+[TODO] - Check IPv6 capability
+[TODO] - Check UV_ERRNO_MAP
+[TODO] - Check uv_fs module
+[TODO] - Replace tty, pipe and signal
+[TODO] - Improve concurence with barrier and thread pool
+[TODO] - Add error handling of uv functions
+[TODO] - Clean up useless examples

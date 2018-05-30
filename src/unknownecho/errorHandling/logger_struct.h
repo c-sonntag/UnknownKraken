@@ -29,7 +29,8 @@
 #define UNKNOWNECHO_LOGGER_STRUCT_H
 
 #include <unknownecho/bool.h>
-#include <unknownecho/thread/thread_mutex.h>
+
+#include <uv.h>
 
 #include <stdio.h>
 
@@ -49,7 +50,7 @@ typedef struct {
     bool padding;
     bool message_color_as_level_color;
     FILE *fp;
-    ue_thread_mutex *mutex;
+    uv_mutex_t mutex;
     char **level_colors;
     char *message_color;
 } ue_logger;

@@ -22,4 +22,8 @@
 
 int ue_console_get_width();
 
+void ue_console_erase_previous_line();
+
+void ue_console_erase_previous_lines(int n);
+
 #endif

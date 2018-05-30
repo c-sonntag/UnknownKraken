@@ -25,6 +25,8 @@
     #include <sys/ioctl.h>
 #endif
 
+#include <stdio.h>
+
 int ue_console_get_width() {
     int width;
 
@@ -41,3 +43,16 @@ int ue_console_get_width() {
     return width;
 }
 
+void ue_console_erase_previous_line() {
+    printf("\033[A\033[2K");
+}
+
+void ue_console_erase_previous_lines(int n) {
+    int i;
+
+    for (i = 0; i < n; i++) {
+        ue_console_erase_previous_line();
+    }
+
+    rewind(stdout);
+}

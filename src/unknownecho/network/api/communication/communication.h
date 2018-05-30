@@ -51,7 +51,7 @@ ue_communication_context *ue_communication_create(const char *communication_type
     bool (*communication_server_is_valid_impl)(void *server),
     bool (*communication_server_is_running_impl)(void *server),
     void (*communication_server_destroy_impl)(void *server),
-    bool (*communication_server_process_impl)(void *server),
+    void (*communication_server_process_impl)(void *server),
     bool (*communication_server_disconnect_impl)(void *server, void *connection),
     bool (*communication_server_stop_impl)(void *server),
     int (*communication_server_get_connections_number_impl)(void *server),
@@ -113,7 +113,7 @@ bool ue_communication_server_destroy(ue_communication_context *context, void *se
 
 bool ue_communication_server_process(ue_communication_context *context, void *server);
 
-bool ue_communication_server_get_process_impl(ue_communication_context *context, bool (**communication_server_process_impl)(void *));
+bool ue_communication_server_get_process_impl(ue_communication_context *context, void (**communication_server_process_impl)(void *));
 
 bool ue_communication_server_disconnect(ue_communication_context *context, void *server, void *connection);
 

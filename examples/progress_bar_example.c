@@ -35,7 +35,7 @@ void test_1() {
     ue_progress_bar_set_right_delimiter(progress_bar, "|");
 
     for (i = 0; i <= n; i++) {
-        ue_progress_bar_update(progress_bar, i);
+        ue_progress_bar_update_and_print(progress_bar, i);
         ue_millisleep(10);
     }
     printf("\n");
@@ -60,7 +60,7 @@ void test_2() {
 #endif
 
     for (i = 0; i <= n; i++) {
-        ue_progress_bar_update(progress_bar, i);
+        ue_progress_bar_update_and_print(progress_bar, i);
         ue_millisleep(1);
     }
     printf("\n");
@@ -75,17 +75,17 @@ void test_3() {
     n = 5;
     progress_bar = ue_progress_bar_create(n, "Loading", stdout);
 
-    ue_progress_bar_update(progress_bar, 0);
+    ue_progress_bar_update_and_print(progress_bar, 0);
     ue_millisleep(200);
-    ue_progress_bar_update(progress_bar, 1);
+    ue_progress_bar_update_and_print(progress_bar, 1);
     ue_millisleep(200);
-    ue_progress_bar_update(progress_bar, 2);
+    ue_progress_bar_update_and_print(progress_bar, 2);
     ue_millisleep(200);
-    ue_progress_bar_update(progress_bar, 3);
+    ue_progress_bar_update_and_print(progress_bar, 3);
     ue_millisleep(200);
-    ue_progress_bar_update(progress_bar, 4);
+    ue_progress_bar_update_and_print(progress_bar, 4);
     ue_millisleep(200);
-    ue_progress_bar_update(progress_bar, 5);
+    ue_progress_bar_update_and_print(progress_bar, 5);
     ue_millisleep(200);
     printf("\n");
 
@@ -101,7 +101,7 @@ void test_4() {
     ue_progress_bar_set_style(progress_bar, "#", ".");
 
     for (i = 0; i <= n; i++) {
-        ue_progress_bar_update(progress_bar, i);
+        ue_progress_bar_update_and_print(progress_bar, i);
         ue_millisleep(10);
     }
     printf("\n");

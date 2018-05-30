@@ -15,7 +15,7 @@ static int genrsa_callback(int p, int n, BN_GENCB *cb) {
 
     if (p != 0) {
         progress_bar = (ue_progress_bar *)BN_GENCB_get_arg(cb);
-        ue_progress_bar_update_by_increasing(progress_bar, 10);
+        ue_progress_bar_update_by_increasing_and_print(progress_bar, 10);
     }
 
     return 1;
