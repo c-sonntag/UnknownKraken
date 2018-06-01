@@ -51,8 +51,6 @@ ue_socket_client_connection *ue_socket_client_connection_init() {
 	connection->all_messages = ue_byte_vector_create_empty();
 	connection->tmp_message = ue_byte_vector_create_empty();
 	connection->current_message = ue_byte_vector_create_empty();
-	connection->read_messages_consumer_thread = NULL;
-	connection->write_messages_consumer_thread = NULL;
 	if ((connection->received_message = ue_byte_stream_create()) == NULL) {
 		ue_stacktrace_push_msg("Failed to init received message");
 		goto clean_up;

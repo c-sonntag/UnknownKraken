@@ -38,7 +38,8 @@
 #include <unknownecho/network/api/tls/tls_connection.h>
 #include <unknownecho/network/api/communication/communication_connection_state.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
-#include <unknownecho/thread/thread_id_struct.h>
+
+#include <uv.h>
 
 #if defined(__unix__)
     #include <netinet/in.h>
@@ -50,7 +51,7 @@ typedef struct {
 	int fd;
 	ue_byte_stream *received_message, *message_to_send, *tmp_stream;
 	ue_queue *received_messages, *messages_to_send;
-	ue_thread_id *read_messages_consumer_thread, *write_messages_consumer_thread;
+    uv_thread_t read_messages_consumer_thread, write_messages_consumer_thread;
     ue_communication_connection_state state;
 	char *nickname;
 	ue_byte_vector *split_message, *all_messages, *tmp_message, *current_message;

@@ -20,11 +20,15 @@
 #ifndef UNKNOWNECHO_INPUT_H
 #define UNKNOWNECHO_INPUT_H
 
+#include <stddef.h>
+
 typedef enum {
     UNKNOWNECHO_STDIN_INPUT,
     UNKNOWNECHO_PUSH_INPUT
 } ue_user_input_mode;
 
 char *ue_input_string(char *prefix);
+
+char *ue_input_password(const char *prompt_message, size_t max_size);
 
 #endif
