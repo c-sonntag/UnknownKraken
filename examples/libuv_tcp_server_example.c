@@ -127,7 +127,7 @@ void on_new_connection(uv_stream_t *server, int status) {
         client->data = &id;
         clients->clients_number++;
         /* @todo add error handling here */
-        uv_read_start((uv_stream_t*) client, alloc_buffer, echo_read);
+        uv_read_start((uv_stream_t *) client, alloc_buffer, echo_read);
     } else {
         uv_close((uv_handle_t*) client, on_close);
     }
