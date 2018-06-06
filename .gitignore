@@ -11,3 +11,6 @@ LibUnknownEcho.config
 LibUnknownEcho.creator
 LibUnknownEcho.files
 LibUnknownEcho.includes
+
+# Commentend until fixed
+.travis.yml

@@ -75,6 +75,11 @@ Clean-up build files, binaries:
 ./clean.sh
 ```
 
+Install:
+```bash
+./build_release.sh && sudo ./install.sh
+```
+
 The static lib will appear in the `bin` directory, and all the examples in `bin/debug/examples` or `bin/release/examples`, according to the compilation mode.
 
 # FAQ

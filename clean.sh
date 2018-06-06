@@ -1,4 +1,5 @@
 #!/bin/bash
+
 echo "Removing bin release files"
 rm -rf bin/release/*
 echo "Removing bin debug files"
