@@ -21,7 +21,6 @@
 #include <unknownecho/time/timer_measure.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/string/string_utility.h>
-#include <unknownecho/errorHandling/logger.h>
 
 #include <string.h>
 
@@ -59,7 +58,7 @@ static ue_timer_measure *get_timer_measure_from_id(ue_timer *tm, unsigned int id
 	return measure;
 }
 
-static double resolve_result_unity(char *unity, double n) {
+/*static */double resolve_result_unity(char *unity, double n) {
 	double result;
 
 	if (strcmp(unity, "us") == 0) {
@@ -69,7 +68,7 @@ static double resolve_result_unity(char *unity, double n) {
 	} else if (strcmp(unity, "s") == 0) {
 		result = n / 1000000;
 	} else {
-		ue_logger_warn("Unknown unity '%s', returned unchanged value", unity);
+		ei_logger_warn("Unknown unity '%s', returned unchanged value", unity);
 		result = n;
 	}
 
@@ -134,7 +133,7 @@ void ue_timer_average_impl(ue_timer *tm, unsigned int id, double *result) {
 }
 
 bool ue_timer_average_print_impl(ue_timer *tm, unsigned int id, char *prefix_message) {
-	double result;
+	/*double result;
 	ue_timer_measure *measure;
 	char *unity;
 
@@ -146,7 +145,10 @@ bool ue_timer_average_print_impl(ue_timer *tm, unsigned int id, char *prefix_mes
 
 	printf("Average time for %s : %.4f%s\n", prefix_message, resolve_result_unity(unity, result), unity);
 
-	return true;
+	return true;*/
+
+	ei_stacktrace_push_msg("Not implemented");
+	return false;
 }
 
 void ue_timer_total_impl(ue_timer *tm, unsigned int id, double *result) {
@@ -163,7 +165,7 @@ void ue_timer_total_impl(ue_timer *tm, unsigned int id, double *result) {
 }
 
 bool ue_timer_total_print_impl(ue_timer *tm, unsigned int id, char *prefix_message) {
-	double result;
+	/*double result;
 	ue_timer_measure *measure;
 	char *unity;
 
@@ -175,5 +177,8 @@ bool ue_timer_total_print_impl(ue_timer *tm, unsigned int id, char *prefix_messa
 
 	printf("Total time for %s : %.4f%s\n", prefix_message, resolve_result_unity(unity, result), unity);
 
-	return true;
+	return true;*/
+
+	ei_stacktrace_push_msg("Not implemented");
+	return false;
 }

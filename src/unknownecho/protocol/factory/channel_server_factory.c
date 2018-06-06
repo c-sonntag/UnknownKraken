@@ -20,25 +20,25 @@
 #include <unknownecho/protocol/factory/channel_server_factory.h>
 #include <unknownecho/protocol/api/channel/channel_server_parameters.h>
 #include <unknownecho/protocol/api/channel/channel_server_parameters_struct.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 
 static bool initialization_begin_callback(void *user_context) {
-    ue_logger_trace("Initialization begin");
+    ei_logger_trace("Initialization begin");
     return true;
 }
 
 static bool initialization_end_callback(void *user_context){
-    ue_logger_trace("Initialization end");
+    ei_logger_trace("Initialization end");
     return true;
 }
 
 static bool uninitialization_begin_callback(void *user_context) {
-    ue_logger_trace("Uninitialization begin");
+    ei_logger_trace("Uninitialization begin");
     return true;
 }
 
 static bool uninitialization_end_callback(void *user_context) {
-    ue_logger_trace("Uninitialization end");
+    ei_logger_trace("Uninitialization end");
     return true;
 }
 

@@ -19,9 +19,7 @@
 
 #include <unknownecho/byte/byte_split.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/errorHandling/check_parameter.h>
+#include <ei/ei.h>
 
 #include <string.h>
 
@@ -54,7 +52,7 @@ unsigned char **ue_byte_split(unsigned char *bytes, size_t bytes_len, unsigned c
 				}
 				tmp_len = k - l + 1;
 				if (tmp_len <= 0) {
-					ue_stacktrace_push_msg("Invalid k - l + 1. k:%d l:%d", k, l);
+					ei_stacktrace_push_msg("Invalid k - l + 1. k:%d l:%d", k, l);
 					goto clean_up_error;
 				}
 				tmp_sizes[tmp_count] = tmp_len-1;
@@ -80,7 +78,7 @@ unsigned char **ue_byte_split(unsigned char *bytes, size_t bytes_len, unsigned c
 
 			tmp_len = m;
 			if (tmp_len <= 0) {
-				ue_stacktrace_push_msg("Invalid k - l + 1. k:%d l:%d", k, l);
+				ei_stacktrace_push_msg("Invalid k - l + 1. k:%d l:%d", k, l);
 				goto clean_up_error;
 			}
 			if (delimiter_len + k == bytes_len) {
@@ -148,20 +146,20 @@ bool ue_byte_split_append(ue_byte_vector *vector, unsigned char *bytes, size_t b
 	unsigned char **split_elements;
 	size_t split_count, *split_sizes, i;
 
-	ue_check_parameter_or_return(vector);
-	ue_check_parameter_or_return(bytes);
-	ue_check_parameter_or_return(bytes_len > 0);
-	ue_check_parameter_or_return(delimiter);
-	ue_check_parameter_or_return(delimiter_len > 0);
+	ei_check_parameter_or_return(vector);
+	ei_check_parameter_or_return(bytes);
+	ei_check_parameter_or_return(bytes_len > 0);
+	ei_check_parameter_or_return(delimiter);
+	ei_check_parameter_or_return(delimiter_len > 0);
 
 	if (!(split_elements = ue_byte_split(bytes, bytes_len, delimiter, delimiter_len, &split_count, &split_sizes))) {
-		ue_stacktrace_push_msg("Failed to split this bytes stream with this delimiter");
+		ei_stacktrace_push_msg("Failed to split this bytes stream with this delimiter");
 		return false;
 	}
 
 	for (i = 0; i < split_count; i++) {
 		if (!ue_byte_vector_append_bytes(vector, split_elements[i], split_sizes[i])) {
-			ue_logger_error("Failed to append element %ld of size %ld", i, split_sizes[i]);
+			ei_logger_error("Failed to append element %ld of size %ld", i, split_sizes[i]);
 		}
 	}
 

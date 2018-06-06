@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 
 /**
  *  @brief Alloc a variable in a safe way.
@@ -44,7 +44,7 @@
  */
 #define ue_safe_alloc(var, type, size) \
 	if (size <= 0) { \
-		ue_stacktrace_push_msg("Can't allocate data with a negative or null size '%d'", (int)size); \
+		ei_stacktrace_push_msg("Can't allocate data with a negative or null size '%d'", (int)size); \
 		return 0; \
 	} \
 	var = NULL; \
@@ -54,18 +54,18 @@
 
 #define ue_safe_alloc_ret(var, type, size, ret) \
 	if (size <= 0) { \
-		ue_stacktrace_push_msg("Can't allocate data with a negative or null size '%d'", (int)size); \
+		ei_stacktrace_push_msg("Can't allocate data with a negative or null size '%d'", (int)size); \
 		ret = 0; \
 	} else { \
 		var = NULL; \
 		var = (type*)malloc(size * sizeof(type)); \
 		memset(var, 0, size * sizeof(type)); \
 	    if (errno == ENOMEM) { \
-	        ue_stacktrace_push_errno() \
+	        ei_stacktrace_push_errno() \
 	        ue_safe_free(var) \
 	        ret = 0; \
 		} else if (!var) { \
-	        ue_stacktrace_push_msg("No such memory to allocate") \
+	        ei_stacktrace_push_msg("No such memory to allocate") \
 			ret = 0; \
 		} \
 		ret = 1; \
@@ -81,7 +81,7 @@
  */
 #define ue_safe_alloc_or_goto(var, type, size, label) \
 	if (size <= 0) { \
-		ue_stacktrace_push_msg("Can't allocate data with a negative or null size '%d'", (int)size); \
+		ei_stacktrace_push_msg("Can't allocate data with a negative or null size '%d'", (int)size); \
 		goto label; \
 	} \
 	var = NULL; \
@@ -99,11 +99,11 @@
  */
 #define ue_safe_realloc(var, type, old_size, more_size) \
 	if (old_size < 0) { \
-		ue_stacktrace_push_msg("Can't allocate data with a negative old_size '%d'", (int)old_size); \
+		ei_stacktrace_push_msg("Can't allocate data with a negative old_size '%d'", (int)old_size); \
 		return 0; \
 	} \
 	if (old_size == 0 && more_size <= 0) { \
-		ue_stacktrace_push_msg("Can't allocate data with an old_size equal to 0 and a null or negative more_size '%d'", (int)more_size); \
+		ei_stacktrace_push_msg("Can't allocate data with an old_size equal to 0 and a null or negative more_size '%d'", (int)more_size); \
 	    return 0; \
 	} \
 	var = (type*)realloc(var, (old_size + more_size + 1) * sizeof(type)); \
@@ -120,11 +120,11 @@
  */
 #define ue_safe_realloc_or_goto(var, type, old_size, more_size, label) \
 	if (old_size < 0) { \
-		ue_stacktrace_push_msg("Can't allocate data with a negative old_size '%d'", (int)old_size); \
+		ei_stacktrace_push_msg("Can't allocate data with a negative old_size '%d'", (int)old_size); \
 	    goto label; \
 	} \
 	if (old_size == 0 && more_size <= 0) { \
-		ue_stacktrace_push_msg("Can't allocate data with an old_size equal to 0 and a null or negative more_size '%d'", (int)more_size); \
+		ei_stacktrace_push_msg("Can't allocate data with an old_size equal to 0 and a null or negative more_size '%d'", (int)more_size); \
 	    goto label; \
 	} \
 	var = (type*)realloc(var, (old_size + more_size + 1) * sizeof(type)); \
@@ -135,18 +135,18 @@
  *  @brief Check if a variable is correctly allocated.
  *
  *  Check if 'errno' variable is equal to value ENOMEM ;
- *  if it is, we add an error message to ue_stacktrace.
+ *  if it is, we add an error message to ei_stacktrace.
  *  Some OS didn't update 'errno' variable in this case, so we check
  *  also if the variable is set to NULL ; if it is, we add an error
- *  message to ue_stacktrace.
+ *  message to ei_stacktrace.
  */
 #define ue_check_alloc(var) \
 	if (errno == ENOMEM) { \
-        ue_stacktrace_push_errno() \
+        ei_stacktrace_push_errno() \
         ue_safe_free(var) \
         return 0; \
 	} else if (!var) { \
-        ue_stacktrace_push_msg("No such memory to allocate") \
+        ei_stacktrace_push_msg("No such memory to allocate") \
 		return 0; \
 	} \
 
@@ -156,11 +156,11 @@
  */
 #define ue_check_alloc_or_goto(var, label) \
 	if (errno == ENOMEM) { \
-        ue_stacktrace_push_errno() \
+        ei_stacktrace_push_errno() \
         ue_safe_free(var) \
         goto label; \
 	} else if (!var) { \
-        ue_stacktrace_push_msg("No such memory to allocate") \
+        ei_stacktrace_push_msg("No such memory to allocate") \
 		goto label; \
 	} \
 

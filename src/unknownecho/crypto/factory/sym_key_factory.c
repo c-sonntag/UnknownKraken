@@ -21,7 +21,7 @@
 #include <unknownecho/crypto/factory/hasher_factory.h>
 #include <unknownecho/crypto/utils/crypto_random.h>
 #include <unknownecho/crypto/api/hash/hasher.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/byte/byte_utility.h>
 
@@ -38,7 +38,7 @@ ue_sym_key *ue_sym_key_create_random() {
 	ue_safe_alloc(buf, unsigned char, buf_size);
 
 	if (!ue_crypto_random_bytes(buf, buf_size)) {
-		ue_stacktrace_push_msg("Failed to get crypto random bytes");
+		ei_stacktrace_push_msg("Failed to get crypto random bytes");
 		ue_safe_free(buf);
 		return NULL;
 	}
@@ -51,7 +51,7 @@ ue_sym_key *ue_sym_key_create_random() {
 }
 
 ue_sym_key *ue_sym_key_create_from_file(char *file_path) {
-	ue_stacktrace_push_msg("Not implemented");
+	ei_stacktrace_push_msg("Not implemented");
 	return NULL;
 }
 

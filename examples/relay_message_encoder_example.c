@@ -13,8 +13,7 @@
 #include <unknownecho/crypto/factory/crypto_metadata_factory.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/byte/byte_writer.h>
-#include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,27 +39,27 @@ int main() {
         fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
         exit(EXIT_FAILURE);
     }
-    ue_logger_info("UnknownEchoLib is correctly initialized");
+    ei_logger_info("UnknownEchoLib is correctly initialized");
 
-    ue_logger_info("Generating crypto metadata for point A...");
+    ei_logger_info("Generating crypto metadata for point A...");
     if (!(our_crypto_metadata = ue_crypto_metadata_create_default())) {
-        ue_stacktrace_push_msg("Failed to generate default crypto metadata for point A");
+        ei_stacktrace_push_msg("Failed to generate default crypto metadata for point A");
         goto clean_up;
     }
 
-    ue_logger_info("Generating crypto metadata for point B...");
+    ei_logger_info("Generating crypto metadata for point B...");
     if (!(b_crypto_metadata = ue_crypto_metadata_create_default())) {
-        ue_stacktrace_push_msg("Failed to generate default crypto metadata for point B");
+        ei_stacktrace_push_msg("Failed to generate default crypto metadata for point B");
         goto clean_up;
     }
 
-    ue_logger_info("Generating crypto metadata for point C...");
+    ei_logger_info("Generating crypto metadata for point C...");
     if (!(c_crypto_metadata = ue_crypto_metadata_create_default())) {
-        ue_stacktrace_push_msg("Failed to generate default crypto metadata for point C");
+        ei_stacktrace_push_msg("Failed to generate default crypto metadata for point C");
         goto clean_up;
     }
 
-    ue_logger_info("Creating route...");
+    ei_logger_info("Creating route...");
 
     /**
      * A: 192.168.0.1:5000
@@ -79,55 +78,55 @@ int main() {
         ),
         step_number))) {
 
-        ue_stacktrace_push_msg("Failed to create route A -> B -> C");
+        ei_stacktrace_push_msg("Failed to create route A -> B -> C");
         goto clean_up;
     }
 
     /* The payload is just an simple Hello world ! */
     ue_byte_writer_append_string(message_payload, "Hello world !");
 
-    ue_logger_info("A -> B");
+    ei_logger_info("A -> B");
 
-    ue_logger_info("Encoding route and message for B...");
+    ei_logger_info("Encoding route and message for B...");
     if (!(encoded_message = ue_relay_message_encode(route, UNKNOWNECHO_RELAY_MESSAGE_ID_SEND, message_payload))) {
-        ue_stacktrace_push_msg("Failed to encode relay message for B");
+        ei_stacktrace_push_msg("Failed to encode relay message for B");
         goto clean_up;
     }
 
-    ue_logger_info("Lets say we send through network the encoded message to B [...]");
+    ei_logger_info("Lets say we send through network the encoded message to B [...]");
 
-    ue_logger_info("Decoding message as B...");
+    ei_logger_info("Decoding message as B...");
     if (!(b_received_message = ue_relay_message_decode(encoded_message, b_crypto_metadata))) {
-        ue_stacktrace_push_msg("Failed to decode message with B crypto metadata");
+        ei_stacktrace_push_msg("Failed to decode message with B crypto metadata");
         goto clean_up;
     }
-    ue_logger_info("Part of B decoded.");
+    ei_logger_info("Part of B decoded.");
 
-    ue_logger_info("B -> C");
+    ei_logger_info("B -> C");
 
     ue_byte_stream_destroy(encoded_message);
 
-    ue_logger_info("Encoding route and message for C...");
+    ei_logger_info("Encoding route and message for C...");
     if (!(encoded_message = ue_relay_message_encode_relay(b_received_message))) {
-        ue_stacktrace_push_msg("Failed to encode relay message for B");
+        ei_stacktrace_push_msg("Failed to encode relay message for B");
         goto clean_up;
     }
 
-    ue_logger_info("Lets say B send through network the encoded message to C [...]");
+    ei_logger_info("Lets say B send through network the encoded message to C [...]");
 
-    ue_logger_info("Decoding message as C...");
+    ei_logger_info("Decoding message as C...");
     if (!(c_received_message = ue_relay_message_decode(encoded_message, c_crypto_metadata))) {
-        ue_stacktrace_push_msg("Failed to decode message with C crypto metadata");
+        ei_stacktrace_push_msg("Failed to decode message with C crypto metadata");
         goto clean_up;
     }
 
     if (!c_received_message->unsealed_payload) {
-        ue_stacktrace_push_msg("Message payload isn't unsealed");
+        ei_stacktrace_push_msg("Message payload isn't unsealed");
         goto clean_up;
     }
 
-    ue_logger_info("Part of C decoded.");
-    ue_logger_info("Print message payload of C:");
+    ei_logger_info("Part of C decoded.");
+    ei_logger_info("Print message payload of C:");
     ue_byte_stream_print_string(c_received_message->payload, stdout);
 
 clean_up:
@@ -139,9 +138,9 @@ clean_up:
     ue_relay_received_message_destroy(b_received_message);
     ue_relay_received_message_destroy(c_received_message);
     ue_byte_stream_destroy(message_payload);
-    if (ue_stacktrace_is_filled()) {
-        ue_logger_error("An error occurred with the following stacktrace :");
-        ue_stacktrace_print_all();
+    if (ei_stacktrace_is_filled()) {
+        ei_logger_error("An error occurred with the following stacktrace :");
+        ei_stacktrace_print_all();
     }
     ue_uninit();
     return 0;

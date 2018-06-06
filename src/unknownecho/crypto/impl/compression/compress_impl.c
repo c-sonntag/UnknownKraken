@@ -133,7 +133,7 @@ bool ue_deflate_compress_file(FILE *source, FILE *dest, int level) {
 
         /* all input will be used */
         if (strm.avail_in != 0) {
-            ue_stacktrace_push_msg("All input is not use");
+            ei_stacktrace_push_msg("All input is not use");
             (void)deflateEnd(&strm);
             return false;
         }

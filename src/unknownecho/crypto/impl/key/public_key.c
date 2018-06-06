@@ -20,8 +20,7 @@
 #include <unknownecho/crypto/api/key/public_key.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 
 #include <openssl/rsa.h>
 #include <openssl/bn.h>
@@ -46,7 +45,7 @@ ue_public_key *ue_public_key_create(ue_public_key_type key_type, void *impl, int
 		pk->type = RSA_PUBLIC_KEY;
 	} else {
 		ue_public_key_destroy(pk);
-		ue_stacktrace_push_msg("Specified key type is unknown");
+		ei_stacktrace_push_msg("Specified key type is unknown");
 		return NULL;
 	}
 
@@ -95,7 +94,7 @@ int ue_public_key_size(ue_public_key *pk) {
 		return RSA_size((RSA *)pk->impl);
 	}
 
-	ue_stacktrace_push_msg("Not implemented key type");
+	ei_stacktrace_push_msg("Not implemented key type");
 
 	return -1;
 }
@@ -107,7 +106,7 @@ bool ue_public_key_is_valid(ue_public_key *pk) {
 		return is_valid_rsa_public_key(EVP_PKEY_get1_RSA(pk->impl)) && ue_public_key_size(pk) == pk->bits;
 	}
 
-	ue_stacktrace_push_msg("Not implemented key type");
+	ei_stacktrace_push_msg("Not implemented key type");
 
 	return false;
 }
@@ -118,7 +117,7 @@ void *ue_public_key_get_impl(ue_public_key *pk) {
 
 void *ue_public_key_get_rsa_impl(ue_public_key *pk) {
 	if (!pk->impl) {
-		ue_stacktrace_push_msg("Specified public key have no implementation");
+		ei_stacktrace_push_msg("Specified public key have no implementation");
 		return NULL;
 	}
 	return EVP_PKEY_get1_RSA(pk->impl);

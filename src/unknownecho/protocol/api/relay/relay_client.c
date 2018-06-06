@@ -10,9 +10,7 @@
 #include <unknownecho/network/factory/communication_factory.h>
 #include <unknownecho/crypto/api/crypto_metadata.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/byte/byte_writer.h>
 
@@ -23,7 +21,7 @@ static ue_relay_client *ue_relay_client_create(ue_communication_metadata *target
     ue_relay_client *relay_client;
     void *client_connection_parameters;
 
-    ue_check_parameter_or_return(target_communication_metadata);
+    ei_check_parameter_or_return(target_communication_metadata);
 
     /* Alloc the client objet */
     ue_safe_alloc(relay_client, ue_relay_client, 1);
@@ -45,7 +43,7 @@ static ue_relay_client *ue_relay_client_create(ue_communication_metadata *target
     if (!(client_connection_parameters = ue_communication_build_client_connection_parameters(relay_client->communication_context, 2,
         ue_communication_metadata_get_host(target_communication_metadata), ue_communication_metadata_get_port(target_communication_metadata)))) {
         ue_safe_free(relay_client);
-        ue_stacktrace_push_msg("Failed to create client connection parameters context");
+        ei_stacktrace_push_msg("Failed to create client connection parameters context");
         goto clean_up;
     }
 
@@ -53,7 +51,7 @@ static ue_relay_client *ue_relay_client_create(ue_communication_metadata *target
     if (!(relay_client->connection = ue_communication_connect(relay_client->communication_context,
         client_connection_parameters))) {
         ue_safe_free(relay_client);
-        ue_stacktrace_push_msg("Failed to connect socket to server");
+        ei_stacktrace_push_msg("Failed to connect socket to server");
         goto clean_up;
     }
 
@@ -72,29 +70,29 @@ ue_relay_client *ue_relay_client_create_from_route(ue_relay_route *route) {
     target_communication_metadata = NULL;
 
     if (!ue_relay_route_is_valid(route)) {
-        ue_stacktrace_push_msg("Specified route isn't valid");
+        ei_stacktrace_push_msg("Specified route isn't valid");
         return NULL;
     }
 
     if (!(step = ue_relay_route_get_sender(route))) {
-        ue_stacktrace_push_msg("Specified route seems valid but it returns a null sender step");
+        ei_stacktrace_push_msg("Specified route seems valid but it returns a null sender step");
         return NULL;
     }
 
     /* Check if relay objet is valid */
     if (!ue_relay_step_is_valid(step)) {
-        ue_stacktrace_push_msg("Specified route seems valid but it returns an invalid sender step");
+        ei_stacktrace_push_msg("Specified route seems valid but it returns an invalid sender step");
         return NULL;
     }
 
     /* Get the communication metadata of the target */
     if (!(target_communication_metadata = ue_relay_step_get_target_communication_metadata(step))) {
-        ue_stacktrace_push_msg("Failed to get target communication metadata from sender step");
+        ei_stacktrace_push_msg("Failed to get target communication metadata from sender step");
         return NULL;
     }
 
     if (!(client = ue_relay_client_create(target_communication_metadata))) {
-        ue_stacktrace_push_msg("Failed to create new relay client from target communication metadata");
+        ei_stacktrace_push_msg("Failed to create new relay client from target communication metadata");
         return NULL;
     }
 
@@ -103,7 +101,7 @@ ue_relay_client *ue_relay_client_create_from_route(ue_relay_route *route) {
 
     if (!(client->encoded_route = ue_relay_route_encode(route))) {
         ue_relay_client_destroy(client);
-        ue_stacktrace_push_msg("Failed to create encoded route from specified route");
+        ei_stacktrace_push_msg("Failed to create encoded route from specified route");
         return NULL;
     }
 
@@ -116,7 +114,7 @@ ue_relay_client *ue_relay_client_create_as_relay(ue_communication_metadata *targ
     ue_relay_client *relay_client;
 
     if (!(relay_client = ue_relay_client_create(target_communication_metadata))) {
-        ue_stacktrace_push_msg("Failed to create relay client with next step");
+        ei_stacktrace_push_msg("Failed to create relay client with next step");
         return NULL;
     }
     relay_client->our_crypto_metadata = our_crypto_metadata;
@@ -142,7 +140,7 @@ bool ue_relay_client_is_valid(ue_relay_client *client) {
 ue_communication_context *ue_relay_client_get_communication_context(ue_relay_client *client) {
     /* Check first if the specified client is valid */
     if (!ue_relay_client_is_valid(client)) {
-        ue_stacktrace_push_msg("Specified client isn't valid. The connection is maybe isn't established");
+        ei_stacktrace_push_msg("Specified client isn't valid. The connection is maybe isn't established");
         return NULL;
     }
 
@@ -152,7 +150,7 @@ ue_communication_context *ue_relay_client_get_communication_context(ue_relay_cli
 void *ue_relay_client_get_connection(ue_relay_client *client) {
     /* Check first if the specified client is valid */
     if (!ue_relay_client_is_valid(client)) {
-        ue_stacktrace_push_msg("Specified client isn't valid. The connection is maybe isn't established");
+        ei_stacktrace_push_msg("Specified client isn't valid. The connection is maybe isn't established");
         return NULL;
     }
 
@@ -168,39 +166,39 @@ bool ue_relay_client_send_message(ue_relay_client *client, ue_byte_stream *messa
     encoded_message = NULL;
 
     if (!ue_relay_client_is_valid(client)) {
-        ue_stacktrace_push_msg("Specified client is invalid");
+        ei_stacktrace_push_msg("Specified client is invalid");
         goto clean_up;
     }
 
     if (!client->route) {
-        ue_stacktrace_push_msg("Specified client has no route specified");
+        ei_stacktrace_push_msg("Specified client has no route specified");
         goto clean_up;
     }
 
     if (!client->encoded_route) {
-        ue_stacktrace_push_msg("Specified client has no encoded route specified");
+        ei_stacktrace_push_msg("Specified client has no encoded route specified");
         goto clean_up;
     }
 
     if (!message || ue_byte_stream_is_empty(message)) {
-        ue_stacktrace_push_msg("Specified message ptr is null or the message is empty");
+        ei_stacktrace_push_msg("Specified message ptr is null or the message is empty");
         goto clean_up;
     }
 
     if (!(receiver_step = ue_relay_route_get_receiver(client->route))) {
-        ue_stacktrace_push_msg("Failed to get receiver step from client relay route");
+        ei_stacktrace_push_msg("Failed to get receiver step from client relay route");
         goto clean_up;
     }
 
     if (!(encoded_message = ue_relay_message_encode_from_encoded_route(client->encoded_route,
         UNKNOWNECHO_RELAY_MESSAGE_ID_SEND, message, receiver_step))) {
 
-        ue_stacktrace_push_msg("Failed to encoded specified message");
+        ei_stacktrace_push_msg("Failed to encoded specified message");
         goto clean_up;
     }
 
     if (!ue_communication_send_sync(client->communication_context, client->connection, encoded_message)) {
-        ue_stacktrace_push_msg("Failed to send encoded message in synchronous mode");
+        ei_stacktrace_push_msg("Failed to send encoded message in synchronous mode");
         goto clean_up;
     }
 
@@ -219,17 +217,17 @@ bool ue_relay_client_relay_message(ue_relay_client *client, ue_relay_received_me
     encoded_message = NULL;
 
     if (!ue_relay_client_is_valid(client)) {
-        ue_stacktrace_push_msg("Specified client is invalid");
+        ei_stacktrace_push_msg("Specified client is invalid");
         goto clean_up;
     }
 
     if (!(encoded_message = ue_relay_message_encode_relay(received_message))) {
-        ue_stacktrace_push_msg("Failed to encode message as relay from received message");
+        ei_stacktrace_push_msg("Failed to encode message as relay from received message");
         goto clean_up;
     }
 
     if (!ue_communication_send_sync(client->communication_context, client->connection, encoded_message)) {
-        ue_stacktrace_push_msg("Failed to send encoded message in synchronous mode");
+        ei_stacktrace_push_msg("Failed to send encoded message in synchronous mode");
         goto clean_up;
     }
 
@@ -251,30 +249,30 @@ bool ue_relay_client_receive_message(ue_relay_client *client, ue_byte_stream *me
     decoded_message = NULL;
 
     if (!ue_relay_client_is_valid(client)) {
-        ue_stacktrace_push_msg("Specified client is invalid");
+        ei_stacktrace_push_msg("Specified client is invalid");
         goto clean_up;
     }
 
-    ue_check_parameter_or_return(message);
+    ei_check_parameter_or_return(message);
 
     received_message = ue_byte_stream_create();
 
     received = ue_communication_receive_sync(client->communication_context, client->connection, received_message);
     if (received == 0) {
-        ue_stacktrace_push_msg("Failed to received bytes");
+        ei_stacktrace_push_msg("Failed to received bytes");
         goto clean_up;
     } else if (received == ULLONG_MAX) {
-        ue_stacktrace_push_msg("Failed to received bytes: connection was interrupted");
+        ei_stacktrace_push_msg("Failed to received bytes: connection was interrupted");
         goto clean_up;
     }
 
     if (!(decoded_message = ue_relay_message_decode(received_message, client->our_crypto_metadata))) {
-        ue_stacktrace_push_msg("Failed to decode message");
+        ei_stacktrace_push_msg("Failed to decode message");
         goto clean_up;
     }
 
     if (!decoded_message->unsealed_payload) {
-        ue_stacktrace_push_msg("Decoded message doesn't contains the unsealed payload. Maybe the message wasn't meant for us");
+        ei_stacktrace_push_msg("Decoded message doesn't contains the unsealed payload. Maybe the message wasn't meant for us");
         goto clean_up;
     }
 

@@ -20,8 +20,7 @@
 #include <unknownecho/console/input.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -85,7 +84,7 @@ static ssize_t get_input_password_unix(char **password, size_t max_size, int mas
      * @todo check each parameter to detail error message
      */
     if (!password || !max_size || !stream) {
-        ue_stacktrace_push_msg("At least one invalid parameter");
+        ei_stacktrace_push_msg("At least one invalid parameter");
         return -1;
     }
 
@@ -94,7 +93,7 @@ static ssize_t get_input_password_unix(char **password, size_t max_size, int mas
 
     /* Save orig settings */
     if (tcgetattr(0, &old_kbd_mode)) {
-        ue_stacktrace_push_msg("tcgetattr failed");
+        ei_stacktrace_push_msg("tcgetattr failed");
         return -1;
     }
 
@@ -105,7 +104,7 @@ static ssize_t get_input_password_unix(char **password, size_t max_size, int mas
     new_kbd_mode.c_cc[VTIME] = 0;
     new_kbd_mode.c_cc[VMIN] = 1;
     if (tcsetattr(0, TCSANOW, &new_kbd_mode)) {
-        ue_stacktrace_push_msg("tcsetattr failed with new flags");
+        ei_stacktrace_push_msg("tcsetattr failed with new flags");
         return -1;
     }
 
@@ -134,13 +133,13 @@ static ssize_t get_input_password_unix(char **password, size_t max_size, int mas
 
     /* Reset original keyboard */
     if (tcsetattr(0, TCSANOW, &old_kbd_mode)) {
-        ue_stacktrace_push_msg("tcsetattr failed to set previous flags");
+        ei_stacktrace_push_msg("tcsetattr failed to set previous flags");
         return -1;
     }
 
     /* Warn if password truncated */
     if (idx == max_size - 1 && c != '\n') {
-        ue_logger_warn("Truncated at %zu chars", max_size - 1);
+        ei_logger_warn("Truncated at %zu chars", max_size - 1);
     }
 
     return idx;

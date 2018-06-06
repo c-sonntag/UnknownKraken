@@ -19,7 +19,7 @@
 
 #include <unknownecho/crypto/impl/openssl_init.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -117,7 +117,7 @@ bool ue_openssl_init() {
 	SSL_load_error_strings();
 
 	if (!alloc_mutexes()) {
-		ue_stacktrace_push_msg("Failed to alloc mutexes");
+		ei_stacktrace_push_msg("Failed to alloc mutexes");
 		return false;
 	}
 

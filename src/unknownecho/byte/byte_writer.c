@@ -20,8 +20,7 @@
 #include <unknownecho/byte/byte_writer.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -29,9 +28,9 @@
 #include <stdint.h>
 
 bool ue_byte_writer_append_bytes(ue_byte_stream *stream, unsigned char *bytes, long bytes_len) {
-	ue_check_parameter_or_return(stream);
-    ue_check_parameter_or_return(bytes);
-    ue_check_parameter_or_return(bytes_len > 0 && bytes_len != 18446744073709551615UL);
+	ei_check_parameter_or_return(stream);
+    ei_check_parameter_or_return(bytes);
+    ei_check_parameter_or_return(bytes_len > 0 && bytes_len != 18446744073709551615UL);
 
     if ((bytes_len + stream->position) > stream->size) {
         ue_safe_realloc(stream->bytes, unsigned char, stream->size, bytes_len + stream->size);
@@ -48,12 +47,12 @@ bool ue_byte_writer_append_bytes(ue_byte_stream *stream, unsigned char *bytes, l
 bool ue_byte_writer_append_string(ue_byte_stream *stream, const char *string) {
     long string_len;
 
-    ue_check_parameter_or_return(stream);
-    ue_check_parameter_or_return(string);
+    ei_check_parameter_or_return(stream);
+    ei_check_parameter_or_return(string);
 
     string_len = strlen(string);
 
-    ue_check_parameter_or_return(string_len > 0 && string_len != 18446744073709551615UL);
+    ei_check_parameter_or_return(string_len > 0 && string_len != 18446744073709551615UL);
 
     if ((string_len + stream->position) > stream->size) {
         ue_safe_realloc(stream->bytes, unsigned char, stream->size, string_len + stream->size);
@@ -68,7 +67,7 @@ bool ue_byte_writer_append_string(ue_byte_stream *stream, const char *string) {
 }
 
 bool ue_byte_writer_append_byte(ue_byte_stream *stream, unsigned char byte) {
-	ue_check_parameter_or_return(stream);
+	ei_check_parameter_or_return(stream);
 
     if ((1 + stream->position) > stream->size) {
         ue_safe_realloc(stream->bytes, unsigned char, stream->size, 1 + stream->size);
@@ -81,7 +80,7 @@ bool ue_byte_writer_append_byte(ue_byte_stream *stream, unsigned char byte) {
 }
 
 bool ue_byte_writer_append_int(ue_byte_stream *stream, int n) {
-	ue_check_parameter_or_return(stream);
+	ei_check_parameter_or_return(stream);
 
     if ((4 + stream->position) > stream->size) {
         ue_safe_realloc(stream->bytes, unsigned char, stream->size, 4 + stream->size);
@@ -97,7 +96,7 @@ bool ue_byte_writer_append_int(ue_byte_stream *stream, int n) {
 }
 
 bool ue_byte_writer_append_long(ue_byte_stream *stream, long int n) {
-   ue_check_parameter_or_return(stream);
+   ei_check_parameter_or_return(stream);
 
     if ((8 + stream->position) > stream->size) {
         ue_safe_realloc(stream->bytes, unsigned char, stream->size, 8 + stream->size);
@@ -117,23 +116,23 @@ bool ue_byte_writer_append_long(ue_byte_stream *stream, long int n) {
 }
 
 bool ue_byte_writer_append_stream(ue_byte_stream *stream, ue_byte_stream *to_copy) {
-    ue_check_parameter_or_return(stream);
-    ue_check_parameter_or_return(to_copy);
+    ei_check_parameter_or_return(stream);
+    ei_check_parameter_or_return(to_copy);
 
     if (ue_byte_stream_is_empty(to_copy)) {
-        ue_stacktrace_push_msg("Specified stream to copy is empty");
+        ei_stacktrace_push_msg("Specified stream to copy is empty");
         return false;
     }
 
     /* Set the virtual cursor of the byte stream to the begining for safety */
 
     if (!ue_byte_writer_append_int(stream, (int)ue_byte_stream_get_size(to_copy))) {
-        ue_stacktrace_push_msg("Failed to write data size to destination stream");
+        ei_stacktrace_push_msg("Failed to write data size to destination stream");
         return false;
     }
 
     if (!ue_byte_writer_append_bytes(stream, ue_byte_stream_get_data(to_copy), ue_byte_stream_get_size(to_copy))) {
-        ue_stacktrace_push_msg("Failed to copy data from stream to copy to destination stream");
+        ei_stacktrace_push_msg("Failed to copy data from stream to copy to destination stream");
         return false;
     }
 

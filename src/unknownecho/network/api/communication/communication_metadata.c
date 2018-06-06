@@ -1,6 +1,5 @@
 #include <unknownecho/network/api/communication/communication_metadata.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/string/string_split.h>
 #include <unknownecho/container/string_vector.h>
@@ -28,15 +27,15 @@ ue_communication_metadata *ue_communication_metadata_create_from_string(const ch
 
     metadata = NULL;
 
-    ue_check_parameter_or_return(string);
+    ei_check_parameter_or_return(string);
 
     if (!(vector = ue_string_split((char *)string, ":"))) {
-        ue_stacktrace_push_msg("Failed to split strint metadata");
+        ei_stacktrace_push_msg("Failed to split strint metadata");
         return NULL;
     }
 
     if ((elements = ue_string_vector_size(vector)) != 3) {
-        ue_stacktrace_push_msg("Split string metadata doesn't contains 3 elements: %d", elements);
+        ei_stacktrace_push_msg("Split string metadata doesn't contains 3 elements: %d", elements);
         goto clean_up;
     }
 
@@ -66,14 +65,14 @@ void ue_communication_metadata_clean_up(ue_communication_metadata *metadata) {
 }
 
 const char *ue_communication_metadata_get_host(ue_communication_metadata *metadata) {
-    ue_check_parameter_or_return(metadata);
+    ei_check_parameter_or_return(metadata);
 
     return metadata->host;
 }
 
 bool ue_communication_metadata_set_host(ue_communication_metadata *metadata, const char *host) {
-   ue_check_parameter_or_return(metadata);
-   ue_check_parameter_or_return(host);
+   ei_check_parameter_or_return(metadata);
+   ei_check_parameter_or_return(host);
 
    metadata->host = ue_string_create_from(host);
 
@@ -81,14 +80,14 @@ bool ue_communication_metadata_set_host(ue_communication_metadata *metadata, con
 }
 
 unsigned int ue_communication_metadata_get_port(ue_communication_metadata *metadata) {
-    ue_check_parameter_or_return(metadata);
+    ei_check_parameter_or_return(metadata);
 
     return metadata->port;
 }
 
 bool ue_communication_metadata_set_port(ue_communication_metadata *metadata, unsigned int port) {
-    ue_check_parameter_or_return(metadata);
-    ue_check_parameter_or_return(port > 0);
+    ei_check_parameter_or_return(metadata);
+    ei_check_parameter_or_return(port > 0);
 
     metadata->port = port;
 
@@ -96,14 +95,14 @@ bool ue_communication_metadata_set_port(ue_communication_metadata *metadata, uns
 }
 
 const char *ue_communication_metadata_get_type(ue_communication_metadata *metadata) {
-    ue_check_parameter_or_return(metadata);
+    ei_check_parameter_or_return(metadata);
 
     return metadata->type;
 }
 
 bool ue_communication_metadata_set_type(ue_communication_metadata *metadata, const char *type) {
-    ue_check_parameter_or_return(metadata);
-    ue_check_parameter_or_return(type);
+    ei_check_parameter_or_return(metadata);
+    ei_check_parameter_or_return(type);
 
     metadata->type = ue_string_create_from(type);
 
@@ -112,26 +111,26 @@ bool ue_communication_metadata_set_type(ue_communication_metadata *metadata, con
 
 bool ue_communication_metadata_is_valid(ue_communication_metadata *metadata) {
     if (!metadata) {
-        ue_stacktrace_push_msg("Specified metadata ptr is null");
+        ei_stacktrace_push_msg("Specified metadata ptr is null");
         return false;
     }
 
     if (!metadata->type) {
-        ue_stacktrace_push_msg("Specified metadata has null type");
+        ei_stacktrace_push_msg("Specified metadata has null type");
         return false;
     }
 
     if (strcmp(metadata->type, UNKNOWNECHO_COMMUNICATION_SOCKET) == 0) {
         if (!metadata->host) {
-            ue_stacktrace_push_msg("The metadata type is of UNKNOWNECHO_COMMUNICATION_SOCKET but no host is provide");
+            ei_stacktrace_push_msg("The metadata type is of UNKNOWNECHO_COMMUNICATION_SOCKET but no host is provide");
             return false;
         }
         if (metadata->port <= 0) {
-            ue_stacktrace_push_msg("The metadata type is of UNKNOWNECHO_COMMUNICATION_SOCKET but the port is invalid");
+            ei_stacktrace_push_msg("The metadata type is of UNKNOWNECHO_COMMUNICATION_SOCKET but the port is invalid");
             return false;
         }
     } else {
-        ue_stacktrace_push_msg("The type of communication of specified metadata is invalid");
+        ei_stacktrace_push_msg("The type of communication of specified metadata is invalid");
         return false;
     }
 
@@ -141,14 +140,14 @@ bool ue_communication_metadata_is_valid(ue_communication_metadata *metadata) {
 const char *ue_communication_metadata_to_string(ue_communication_metadata *metadata) {
     const char *string;
 
-    ue_check_parameter_or_return(metadata);
+    ei_check_parameter_or_return(metadata);
 
     if (strcmp(metadata->type, UNKNOWNECHO_COMMUNICATION_SOCKET) == 0) {
         string = ue_strcat_variadic("ssssd", ue_communication_metadata_get_type(metadata), ":",
             ue_communication_metadata_get_host(metadata), ":",
             ue_communication_metadata_get_port(metadata));
     } else {
-        ue_stacktrace_push_msg("Unknown communication metadata type");
+        ei_stacktrace_push_msg("Unknown communication metadata type");
         return NULL;
     }
 
@@ -158,8 +157,8 @@ const char *ue_communication_metadata_to_string(ue_communication_metadata *metad
 bool ue_communication_metadata_print(ue_communication_metadata *metadata, FILE *fd) {
     const char *string;
 
-    ue_check_parameter_or_return(metadata);
-    ue_check_parameter_or_return(fd);
+    ei_check_parameter_or_return(metadata);
+    ei_check_parameter_or_return(fd);
 
     string = ue_communication_metadata_to_string(metadata);
 
@@ -176,12 +175,12 @@ bool ue_communication_metadata_equals(ue_communication_metadata *m1, ue_communic
      */
 
     /*if (!ue_communication_metadata_is_valid(m1)) {
-        ue_stacktrace_push_msg("First specified communication metadata ptr is invalid");
+        ei_stacktrace_push_msg("First specified communication metadata ptr is invalid");
         return false;
     }
 
     if (!ue_communication_metadata_is_valid(m2)) {
-        ue_stacktrace_push_msg("Second specified communication metadata ptr is invalid");
+        ei_stacktrace_push_msg("Second specified communication metadata ptr is invalid");
         return false;
     }*/
 

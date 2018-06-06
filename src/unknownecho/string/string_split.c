@@ -20,8 +20,7 @@
 #include <unknownecho/string/string_split.h>
 #include <unknownecho/container/string_vector.h>
 #include <unknownecho/string/string_utility.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 
 #include <string.h>
@@ -60,8 +59,8 @@ ue_string_vector *ue_string_split(char *string, char *delimiter) {
     char *token;
     multi_tok_t s;
 
-    ue_check_parameter_or_return(string);
-    ue_check_parameter_or_return(delimiter);
+    ei_check_parameter_or_return(string);
+    ei_check_parameter_or_return(delimiter);
 
     v = ue_string_vector_create_empty();
     s = init();
@@ -84,9 +83,9 @@ bool ue_string_split_append(ue_string_vector *v, char *string, char *delimiter) 
     char *token;
     multi_tok_t s;
 
-    ue_check_parameter_or_return(v);
-    ue_check_parameter_or_return(string);
-    ue_check_parameter_or_return(delimiter);
+    ei_check_parameter_or_return(v);
+    ei_check_parameter_or_return(string);
+    ei_check_parameter_or_return(delimiter);
 
     s = init();
 
@@ -108,9 +107,9 @@ bool ue_string_split_append_one_delim(ue_string_vector *v, const char *string, c
     const char *token;
     char *tmp_string;
 
-    ue_check_parameter_or_return(v);
-    ue_check_parameter_or_return(string);
-    ue_check_parameter_or_return(delimiter);
+    ei_check_parameter_or_return(v);
+    ei_check_parameter_or_return(string);
+    ei_check_parameter_or_return(delimiter);
 
     tmp_string = ue_string_create_from(string);
 

@@ -19,7 +19,7 @@
 
 #include <unknownecho/crypto/api/certificate/x509_csr.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 
 #include <openssl/bio.h>
@@ -42,7 +42,7 @@ ue_x509_csr *ue_x509_csr_create(ue_x509_certificate *certificate, ue_private_key
     ue_safe_alloc(csr, ue_x509_csr, 1);
 
     if (!(csr->impl = X509_to_X509_REQ(ue_x509_certificate_get_impl(certificate), ue_private_key_get_impl(private_key), digest))) {
-        ue_stacktrace_push_msg("Failed to convert X509 certificate to X509 csr");
+        ei_stacktrace_push_msg("Failed to convert X509 certificate to X509 csr");
         ue_safe_free(csr);
         return NULL;
     }
@@ -63,12 +63,12 @@ bool ue_x509_csr_print(ue_x509_csr *csr, FILE *fd) {
     BIO *out_bio;
 
     if (!(out_bio = BIO_new_fp(fd, BIO_NOCLOSE))) {
-        ue_stacktrace_push_msg("Failed to create BIO from specified fd");
+        ei_stacktrace_push_msg("Failed to create BIO from specified fd");
         return false;
     }
 
     if (!PEM_write_bio_X509_REQ(out_bio, csr->impl)) {
-        ue_stacktrace_push_msg("Failed to write csr to BIO in PEM format");
+        ei_stacktrace_push_msg("Failed to write csr to BIO in PEM format");
         BIO_free_all(out_bio);
         return false;
     }
@@ -176,7 +176,7 @@ ue_x509_certificate *ue_x509_csr_sign(ue_x509_csr *csr, ue_private_key *private_
     X509 *certificate_impl;
 
     if (!X509_REQ_sign(csr->impl, ue_private_key_get_impl(private_key), EVP_sha256())) {
-        ue_stacktrace_push_msg("Failed to sign CSR");
+        ei_stacktrace_push_msg("Failed to sign CSR");
         return NULL;
     }
 

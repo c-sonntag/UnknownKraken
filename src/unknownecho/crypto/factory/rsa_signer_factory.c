@@ -19,23 +19,23 @@
 
 #include <unknownecho/crypto/factory/rsa_signer_factory.h>
 #include <unknownecho/crypto/factory/hasher_factory.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 
 ue_signer *ue_rsa_signer_create(ue_public_key *pk, ue_private_key *sk, const char *digest_name) {
 	ue_signer *signer;
 
 	if (!pk) {
-		ue_stacktrace_push_msg("Specified public key is null");
+		ei_stacktrace_push_msg("Specified public key is null");
 		return NULL;
 	}
 
 	if (!sk) {
-		ue_stacktrace_push_msg("Specified private key is null");
+		ei_stacktrace_push_msg("Specified private key is null");
 		return NULL;
 	}
 
 	if (!(signer = ue_signer_create(digest_name))) {
-		ue_stacktrace_push_msg("Failed to create signer");
+		ei_stacktrace_push_msg("Failed to create signer");
 		return NULL;
 	}
 

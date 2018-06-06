@@ -20,7 +20,7 @@
 #ifndef UNKNOWNECHO_ZLIB_ERROR_HANDLING_H
 #define UNKNOWNECHO_ZLIB_ERROR_HANDLING_H
 
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 
 void ue_zlib_error_handling_impl(int error_code);
 

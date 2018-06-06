@@ -5,6 +5,10 @@
 
 #include <stdio.h>
 
+/**
+ * @todo add error handling
+ */
+
 static void print_progress(uv_async_t *handle) {
     ue_multiple_progress_bars_iteration *ctx = handle->data;
 

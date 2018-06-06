@@ -18,7 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/crypto/utils/friendly_name.h>
-#include <unknownecho/errorHandling/check_parameter.h>
+#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 
 #include <string.h>
@@ -26,9 +26,9 @@
 unsigned char *ue_friendly_name_build(unsigned char *nickname, size_t nickname_size, const char *keystore_type, size_t *friendly_name_size) {
 	unsigned char *friendly_name;
 
-	ue_check_parameter_or_return(nickname);
-	ue_check_parameter_or_return(nickname_size > 0);
-	ue_check_parameter_or_return(keystore_type);
+	ei_check_parameter_or_return(nickname);
+	ei_check_parameter_or_return(nickname_size > 0);
+	ei_check_parameter_or_return(keystore_type);
 
 	*friendly_name_size = nickname_size + 1 + strlen(keystore_type);
 	ue_safe_alloc(friendly_name, unsigned char, *friendly_name_size);

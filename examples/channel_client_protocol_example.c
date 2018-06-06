@@ -28,9 +28,7 @@
   */
 
 #include <unknownecho/init.h>
-#include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/errorHandling/logger_manager.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 #include <unknownecho/protocol/api/channel/channel_client.h>
 #include <unknownecho/protocol/api/channel/channel_client_struct.h>
 #include <unknownecho/protocol/factory/channel_client_factory.h>
@@ -63,7 +61,7 @@ static void handle_signal(int sig, void (*h)(int), int options) {
     sigemptyset(&s.sa_mask);
     s.sa_flags = options;
     if (sigaction(sig, &s, NULL) < 0) {
-        ue_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
     }
 }
 
@@ -74,7 +72,7 @@ static void handle_signal(int sig, void (*h)(int), int options) {
 bool write_callback(void *user_context, ue_byte_stream *printer) {
     /* Append \n and \0 to correctly print the message on the consola */
     if (!ue_byte_writer_append_bytes(printer, (unsigned char *)"\n\0", 2)) {
-		ue_stacktrace_push_msg("Failed to write \n\0 to printer");
+		ei_stacktrace_push_msg("Failed to write \n\0 to printer");
 		return false;
 	}
 
@@ -110,8 +108,8 @@ int main(int argc, char **argv) {
     child_pid = -1;
 
     /* Set log levels for the screen and the log file */
-    ue_logger_set_file_level(ue_logger_manager_get_logger(), UNKNOWNECHO_LOG_TRACE);
-    ue_logger_set_print_level(ue_logger_manager_get_logger(), UNKNOWNECHO_LOG_TRACE);
+    ei_logger_set_file_level(ei_logger_manager_get_logger(), ERRORINTERCEPTOR_LOG_TRACE);
+    ei_logger_set_print_level(ei_logger_manager_get_logger(), ERRORINTERCEPTOR_LOG_TRACE);
 
     /**
      * Get the user nickname.
@@ -121,7 +119,7 @@ int main(int argc, char **argv) {
      * If it's fail, it will add an error message to the stacktrace.
      */
     if (!(nickname = ue_input_string("Nickname : "))) {
-        ue_stacktrace_push_msg("Specified nickname isn't valid");
+        ei_stacktrace_push_msg("Specified nickname isn't valid");
         goto end;
     }
 
@@ -131,7 +129,7 @@ int main(int argc, char **argv) {
      * If it's fail, it will add an error message to the stacktrace.
      */
     if (!(password = ue_input_string("Password : "))) {
-        ue_stacktrace_push_msg("Specified password isn't valid");
+        ei_stacktrace_push_msg("Specified password isn't valid");
         goto end;
     }
 
@@ -142,7 +140,7 @@ int main(int argc, char **argv) {
      * Only working on UNIX system.
      */
     if (pipe(fds) == -1) {
-		ue_stacktrace_push_errno();
+		ei_stacktrace_push_errno();
         goto end;
     }
 
@@ -154,7 +152,7 @@ int main(int argc, char **argv) {
     child_pid = fork();
     /* Check if fork() failed. */
     if (child_pid == -1) {
-		ue_stacktrace_push_errno();
+		ei_stacktrace_push_errno();
         goto end;
     }
 
@@ -170,7 +168,7 @@ int main(int argc, char **argv) {
         char f[PATH_MAX + 1];
         sprintf(f, "/dev/fd/%d", fds[0]);
         execlp("xterm", "xterm", "-e", "cat", f, NULL);
-		ue_stacktrace_push_errno();
+		ei_stacktrace_push_errno();
         goto end;
     }
 
@@ -190,9 +188,9 @@ int main(int argc, char **argv) {
          * establish a connection with the remote host.
          */
         if (argc > 1) {
-            ue_logger_info("Trying to create and connect remote channel client on host %s...", argv[1]);
+            ei_logger_info("Trying to create and connect remote channel client on host %s...", argv[1]);
             if (!(channel_client = ue_channel_client_create_default_remote(nickname, password, write_callback, argv[1]))) {
-                ue_stacktrace_push_msg("Failed to create remote channel client");
+                ei_stacktrace_push_msg("Failed to create remote channel client");
                 goto end;
             }
         }
@@ -201,9 +199,9 @@ int main(int argc, char **argv) {
          * to establish a connection in localhost.
          */
         else {
-            ue_logger_info("Trying to create and connect local channel client...");
+            ei_logger_info("Trying to create and connect local channel client...");
             if (!(channel_client = ue_channel_client_create_default_local(nickname, password, write_callback))) {
-                ue_stacktrace_push_msg("Failed to create local channel client");
+                ei_stacktrace_push_msg("Failed to create local channel client");
                 goto end;
             }
         }
@@ -214,7 +212,7 @@ int main(int argc, char **argv) {
 
         /* Connect the client */
         if (!ue_channel_client_start(channel_client)) {
-            ue_stacktrace_push_msg("Failed to start channel client");
+            ei_stacktrace_push_msg("Failed to start channel client");
             goto end;
         }
     }
@@ -228,8 +226,8 @@ end:
     ue_safe_free(nickname);
     ue_safe_free(password);
     /* Log the stacktrace if it exists */
-    if (ue_stacktrace_is_filled()) {
-		ue_logger_stacktrace("An error occurred with the following stacktrace :");
+    if (ei_stacktrace_is_filled()) {
+		ei_logger_stacktrace("An error occurred with the following stacktrace :");
 	}
     /* If it's the parent process */
     if (child_pid != 0) {

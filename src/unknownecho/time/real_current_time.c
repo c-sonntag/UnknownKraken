@@ -19,8 +19,7 @@
 
 #include <unknownecho/time/real_current_time.h>
 #include <unknownecho/time/current_time.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 
 #include <time.h>
 
@@ -75,7 +74,7 @@ unsigned long long ue_get_real_current_time() {
     //struct timespec ts = {0, 0};
     struct timeval tv;
 
-    ue_logger_debug("Before");
+    ei_logger_debug("Before");
 
 /*#if defined(__unix__)
     if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
@@ -88,8 +87,8 @@ unsigned long long ue_get_real_current_time() {
         return (unsigned long long) (tv.tv_sec * 1000000 + tv.tv_usec);
     }
 
-    ue_logger_debug("After");
+    ei_logger_debug("After");
 
-    ue_stacktrace_push_msg("Failed to get real current time or alternative");
+    ei_stacktrace_push_msg("Failed to get real current time or alternative");
     return 0;
 }

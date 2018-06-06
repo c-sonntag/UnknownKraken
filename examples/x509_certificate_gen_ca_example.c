@@ -18,8 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/init.h>
-#include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate_generation.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
 #include <unknownecho/crypto/api/key/private_key.h>
@@ -40,18 +39,18 @@ int main() {
     }
 
     if (!ue_x509_certificate_generate_self_signed_ca("SWA", &certificate, &private_key)) {
-        ue_logger_error("Failed to generate self signed CA");
+        ei_logger_error("Failed to generate self signed CA");
         goto clean_up;
     }
 
-    if (!ue_x509_certificate_print_pair(certificate, private_key, "ca_out/cert.pem", "ca_out/key.pem", NULL)) {
-        ue_logger_error("Failed to print ca certificate and private key to files");
+    if (!ue_x509_certificate_print_pair(certificate, private_key, "out/cert.pem", "out/key.pem", NULL)) {
+        ei_logger_error("Failed to print ca certificate and private key to files");
         goto clean_up;
     }
 
-    if (ue_stacktrace_is_filled()) {
-        ue_logger_error("Error(s) occurred with the following stacktrace(s) :");
-        ue_stacktrace_print_all();
+    if (ei_stacktrace_is_filled()) {
+        ei_logger_error("Error(s) occurred with the following stacktrace(s) :");
+        ei_stacktrace_print_all();
     }
 
 clean_up:

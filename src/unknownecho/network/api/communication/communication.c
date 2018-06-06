@@ -20,9 +20,7 @@
 #include <unknownecho/network/api/communication/communication.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/string/string_utility.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 
 ue_communication_context *ue_communication_create(const char *communication_type,
     void *(*communication_connect_impl)(void *parameter),
@@ -57,27 +55,27 @@ ue_communication_context *ue_communication_create(const char *communication_type
 
     ue_communication_context *context;
 
-    ue_check_parameter_or_return(communication_type);
-    ue_check_parameter_or_return(communication_connect_impl);
-    ue_check_parameter_or_return(communication_client_connection_destroy_impl);
-    ue_check_parameter_or_return(communication_client_connection_clean_up_impl);
+    ei_check_parameter_or_return(communication_type);
+    ei_check_parameter_or_return(communication_connect_impl);
+    ei_check_parameter_or_return(communication_client_connection_destroy_impl);
+    ei_check_parameter_or_return(communication_client_connection_clean_up_impl);
 
     if (!communication_client_connection_is_available_impl) {
-        ue_logger_warn("Optional parameter communication_client_connection_is_available_impl ptr is null.");
+        ei_logger_warn("Optional parameter communication_client_connection_is_available_impl ptr is null.");
     }
 
     if (!communication_client_connection_is_established_impl) {
-        ue_logger_warn("Optional parameter communication_client_connection_is_established_impl ptr is null.");
+        ei_logger_warn("Optional parameter communication_client_connection_is_established_impl ptr is null.");
     }
 
-    ue_check_parameter_or_return(communication_receive_sync_impl);
-    ue_check_parameter_or_return(communication_send_sync_impl);
-    ue_check_parameter_or_return(communication_server_create_impl);
-    ue_check_parameter_or_return(communication_server_is_valid_impl);
-    ue_check_parameter_or_return(communication_server_is_running_impl);
-    ue_check_parameter_or_return(communication_server_destroy_impl);
-    ue_check_parameter_or_return(communication_server_process_impl);
-    ue_check_parameter_or_return(communication_server_disconnect_impl);
+    ei_check_parameter_or_return(communication_receive_sync_impl);
+    ei_check_parameter_or_return(communication_send_sync_impl);
+    ei_check_parameter_or_return(communication_server_create_impl);
+    ei_check_parameter_or_return(communication_server_is_valid_impl);
+    ei_check_parameter_or_return(communication_server_is_running_impl);
+    ei_check_parameter_or_return(communication_server_destroy_impl);
+    ei_check_parameter_or_return(communication_server_process_impl);
+    ei_check_parameter_or_return(communication_server_disconnect_impl);
 
     ue_safe_alloc(context, ue_communication_context, 1);
 
@@ -124,21 +122,21 @@ void ue_communication_destroy(ue_communication_context *context) {
 }
 
 bool ue_communication_context_is_valid(ue_communication_context *context) {
-    ue_check_parameter_or_return(context);
+    ei_check_parameter_or_return(context);
 
-    ue_check_parameter_or_return(context->communication_type);
-    ue_check_parameter_or_return(context->communication_connect_impl);
-    ue_check_parameter_or_return(context->communication_client_connection_destroy_impl);
-    ue_check_parameter_or_return(context->communication_client_connection_clean_up_impl);
+    ei_check_parameter_or_return(context->communication_type);
+    ei_check_parameter_or_return(context->communication_connect_impl);
+    ei_check_parameter_or_return(context->communication_client_connection_destroy_impl);
+    ei_check_parameter_or_return(context->communication_client_connection_clean_up_impl);
 
-    ue_check_parameter_or_return(context->communication_receive_sync_impl);
-    ue_check_parameter_or_return(context->communication_send_sync_impl);
-    ue_check_parameter_or_return(context->communication_server_create_impl);
-    ue_check_parameter_or_return(context->communication_server_is_valid_impl);
-    ue_check_parameter_or_return(context->communication_server_is_running_impl);
-    ue_check_parameter_or_return(context->communication_server_destroy_impl);
-    ue_check_parameter_or_return(context->communication_server_process_impl);
-    ue_check_parameter_or_return(context->communication_server_disconnect_impl);
+    ei_check_parameter_or_return(context->communication_receive_sync_impl);
+    ei_check_parameter_or_return(context->communication_send_sync_impl);
+    ei_check_parameter_or_return(context->communication_server_create_impl);
+    ei_check_parameter_or_return(context->communication_server_is_valid_impl);
+    ei_check_parameter_or_return(context->communication_server_is_running_impl);
+    ei_check_parameter_or_return(context->communication_server_destroy_impl);
+    ei_check_parameter_or_return(context->communication_server_process_impl);
+    ei_check_parameter_or_return(context->communication_server_disconnect_impl);
 
     return true;
 }
@@ -148,18 +146,18 @@ bool ue_communication_context_is_valid(ue_communication_context *context) {
 void *ue_communication_connect(ue_communication_context *context, void *parameter) {
     void *result;
 
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(parameter);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(parameter);
 
     if (!(result = context->communication_connect_impl(parameter))) {
-        ue_stacktrace_push_msg("communication_connect_impl() returned an null result");
+        ei_stacktrace_push_msg("communication_connect_impl() returned an null result");
     }
 
     return result;
 }
 
 bool ue_communication_client_connection_destroy(ue_communication_context *context, void *connection) {
-    ue_check_parameter_or_return(context);
+    ei_check_parameter_or_return(context);
 
     context->communication_client_connection_destroy_impl(connection);
 
@@ -167,7 +165,7 @@ bool ue_communication_client_connection_destroy(ue_communication_context *contex
 }
 
 bool ue_communication_client_connection_clean_up(ue_communication_context *context, void *connection) {
-    ue_check_parameter_or_return(context);
+    ei_check_parameter_or_return(context);
 
     context->communication_client_connection_clean_up_impl(connection);
 
@@ -175,91 +173,91 @@ bool ue_communication_client_connection_clean_up(ue_communication_context *conte
 }
 
 bool ue_communication_client_connection_is_available(ue_communication_context *context, void *connection) {
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(context->communication_client_connection_is_available_impl);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(context->communication_client_connection_is_available_impl);
 
     return context->communication_client_connection_is_available_impl(connection);
 }
 
 bool ue_communication_client_connection_is_established(ue_communication_context *context, void *connection) {
-    ue_check_parameter_or_return(context);
+    ei_check_parameter_or_return(context);
 
     return context->communication_client_connection_is_established_impl(connection);
 }
 
 void *ue_communication_client_connection_get_user_data(ue_communication_context *context, void *connection)  {
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(connection);
 
     return context->communication_client_connection_get_user_data_impl(connection);
 }
 
 bool ue_communication_client_connection_set_user_data(ue_communication_context *context, void *connection, void *user_data)  {
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(connection);
 
     return context->communication_client_connection_set_user_data_impl(connection, user_data);
 }
 
 char *ue_communication_client_connection_get_uid(ue_communication_context *context, void *connection) {
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(connection);
 
     return context->communication_client_connection_get_uid_impl(connection);
 }
 
 bool ue_communication_client_connection_set_uid(ue_communication_context *context, void *connection, char *uid) {
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(connection);
 
     return context->communication_client_connection_set_uid_impl(connection, uid);
 }
 
 void *ue_communication_client_connection_get_received_message(ue_communication_context *context, void *connection) {
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(connection);
 
     return context->communication_client_connection_get_received_message_impl(connection);
 }
 
 void *ue_communication_client_connection_get_message_to_send(ue_communication_context *context, void *connection) {
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(connection);
 
     return context->communication_client_connection_get_message_to_send_impl(connection);
 }
 
 void *ue_communication_client_connection_get_received_messages(ue_communication_context *context, void *connection) {
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(connection);
 
     return context->communication_client_connection_get_received_messages_impl(connection);
 }
 
 void *ue_communication_client_connection_get_messages_to_send(ue_communication_context *context, void *connection) {
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(connection);
 
     return context->communication_client_connection_get_messages_to_send_impl(connection);
 }
 
 ue_communication_connection_state ue_communication_client_connection_get_state(ue_communication_context *context, void *connection) {
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(connection);
 
     return context->communication_client_connection_get_state_impl(connection);
 }
 
 bool ue_communication_client_connection_set_state(ue_communication_context *context, void *connection, ue_communication_connection_state state) {
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(connection);
 
     return context->communication_client_connection_set_state_impl(connection, state);
 }
 
 ue_communication_metadata *ue_communication_client_connection_get_communication_metadata(ue_communication_context *context, void *connection) {
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(connection);
 
     return context->communication_client_connection_get_communication_metadata_impl(connection);
 }
@@ -268,7 +266,7 @@ ue_communication_metadata *ue_communication_client_connection_get_communication_
 
 size_t ue_communication_receive_sync(ue_communication_context *context, void *connection, void *received_message) {
     if (!context) {
-        ue_stacktrace_push_code(UNKNOWNECHO_INVALID_PARAMETER);
+        ei_stacktrace_push_code(ERRORINTERCEPTOR_INVALID_PARAMETER);
         return 0;
     }
 
@@ -277,7 +275,7 @@ size_t ue_communication_receive_sync(ue_communication_context *context, void *co
 
 size_t ue_communication_send_sync(ue_communication_context *context, void *connection, void *message_to_send) {
     if (!context) {
-        ue_stacktrace_push_code(UNKNOWNECHO_INVALID_PARAMETER);
+        ei_stacktrace_push_code(ERRORINTERCEPTOR_INVALID_PARAMETER);
         return 0;
     }
 
@@ -289,29 +287,29 @@ size_t ue_communication_send_sync(ue_communication_context *context, void *conne
 void *ue_communication_server_create(ue_communication_context *context, void *parameters) {
     void *result;
 
-    ue_check_parameter_or_return(context);
+    ei_check_parameter_or_return(context);
 
     if (!(result = context->communication_server_create_impl(parameters))) {
-        ue_stacktrace_push_msg("communication_server_create_impl returned false. Failed to create communication server");
+        ei_stacktrace_push_msg("communication_server_create_impl returned false. Failed to create communication server");
     }
 
     return result;
 }
 
 bool ue_communication_server_is_valid(ue_communication_context *context, void *server) {
-    ue_check_parameter_or_return(context);
+    ei_check_parameter_or_return(context);
 
     return context->communication_server_is_valid_impl(server);
 }
 
 bool ue_communication_server_is_running(ue_communication_context *context, void *server) {
-    ue_check_parameter_or_return(context);
+    ei_check_parameter_or_return(context);
 
     return context->communication_server_is_running_impl(server);
 }
 
 bool ue_communication_server_destroy(ue_communication_context *context, void *server) {
-    ue_check_parameter_or_return(context);
+    ei_check_parameter_or_return(context);
 
     context->communication_server_destroy_impl(server);
 
@@ -319,8 +317,8 @@ bool ue_communication_server_destroy(ue_communication_context *context, void *se
 }
 
 bool ue_communication_server_process(ue_communication_context *context, void *server) {
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(server);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(server);
 
     context->communication_server_process_impl(server);
 
@@ -328,22 +326,22 @@ bool ue_communication_server_process(ue_communication_context *context, void *se
 }
 
 bool ue_communication_server_get_process_impl(ue_communication_context *context, void (**communication_server_process_impl)(void *)) {
-    ue_check_parameter_or_return(context);
+    ei_check_parameter_or_return(context);
 
     if (context->communication_server_process_impl) {
         *communication_server_process_impl = context->communication_server_process_impl;
         return true;
     }
 
-    ue_stacktrace_push_msg("No implementation found for communication server process");
+    ei_stacktrace_push_msg("No implementation found for communication server process");
     return false;
 }
 
 bool ue_communication_server_disconnect(ue_communication_context *context, void *server, void *connection) {
-    ue_check_parameter_or_return(context);
+    ei_check_parameter_or_return(context);
 
     if (!context->communication_server_disconnect_impl(server, connection)) {
-        ue_stacktrace_push_msg("communication_server_disconnect_impl returned false. Failed to disconnect client from server");
+        ei_stacktrace_push_msg("communication_server_disconnect_impl returned false. Failed to disconnect client from server");
         return false;
     }
 
@@ -351,10 +349,10 @@ bool ue_communication_server_disconnect(ue_communication_context *context, void 
 }
 
 bool ue_communication_server_stop(ue_communication_context *context, void *server) {
-    ue_check_parameter_or_return(context);
+    ei_check_parameter_or_return(context);
 
     if (!context->communication_server_stop_impl(server)) {
-        ue_stacktrace_push_msg("communication_server_stop_impl retuned false. Failed to stop server");
+        ei_stacktrace_push_msg("communication_server_stop_impl retuned false. Failed to stop server");
         return false;
     }
 
@@ -362,13 +360,13 @@ bool ue_communication_server_stop(ue_communication_context *context, void *serve
 }
 
 int ue_communication_server_get_connections_number(ue_communication_context *context, void *server) {
-    ue_check_parameter_or_return(context);
+    ei_check_parameter_or_return(context);
 
     return context->communication_server_get_connections_number_impl(server);
 }
 
 void *ue_communication_server_get_connection(ue_communication_context *context, void *server, int index) {
-    ue_check_parameter_or_return(context);
+    ei_check_parameter_or_return(context);
 
     return context->communication_server_get_connection_impl(server, index);
 }

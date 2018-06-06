@@ -20,7 +20,7 @@
 #include <unknownecho/container/byte_vector.h>
 #include <unknownecho/byte/byte_utility.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/check_parameter.h>
+#include <ei/ei.h>
 
 #include <string.h>
 
@@ -85,7 +85,7 @@ void ue_byte_vector_destroy(ue_byte_vector *vector) {
 bool ue_byte_vector_append_string(ue_byte_vector *vector, const char *new_string) {
     int i;
 
-    ue_check_parameter_or_return(vector);
+    ei_check_parameter_or_return(vector);
 
     if (!vector->elements) {
         ue_safe_alloc(vector->elements, ue_byte_vector_element *, 1);
@@ -110,7 +110,7 @@ bool ue_byte_vector_append_string(ue_byte_vector *vector, const char *new_string
 bool ue_byte_vector_append_bytes(ue_byte_vector *vector, unsigned char *new_bytes, size_t new_bytes_size) {
     int i;
 
-    ue_check_parameter_or_return(vector);
+    ei_check_parameter_or_return(vector);
 
     if (!vector->elements) {
         ue_safe_alloc(vector->elements, ue_byte_vector_element *, 1);
@@ -136,8 +136,8 @@ bool ue_byte_vector_append_vector(ue_byte_vector *from, ue_byte_vector *to) {
     int i;
     ue_byte_vector_element *current_element;
 
-    ue_check_parameter_or_return(from);
-    ue_check_parameter_or_return(to);
+    ei_check_parameter_or_return(from);
+    ei_check_parameter_or_return(to);
 
     for (i = 0; i < from->number; i++) {
         current_element = ue_byte_vector_get(from, i);
@@ -159,7 +159,7 @@ bool ue_byte_vector_remove(ue_byte_vector *vector, int index) {
     }
 
     if (ue_byte_vector_size(vector) < index) {
-        ue_stacktrace_push_msg("Index out of range");
+        ei_stacktrace_push_msg("Index out of range");
         return false;
     }
 
@@ -181,11 +181,11 @@ int ue_byte_vector_size(ue_byte_vector *vector) {
 }
 
 ue_byte_vector_element *ue_byte_vector_get(ue_byte_vector *vector, int index) {
-    ue_check_parameter_or_return(vector);
-    ue_check_parameter_or_return(vector->elements);
+    ei_check_parameter_or_return(vector);
+    ei_check_parameter_or_return(vector->elements);
 
     if (ue_byte_vector_size(vector) < index) {
-        ue_stacktrace_push_msg("Index out of range");
+        ei_stacktrace_push_msg("Index out of range");
         return NULL;
     }
 
@@ -193,7 +193,7 @@ ue_byte_vector_element *ue_byte_vector_get(ue_byte_vector *vector, int index) {
 }
 
 bool ue_byte_vector_is_empty(ue_byte_vector *vector) {
-    ue_check_parameter_or_return(vector);
+    ei_check_parameter_or_return(vector);
 
     return !vector->elements || vector->number <= 0;
 }
@@ -202,8 +202,8 @@ bool ue_byte_vector_print(ue_byte_vector *vector, FILE *out) {
     int i;
     size_t j;
 
-    ue_check_parameter_or_return(vector);
-    ue_check_parameter_or_return(out);
+    ei_check_parameter_or_return(vector);
+    ei_check_parameter_or_return(out);
 
     if (ue_byte_vector_is_empty(vector)) {
         return false;
@@ -224,7 +224,7 @@ bool ue_byte_vector_print_element(ue_byte_vector *vector, int index, FILE *out) 
     size_t i;
 
     if (!(element = ue_byte_vector_get(vector, index))) {
-        ue_stacktrace_push_msg("Failed to found element at index %d", index);
+        ei_stacktrace_push_msg("Failed to found element at index %d", index);
         return false;
     }
 
@@ -239,8 +239,8 @@ bool ue_byte_vector_print_element(ue_byte_vector *vector, int index, FILE *out) 
 bool ue_byte_vector_contains(ue_byte_vector *vector, unsigned char *target, size_t target_size) {
     int i;
 
-    ue_check_parameter_or_return(vector);
-    ue_check_parameter_or_return(target);
+    ei_check_parameter_or_return(vector);
+    ei_check_parameter_or_return(target);
 
     if (vector->number == 0) {
         return false;
@@ -258,10 +258,10 @@ bool ue_byte_vector_contains(ue_byte_vector *vector, unsigned char *target, size
 bool ue_byte_vector_element_print_string(ue_byte_vector_element *element, FILE *out) {
     size_t i;
 
-    ue_check_parameter_or_return(element);
-    ue_check_parameter_or_return(element->data);
-    ue_check_parameter_or_return(element->size);
-    ue_check_parameter_or_return(out);
+    ei_check_parameter_or_return(element);
+    ei_check_parameter_or_return(element->data);
+    ei_check_parameter_or_return(element->size);
+    ei_check_parameter_or_return(out);
 
     for (i = 0; i < element->size; i++) {
         fprintf(out, "%c", element->data[i]);

@@ -19,8 +19,7 @@
 
 #include <unknownecho/byte/byte_utility.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 
 #include <string.h>
 
@@ -59,13 +58,13 @@ int ue_bytes_to_int(unsigned char *bytes) {
 }
 
 bool ue_bytes_starts_with(unsigned char *data, size_t data_size, unsigned char *target, size_t target_size) {
-	ue_check_parameter_or_return(data);
-	ue_check_parameter_or_return(data_size > 0);
-	ue_check_parameter_or_return(target);
-	ue_check_parameter_or_return(target_size);
+	ei_check_parameter_or_return(data);
+	ei_check_parameter_or_return(data_size > 0);
+	ei_check_parameter_or_return(target);
+	ei_check_parameter_or_return(target_size);
 
 	if (data_size < target_size) {
-		ue_logger_warn("Target > than data. The comparaison will be performed with the data size and not the target size.");
+		ei_logger_warn("Target > than data. The comparaison will be performed with the data size and not the target size.");
 		return memcmp(data, target, data_size) == 0;
 	}
 
@@ -75,13 +74,13 @@ bool ue_bytes_starts_with(unsigned char *data, size_t data_size, unsigned char *
 bool ue_bytes_contains(unsigned char *data, size_t data_size, unsigned char *target, size_t target_size) {
 	size_t i, counter;
 
-	ue_check_parameter_or_return(data);
-	ue_check_parameter_or_return(data_size > 0);
-	ue_check_parameter_or_return(target);
-	ue_check_parameter_or_return(target_size);
+	ei_check_parameter_or_return(data);
+	ei_check_parameter_or_return(data_size > 0);
+	ei_check_parameter_or_return(target);
+	ei_check_parameter_or_return(target_size);
 
 	if (data_size < target_size) {
-		ue_logger_warn("Target > than data.");
+		ei_logger_warn("Target > than data.");
 		return false;
 	}
 

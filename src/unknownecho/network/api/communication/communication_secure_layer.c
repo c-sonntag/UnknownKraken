@@ -20,8 +20,7 @@
 #include <unknownecho/network/api/communication/communication_secure_layer.h>
 #include <unknownecho/network/api/tls/tls_session.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/check_parameter.h>
+#include <ei/ei.h>
 
 #include <stdarg.h>
 #include <string.h>
@@ -33,14 +32,14 @@ void *ue_communication_secure_layer_build_client(ue_communication_context *conte
     ue_x509_certificate **ca_certificates;
     int ca_certificate_count;
 
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(count > 0);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(count > 0);
 
     secure_layer = NULL;
 
     if (strcmp(context->communication_type, "SOCKET") == 0) {
         if (count != 4) {
-            ue_stacktrace_push_msg("Specified number of argments doesn't fit with communication type SOCKET");
+            ei_stacktrace_push_msg("Specified number of argments doesn't fit with communication type SOCKET");
             return NULL;
         }
         va_start(ap, count);
@@ -50,11 +49,11 @@ void *ue_communication_secure_layer_build_client(ue_communication_context *conte
         ca_certificate_count = va_arg(ap, int);
         if (!(secure_layer = (void *)ue_tls_session_create_client(keystore_path, passphrase,
             ca_certificates, ca_certificate_count))) {
-            ue_stacktrace_push_msg("Failed to create TLS session for client");
+            ei_stacktrace_push_msg("Failed to create TLS session for client");
         }
         va_end(ap);
     } else {
-        ue_stacktrace_push_msg("Unknown communication type");
+        ei_stacktrace_push_msg("Unknown communication type");
     }
 
     return secure_layer;
@@ -67,14 +66,14 @@ void *ue_communication_secure_layer_build_server(ue_communication_context *conte
     ue_x509_certificate **ca_certificates;
     int ca_certificate_count;
 
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(count > 0);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(count > 0);
 
     secure_layer = NULL;
 
     if (strcmp(context->communication_type, "SOCKET") == 0) {
         if (count != 4) {
-            ue_stacktrace_push_msg("Specified number of argments doesn't fit with communication type SOCKET");
+            ei_stacktrace_push_msg("Specified number of argments doesn't fit with communication type SOCKET");
             return NULL;
         }
         va_start(ap, count);
@@ -84,24 +83,24 @@ void *ue_communication_secure_layer_build_server(ue_communication_context *conte
         ca_certificate_count = va_arg(ap, int);
         if (!(secure_layer = (void *)ue_tls_session_create_server(keystore_path, passphrase,
             ca_certificates, ca_certificate_count))) {
-            ue_stacktrace_push_msg("Failed to create TLS session for server");
+            ei_stacktrace_push_msg("Failed to create TLS session for server");
         }
         va_end(ap);
     } else {
-        ue_stacktrace_push_msg("Unknown communication type");
+        ei_stacktrace_push_msg("Unknown communication type");
     }
 
     return secure_layer;
 }
 
 bool ue_communication_secure_layer_destroy(ue_communication_context *context, void *csl) {
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(context->communication_type);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(context->communication_type);
 
     if (strcmp(context->communication_type, "SOCKET") == 0) {
         ue_tls_session_destroy((ue_tls_session *)csl);
     } else {
-        ue_stacktrace_push_msg("Unknown communication type");
+        ei_stacktrace_push_msg("Unknown communication type");
         return false;
     }
 
@@ -112,9 +111,9 @@ ue_pkcs12_keystore *ue_communication_secure_layer_get_keystore(ue_communication_
     ue_pkcs12_keystore *keystore;
     ue_tls_session *tls_session;
 
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(context->communication_type);
-    ue_check_parameter_or_return(csl);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(context->communication_type);
+    ei_check_parameter_or_return(csl);
 
     keystore = NULL;
 
@@ -122,7 +121,7 @@ ue_pkcs12_keystore *ue_communication_secure_layer_get_keystore(ue_communication_
         tls_session = (ue_tls_session *)csl;
         keystore = tls_session->keystore;
     } else {
-        ue_stacktrace_push_msg("Unknown communication type");
+        ei_stacktrace_push_msg("Unknown communication type");
     }
 
     return keystore;

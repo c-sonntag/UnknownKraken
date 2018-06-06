@@ -33,7 +33,6 @@
 #include <unknownecho/time/timer_measure.h>
 #include <unknownecho/time/real_current_time.h>
 #include <unknownecho/bool.h>
-#include <unknownecho/thread/thread_storage.h>
 
 #include <time.h>
 
@@ -55,7 +54,11 @@ bool ue_timer_total_print_impl(ue_timer *tm, unsigned int id, char *prefix_messa
 
 bool ue_timer_set_unity_impl(ue_timer *tm, unsigned int id, char *unity);
 
-#define ue_timer_set_unity(id, unity) \
+/**
+ * Replace thread storage by libuv uv_key API
+ */
+
+/*#define ue_timer_set_unity(id, unity) \
 	ue_timer_set_unity_impl(ue_thread_storage_get_timer(), id, unity); \
 
 #define ue_timer_start(id) \
@@ -74,6 +77,6 @@ bool ue_timer_set_unity_impl(ue_timer *tm, unsigned int id, char *unity);
 	ue_timer_total_impl(ue_thread_storage_get_timer(), id, &result); \
 
 #define ue_timer_total_print(id, message) \
-	ue_timer_total_print_impl(ue_thread_storage_get_timer(), id, message); \
+	ue_timer_total_print_impl(ue_thread_storage_get_timer(), id, message); \*/
 
 #endif

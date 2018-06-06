@@ -21,9 +21,7 @@
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/fileSystem/file_utility.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 #include <unknownecho/string/string_utility.h>
 
 #include <openssl/bio.h>
@@ -81,8 +79,8 @@ ue_pkcs12_keystore *ue_pkcs12_keystore_load(const char *file_name, const char *p
     char *error_buffer;
     PKCS12 *p12;
 
-    ue_check_parameter_or_return(file_name);
-    ue_check_parameter_or_return(passphrase);
+    ei_check_parameter_or_return(file_name);
+    ei_check_parameter_or_return(passphrase);
 
     keystore = NULL;
     bio = NULL;
@@ -90,7 +88,7 @@ ue_pkcs12_keystore *ue_pkcs12_keystore_load(const char *file_name, const char *p
     p12 = NULL;
 
     if (!ue_is_file_exists(file_name)) {
-        ue_stacktrace_push_msg("Specified keystore file '%s' doesn't exists", file_name);
+        ei_stacktrace_push_msg("Specified keystore file '%s' doesn't exists", file_name);
         return NULL;
     }
 
@@ -109,7 +107,7 @@ ue_pkcs12_keystore *ue_pkcs12_keystore_load(const char *file_name, const char *p
     if (!load_certs_keys_p12(keystore, p12, passphrase, (int)strlen(passphrase), EVP_des_ede3_cbc())) {
         ue_pkcs12_keystore_destroy(keystore);
         keystore = NULL;
-        ue_stacktrace_push_msg("Failed to load certs from keystore '%s'", file_name);
+        ei_stacktrace_push_msg("Failed to load certs from keystore '%s'", file_name);
     }
 
 clean_up:
@@ -156,11 +154,11 @@ bool ue_pkcs12_keystore_add_certificate(ue_pkcs12_keystore *keystore, ue_x509_ce
 
     result = false;
 
-    ue_check_parameter_or_return(keystore);
-    ue_check_parameter_or_return(certificate);
-    ue_check_parameter_or_return(ue_x509_certificate_get_impl(certificate));
-    ue_check_parameter_or_return(friendly_name);
-    ue_check_parameter_or_return(friendly_name_size > 0);
+    ei_check_parameter_or_return(keystore);
+    ei_check_parameter_or_return(certificate);
+    ei_check_parameter_or_return(ue_x509_certificate_get_impl(certificate));
+    ei_check_parameter_or_return(friendly_name);
+    ei_check_parameter_or_return(friendly_name_size > 0);
 
     if (keystore->other_certificates) {
         ue_safe_realloc(keystore->other_certificates, ue_x509_certificate *, keystore->other_certificates_number, 1);
@@ -180,13 +178,13 @@ bool ue_pkcs12_keystore_add_certificate_from_file(ue_pkcs12_keystore *keystore, 
     ue_x509_certificate *certificate;
 
     if (!ue_x509_certificate_load_from_file(file_name, &certificate)) {
-		ue_stacktrace_push_msg("Failed to load certificate from path '%s'", file_name);
+		ei_stacktrace_push_msg("Failed to load certificate from path '%s'", file_name);
 		return false;
 	}
 
     if (!ue_pkcs12_keystore_add_certificate(keystore, certificate, friendly_name, friendly_name_size)) {
         ue_x509_certificate_destroy(certificate);
-        ue_stacktrace_push_msg("Failed to add loaded certificate");
+        ei_stacktrace_push_msg("Failed to add loaded certificate");
         return false;
     }
 
@@ -199,13 +197,13 @@ bool ue_pkcs12_keystore_add_certificate_from_bytes(ue_pkcs12_keystore *keystore,
     ue_x509_certificate *certificate;
 
     if (!(certificate = ue_x509_certificate_load_from_bytes(data, data_size))) {
-        ue_stacktrace_push_msg("Failed to create x509 certificate from this data");
+        ei_stacktrace_push_msg("Failed to create x509 certificate from this data");
         return false;
     }
 
     if (!ue_pkcs12_keystore_add_certificate(keystore, certificate, friendly_name, friendly_name_size)) {
         ue_x509_certificate_destroy(certificate);
-        ue_stacktrace_push_msg("Failed to add loaded certificate");
+        ei_stacktrace_push_msg("Failed to add loaded certificate");
         return false;
     }
 
@@ -276,7 +274,7 @@ bool ue_pkcs12_keystore_remove_certificate(ue_pkcs12_keystore *keystore, const u
         }
 
         if (!(alias = X509_alias_get0(ue_x509_certificate_get_impl(keystore->other_certificates[i]), &alias_size))) {
-            ue_logger_warn("Other certificates '%d' in keystore have no alias", i);
+            ei_logger_warn("Other certificates '%d' in keystore have no alias", i);
             continue;
         }
 
@@ -297,9 +295,9 @@ ue_x509_certificate *ue_pkcs12_keystore_find_certificate_by_friendly_name(ue_pkc
     unsigned char *alias;
     int alias_size;
 
-    ue_check_parameter_or_return(keystore);
-    ue_check_parameter_or_return(friendly_name);
-    ue_check_parameter_or_return(friendly_name_size > 0);
+    ei_check_parameter_or_return(keystore);
+    ei_check_parameter_or_return(friendly_name);
+    ei_check_parameter_or_return(friendly_name_size > 0);
 
     for (i = 0; i < keystore->other_certificates_number; i++) {
         if (!keystore->other_certificates[i]) {
@@ -307,7 +305,7 @@ ue_x509_certificate *ue_pkcs12_keystore_find_certificate_by_friendly_name(ue_pkc
         }
 
         if (!(alias = X509_alias_get0(ue_x509_certificate_get_impl(keystore->other_certificates[i]), &alias_size))) {
-            ue_logger_warn("Other certificates '%d' in keystore have no alias", i);
+            ei_logger_warn("Other certificates '%d' in keystore have no alias", i);
             continue;
         }
 
@@ -333,7 +331,7 @@ bool ue_pkcs12_keystore_write(ue_pkcs12_keystore *keystore, const char *file_nam
     p12 = NULL;
     fd = NULL;
 
-    ue_check_parameter_or_return(keystore);
+    ei_check_parameter_or_return(keystore);
 
     for (i = 0; i < keystore->other_certificates_number; i++) {
         if (keystore->other_certificates[i] && !sk_X509_push(other_certificates, ue_x509_certificate_get_impl(keystore->other_certificates[i]))) {
@@ -350,7 +348,7 @@ bool ue_pkcs12_keystore_write(ue_pkcs12_keystore *keystore, const char *file_nam
     }
 
     if (!(fd = fopen(file_name, "wb"))) {
-        ue_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         goto clean_up;
     }
 
@@ -398,18 +396,18 @@ static bool load_certs_keys_p12(ue_pkcs12_keystore *keystore, const PKCS12 *p12,
         } else if (bagnid == NID_pkcs7_encrypted) {
             bags = PKCS12_unpack_p7encdata(p7, passphrase, passphrase_len);
         } else {
-            ue_logger_warn("Unknown bag id for PKCS7 num %d", i);
+            ei_logger_warn("Unknown bag id for PKCS7 num %d", i);
             continue;
         }
         if (!bags) {
-            ue_logger_warn("Empty bags for PKCS7 num %d", i);
+            ei_logger_warn("Empty bags for PKCS7 num %d", i);
             continue;
         }
 
         if (!load_certs_pkeys_bags(keystore, bags, passphrase, passphrase_len, enc)) {
             sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
-            ue_logger_warn("Failed to load certs bags of PKCS7 num %d", i);
-            ue_stacktrace_push_msg("Failed to decrypt PKCS7, incorrect password ?");
+            ei_logger_warn("Failed to load certs bags of PKCS7 num %d", i);
+            ei_stacktrace_push_msg("Failed to decrypt PKCS7, incorrect password ?");
             goto clean_up;
         }
         sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
@@ -430,7 +428,7 @@ static bool load_certs_pkeys_bags(ue_pkcs12_keystore *keystore, const STACK_OF(P
 
     for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
         if (!load_certs_pkeys_bag(keystore, sk_PKCS12_SAFEBAG_value(bags, i), passphrase, passphrase_len, enc)) {
-            ue_stacktrace_push_msg("Failed to load certs and keys of bag '%d'", i);
+            ei_stacktrace_push_msg("Failed to load certs and keys of bag '%d'", i);
             return false;
         }
     }
@@ -482,7 +480,7 @@ static bool load_certs_pkeys_bag(ue_pkcs12_keystore *keystore, const PKCS12_SAFE
 
             PKCS8_PRIV_KEY_INFO_free(p8);
             if (keystore->private_key) {
-                ue_logger_warn("Private key already set in the keystore");
+                ei_logger_warn("Private key already set in the keystore");
             } else {
                 keystore->private_key = ue_private_key_create_from_impl(pkey);
             }
@@ -519,12 +517,12 @@ static bool load_certs_pkeys_bag(ue_pkcs12_keystore *keystore, const PKCS12_SAFE
 
         case NID_safeContentsBag:
             if (!load_certs_pkeys_bags(keystore, PKCS12_SAFEBAG_get0_safes(bag), passphrase, passphrase_len, enc)) {
-                ue_stacktrace_push_msg("Failed to load bags");
+                ei_stacktrace_push_msg("Failed to load bags");
                 return false;
             }
             return true;
         default:
-            ue_logger_warn("Warning unsupported bag type : '%s'", PKCS12_SAFEBAG_get0_type(bag));
+            ei_logger_warn("Warning unsupported bag type : '%s'", PKCS12_SAFEBAG_get0_type(bag));
             return true;
     }
 

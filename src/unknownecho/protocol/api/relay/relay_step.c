@@ -1,7 +1,6 @@
 #include <unknownecho/protocol/api/relay/relay_step.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 
 #include <stdarg.h>
 
@@ -10,7 +9,7 @@ ue_relay_step *ue_relay_step_create(ue_communication_metadata *target_communicat
 
     ue_relay_step *step;
 
-    ue_check_parameter_or_return(target_communication_metadata);
+    ei_check_parameter_or_return(target_communication_metadata);
 
     ue_safe_alloc(step, ue_relay_step, 1);
     step->target_communication_metadata = target_communication_metadata;
@@ -25,7 +24,7 @@ ue_relay_step **ue_relay_steps_create(int step_number, ...) {
     va_list ap;
     int i;
 
-    ue_check_parameter_or_return(step_number > 0);
+    ei_check_parameter_or_return(step_number > 0);
 
     ue_safe_alloc(steps, ue_relay_step *, step_number);
 
@@ -58,7 +57,7 @@ void ue_relay_step_destroy_all(ue_relay_step *step) {
 
 ue_communication_metadata *ue_relay_step_get_target_communication_metadata(ue_relay_step *step) {
     if (!ue_relay_step_is_valid(step)) {
-        ue_stacktrace_push_msg("Specified step ptr is invalid");
+        ei_stacktrace_push_msg("Specified step ptr is invalid");
         return NULL;
     }
 
@@ -67,7 +66,7 @@ ue_communication_metadata *ue_relay_step_get_target_communication_metadata(ue_re
 
 ue_crypto_metadata *ue_relay_step_get_our_crypto_metadata(ue_relay_step *step) {
     if (!ue_relay_step_is_valid(step)) {
-        ue_stacktrace_push_msg("Specified step ptr is invalid");
+        ei_stacktrace_push_msg("Specified step ptr is invalid");
         return NULL;
     }
 
@@ -76,7 +75,7 @@ ue_crypto_metadata *ue_relay_step_get_our_crypto_metadata(ue_relay_step *step) {
 
 ue_crypto_metadata *ue_relay_step_get_target_crypto_metadata(ue_relay_step *step) {
     if (!ue_relay_step_is_valid(step)) {
-        ue_stacktrace_push_msg("Specified step ptr is invalid");
+        ei_stacktrace_push_msg("Specified step ptr is invalid");
         return NULL;
     }
 
@@ -91,17 +90,17 @@ void ue_relay_step_print(ue_relay_step *step, FILE *fd) {
 
 bool ue_relay_step_is_valid(ue_relay_step *step) {
     if (!step) {
-        ue_stacktrace_push_msg("Specified step ptr is null");
+        ei_stacktrace_push_msg("Specified step ptr is null");
         return false;
     }
 
     if (!ue_communication_metadata_is_valid(step->target_communication_metadata)) {
-        ue_stacktrace_push_msg("The communication metadata of specified step is invalid");
+        ei_stacktrace_push_msg("The communication metadata of specified step is invalid");
         return false;
     }
 
     if (!step->target_crypto_metadata) {
-        ue_logger_warn("Specified step doesn't provide target crypto metadata");
+        ei_logger_warn("Specified step doesn't provide target crypto metadata");
     }
 
     return true;

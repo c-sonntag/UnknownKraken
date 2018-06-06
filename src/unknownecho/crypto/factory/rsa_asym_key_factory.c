@@ -21,9 +21,7 @@
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/crypto/impl/key/rsa_keypair_generation.h>
 #include <unknownecho/crypto/utils/crypto_random.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/errorHandling/check_parameter.h>
+#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 
 #include <openssl/rsa.h>
@@ -107,7 +105,7 @@ static bool ue_rsa_get_pub_key_from_file(const char *file_name, RSA **pub_key) {
     error_buffer = NULL;
 
     if (!(fd = fopen(file_name, "rb"))) {
-		ue_stacktrace_push_errno();
+		ei_stacktrace_push_errno();
 		return false;
 	}
 
@@ -132,7 +130,7 @@ static bool ue_rsa_get_priv_key_from_file(const char *file_name, RSA **priv_key)
     error_buffer = NULL;
 
     if (!(fd = fopen(file_name, "rb"))) {
-		ue_stacktrace_push_errno();
+		ei_stacktrace_push_errno();
 		return false;
 	}
 
@@ -170,47 +168,47 @@ ue_asym_key *ue_rsa_asym_key_create(int bits) {
 	pk = NULL;
 
     if (!(ue_rsa_key_pair = ue_rsa_keypair_gen(bits))) {
-		ue_stacktrace_push_msg("Failed to gen openssl RSA keypair");
+		ei_stacktrace_push_msg("Failed to gen openssl RSA keypair");
 		goto clean_up;
 	}
 
     if (!(ue_rsa_get_string_from_keypair(ue_rsa_key_pair, &pub_key_buf, &priv_key_buf, &pub_key_buf_length, &priv_key_buf_length))) {
-		ue_stacktrace_push_msg("Failed to get string from openssl RSA keypair");
+		ei_stacktrace_push_msg("Failed to get string from openssl RSA keypair");
 		goto clean_up;
 	}
 
 	if (!(ue_rsa_pk_bio = BIO_new_mem_buf(pub_key_buf, pub_key_buf_length))) {
-		ue_stacktrace_push_msg("Failed to init new mem BIO for pub key buf");
+		ei_stacktrace_push_msg("Failed to init new mem BIO for pub key buf");
 		goto clean_up;
 	}
 
 	if (!(ue_rsa_pk = PEM_read_bio_RSAPublicKey(ue_rsa_pk_bio, NULL, NULL, NULL))) {
-		ue_stacktrace_push_msg("Failed to build openssl rsa pk from string");
+		ei_stacktrace_push_msg("Failed to build openssl rsa pk from string");
 		goto clean_up;
 	}
 
 	if (!(pk = ue_public_key_create(RSA_PUBLIC_KEY, (void *)ue_rsa_pk, bits))) {
-		ue_stacktrace_push_msg("Failed to create new rsa public key");
+		ei_stacktrace_push_msg("Failed to create new rsa public key");
 		goto clean_up;
 	}
 
 	if (!(ue_rsa_sk_bio = BIO_new_mem_buf(priv_key_buf, priv_key_buf_length))) {
-		ue_stacktrace_push_msg("Failed to init new mem BIO for priv key buf");
+		ei_stacktrace_push_msg("Failed to init new mem BIO for priv key buf");
 		goto clean_up;
 	}
 
 	if (!(ue_rsa_sk = PEM_read_bio_RSAPrivateKey(ue_rsa_sk_bio, NULL, NULL, NULL))) {
-		ue_stacktrace_push_msg("Failed to build openssl rsa sk from string");
+		ei_stacktrace_push_msg("Failed to build openssl rsa sk from string");
 		goto clean_up;
 	}
 
 	if (!(sk = ue_private_key_create(RSA_PRIVATE_KEY, (void *)ue_rsa_sk, bits))) {
-		ue_stacktrace_push_msg("Failed to create new rsa private key");
+		ei_stacktrace_push_msg("Failed to create new rsa private key");
 		goto clean_up;
 	}
 
 	if (!(akey = ue_asym_key_create(pk, sk))) {
-		ue_stacktrace_push_msg("Failed to create asym key");
+		ei_stacktrace_push_msg("Failed to create asym key");
 		goto clean_up;
 	}
 
@@ -233,12 +231,12 @@ ue_public_key *ue_rsa_public_key_create_pk_from_file(char *file_path) {
 	ue_rsa_pk = NULL;
 
 	if (!(ue_rsa_get_pub_key_from_file(file_path, &ue_rsa_pk))) {
-		ue_stacktrace_push_msg("Failed to read openssl rsa public key from file");
+		ei_stacktrace_push_msg("Failed to read openssl rsa public key from file");
 		return NULL;
 	}
 
 	if (!(pk = ue_public_key_create(RSA_PUBLIC_KEY, (void *)ue_rsa_pk, RSA_size(ue_rsa_pk)))) {
-		ue_stacktrace_push_msg("Failed to build public key from openssl rsa public key");
+		ei_stacktrace_push_msg("Failed to build public key from openssl rsa public key");
 		RSA_free(ue_rsa_pk);
 		return NULL;
 	}
@@ -254,12 +252,12 @@ ue_private_key *ue_rsa_private_key_create_sk_from_file(char *file_path) {
 	ue_rsa_sk = NULL;
 
 	if (!(ue_rsa_get_priv_key_from_file(file_path, &ue_rsa_sk))) {
-		ue_stacktrace_push_msg("Failed to read openssl rsa private key from file");
+		ei_stacktrace_push_msg("Failed to read openssl rsa private key from file");
 		return NULL;
 	}
 
 	if (!(sk = ue_private_key_create(RSA_PRIVATE_KEY, (void *)ue_rsa_sk, RSA_size(ue_rsa_sk)))) {
-		ue_stacktrace_push_msg("Failed to build private key from openssl rsa private key");
+		ei_stacktrace_push_msg("Failed to build private key from openssl rsa private key");
 		RSA_free(ue_rsa_sk);
 		return NULL;
 	}
@@ -273,7 +271,7 @@ ue_asym_key *ue_rsa_asym_key_create_from_files(char *pk_file_path, char *sk_file
 	akey = NULL;
 
 	if (!(akey = ue_asym_key_create(ue_rsa_public_key_create_pk_from_file(pk_file_path), ue_rsa_private_key_create_sk_from_file(sk_file_path)))) {
-		ue_stacktrace_push_msg("Failed to create asym key");
+		ei_stacktrace_push_msg("Failed to create asym key");
 		return NULL;
 	}
 
@@ -289,8 +287,8 @@ ue_public_key *ue_rsa_public_key_from_x509_certificate(ue_x509_certificate *cert
 	public_key_impl = NULL;
 	rsa = NULL;
 
-	ue_check_parameter_or_return(certificate);
-	ue_check_parameter_or_return(ue_x509_certificate_get_impl(certificate));
+	ei_check_parameter_or_return(certificate);
+	ei_check_parameter_or_return(ue_x509_certificate_get_impl(certificate));
 
 	public_key_impl = X509_get_pubkey(ue_x509_certificate_get_impl(certificate));
 	rsa = EVP_PKEY_get1_RSA(public_key_impl);
@@ -298,7 +296,7 @@ ue_public_key *ue_rsa_public_key_from_x509_certificate(ue_x509_certificate *cert
 
 	if (!(public_key = ue_public_key_create(RSA_PUBLIC_KEY, (void *)rsa, RSA_size(rsa)))) {
 		RSA_free(rsa);
-		ue_stacktrace_push_msg("Failed to build public key from openssl rsa public key");
+		ei_stacktrace_push_msg("Failed to build public key from openssl rsa public key");
 		return NULL;
 	}
 
@@ -330,7 +328,7 @@ ue_private_key *ue_rsa_private_key_from_key_certificate(const char *file_name) {
 	rsa = EVP_PKEY_get1_RSA(private_key_impl);
 
 	if (!(private_key = ue_private_key_create(RSA_PRIVATE_KEY, (void *)rsa, RSA_size(rsa)))) {
-		ue_stacktrace_push_msg("Failed to build RSA private key from key certificate file");
+		ei_stacktrace_push_msg("Failed to build RSA private key from key certificate file");
 		goto clean_up;
 	}
 

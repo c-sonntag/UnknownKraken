@@ -12,5 +12,8 @@ LibUnknownEcho.creator
 LibUnknownEcho.files
 LibUnknownEcho.includes
 
+# Visual Studio Code config file
+.vscode
+
 # Commentend until fixed
 .travis.yml

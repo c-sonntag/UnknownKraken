@@ -5,9 +5,7 @@
 #include <unknownecho/protocol/api/relay/relay_route.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/network/factory/communication_metadata_factory.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/errorHandling/check_parameter.h>
+#include <ei/ei.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/byte/byte_writer.h>
 #include <unknownecho/crypto/api/crypto_metadata.h>
@@ -47,13 +45,13 @@ static ue_relay_step *create_step_from_uid(ue_crypto_metadata *our_crypto_metada
     ue_crypto_metadata *target_crypto_metadata;
 
     if (!(target_crypto_metadata = ue_crypto_metadata_create_empty())) {
-        ue_stacktrace_push_msg("Failed to create empty crypto metadata object for target");
+        ei_stacktrace_push_msg("Failed to create empty crypto metadata object for target");
         return NULL;
     }
 
     if (!ue_crypto_metadata_read_certificates(target_crypto_metadata, "out/public", target_uid)) {
         ue_crypto_metadata_destroy(target_crypto_metadata);
-        ue_stacktrace_push_msg("Failed to read certificates of target");
+        ei_stacktrace_push_msg("Failed to read certificates of target");
         return NULL;
     }
 
@@ -61,7 +59,7 @@ static ue_relay_step *create_step_from_uid(ue_crypto_metadata *our_crypto_metada
         our_crypto_metadata, target_crypto_metadata))) {
 
         ue_crypto_metadata_destroy(target_crypto_metadata);
-        ue_stacktrace_push_msg("Failed to create step with uid '%s'", target_uid);
+        ei_stacktrace_push_msg("Failed to create step with uid '%s'", target_uid);
         return NULL;
     }
 
@@ -85,13 +83,13 @@ static ue_relay_route *create_route_from_args(ue_crypto_metadata *our_crypto_met
 
     for (i = 3, j = 0; i < argc; i+=2, j++) {
         if (!(steps[j] = create_step_from_uid(our_crypto_metadata, argv[i], atoi(argv[i+1]), j))) {
-            ue_stacktrace_push_msg("Failed to create step at iteration %d with uid '%s'", j, argv[i]);
+            ei_stacktrace_push_msg("Failed to create step at iteration %d with uid '%s'", j, argv[i]);
             goto clean_up_fail;
         }
     }
 
     if (!(route = ue_relay_route_create(steps, step_number))) {
-        ue_stacktrace_push_msg("Failed to create new relay route");
+        ei_stacktrace_push_msg("Failed to create new relay route");
         goto clean_up_fail;
     }
 
@@ -113,24 +111,24 @@ ue_relay_route *generate_simple_route(ue_crypto_metadata *our_crypto_metadata) {
     ue_crypto_metadata *b_crypto_metadata, *c_crypto_metadata;
 
     if (!(b_crypto_metadata = ue_crypto_metadata_create_empty())) {
-        ue_stacktrace_push_msg("Failed to create empty crypto metadata object for target b");
+        ei_stacktrace_push_msg("Failed to create empty crypto metadata object for target b");
         return NULL;
     }
 
     if (!ue_crypto_metadata_read_certificates(b_crypto_metadata, "out/public", "server1_uid")) {
         ue_crypto_metadata_destroy(b_crypto_metadata);
-        ue_stacktrace_push_msg("Failed to read certificates of target b");
+        ei_stacktrace_push_msg("Failed to read certificates of target b");
         return NULL;
     }
 
     if (!(c_crypto_metadata = ue_crypto_metadata_create_empty())) {
-        ue_stacktrace_push_msg("Failed to create empty crypto metadata object for target c");
+        ei_stacktrace_push_msg("Failed to create empty crypto metadata object for target c");
         return NULL;
     }
 
     if (!ue_crypto_metadata_read_certificates(c_crypto_metadata, "out/public", "server2_uid")) {
         ue_crypto_metadata_destroy(c_crypto_metadata);
-        ue_stacktrace_push_msg("Failed to read certificates of target c");
+        ei_stacktrace_push_msg("Failed to read certificates of target c");
         return NULL;
     }
 
@@ -142,7 +140,7 @@ ue_relay_route *generate_simple_route(ue_crypto_metadata *our_crypto_metadata) {
         ),
         2))) {
 
-        ue_stacktrace_push_msg("Failed to create route A -> B -> C");
+        ei_stacktrace_push_msg("Failed to create route A -> B -> C");
         return NULL;
     }
 
@@ -152,8 +150,8 @@ ue_relay_route *generate_simple_route(ue_crypto_metadata *our_crypto_metadata) {
 static bool send_message(ue_byte_stream *message_to_send) {
     bool result;
 
-    ue_check_parameter_or_return(message_to_send);
-    ue_check_parameter_or_return(!ue_byte_stream_is_empty(message_to_send));
+    ei_check_parameter_or_return(message_to_send);
+    ei_check_parameter_or_return(!ue_byte_stream_is_empty(message_to_send));
 
     result = false;
 
@@ -189,12 +187,12 @@ static bool receive_message(ue_byte_stream *received_message) {
     server_public_key = NULL;
 
     if (!(server_certificate = ue_pkcs12_keystore_find_certificate_by_friendly_name(context.cipher_keystore, (const unsigned char *)"CIPHER_SERVER", strlen("CIPHER_SERVER")))) {
-        ue_stacktrace_push_msg("Failed to get cipher client certificate");
+        ei_stacktrace_push_msg("Failed to get cipher client certificate");
         goto clean_up;
     }
 
     if (!(server_public_key = ue_rsa_public_key_from_x509_certificate(server_certificate))) {
-        ue_stacktrace_push_msg("Failed to get server public key from server certificate");
+        ei_stacktrace_push_msg("Failed to get server public key from server certificate");
         goto clean_up;
     }
 
@@ -202,19 +200,19 @@ static bool receive_message(ue_byte_stream *received_message) {
         server_public_key, context.signer_keystore->private_key, &cipher_data, &cipher_data_size, context.cipher_name,
         context.digest_name)) {
 
-        ue_stacktrace_push_msg("Failed to cipher plain data");
+        ei_stacktrace_push_msg("Failed to cipher plain data");
         goto clean_up;
     }
 
     ue_byte_stream_clean_up(context.message_to_send);
 
     if (!ue_byte_writer_append_bytes(context.message_to_send, cipher_data, cipher_data_size)) {
-        ue_stacktrace_push_msg("Failed to write cipher data to message to send");
+        ei_stacktrace_push_msg("Failed to write cipher data to message to send");
         goto clean_up;
     }
 
     if (!send_message(channel_client, connection, context.message_to_send)) {
-        ue_stacktrace_push_msg("Failed to send cipher message");
+        ei_stacktrace_push_msg("Failed to send cipher message");
         goto clean_up;
     }
 
@@ -238,18 +236,18 @@ static size_t receive_cipher_message(ue_channel_client *channel_client, void *co
     received = receive_message(channel_client, connection);
 
     if (received <= 0 || received == ULLONG_MAX) {
-        ue_logger_warn("Connection with server is interrupted.");
+        ei_logger_warn("Connection with server is interrupted.");
         goto clean_up;
     }
 
     if (!(server_certificate = ue_pkcs12_keystore_find_certificate_by_friendly_name(context.signer_keystore, (const unsigned char *)"SIGNER_SERVER", strlen("SIGNER_SERVER")))) {
-        ue_stacktrace_push_msg("Failed to find server signer certificate");
+        ei_stacktrace_push_msg("Failed to find server signer certificate");
         received = -1;
         goto clean_up;
     }
 
     if (!(server_public_key = ue_rsa_public_key_from_x509_certificate(server_certificate))) {
-        ue_stacktrace_push_msg("Failed to get server public key from server certificate");
+        ei_stacktrace_push_msg("Failed to get server public key from server certificate");
         received = -1;
         goto clean_up;
     }
@@ -260,7 +258,7 @@ static size_t receive_cipher_message(ue_channel_client *channel_client, void *co
         context.digest_name)) {
 
         received = -1;
-        ue_stacktrace_push_msg("Failed decipher message data");
+        ei_stacktrace_push_msg("Failed decipher message data");
         goto clean_up;
     }
 
@@ -268,7 +266,7 @@ static size_t receive_cipher_message(ue_channel_client *channel_client, void *co
 
     if (!ue_byte_writer_append_bytes(context.received_message, plain_data, plain_data_size)) {
         received = -1;
-        ue_stacktrace_push_msg("Failed to write plain data to received message");
+        ei_stacktrace_push_msg("Failed to write plain data to received message");
         goto clean_up;
     }
 
@@ -285,8 +283,8 @@ static void read_consumer(void *parameter) {
 
     while (context.running) {
         if (!receive_message(received_message)) {
-            ue_logger_stacktrace("Failed to receive message");
-            ue_stacktrace_clean_up();
+            ei_logger_stacktrace("Failed to receive message");
+            ei_stacktrace_clean_up();
         }
         ue_byte_stream_print_string(received_message, stdout);
         if (memcmp(ue_byte_stream_get_data(received_message), "-s", strlen("-s")) == 0) {
@@ -303,7 +301,7 @@ static void write_consumer(void *parameter) {
     ue_byte_stream *message;
 
     if (!(message = ue_byte_stream_create())) {
-        ue_stacktrace_push_msg("Failed to create empty byte stream");
+        ei_stacktrace_push_msg("Failed to create empty byte stream");
         return;
     }
 
@@ -323,9 +321,9 @@ static void write_consumer(void *parameter) {
         ue_byte_writer_append_string(message, input);
 
         if (!send_message(message)) {
-            ue_logger_stacktrace("Failed to send message to server");
+            ei_logger_stacktrace("Failed to send message to server");
         } else {
-            ue_logger_info("Message sent.");
+            ei_logger_info("Message sent.");
         }
 
         ue_safe_free(input);
@@ -354,7 +352,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
         exit(EXIT_FAILURE);
     }
-    ue_logger_info("UnknownEchoLib is correctly initialized.");
+    ei_logger_info("UnknownEchoLib is correctly initialized.");
 
     uv_mutex_init(&context.mutex);
     uv_cond_init(&context.cond);
@@ -363,32 +361,32 @@ int main(int argc, char **argv) {
     context.running = true;
 
     if (!(our_crypto_metadata = ue_crypto_metadata_write_if_not_exist("out/private", "out/public", argv[1], argv[2]))) {
-        ue_stacktrace_push_msg("Failed to get crypto metadata");
+        ei_stacktrace_push_msg("Failed to get crypto metadata");
         goto clean_up;
     }
 
     if (!(route = create_route_from_args(our_crypto_metadata, argc, argv))) {
-        ue_stacktrace_push_msg("Failed to create route from args");
+        ei_stacktrace_push_msg("Failed to create route from args");
         goto clean_up;
     }
 
     //route = generate_simple_route(our_crypto_metadata);
 
     if (!ue_relay_route_is_valid(route)) {
-        ue_stacktrace_push_msg("New route is invalid");
+        ei_stacktrace_push_msg("New route is invalid");
         goto clean_up;
     }
 
     if (!(context.client = ue_relay_client_create_from_route(route))) {
-        ue_stacktrace_push_msg("Failed to create new relay client");
+        ei_stacktrace_push_msg("Failed to create new relay client");
         goto clean_up;
     }
 
     if (!ue_relay_client_is_valid(context.client)) {
-        ue_stacktrace_push_msg("New relay client is invalid");
+        ei_stacktrace_push_msg("New relay client is invalid");
         goto clean_up;
     }
-    ue_logger_info("New relay client is valid");
+    ei_logger_info("New relay client is valid");
 
     uv_thread_create(&context.read_consumer_thread, read_consumer, NULL);
     uv_thread_create(&context.write_consumer_thread, write_consumer, NULL);
@@ -408,9 +406,9 @@ clean_up:
         }
         ue_safe_free(remote_crypto_metadatas);
     }
-    if (ue_stacktrace_is_filled()) {
-        ue_logger_error("An error occurred with the following stacktrace :");
-        ue_stacktrace_print_all();
+    if (ei_stacktrace_is_filled()) {
+        ei_logger_error("An error occurred with the following stacktrace :");
+        ei_stacktrace_print_all();
     }
     ue_uninit();
     return 0;

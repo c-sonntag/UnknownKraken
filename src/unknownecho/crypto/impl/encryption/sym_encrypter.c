@@ -20,8 +20,7 @@
 #include <unknownecho/crypto/api/encryption/sym_encrypter.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 #include <unknownecho/string/string_utility.h>
 
 #include <openssl/evp.h>
@@ -64,10 +63,10 @@ ue_sym_key *ue_sym_encrypter_get_key(ue_sym_encrypter *encrypter) {
 }
 
 bool ue_sym_encrypter_set_key(ue_sym_encrypter *encrypter, ue_sym_key *key) {
-	ue_check_parameter_or_return(encrypter);
+	ei_check_parameter_or_return(encrypter);
 
 	if (!ue_sym_key_is_valid(key)) {
-		ue_stacktrace_push_msg("Specified key is invalid");
+		ei_stacktrace_push_msg("Specified key is invalid");
 		return false;
 	}
 
@@ -89,10 +88,10 @@ bool ue_sym_encrypter_encrypt(ue_sym_encrypter *encrypter, unsigned char *plaint
 
 	error_buffer = NULL;
 
-	ue_check_parameter_or_return(encrypter);
-	ue_check_parameter_or_return(plaintext);
-	ue_check_parameter_or_return(iv);
-	ue_check_parameter_or_return(plaintext_size);
+	ei_check_parameter_or_return(encrypter);
+	ei_check_parameter_or_return(plaintext);
+	ei_check_parameter_or_return(iv);
+	ei_check_parameter_or_return(plaintext_size);
 
 	if (!(ctx = EVP_CIPHER_CTX_new())) {
 		ue_openssl_error_handling(error_buffer, "EVP_CIPHER_CTX_new");

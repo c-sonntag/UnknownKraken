@@ -19,9 +19,7 @@
 
 #include <unknownecho/network/api/socket/socket_send.h>
 #include <unknownecho/network/api/tls/tls_connection_write.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/network/api/tls/tls_connection.h>
 #include <unknownecho/byte/byte_stream.h>
@@ -50,8 +48,8 @@ size_t ue_socket_send_sync(ue_socket_client_connection *connection, ue_byte_stre
         char *error_buffer;
     #endif
 
-    ue_check_parameter_or_return(connection->fd > 0);
-    ue_check_parameter_or_return(ue_byte_stream_get_size(message_to_send) > 0);
+    ei_check_parameter_or_return(connection->fd > 0);
+    ei_check_parameter_or_return(ue_byte_stream_get_size(message_to_send) > 0);
 
     data = ue_byte_stream_get_data(message_to_send);
     size = ue_byte_stream_get_size(message_to_send);
@@ -63,7 +61,7 @@ size_t ue_socket_send_sync(ue_socket_client_connection *connection, ue_byte_stre
             do {
                 bytes = write(connection->fd, data + sent, size - sent);
                 if (bytes < 0) {
-                    ue_stacktrace_push_errno();
+                    ei_stacktrace_push_errno();
                     return -1;
                 }
                 if (bytes == 0) {
@@ -74,7 +72,7 @@ size_t ue_socket_send_sync(ue_socket_client_connection *connection, ue_byte_stre
         #elif defined(_WIN32) || defined(_WIN64)
             if((sent = send((SOCKET)connection->fd, (char *)data, size, 0)) < 0) {
                 ue_get_last_wsa_error(error_buffer);
-                ue_stacktrace_push_msg(error_buffer);
+                ei_stacktrace_push_msg(error_buffer);
                 ue_safe_free(error_buffer);
                 return -1;
             }
@@ -85,7 +83,7 @@ size_t ue_socket_send_sync(ue_socket_client_connection *connection, ue_byte_stre
         sent = ue_tls_connection_write_sync(connection->tls, data, size);
     }
 
-    ue_logger_trace("%lu bytes sent", sent);
+    ei_logger_trace("%lu bytes sent", sent);
 
     return sent;
 }

@@ -44,7 +44,7 @@ ue_x509_certificate_parameters *ue_x509_certificate_parameters_create() {
     ue_safe_alloc(parameters, ue_x509_certificate_parameters, 1);
     ue_safe_alloc(parameters->serial, unsigned char, UNKNOWNECHO_DEFUALT_X509_SERIAL_LENGTH);
 	if (!ue_crypto_random_bytes(parameters->serial, UNKNOWNECHO_DEFUALT_X509_SERIAL_LENGTH)) {
-		ue_stacktrace_push_msg("Failed to gen crypto random bytes");
+		ei_stacktrace_push_msg("Failed to gen crypto random bytes");
 		return false;
 	}
     /* @todo set default serial length in defines */

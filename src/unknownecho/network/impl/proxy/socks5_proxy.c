@@ -25,8 +25,7 @@
 #include <unknownecho/network/api/socket/socket_send.h>
 #include <unknownecho/bool.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/check_parameter.h>
+#include <ei/ei.h>
 
 #include <stddef.h>
 #include <string.h>
@@ -41,9 +40,9 @@
 #endif
 
 static bool send_all(int socket_fd, unsigned char *data, size_t data_size) {
-    ue_check_parameter_or_return(socket_fd > 0);
-    ue_check_parameter_or_return(data);
-    ue_check_parameter_or_return(data_size > 0);
+    ei_check_parameter_or_return(socket_fd > 0);
+    ei_check_parameter_or_return(data);
+    ei_check_parameter_or_return(data_size > 0);
 
 	//ue_socket_send_sync(socket_fd, data, data_size, NULL);
 	return true;
@@ -53,9 +52,9 @@ static bool recv_all(int socket_fd, unsigned char *data, size_t data_size) {
     unsigned char *bytes;
     size_t i;
 
-    ue_check_parameter_or_return(socket_fd > 0);
-    ue_check_parameter_or_return(data);
-    ue_check_parameter_or_return(data_size > 0);
+    ei_check_parameter_or_return(socket_fd > 0);
+    ei_check_parameter_or_return(data);
+    ei_check_parameter_or_return(data_size > 0);
 
 	ue_socket_receive_all_sync(socket_fd, &bytes, data_size, NULL);
 	for (i = 0; i < data_size; i++) {
@@ -74,17 +73,17 @@ static bool socks5_start(int socket_fd) {
     unsigned char rx[2] = { 0 };
 
     if (!send_all(socket_fd, tx, sizeof(tx))) {
-        ue_stacktrace_push_msg("Failed to send TX");
+        ei_stacktrace_push_msg("Failed to send TX");
         return false;
     }
 
     if (!recv_all(socket_fd, rx, sizeof(rx))) {
-        ue_stacktrace_push_msg("Failed to receive RX");
+        ei_stacktrace_push_msg("Failed to receive RX");
         return false;
     }
 
     if (tx[0] != rx[0] || tx[2] != rx[1]) {
-        ue_stacktrace_push_msg("Received RX data are invalid");
+        ei_stacktrace_push_msg("Received RX data are invalid");
         return false;
     }
 

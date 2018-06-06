@@ -27,8 +27,7 @@
 #include <unknownecho/crypto/api/cipher/data_cipher.h>
 #include <unknownecho/crypto/factory/rsa_asym_key_factory.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 #include <unknownecho/byte/byte_utility.h>
 
 #include <stddef.h>
@@ -70,7 +69,7 @@ int main(int argc, char **argv) {
     }
 
     if (!(plain_data = ue_bytes_create_from_string(argv[1]))) {
-        ue_stacktrace_push_msg("Failed to convert arg to bytes")
+        ei_stacktrace_push_msg("Failed to convert arg to bytes")
         goto clean_up;
     }
     plain_data_size = strlen(argv[1]);
@@ -81,28 +80,28 @@ int main(int argc, char **argv) {
 
     private_key = ue_rsa_private_key_from_key_certificate(argv[3]);
 
-    ue_timer_start(CIPHER_ID);
+    //ue_timer_start(CIPHER_ID);
     if (!ue_cipher_plain_data(plain_data, plain_data_size, public_key, private_key, &cipher_data, &cipher_data_size, "aes-256-cbc", "sha256")) {
-        ue_stacktrace_push_msg("Failed to cipher plain data");
+        ei_stacktrace_push_msg("Failed to cipher plain data");
         goto clean_up;
     }
-    ue_timer_stop(CIPHER_ID);
+    //ue_timer_stop(CIPHER_ID);
 
-    ue_timer_start(DECIPHER_ID);
+    //ue_timer_start(DECIPHER_ID);
     if (!ue_decipher_cipher_data(cipher_data, cipher_data_size, private_key, public_key, &decipher_data, &decipher_data_size,
         "aes-256-cbc", "sha256")) {
 
-        ue_stacktrace_push_msg("Failed to decipher cipher data");
+        ei_stacktrace_push_msg("Failed to decipher cipher data");
         goto clean_up;
     }
-    ue_timer_stop(DECIPHER_ID);
+    //ue_timer_stop(DECIPHER_ID);
 
     if (plain_data_size == decipher_data_size && memcmp(decipher_data, plain_data, plain_data_size) == 0) {
-        ue_logger_info("Plain data and decipher data match");
-        ue_timer_total_print(CIPHER_ID, "cipher data");
-        ue_timer_total_print(DECIPHER_ID, "decipher data");
+        ei_logger_info("Plain data and decipher data match");
+        //ue_timer_total_print(CIPHER_ID, "cipher data");
+        //ue_timer_total_print(DECIPHER_ID, "decipher data");
     } else {
-        ue_logger_error("Plain data and decipher data doesn't match");
+        ei_logger_error("Plain data and decipher data doesn't match");
     }
 
 clean_up:
@@ -113,9 +112,9 @@ clean_up:
     ue_safe_free(cipher_data);
     ue_safe_free(decipher_data);
     ue_x509_certificate_destroy(certificate);
-    if (ue_stacktrace_is_filled()) {
-        ue_logger_error("Error(s) occurred with the following stacktrace(s) :");
-        ue_stacktrace_print_all();
+    if (ei_stacktrace_is_filled()) {
+        ei_logger_error("Error(s) occurred with the following stacktrace(s) :");
+        ei_stacktrace_print_all();
     }
     ue_uninit();
     return 0;

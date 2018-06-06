@@ -18,7 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/time/current_time.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 
 #if defined(_WIN32) || defined(_WIN64)
     #include <windows.h>
@@ -46,7 +46,7 @@ bool ue_time_of_day(struct timeval *p) {
     p->tv_sec = (long) (ul.QuadPart / 1000000LL);
 #elif defined(__linux__)
     if (gettimeofday(p , NULL) == -1) {
-        ue_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         return false;
     }
 #endif

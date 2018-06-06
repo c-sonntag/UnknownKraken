@@ -19,8 +19,7 @@
 
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 
 #include <string.h>
 
@@ -32,7 +31,7 @@ ue_byte_stream *ue_byte_stream_create() {
 ue_byte_stream *ue_byte_stream_create_size(size_t size) {
 	ue_byte_stream *stream;
 
-    ue_check_parameter_or_return(size > 0);
+    ei_check_parameter_or_return(size > 0);
 
     ue_safe_alloc(stream, ue_byte_stream, 1);
 
@@ -90,13 +89,13 @@ size_t ue_byte_stream_get_position(ue_byte_stream *stream) {
 }
 
 bool ue_byte_stream_set_position(ue_byte_stream *stream, size_t position) {
-    ue_check_parameter_or_return(stream);
-    ue_check_parameter_or_return(stream->bytes);
-    ue_check_parameter_or_return(stream->limit > 0);
-    ue_check_parameter_or_return(position >= 0 && position < 18446744073709551615UL);
+    ei_check_parameter_or_return(stream);
+    ei_check_parameter_or_return(stream->bytes);
+    ei_check_parameter_or_return(stream->limit > 0);
+    ei_check_parameter_or_return(position >= 0 && position < 18446744073709551615UL);
 
 	if (position >= stream->limit || position > stream->size) {
-		ue_stacktrace_push_msg("Position out of range");
+		ei_stacktrace_push_msg("Position out of range");
 		return false;
 	}
 
@@ -114,7 +113,7 @@ size_t ue_byte_stream_get_size(ue_byte_stream *stream) {
 }
 
 bool ue_byte_stream_is_empty(ue_byte_stream *stream) {
-    ue_check_parameter_or_return(stream);
+    ei_check_parameter_or_return(stream);
 
     return stream->position <= 0;
 }

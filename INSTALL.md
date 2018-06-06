@@ -3,6 +3,7 @@
 * libcrypto >= 1.1.0 for encryption.
 * libz >= 1.2.11 for compression.
 * libuv >= 1.20.3 for networking and threading.
+* libei for stacktrace and logging.
 * A recent version of CMake.
 * Optional: ccache is supported to reduce build time of LibUnknownEcho.
 * Optional: Valgrind for memory debugging/memory leak detection
@@ -55,6 +56,15 @@ sh autogen.sh && \
 make && \
 make check && \
 sudo make install && \
+cd ..
+```
+
+* Install libei:
+```bash
+git clone https://github.com/swasun/LibErrorInterceptor && \
+cd LibErrorInterceptor && \
+./buid_release && \
+sudo ./install && \
 cd ..
 ```
 

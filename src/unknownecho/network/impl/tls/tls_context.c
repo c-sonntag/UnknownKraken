@@ -20,7 +20,7 @@
 #include <unknownecho/network/api/tls/tls_context.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 
 #include <openssl/ssl.h>
 
@@ -34,7 +34,7 @@ static char *local_passphrase = NULL;
 
 static int password_callback(char *buf, int num, int rwflag, void *userdata) {
 	if (!local_passphrase) {
-		ue_logger_warn("Passphrase callback is called to decipher certificate, but no passphrase is provide");
+		ei_logger_warn("Passphrase callback is called to decipher certificate, but no passphrase is provide");
 		return -1;
 	}
 

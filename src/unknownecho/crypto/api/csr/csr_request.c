@@ -23,9 +23,7 @@
 #include <unknownecho/crypto/api/cipher/data_cipher.h>
 #include <unknownecho/crypto/api/encryption/sym_encrypter.h>
 #include <unknownecho/crypto/factory/sym_encrypter_factory.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/byte/byte_writer.h>
 #include <unknownecho/byte/byte_reader.h>
@@ -35,20 +33,20 @@ static char *generate_csr_string(ue_x509_certificate *certificate, ue_private_ke
     ue_x509_csr *csr;
     char *csr_string;
 
-	ue_check_parameter_or_return(certificate);
-	ue_check_parameter_or_return(private_key);
+	ei_check_parameter_or_return(certificate);
+	ei_check_parameter_or_return(private_key);
 
     csr_string = NULL;
     csr = NULL;
 
     if (!(csr = ue_x509_csr_create(certificate, private_key))) {
-        ue_stacktrace_push_msg("Failed to create x509 CRS from certificate and private key");
+        ei_stacktrace_push_msg("Failed to create x509 CRS from certificate and private key");
         return NULL;
     }
 
-    ue_logger_info("Convert x509 CRS to string...");
+    ei_logger_info("Convert x509 CRS to string...");
     if (!(csr_string = ue_x509_csr_to_string(csr))) {
-        ue_stacktrace_push_msg("Failed to convert x509 CRS to string");
+        ei_stacktrace_push_msg("Failed to convert x509 CRS to string");
         ue_x509_csr_destroy(csr);
         return NULL;
     }
@@ -67,12 +65,12 @@ unsigned char *ue_csr_build_client_request(ue_x509_certificate *certificate, ue_
     ue_byte_stream *stream;
     unsigned char *cipher_data;
 
-	ue_check_parameter_or_return(certificate);
-	ue_check_parameter_or_return(private_key);
-	ue_check_parameter_or_return(ca_public_key);
-	ue_check_parameter_or_return(future_key);
-	ue_check_parameter_or_return(iv);
-	ue_check_parameter_or_return(iv_size > 0);
+	ei_check_parameter_or_return(certificate);
+	ei_check_parameter_or_return(private_key);
+	ei_check_parameter_or_return(ca_public_key);
+	ei_check_parameter_or_return(future_key);
+	ei_check_parameter_or_return(iv);
+	ei_check_parameter_or_return(iv_size > 0);
 
     csr_string = NULL;
     public_key = NULL;
@@ -80,39 +78,39 @@ unsigned char *ue_csr_build_client_request(ue_x509_certificate *certificate, ue_
     cipher_data = NULL;
 
     if (!(csr_string = generate_csr_string(certificate, private_key))) {
-		ue_stacktrace_push_msg("Failed to generate CSR string from certificate and private key");
+		ei_stacktrace_push_msg("Failed to generate CSR string from certificate and private key");
 		goto clean_up;
 	}
 
     if (!ue_byte_writer_append_int(stream, (int)strlen(csr_string))) {
-		ue_stacktrace_push_msg("Failed to write CSR string size to stream");
+		ei_stacktrace_push_msg("Failed to write CSR string size to stream");
 		goto clean_up;
 	}
     if (!ue_byte_writer_append_int(stream, (int)future_key->size)) {
-		ue_stacktrace_push_msg("Failed to write future key size to stream");
+		ei_stacktrace_push_msg("Failed to write future key size to stream");
 		goto clean_up;
 	}
     if (!ue_byte_writer_append_int(stream, (int)iv_size)) {
-		ue_stacktrace_push_msg("Failed to write IV size to stream");
+		ei_stacktrace_push_msg("Failed to write IV size to stream");
 		goto clean_up;
 	}
     if (!ue_byte_writer_append_string(stream, csr_string)) {
-		ue_stacktrace_push_msg("Failed to write CSR string to stream");
+		ei_stacktrace_push_msg("Failed to write CSR string to stream");
 		goto clean_up;
 	}
     if (!ue_byte_writer_append_bytes(stream, future_key->data, future_key->size)) {
-		ue_stacktrace_push_msg("Failed to write future to stream");
+		ei_stacktrace_push_msg("Failed to write future to stream");
 		goto clean_up;
 	}
     if (!ue_byte_writer_append_bytes(stream, iv, iv_size)) {
-		ue_stacktrace_push_msg("Failed to write IV to stream");
+		ei_stacktrace_push_msg("Failed to write IV to stream");
 		goto clean_up;
 	}
 
     if (!ue_cipher_plain_data(ue_byte_stream_get_data(stream), ue_byte_stream_get_size(stream), ca_public_key, NULL, &cipher_data,
         cipher_data_size, cipher_name, digest_name)) {
 
-        ue_stacktrace_push_msg("Failed to cipher plain data");
+        ei_stacktrace_push_msg("Failed to cipher plain data");
         goto clean_up;
     }
 
@@ -131,22 +129,22 @@ ue_x509_certificate *ue_csr_process_server_response(unsigned char *server_respon
     unsigned char *signed_certificate_buffer;
     size_t signed_certificate_buffer_size;
 
-	ue_check_parameter_or_return(server_response);
-	ue_check_parameter_or_return(server_response_size > 0);
-	ue_check_parameter_or_return(key);
-	ue_check_parameter_or_return(iv);
-	ue_check_parameter_or_return(iv_size > 0);
+	ei_check_parameter_or_return(server_response);
+	ei_check_parameter_or_return(server_response_size > 0);
+	ei_check_parameter_or_return(key);
+	ei_check_parameter_or_return(iv);
+	ei_check_parameter_or_return(iv_size > 0);
 
     signed_certificate = NULL;
 
     sym_encrypter = ue_sym_encrypter_default_create(key);
 	if (!ue_sym_encrypter_decrypt(sym_encrypter, server_response, server_response_size, iv, &signed_certificate_buffer, &signed_certificate_buffer_size)) {
-		ue_stacktrace_push_msg("Failed to decrypt signed certificate");
+		ei_stacktrace_push_msg("Failed to decrypt signed certificate");
 		goto clean_up;
 	}
 
     if (!(signed_certificate = ue_x509_certificate_load_from_bytes(signed_certificate_buffer, signed_certificate_buffer_size))) {
-        ue_stacktrace_push_msg("Failed to convert bytes to x509 certificate");
+        ei_stacktrace_push_msg("Failed to convert bytes to x509 certificate");
     }
 
 clean_up:
@@ -181,84 +179,84 @@ unsigned char *ue_csr_build_server_response(ue_private_key *csr_private_key, ue_
     iv = NULL;
     string_pem_certificate_size = 0;
 
-    ue_check_parameter_or_return(csr_private_key);
-    ue_check_parameter_or_return(ca_certificate);
-    ue_check_parameter_or_return(ca_private_key);
-    ue_check_parameter_or_return(client_request);
-    ue_check_parameter_or_return(client_request_size > 0);
+    ei_check_parameter_or_return(csr_private_key);
+    ei_check_parameter_or_return(ca_certificate);
+    ei_check_parameter_or_return(ca_private_key);
+    ei_check_parameter_or_return(client_request);
+    ei_check_parameter_or_return(client_request_size > 0);
 
     if (!ue_decipher_cipher_data(client_request, client_request_size, csr_private_key, NULL, &decipher_data, &decipher_data_size,
         cipher_name, digest_name)) {
 
-        ue_stacktrace_push_msg("Failed to decipher cipher data");
+        ei_stacktrace_push_msg("Failed to decipher cipher data");
         goto clean_up;
     }
 
     if (!ue_byte_writer_append_bytes(stream, decipher_data, decipher_data_size)) {
-		ue_stacktrace_push_msg("Failed to write deciphered client CSR");
+		ei_stacktrace_push_msg("Failed to write deciphered client CSR");
 		goto clean_up;
 	}
 	ue_byte_stream_set_position(stream, 0);
 
     ue_byte_read_next_int(stream, &read_int);
     if (read_int == 0) {
-        ue_stacktrace_push_msg("Failed to read decipher client request size");
+        ei_stacktrace_push_msg("Failed to read decipher client request size");
         goto clean_up;
     }
     decipher_client_request_size = read_int;
 
     ue_byte_read_next_int(stream, &read_int);
     if (read_int == 0) {
-        ue_stacktrace_push_msg("Failed to read future key size");
+        ei_stacktrace_push_msg("Failed to read future key size");
         goto clean_up;
     }
     key_size = read_int;
 
     ue_byte_read_next_int(stream, &read_int);
     if (read_int == 0) {
-        ue_stacktrace_push_msg("Failed to read future IV size");
+        ei_stacktrace_push_msg("Failed to read future IV size");
         goto clean_up;
     }
     iv_size = read_int;
 
     if (!(ue_byte_read_next_bytes(stream, &decipher_client_request, decipher_client_request_size))) {
-        ue_stacktrace_push_msg("Failed to read decipher client request");
+        ei_stacktrace_push_msg("Failed to read decipher client request");
         goto clean_up;
     }
 
     if (!(ue_byte_read_next_bytes(stream, &key_data, key_size))) {
-        ue_stacktrace_push_msg("Failed to read asym key to use");
+        ei_stacktrace_push_msg("Failed to read asym key to use");
         goto clean_up;
     }
 
     if (!(ue_byte_read_next_bytes(stream, &iv, iv_size))) {
-        ue_stacktrace_push_msg("Failed to read IV to use");
+        ei_stacktrace_push_msg("Failed to read IV to use");
         goto clean_up;
     }
 
     if (!(key = ue_sym_key_create(key_data, key_size))) {
-        ue_stacktrace_push_msg("Failed to create sym key");
+        ei_stacktrace_push_msg("Failed to create sym key");
         goto clean_up;
     }
 
     if (!(csr = ue_x509_bytes_to_csr(decipher_client_request, decipher_client_request_size))) {
-        ue_stacktrace_push_msg("Failed to convert decipher bytes to x509 CSR");
+        ei_stacktrace_push_msg("Failed to convert decipher bytes to x509 CSR");
         goto clean_up;
     }
 
     if (!(*signed_certificate = ue_x509_certificate_sign_from_csr(csr, ca_certificate, ca_private_key))) {
-        ue_stacktrace_push_msg("Failed to gen certificate from client certificate");
+        ei_stacktrace_push_msg("Failed to gen certificate from client certificate");
         goto clean_up;
     }
 
     if (!(string_pem_certificate = ue_x509_certificate_to_pem_string(*signed_certificate, &string_pem_certificate_size))) {
-        ue_stacktrace_push_msg("Failed to convert certificate to PEM string");
+        ei_stacktrace_push_msg("Failed to convert certificate to PEM string");
         goto clean_up;
     }
 
     sym_encrypter = ue_sym_encrypter_default_create(key);
     if (!ue_sym_encrypter_encrypt(sym_encrypter, (unsigned char *)string_pem_certificate, string_pem_certificate_size, iv, &server_response, server_response_size)) {
-		ue_stacktrace_push_msg("Failed to encrypt csr content");
+		ei_stacktrace_push_msg("Failed to encrypt csr content");
 		goto clean_up;
 	}
 

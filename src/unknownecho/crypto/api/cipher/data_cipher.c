@@ -32,8 +32,7 @@
 #include <unknownecho/byte/byte_reader.h>
 #include <unknownecho/byte/byte_utility.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 
 bool ue_cipher_plain_data(unsigned char *plain_data, size_t plain_data_size,
     ue_public_key *public_key, ue_private_key *private_key,
@@ -58,7 +57,7 @@ bool ue_cipher_plain_data(unsigned char *plain_data, size_t plain_data_size,
     compressed = NULL;
 
     if (!(compressed = ue_compress_buf(plain_data, plain_data_size, &compressed_size))) {
-		ue_stacktrace_push_msg("Failed to compress ReceiverHeader content");
+		ei_stacktrace_push_msg("Failed to compress ReceiverHeader content");
 		goto clean_up;
 	}
 
@@ -66,18 +65,18 @@ bool ue_cipher_plain_data(unsigned char *plain_data, size_t plain_data_size,
         (int)compressed_size, &encrypted_key, &encrypted_key_len, &iv, &iv_len,
     	&cipher_data_temp, &cipher_data_len_temp, cipher_name)) {
 
-        ue_stacktrace_push_msg("Failed to envelope buffer");
+        ei_stacktrace_push_msg("Failed to envelope buffer");
         goto clean_up;
     }
 
     if (private_key) {
         if (!(signer = ue_rsa_signer_create(public_key, private_key, digest_name))) {
-            ue_stacktrace_push_msg("Failed to create rsa ue_signer with key pair");
+            ei_stacktrace_push_msg("Failed to create rsa ue_signer with key pair");
             goto clean_up;
         }
 
         if (!ue_signer_sign_buffer(signer, plain_data, plain_data_size, &signature, &signature_size)) {
-            ue_stacktrace_push_msg("Failed to sign message with our private key");
+            ei_stacktrace_push_msg("Failed to sign message with our private key");
             goto clean_up;
         }
     }
@@ -144,10 +143,10 @@ bool ue_decipher_cipher_data(unsigned char *cipher_data,
     ue_byte_read_next_int(stream, &plain_data_size_read);
 
     if (signature_size == 0 && public_key != NULL) {
-        ue_stacktrace_push_msg("A public key is specified to verify the signature of the data, but the signature size is equal to 0");
+        ei_stacktrace_push_msg("A public key is specified to verify the signature of the data, but the signature size is equal to 0");
         goto clean_up;
     } else if (signature_size > 0 && public_key == NULL) {
-        ue_stacktrace_push_msg("A signature is specified in the data, but no public key is specified");
+        ei_stacktrace_push_msg("A signature is specified in the data, but no public key is specified");
         goto clean_up;
     } else if (signature_size > 0 && public_key != NULL) {
         verify_signature = true;
@@ -158,7 +157,7 @@ bool ue_decipher_cipher_data(unsigned char *cipher_data,
     ue_byte_read_next_bytes(stream, &cipher_data_temp, (size_t)cipher_data_len_temp);
 
     if (verify_signature && !ue_byte_read_next_bytes(stream, &signature, signature_size)) {
-		ue_stacktrace_push_msg("Failed to read signature field");
+		ei_stacktrace_push_msg("Failed to read signature field");
 		goto clean_up;
 	}
 
@@ -166,26 +165,26 @@ bool ue_decipher_cipher_data(unsigned char *cipher_data,
         cipher_data_temp, cipher_data_len_temp, encrypted_key,
         encrypted_key_len, iv, &compressed, &compressed_size, cipher_name)) {
 
-        ue_stacktrace_push_msg("Failed to open envelope buffer");
+        ei_stacktrace_push_msg("Failed to open envelope buffer");
         goto clean_up;
     }
 
     *plain_data_size = plain_data_size_read;
 
     if (!(*plain_data = ue_decompress_buf(compressed, (size_t)compressed_size, plain_data_size_read))) {
-		ue_stacktrace_push_msg("Failed to decompress ServerHeader content");
+		ei_stacktrace_push_msg("Failed to decompress ServerHeader content");
 		goto clean_up;
 	}
 
     if (verify_signature) {
         if (!(signer = ue_rsa_signer_create(public_key, private_key, digest_name))) {
-            ue_stacktrace_push_msg("Failed to create signer to verify signature");
+            ei_stacktrace_push_msg("Failed to create signer to verify signature");
             goto clean_up;
         }
     	if (!ue_signer_verify_buffer(signer, *plain_data, *plain_data_size, signature, signature_size)) {
             ue_safe_free(*plain_data);
             *plain_data_size = 0;
-    		ue_stacktrace_push_msg("Failed to verify the signature of the sender");
+    		ei_stacktrace_push_msg("Failed to verify the signature of the sender");
     		goto clean_up;
     	}
     }

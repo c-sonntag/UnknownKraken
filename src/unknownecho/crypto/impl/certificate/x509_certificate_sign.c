@@ -20,9 +20,7 @@
 #include <unknownecho/crypto/api/certificate/x509_certificate_sign.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/crypto/utils/crypto_random.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 #include <unknownecho/defines.h>
 
 #include <openssl/rand.h>
@@ -36,7 +34,7 @@ static bool generate_set_random_serial(X509 *crt) {
 	unsigned char serial_bytes[20];
 
 	if (!ue_crypto_random_bytes(serial_bytes, 20)) {
-		ue_stacktrace_push_msg("Failed to gen crypto random bytes");
+		ei_stacktrace_push_msg("Failed to gen crypto random bytes");
 		return false;
 	}
 
@@ -59,9 +57,9 @@ ue_x509_certificate *ue_x509_certificate_sign_from_csr(ue_x509_csr *csr, ue_x509
 	EVP_PKEY *req_pubkey;
 	char *error_buffer;
 
-	ue_check_parameter_or_return(csr);
-	ue_check_parameter_or_return(ca_certificate);
-	ue_check_parameter_or_return(ca_private_key);
+	ei_check_parameter_or_return(csr);
+	ei_check_parameter_or_return(ca_certificate);
+	ei_check_parameter_or_return(ca_private_key);
 
     certificate_impl = X509_new();
     certificate = ue_x509_certificate_create_empty();
@@ -73,7 +71,7 @@ ue_x509_certificate *ue_x509_certificate_sign_from_csr(ue_x509_csr *csr, ue_x509
 
     /* Generate random 20 byte serial. */
     if (!generate_set_random_serial(certificate_impl)) {
-		ue_stacktrace_push_msg("Failed to generate and set random serial to certificate impl");
+		ei_stacktrace_push_msg("Failed to generate and set random serial to certificate impl");
 		goto clean_up_failed;
 	}
 
@@ -86,12 +84,12 @@ ue_x509_certificate *ue_x509_certificate_sign_from_csr(ue_x509_csr *csr, ue_x509
 		UNKNOWNECHO_DEFAULT_X509_NOT_AFTER_DAYS * 3600);
 
     if (!X509_set_subject_name(certificate_impl, X509_REQ_get_subject_name((X509_REQ *)ue_x509_csr_get_impl(csr)))) {
-		ue_stacktrace_push_msg("Failed to set subject name to certificate impl")
+		ei_stacktrace_push_msg("Failed to set subject name to certificate impl")
 		goto clean_up_failed;
 	}
     req_pubkey = X509_REQ_get_pubkey(ue_x509_csr_get_impl(csr));
     if (!X509_set_pubkey(certificate_impl, req_pubkey)) {
-		ue_stacktrace_push_msg("Failed to set req pubkey to certificate impl");
+		ei_stacktrace_push_msg("Failed to set req pubkey to certificate impl");
 		goto clean_up_failed;
 	}
 
@@ -123,8 +121,8 @@ bool ue_x509_certificate_verify(ue_x509_certificate *signed_certificate, ue_x509
     store = NULL;
     error_buffer = NULL;
 
-	ue_check_parameter_or_return(signed_certificate);
-	ue_check_parameter_or_return(ca_certificate);
+	ei_check_parameter_or_return(signed_certificate);
+	ei_check_parameter_or_return(ca_certificate);
 
 	if (!(store = X509_STORE_new())) {
 		ue_openssl_error_handling(error_buffer, "X509_STORE_new");
@@ -147,7 +145,7 @@ bool ue_x509_certificate_verify(ue_x509_certificate *signed_certificate, ue_x509
     }
 
     if (X509_verify_cert(verify_ctx) != 1) {
-        ue_stacktrace_push_msg(X509_verify_cert_error_string(X509_STORE_CTX_get_error(verify_ctx)));
+        ei_stacktrace_push_msg(X509_verify_cert_error_string(X509_STORE_CTX_get_error(verify_ctx)));
 		goto clean_up;
     }
 

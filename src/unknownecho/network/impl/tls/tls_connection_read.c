@@ -19,8 +19,7 @@
 
 #include <unknownecho/network/api/tls/tls_connection_read.h>
 #include <unknownecho/byte/byte_writer.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -47,19 +46,19 @@ size_t ue_tls_connection_read_sync(ue_tls_connection *connection, ue_byte_stream
 			ssl_error = SSL_get_error(ssl, bytes);
 			switch (ssl_error) {
 				case SSL_ERROR_NONE:
-					ue_logger_trace("SSL_ERROR_NONE");
+					ei_logger_trace("SSL_ERROR_NONE");
 				break;
 
 				case SSL_ERROR_WANT_READ:
-					ue_logger_trace("SSL_ERROR_WANT_READ");
+					ei_logger_trace("SSL_ERROR_WANT_READ");
 				break;
 
 				case SSL_ERROR_WANT_WRITE:
-					ue_logger_trace("SSL_ERROR_WANT_WRITE");
+					ei_logger_trace("SSL_ERROR_WANT_WRITE");
 				break;
 
 				case SSL_ERROR_ZERO_RETURN:
-					ue_logger_trace("SSL_ERROR_ZERO_RETURN");
+					ei_logger_trace("SSL_ERROR_ZERO_RETURN");
 				break;
 
 				default:
@@ -70,7 +69,7 @@ size_t ue_tls_connection_read_sync(ue_tls_connection *connection, ue_byte_stream
 		if ((bytes > 0) && (ssl_error == SSL_ERROR_NONE)) {
 			received += bytes;
 			if (!ue_byte_writer_append_bytes(stream, response, bytes)) {
-				ue_stacktrace_push_msg("Failed to append in bytes stream socket response");
+				ei_stacktrace_push_msg("Failed to append in bytes stream socket response");
 				return -1;
 			}
 
@@ -80,7 +79,7 @@ size_t ue_tls_connection_read_sync(ue_tls_connection *connection, ue_byte_stream
 			if (errno != EAGAIN) {
 				continue;
 			}
-			ue_stacktrace_push_errno();
+			ei_stacktrace_push_errno();
 			return -1;
 		}
 		else if (bytes == 0) {
@@ -90,7 +89,7 @@ size_t ue_tls_connection_read_sync(ue_tls_connection *connection, ue_byte_stream
 	} while (1);
 
 	if (received == total) {
-		ue_stacktrace_push_msg("Failed storing complete response from socket");
+		ei_stacktrace_push_msg("Failed storing complete response from socket");
 		return -1;
 	}
 
@@ -117,19 +116,19 @@ size_t ue_tls_connection_read_async(ue_tls_connection *connection, bool (*flow_c
 			ssl_error = SSL_get_error(ssl, bytes);
 			switch (ssl_error) {
 				case SSL_ERROR_NONE:
-					ue_logger_trace("SSL_ERROR_NONE");
+					ei_logger_trace("SSL_ERROR_NONE");
 				break;
 
 				case SSL_ERROR_WANT_READ:
-					ue_logger_trace("SSL_ERROR_WANT_READ");
+					ei_logger_trace("SSL_ERROR_WANT_READ");
 				break;
 
 				case SSL_ERROR_WANT_WRITE:
-					ue_logger_trace("SSL_ERROR_WANT_WRITE");
+					ei_logger_trace("SSL_ERROR_WANT_WRITE");
 				break;
 
 				case SSL_ERROR_ZERO_RETURN:
-					ue_logger_trace("SSL_ERROR_ZERO_RETURN");
+					ei_logger_trace("SSL_ERROR_ZERO_RETURN");
 				break;
 
 				default:
@@ -139,7 +138,7 @@ size_t ue_tls_connection_read_async(ue_tls_connection *connection, bool (*flow_c
 
 		if ((bytes > 0) && (ssl_error == SSL_ERROR_NONE)) {
 			if (!flow_consumer(response, bytes)) {
-				ue_stacktrace_push_msg("Flow consumer failed");
+				ei_stacktrace_push_msg("Flow consumer failed");
 				return -1;
 			}
 		}
@@ -147,19 +146,19 @@ size_t ue_tls_connection_read_async(ue_tls_connection *connection, bool (*flow_c
 			if (errno != EAGAIN) {
 				continue;
 			}
-			ue_stacktrace_push_errno();
+			ei_stacktrace_push_errno();
 			return -1;
 		}
 		else if (bytes == 0) {
 			ERR_print_errors_fp(stderr);
-			ue_logger_warn("Client disconnected ?");
+			ei_logger_warn("Client disconnected ?");
 			break;
 		}
 
 	} while (1);
 
 	if (received == total) {
-		ue_stacktrace_push_msg("Failed storing complete response from socket");
+		ei_stacktrace_push_msg("Failed storing complete response from socket");
 		return -1;
 	}
 

@@ -21,19 +21,18 @@
 #include <unknownecho/alloc.h>
 #include <unknownecho/byte/byte_utility.h>
 #include <unknownecho/string/string_utility.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 
 #define SYM_KEY_MIN_SIZE 32
 
 ue_sym_key *ue_sym_key_create(unsigned char *data, size_t size) {
 	ue_sym_key *key;
 
-	ue_check_parameter_or_return(data);
-	ue_check_parameter_or_return(size);
+	ei_check_parameter_or_return(data);
+	ei_check_parameter_or_return(size);
 
 	if (size < SYM_KEY_MIN_SIZE) {
-		ue_stacktrace_push_msg("Key size is too short. >= %d is required", SYM_KEY_MIN_SIZE);
+		ei_stacktrace_push_msg("Key size is too short. >= %d is required", SYM_KEY_MIN_SIZE);
 		return NULL;
 	}
 
@@ -56,11 +55,11 @@ size_t ue_sym_key_get_min_size() {
 }
 
 bool ue_sym_key_is_valid(ue_sym_key *key) {
-	ue_check_parameter_or_return(key);
-	ue_check_parameter_or_return(key->data);
+	ei_check_parameter_or_return(key);
+	ei_check_parameter_or_return(key->data);
 
 	if (key->size < SYM_KEY_MIN_SIZE) {
-		ue_stacktrace_push_msg("Key size is too short. >= %d is required", SYM_KEY_MIN_SIZE);
+		ei_stacktrace_push_msg("Key size is too short. >= %d is required", SYM_KEY_MIN_SIZE);
 		return false;
 	}
 

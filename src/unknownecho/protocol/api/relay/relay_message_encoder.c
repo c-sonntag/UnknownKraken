@@ -8,9 +8,7 @@
 #include <unknownecho/crypto/api/cipher/data_cipher.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/byte/byte_writer.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/errorHandling/check_parameter.h>
+#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/bool.h>
 
@@ -24,11 +22,11 @@ static bool write_sealed_payload(ue_relay_step *first_step, ue_byte_stream *payl
 
     result = false;
     if (!(our_crypto_metadata = ue_relay_step_get_our_crypto_metadata(first_step))) {
-        ue_stacktrace_push_msg("The first step doesn't contain our crypto metadata");
+        ei_stacktrace_push_msg("The first step doesn't contain our crypto metadata");
         return false;
     }
     if (!(target_crypto_metadata = ue_relay_step_get_target_crypto_metadata(first_step))) {
-        ue_stacktrace_push_msg("The first step doesn't contain target crypto metadata");
+        ei_stacktrace_push_msg("The first step doesn't contain target crypto metadata");
         return false;
     }
     cipher_data = NULL;
@@ -40,17 +38,17 @@ static bool write_sealed_payload(ue_relay_step *first_step, ue_byte_stream *payl
         ue_crypto_metadata_get_cipher_public_key(target_crypto_metadata), NULL, &cipher_data, &cipher_data_size,
         ue_crypto_metadata_get_cipher_name(our_crypto_metadata), ue_crypto_metadata_get_digest_name(our_crypto_metadata))) {
 
-        ue_stacktrace_push_msg("Failed to cipher content of payload");
+        ei_stacktrace_push_msg("Failed to cipher content of payload");
         goto clean_up;
     }
 
     if (!ue_byte_writer_append_int(encoded_message, (int)cipher_data_size)) {
-        ue_stacktrace_push_msg("Failed to write cipher payload size to encoded message stream");
+        ei_stacktrace_push_msg("Failed to write cipher payload size to encoded message stream");
         goto clean_up;
     }
 
     if (!ue_byte_writer_append_bytes(encoded_message, cipher_data, cipher_data_size)) {
-        ue_stacktrace_push_msg("Failed to write cipher payload to encoded message stream");
+        ei_stacktrace_push_msg("Failed to write cipher payload to encoded message stream");
         goto clean_up;
     }
 
@@ -66,7 +64,7 @@ ue_byte_stream *ue_relay_message_encode(ue_relay_route *route, ue_relay_message_
     ue_relay_step *first_step;
 
     if (!ue_relay_route_is_valid(route)) {
-        ue_stacktrace_push_msg("Specified route ptr is invalid");
+        ei_stacktrace_push_msg("Specified route ptr is invalid");
         return NULL;
     }
 
@@ -74,18 +72,18 @@ ue_byte_stream *ue_relay_message_encode(ue_relay_route *route, ue_relay_message_
         message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_RECEIVE) &&
         (!payload || ue_byte_stream_is_empty(payload))) {
 
-        ue_stacktrace_push_msg("Specified payload is null or empty, but message_id type specify it needs to be filled");
+        ei_stacktrace_push_msg("Specified payload is null or empty, but message_id type specify it needs to be filled");
         return NULL;
     }
     else if (message_id != UNKNOWNECHO_RELAY_MESSAGE_ID_SEND &&
         message_id != UNKNOWNECHO_RELAY_MESSAGE_ID_RECEIVE &&
         payload && !ue_byte_stream_is_empty(payload)) {
 
-        ue_logger_warn("A message payload is specified, but the message id is: %d", message_id);
+        ei_logger_warn("A message payload is specified, but the message id is: %d", message_id);
     }
 
     if (!(encoded_route = ue_relay_route_encode(route))) {
-        ue_stacktrace_push_msg("Failed to encode specified route (route seems valid)");
+        ei_stacktrace_push_msg("Failed to encode specified route (route seems valid)");
         return NULL;
     }
 
@@ -94,7 +92,7 @@ ue_byte_stream *ue_relay_message_encode(ue_relay_route *route, ue_relay_message_
     ue_byte_writer_append_int(encoded_message, (int)UNKNOWNECHO_PROTOCOL_ID_RELAY);
     ue_byte_writer_append_int(encoded_message, (int)message_id);
     if (!ue_byte_writer_append_stream(encoded_message, encoded_route)) {
-        ue_stacktrace_push_msg("Failed to write encoded route to encoded message stream");
+        ei_stacktrace_push_msg("Failed to write encoded route to encoded message stream");
         ue_byte_stream_destroy(encoded_message);
         return NULL;
     }
@@ -102,7 +100,7 @@ ue_byte_stream *ue_relay_message_encode(ue_relay_route *route, ue_relay_message_
     if (payload && !ue_byte_stream_is_empty(payload)) {
         first_step = ue_relay_route_get_receiver(route);
         if (!write_sealed_payload(first_step, payload, encoded_message)) {
-            ue_stacktrace_push_msg("Failed to write sealed payload to encoded message");
+            ei_stacktrace_push_msg("Failed to write sealed payload to encoded message");
             ue_byte_stream_destroy(encoded_message);
             ue_byte_stream_destroy(encoded_route);
             return NULL;
@@ -120,7 +118,7 @@ ue_byte_stream *ue_relay_message_encode_from_encoded_route(ue_byte_stream *encod
     ue_byte_stream *encoded_message;
 
     if (!encoded_route || ue_byte_stream_is_empty(encoded_route)) {
-        ue_stacktrace_push_msg("Specified encoded route ptr is null or empty");
+        ei_stacktrace_push_msg("Specified encoded route ptr is null or empty");
         return NULL;
     }
 
@@ -128,14 +126,14 @@ ue_byte_stream *ue_relay_message_encode_from_encoded_route(ue_byte_stream *encod
         message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_RECEIVE) &&
         (!payload || ue_byte_stream_is_empty(payload))) {
 
-        ue_stacktrace_push_msg("Specified payload is null or empty, but message_id type specify it needs to be filled");
+        ei_stacktrace_push_msg("Specified payload is null or empty, but message_id type specify it needs to be filled");
         return NULL;
     }
     else if (message_id != UNKNOWNECHO_RELAY_MESSAGE_ID_SEND &&
         message_id != UNKNOWNECHO_RELAY_MESSAGE_ID_RECEIVE &&
         payload && !ue_byte_stream_is_empty(payload)) {
 
-        ue_logger_warn("A message payload is specified, but the message id is: %d", message_id);
+        ei_logger_warn("A message payload is specified, but the message id is: %d", message_id);
     }
 
     encoded_message = ue_byte_stream_create();
@@ -143,14 +141,14 @@ ue_byte_stream *ue_relay_message_encode_from_encoded_route(ue_byte_stream *encod
     ue_byte_writer_append_int(encoded_message, (int)UNKNOWNECHO_PROTOCOL_ID_RELAY);
     ue_byte_writer_append_int(encoded_message, (int)message_id);
     if (!ue_byte_writer_append_stream(encoded_message, encoded_route)) {
-        ue_stacktrace_push_msg("Failed to write encoded route to encoded message stream");
+        ei_stacktrace_push_msg("Failed to write encoded route to encoded message stream");
         ue_byte_stream_destroy(encoded_message);
         return NULL;
     }
 
     if (payload && !ue_byte_stream_is_empty(payload)) {
         if (!write_sealed_payload(payload_receiver, payload, encoded_message)) {
-            ue_stacktrace_push_msg("Failed to write sealed payload to encoded message");
+            ei_stacktrace_push_msg("Failed to write sealed payload to encoded message");
             ue_byte_stream_destroy(encoded_message);
             ue_byte_stream_destroy(encoded_route);
             return NULL;
@@ -163,16 +161,16 @@ ue_byte_stream *ue_relay_message_encode_from_encoded_route(ue_byte_stream *encod
 ue_byte_stream *ue_relay_message_encode_relay(ue_relay_received_message *received_message) {
     ue_byte_stream *encoded_message;
 
-    ue_check_parameter_or_return(received_message);
+    ei_check_parameter_or_return(received_message);
 
     if (received_message->unsealed_payload) {
-        ue_stacktrace_push_msg("Cannot relay a message which is meant for us");
+        ei_stacktrace_push_msg("Cannot relay a message which is meant for us");
         return NULL;
     }
 
     if (!received_message->remaining_encoded_route ||
         ue_byte_stream_is_empty(received_message->remaining_encoded_route)) {
-        ue_stacktrace_push_msg("Cannot encode a message as relay without a route");
+        ei_stacktrace_push_msg("Cannot encode a message as relay without a route");
         return NULL;
     }
 
@@ -182,13 +180,13 @@ ue_byte_stream *ue_relay_message_encode_relay(ue_relay_received_message *receive
     ue_byte_writer_append_int(encoded_message, (int)received_message->message_id);
 
     if (!ue_byte_writer_append_stream(encoded_message, received_message->remaining_encoded_route)) {
-        ue_stacktrace_push_msg("Failed to write remaining encoded route to encoded message stream");
+        ei_stacktrace_push_msg("Failed to write remaining encoded route to encoded message stream");
         ue_byte_stream_destroy(encoded_message);
         return NULL;
     }
 
     if (!ue_byte_writer_append_stream(encoded_message, received_message->payload)) {
-        ue_stacktrace_push_msg("Failed to write sealed payload to message stream");
+        ei_stacktrace_push_msg("Failed to write sealed payload to message stream");
         ue_byte_stream_destroy(encoded_message);
         return NULL;
     }

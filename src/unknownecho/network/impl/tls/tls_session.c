@@ -19,7 +19,7 @@
 
 #include <unknownecho/network/api/tls/tls_session.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 
 ue_tls_session *ue_tls_session_create(char *keystore_path, char *passphrase, ue_tls_method *method, ue_x509_certificate **ca_certificates, int ca_certificate_count) {
     ue_tls_session *tls_session;
@@ -27,7 +27,7 @@ ue_tls_session *ue_tls_session_create(char *keystore_path, char *passphrase, ue_
     ue_safe_alloc(tls_session, ue_tls_session, 1);
 
     if (!(tls_session->keystore = ue_pkcs12_keystore_load(keystore_path, passphrase))) {
-        ue_stacktrace_push_msg("Failed to loas pkcs12 keystore from file '%s'", keystore_path);
+        ei_stacktrace_push_msg("Failed to loas pkcs12 keystore from file '%s'", keystore_path);
         ue_safe_free(tls_session);
         return NULL;
     }
@@ -35,13 +35,13 @@ ue_tls_session *ue_tls_session_create(char *keystore_path, char *passphrase, ue_
     tls_session->method = method;
 
     if (!(tls_session->ctx = ue_tls_context_create(tls_session->method))) {
-        ue_stacktrace_push_msg("Failed to create TLS context");
+        ei_stacktrace_push_msg("Failed to create TLS context");
         ue_tls_session_destroy(tls_session);
         return NULL;
     }
 
 	if (!(ue_tls_context_load_certificates(tls_session->ctx, tls_session->keystore, ca_certificates, ca_certificate_count))) {
-        ue_stacktrace_push_msg("Failed to load keystore certificates into TLS context");
+        ei_stacktrace_push_msg("Failed to load keystore certificates into TLS context");
         ue_tls_session_destroy(tls_session);
         return NULL;
     }
@@ -56,7 +56,7 @@ ue_tls_session *ue_tls_session_create_server(char *keystore_path, char *passphra
     ue_tls_session *tls_session;
 
     if (!(tls_session = ue_tls_session_create(keystore_path, passphrase, ue_tls_method_create_server(), ca_certificates, ca_certificate_count))) {
-        ue_stacktrace_push_msg("Failed to create TLS session as server");
+        ei_stacktrace_push_msg("Failed to create TLS session as server");
         return NULL;
     }
 
@@ -67,7 +67,7 @@ ue_tls_session *ue_tls_session_create_client(char *keystore_path, char *passphra
     ue_tls_session *tls_session;
 
     if (!(tls_session = ue_tls_session_create(keystore_path, passphrase, ue_tls_method_create_client(), ca_certificates, ca_certificate_count))) {
-        ue_stacktrace_push_msg("Failed to create TLS session as client");
+        ei_stacktrace_push_msg("Failed to create TLS session as client");
         return NULL;
     }
 

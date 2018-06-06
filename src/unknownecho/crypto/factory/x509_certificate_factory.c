@@ -22,8 +22,7 @@
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/crypto/impl/key/rsa_keypair_generation.h>
 #include <unknownecho/crypto/utils/crypto_random.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/check_parameter.h>
+#include <ei/ei.h>
 #include <unknownecho/defines.h>
 
 #include <openssl/x509.h>
@@ -52,35 +51,35 @@ bool ue_x509_certificate_generate_self_signed_ca(char *CN, ue_x509_certificate *
 	certificate_impl = NULL;
 	private_key_impl = NULL;
 
-	ue_check_parameter_or_return(CN);
+	ei_check_parameter_or_return(CN);
 
 	if (!(parameters = ue_x509_certificate_parameters_create())) {
-		ue_stacktrace_push_msg("Failed to create x509 parameters structure");
+		ei_stacktrace_push_msg("Failed to create x509 parameters structure");
 		return false;
 	}
 
     if (!ue_x509_certificate_parameters_set_common_name(parameters, CN)) {
-		ue_stacktrace_push_msg("Failed to set CN to x509 parameters");
+		ei_stacktrace_push_msg("Failed to set CN to x509 parameters");
 		goto clean_up;
 	}
 
     if (!ue_x509_certificate_parameters_set_ca_type(parameters)) {
-		ue_stacktrace_push_msg("Failed to set certificate as ca type");
+		ei_stacktrace_push_msg("Failed to set certificate as ca type");
 		goto clean_up;
 	}
 
     if (!ue_x509_certificate_parameters_set_subject_key_identifier_as_hash(parameters)) {
-		ue_stacktrace_push_msg("Failed to set certificate subject key identifier as hash");
+		ei_stacktrace_push_msg("Failed to set certificate subject key identifier as hash");
 		goto clean_up;
 	}
 
     if (!ue_x509_certificate_parameters_set_self_signed(parameters)) {
-		ue_stacktrace_push_msg("Failed to set certificate as self signed");
+		ei_stacktrace_push_msg("Failed to set certificate as self signed");
 		goto clean_up;
 	}
 
     if (!ue_x509_certificate_generate(parameters, &certificate_impl, &private_key_impl)) {
-		ue_stacktrace_push_msg("Failed to generate certificate and relative private key");
+		ei_stacktrace_push_msg("Failed to generate certificate and relative private key");
 		goto clean_up;
 	}
 
@@ -101,9 +100,9 @@ bool ue_x509_certificate_generate_signed(ue_x509_certificate *ca_certificate, ue
 	RSA *rsa;
 	char *error_buffer;
 
-	ue_check_parameter_or_return(ca_certificate);
-	ue_check_parameter_or_return(ca_private_key);
-	ue_check_parameter_or_return(CN);
+	ei_check_parameter_or_return(ca_certificate);
+	ei_check_parameter_or_return(ca_private_key);
+	ei_check_parameter_or_return(CN);
 
 	certificate_impl = NULL;
 	private_key_impl = NULL;
@@ -113,17 +112,17 @@ bool ue_x509_certificate_generate_signed(ue_x509_certificate *ca_certificate, ue
 
 	if (!generate_signed_key_pair(ue_x509_certificate_get_impl(ca_certificate), ue_private_key_get_impl(ca_private_key), CN,
 		&certificate_impl, &private_key_impl)) {
-		ue_stacktrace_push_msg("Failed to generate signed key pair");
+		ei_stacktrace_push_msg("Failed to generate signed key pair");
 		goto clean_up_failed;
 	}
 
 	if (!(*certificate = ue_x509_certificate_create_empty())) {
-		ue_stacktrace_push_msg("Failed to generate new x509 certificate");
+		ei_stacktrace_push_msg("Failed to generate new x509 certificate");
 		goto clean_up_failed;
 	}
 
 	if (!ue_x509_certificate_set_impl(*certificate, certificate_impl)) {
-		ue_stacktrace_push_msg("Failed to cert impl to cert");
+		ei_stacktrace_push_msg("Failed to cert impl to cert");
 		goto clean_up_failed;
 	}
 
@@ -133,7 +132,7 @@ bool ue_x509_certificate_generate_signed(ue_x509_certificate *ca_certificate, ue
 	}
 
 	if(!(*private_key = ue_private_key_create(RSA_PRIVATE_KEY, rsa, RSA_size(rsa)))) {
-		ue_stacktrace_push_msg("Failed to create new private key from RSA impl");
+		ei_stacktrace_push_msg("Failed to create new private key from RSA impl");
 		goto clean_up_failed;
 	}
 
@@ -154,9 +153,9 @@ static bool generate_signed_key_pair(X509 *ca_crt, EVP_PKEY *ca_key, char *CN, X
 	EVP_PKEY *req_pubkey;
 	char *error_buffer;
 
-	ue_check_parameter_or_return(ca_crt);
-	ue_check_parameter_or_return(ca_key);
-	ue_check_parameter_or_return(CN);
+	ei_check_parameter_or_return(ca_crt);
+	ei_check_parameter_or_return(ca_key);
+	ei_check_parameter_or_return(CN);
 
 	req = NULL;
 	req_pubkey = NULL;
@@ -165,7 +164,7 @@ static bool generate_signed_key_pair(X509 *ca_crt, EVP_PKEY *ca_key, char *CN, X
 	*key = NULL;
 
 	if (!generate_key_csr(key, CN, &req)) {
-		ue_stacktrace_push_msg("Fialed to generate CSR key");
+		ei_stacktrace_push_msg("Fialed to generate CSR key");
 		return false;
 	}
 
@@ -179,13 +178,13 @@ static bool generate_signed_key_pair(X509 *ca_crt, EVP_PKEY *ca_key, char *CN, X
 
 	/* Generate random 20 byte serial. */
 	if (!generate_set_random_serial(*crt)) {
-		ue_stacktrace_push_msg("Failed to generate and set random serial to cert");
+		ei_stacktrace_push_msg("Failed to generate and set random serial to cert");
 		goto clean_up_failed;
 	}
 
 	/* Set issuer to CA's subject. */
 	if (!X509_set_issuer_name(*crt, X509_get_subject_name(ca_crt))) {
-		ue_stacktrace_push_msg("Failed to set CA's CN as cert issuer name")
+		ei_stacktrace_push_msg("Failed to set CA's CN as cert issuer name")
 		goto clean_up_failed;
 	}
 
@@ -222,7 +221,7 @@ static bool generate_key_csr(EVP_PKEY **key, char *CN, X509_REQ **req) {
 	RSA *rsa;
 	X509_NAME *name;
 
-	ue_check_parameter_or_return(CN);
+	ei_check_parameter_or_return(CN);
 
 	error_buffer = NULL;
 	rsa = NULL;
@@ -239,7 +238,7 @@ static bool generate_key_csr(EVP_PKEY **key, char *CN, X509_REQ **req) {
 
 	/* @todo get default bits length in defines */
     if (!(rsa = ue_rsa_keypair_gen(UNKNOWNECHO_DEFAULT_RSA_KEY_BITS))) {
-		ue_stacktrace_push_msg("Failed to gen RSA keypair");
+		ei_stacktrace_push_msg("Failed to gen RSA keypair");
 		goto clean_up_failed;
 	}
 
@@ -272,7 +271,7 @@ static bool generate_set_random_serial(X509 *crt) {
 	unsigned char serial_bytes[20];
 
 	if (!ue_crypto_random_bytes(serial_bytes, 20)) {
-		ue_stacktrace_push_msg("Failed to gen crypto random bytes");
+		ei_stacktrace_push_msg("Failed to gen crypto random bytes");
 		return false;
 	}
 

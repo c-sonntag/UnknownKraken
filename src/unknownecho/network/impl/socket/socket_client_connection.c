@@ -20,8 +20,7 @@
 #include <unknownecho/network/api/socket/socket_client_connection.h>
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/network/api/communication/communication_connection_state.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/defines.h>
 #include <unknownecho/alloc.h>
@@ -52,11 +51,11 @@ ue_socket_client_connection *ue_socket_client_connection_init() {
 	connection->tmp_message = ue_byte_vector_create_empty();
 	connection->current_message = ue_byte_vector_create_empty();
 	if ((connection->received_message = ue_byte_stream_create()) == NULL) {
-		ue_stacktrace_push_msg("Failed to init received message");
+		ei_stacktrace_push_msg("Failed to init received message");
 		goto clean_up;
 	}
 	if ((connection->message_to_send = ue_byte_stream_create()) == NULL) {
-		ue_stacktrace_push_msg("Failed to init message to send");
+		ei_stacktrace_push_msg("Failed to init message to send");
 		goto clean_up;
 	}
 	connection->received_message_stream = ue_byte_stream_create();
@@ -101,7 +100,7 @@ void ue_socket_client_connection_destroy(ue_socket_client_connection *connection
 
 void ue_socket_client_connection_clean_up(ue_socket_client_connection *connection) {
     if (!connection) {
-        ue_logger_warn("Specified connection ptr is null");
+        ei_logger_warn("Specified connection ptr is null");
         return;
     }
 
@@ -135,7 +134,7 @@ bool ue_socket_client_connection_is_available(ue_socket_client_connection *conne
 }
 
 bool ue_socket_client_connection_establish(ue_socket_client_connection *connection, int ue_socket_fd) {
-	ue_check_parameter_or_return(connection);
+	ei_check_parameter_or_return(connection);
 
 	connection->fd = ue_socket_fd;
     connection->state = UNKNOWNECHO_COMMUNICATION_CONNECTION_READ_STATE;
@@ -145,32 +144,32 @@ bool ue_socket_client_connection_establish(ue_socket_client_connection *connecti
 }
 
 bool ue_socket_client_connection_is_established(ue_socket_client_connection *connection) {
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(connection);
 
 	return connection->established;
 }
 
 void *ue_socket_client_connection_get_user_data(ue_socket_client_connection *connection) {
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(connection);
 
     return connection->optional_data;
 }
 
 bool ue_socket_client_connection_set_user_data(ue_socket_client_connection *connection, void *user_data) {
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(connection);
 
     connection->optional_data = user_data;
     return true;
 }
 
 char *ue_socket_client_connection_get_nickname(ue_socket_client_connection *connection) {
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(connection);
 
     return connection->nickname;
 }
 
 bool ue_socket_client_connection_set_nickname(ue_socket_client_connection *connection, char *nickname) {
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(connection);
 
     connection->nickname = nickname;
 
@@ -178,40 +177,40 @@ bool ue_socket_client_connection_set_nickname(ue_socket_client_connection *conne
 }
 
 ue_byte_stream *ue_socket_client_connection_get_received_message(ue_socket_client_connection *connection) {
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(connection);
 
     return connection->received_message;
 }
 
 ue_byte_stream *ue_socket_client_connection_get_message_to_send(ue_socket_client_connection *connection) {
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(connection);
 
     return connection->message_to_send;
 }
 
 ue_queue *ue_socket_client_connection_get_received_messages(ue_socket_client_connection *connection) {
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(connection);
 
     return connection->received_messages;
 }
 
 ue_queue *ue_socket_client_connection_get_messages_to_send(ue_socket_client_connection *connection) {
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(connection);
 
     return connection->messages_to_send;
 }
 
 ue_communication_connection_state ue_socket_client_connection_get_state(ue_socket_client_connection *connection) {
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(connection);
 
     return connection->state;
 }
 
 bool ue_socket_client_connection_set_state(ue_socket_client_connection *connection, ue_communication_connection_state state) {
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(connection);
 
     if (!connection->established) {
-        ue_logger_warn("Cannot update the state of an unestablished connection");
+        ei_logger_warn("Cannot update the state of an unestablished connection");
         return false;
     }
     connection->state = state;
@@ -223,8 +222,8 @@ bool ue_socket_client_connection_build_communication_metadata(ue_socket_client_c
     int inet_addr_len, family, port;
     char *host;
 
-    ue_check_parameter_or_return(connection);
-    ue_check_parameter_or_return(sa);
+    ei_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(sa);
 
     if (sa->sa_family == AF_INET) {
         sock_addr_in = &(((struct sockaddr_in *)sa)->sin_addr);
@@ -241,7 +240,7 @@ bool ue_socket_client_connection_build_communication_metadata(ue_socket_client_c
     ue_safe_alloc(host, char, inet_addr_len);
 
     if (!inet_ntop(family, sock_addr_in, host, inet_addr_len)) {
-        ue_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         ue_safe_free(host);
         return false;
     }
@@ -256,7 +255,7 @@ bool ue_socket_client_connection_build_communication_metadata(ue_socket_client_c
 }
 
 ue_communication_metadata *ue_socket_client_connection_get_communication_metadata(ue_socket_client_connection *connection) {
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(connection);
 
     return connection->communication_metadata;
 }

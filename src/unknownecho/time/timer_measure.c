@@ -19,7 +19,7 @@
 
 #include <unknownecho/time/timer_measure.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 #include <unknownecho/string/string_utility.h>
 
 #include <time.h>
@@ -91,14 +91,14 @@ bool ue_timer_measure_average(ue_timer_measure *measure, double *result) {
 	*result = 0.0;
 
 	if (measure->times_begin_number < measure->times_end_number) {
-		ue_stacktrace_push_msg("There's less times start than times end");
+		ei_stacktrace_push_msg("There's less times start than times end");
 		return false;
 	}
 	else if (measure->times_begin_number > measure->times_end_number) {
-		ue_stacktrace_push_msg("There's more times start than times end");
+		ei_stacktrace_push_msg("There's more times start than times end");
 		return false;
 	} else if (measure->times_begin_number == 0 && measure->times_end_number == 0) {
-		ue_stacktrace_push_msg("Couple of times are equals to 0");
+		ei_stacktrace_push_msg("Couple of times are equals to 0");
 		return false;
 	}
 

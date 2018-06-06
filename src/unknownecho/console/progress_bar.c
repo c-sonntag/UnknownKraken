@@ -46,8 +46,7 @@
 #include <unknownecho/console/color.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/string/string_utility.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -162,10 +161,10 @@ static void progress_bar_print(ue_progress_bar *progress_bar, const char *space,
 }
 
 bool ue_progress_bar_update(ue_progress_bar *progress_bar, int idx) {
-    ue_check_parameter_or_return(progress_bar);
+    ei_check_parameter_or_return(progress_bar);
 
     if (idx > progress_bar->n) {
-        ue_stacktrace_push_msg("idx cannot be > n");
+        ei_stacktrace_push_msg("idx cannot be > n");
         ue_progress_bar_clear_field(progress_bar);
         return false;
     }
@@ -193,7 +192,7 @@ bool ue_progress_bar_update(ue_progress_bar *progress_bar, int idx) {
 
 bool ue_progress_bar_update_by_increasing(ue_progress_bar *progress_bar, int idx) {
     if (!ue_progress_bar_update(progress_bar, progress_bar->current_position + idx)) {
-        ue_stacktrace_push_msg("Failed to update rpogress bar by increasing of %d", idx);
+        ei_stacktrace_push_msg("Failed to update rpogress bar by increasing of %d", idx);
         return false;
     }
 
@@ -201,7 +200,7 @@ bool ue_progress_bar_update_by_increasing(ue_progress_bar *progress_bar, int idx
 }
 
 bool ue_progress_bar_finish(ue_progress_bar *progress_bar) {
-    ue_check_parameter_or_return(progress_bar);
+    ei_check_parameter_or_return(progress_bar);
 
     ue_progress_bar_update(progress_bar, progress_bar->n);
 
@@ -211,7 +210,7 @@ bool ue_progress_bar_finish(ue_progress_bar *progress_bar) {
 bool ue_progress_bar_print(ue_progress_bar *progress_bar) {
     int bar_length;
 
-    ue_check_parameter_or_return(progress_bar);
+    ei_check_parameter_or_return(progress_bar);
 
     progress_bar_print(progress_bar, "", progress_bar->description, false);
 

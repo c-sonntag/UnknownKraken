@@ -18,8 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/network/api/tls/tls_connection_write.h>
-#include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -43,19 +42,19 @@ size_t ue_tls_connection_write_sync(ue_tls_connection *connection, const void *d
 			ssl_error = SSL_get_error(ssl, bytes);
 			switch (ssl_error) {
 				case SSL_ERROR_NONE:
-					ue_logger_trace("SSL_ERROR_NONE");
+					ei_logger_trace("SSL_ERROR_NONE");
 				break;
 
 				case SSL_ERROR_WANT_READ:
-					ue_logger_trace("SSL_ERROR_WANT_READ");
+					ei_logger_trace("SSL_ERROR_WANT_READ");
 				break;
 
 				case SSL_ERROR_WANT_WRITE:
-					ue_logger_trace("SSL_ERROR_WANT_WRITE");
+					ei_logger_trace("SSL_ERROR_WANT_WRITE");
 				break;
 
 				case SSL_ERROR_ZERO_RETURN:
-					ue_logger_trace("SSL_ERROR_ZERO_RETURN");
+					ei_logger_trace("SSL_ERROR_ZERO_RETURN");
 				break;
 
 				default:
@@ -71,12 +70,12 @@ size_t ue_tls_connection_write_sync(ue_tls_connection *connection, const void *d
 				continue;
 			}
 
-			ue_stacktrace_push_errno();
+			ei_stacktrace_push_errno();
 			return -1;
 		}
 		else if (bytes == 0) {
 			ERR_print_errors_fp(stderr);
-			ue_logger_warn("Client disconnected ?");
+			ei_logger_warn("Client disconnected ?");
 			break;
 		}
 	} while (sent < size);

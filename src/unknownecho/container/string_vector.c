@@ -20,7 +20,7 @@
 #include <unknownecho/container/string_vector.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/check_parameter.h>
+#include <ei/ei.h>
 
 ue_string_vector *ue_string_vector_create_empty() {
     ue_string_vector *v;
@@ -65,7 +65,7 @@ void ue_string_vector_destroy(ue_string_vector *v) {
 bool ue_string_vector_append(ue_string_vector *v, const char *new_string) {
     int i;
 
-    ue_check_parameter_or_return(v);
+    ei_check_parameter_or_return(v);
 
     if (!v->elements) {
         ue_safe_alloc(v->elements, char *, 1);
@@ -90,8 +90,8 @@ bool ue_string_vector_append(ue_string_vector *v, const char *new_string) {
 bool ue_string_vector_append_vector(ue_string_vector *from, ue_string_vector *to) {
     int i;
 
-    ue_check_parameter_or_return(from);
-    ue_check_parameter_or_return(to);
+    ei_check_parameter_or_return(from);
+    ei_check_parameter_or_return(to);
 
     for (i = 0; i < from->number; i++) {
         if (!ue_string_vector_append(to, ue_string_vector_get(from, i))) {
@@ -112,7 +112,7 @@ bool ue_string_vector_remove(ue_string_vector *v, int index) {
     }
 
     if (ue_string_vector_size(v) < index) {
-        ue_stacktrace_push_msg("Index out of range");
+        ei_stacktrace_push_msg("Index out of range");
         return false;
     }
 
@@ -134,11 +134,11 @@ int ue_string_vector_size(ue_string_vector *v) {
 }
 
 char *ue_string_vector_get(ue_string_vector *v, int index) {
-    ue_check_parameter_or_return(v);
-    ue_check_parameter_or_return(v->elements);
+    ei_check_parameter_or_return(v);
+    ei_check_parameter_or_return(v->elements);
 
     if (ue_string_vector_size(v) < index) {
-        ue_stacktrace_push_msg("Index out of range");
+        ei_stacktrace_push_msg("Index out of range");
         return NULL;
     }
 
@@ -146,7 +146,7 @@ char *ue_string_vector_get(ue_string_vector *v, int index) {
 }
 
 bool ue_string_vector_is_empty(ue_string_vector *v) {
-    ue_check_parameter_or_return(v);
+    ei_check_parameter_or_return(v);
 
     return !v->elements || v->number <= 0;
 }
@@ -154,8 +154,8 @@ bool ue_string_vector_is_empty(ue_string_vector *v) {
 bool ue_string_vector_print(ue_string_vector *v, FILE *out) {
     int i;
 
-    ue_check_parameter_or_return(v);
-    ue_check_parameter_or_return(out);
+    ei_check_parameter_or_return(v);
+    ei_check_parameter_or_return(out);
 
     if (ue_string_vector_is_empty(v)) {
         return false;
@@ -171,8 +171,8 @@ bool ue_string_vector_print(ue_string_vector *v, FILE *out) {
 bool ue_string_vector_contains(ue_string_vector *v, char *target) {
     int i;
 
-    ue_check_parameter_or_return(v);
-    ue_check_parameter_or_return(target);
+    ei_check_parameter_or_return(v);
+    ei_check_parameter_or_return(target);
 
     if (v->number == 0) {
         return false;

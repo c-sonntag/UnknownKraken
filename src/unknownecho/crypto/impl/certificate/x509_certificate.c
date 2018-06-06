@@ -19,9 +19,7 @@
 
 #include <unknownecho/crypto/api/certificate/x509_certificate.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 
 #include <openssl/x509.h>
@@ -57,7 +55,7 @@ bool ue_x509_certificate_load_from_file(const char *file_name, ue_x509_certifica
 	BIO *bio;
 	char *error_buffer;
 
-	ue_check_parameter_or_return(file_name);
+	ei_check_parameter_or_return(file_name);
 
 	result = false;
 	certificate_impl = NULL;
@@ -76,12 +74,12 @@ bool ue_x509_certificate_load_from_file(const char *file_name, ue_x509_certifica
 	}
 
 	if (!(*certificate = ue_x509_certificate_create_empty())) {
-		ue_stacktrace_push_msg("Failed to create empty x509 certificate");
+		ei_stacktrace_push_msg("Failed to create empty x509 certificate");
 		X509_free(certificate_impl);
 		goto clean_up;
 	}
 	if (!ue_x509_certificate_set_impl(*certificate, certificate_impl)) {
-		ue_stacktrace_push_msg("Failed to set x509 certificate impl to new ue_x509_certificate");
+		ei_stacktrace_push_msg("Failed to set x509 certificate impl to new ue_x509_certificate");
 		ue_x509_certificate_destroy(*certificate);
 		X509_free(certificate_impl);
 		goto clean_up;
@@ -102,8 +100,8 @@ bool ue_x509_certificate_load_from_files(const char *cert_file_name, const char 
 	RSA *rsa;
 	char *error_buffer;
 
-	ue_check_parameter_or_return(cert_file_name);
-	ue_check_parameter_or_return(private_key_file_name);
+	ei_check_parameter_or_return(cert_file_name);
+	ei_check_parameter_or_return(private_key_file_name);
 
 	certificate_impl = NULL;
 	private_key_impl = NULL;
@@ -111,16 +109,16 @@ bool ue_x509_certificate_load_from_files(const char *cert_file_name, const char 
 	error_buffer = NULL;
 
 	if (!load_certificate_pair(cert_file_name, private_key_file_name, password, &certificate_impl, &private_key_impl)) {
-		ue_stacktrace_push_msg("Failed to load impl certificate pair files");
+		ei_stacktrace_push_msg("Failed to load impl certificate pair files");
 		return false;
 	}
 
 	if (!(*certificate = ue_x509_certificate_create_empty())) {
-		ue_stacktrace_push_msg("Failed to create empty x509 certificate");
+		ei_stacktrace_push_msg("Failed to create empty x509 certificate");
 		goto clean_up_failed;
 	}
 	if (!ue_x509_certificate_set_impl(*certificate, certificate_impl)) {
-		ue_stacktrace_push_msg("Failed to set x509 certificate impl to new ue_x509_certificate");
+		ei_stacktrace_push_msg("Failed to set x509 certificate impl to new ue_x509_certificate");
 		goto clean_up_failed;
 	}
 
@@ -130,7 +128,7 @@ bool ue_x509_certificate_load_from_files(const char *cert_file_name, const char 
 	}
 
 	if (!(*private_key = ue_private_key_create(RSA_PRIVATE_KEY, rsa, RSA_size(rsa)))) {
-		ue_stacktrace_push_msg("Failed to create ue_private_key from rsa impl");
+		ei_stacktrace_push_msg("Failed to create ue_private_key from rsa impl");
 		goto clean_up_failed;
 	}
 
@@ -151,8 +149,8 @@ ue_x509_certificate *ue_x509_certificate_load_from_bytes(unsigned char *data, si
     char *error_buffer;
 	X509 *certificate_impl;
 
-	ue_check_parameter_or_return(data);
-	ue_check_parameter_or_return(data_size > 0);
+	ei_check_parameter_or_return(data);
+	ei_check_parameter_or_return(data_size > 0);
 
     certificate = ue_x509_certificate_create_empty();
     bio = NULL;
@@ -189,12 +187,12 @@ void ue_x509_certificate_destroy(ue_x509_certificate *certificate) {
 
 void *ue_x509_certificate_get_impl(ue_x509_certificate *certificate) {
 	if (!certificate) {
-		ue_stacktrace_push_msg("Specified certificate ptr is null");
+		ei_stacktrace_push_msg("Specified certificate ptr is null");
 		return NULL;
 	}
 
 	if (!certificate->impl) {
-		ue_stacktrace_push_msg("Specified certificate have no implementation");
+		ei_stacktrace_push_msg("Specified certificate have no implementation");
 		return NULL;
 	}
 
@@ -202,8 +200,8 @@ void *ue_x509_certificate_get_impl(ue_x509_certificate *certificate) {
 }
 
 bool ue_x509_certificate_set_impl(ue_x509_certificate *certificate, void *impl) {
-	ue_check_parameter_or_return(certificate);
-	ue_check_parameter_or_return(impl);
+	ei_check_parameter_or_return(certificate);
+	ei_check_parameter_or_return(impl);
 
 	certificate->impl = impl;
 	return true;
@@ -223,8 +221,8 @@ bool ue_x509_certificate_equals(ue_x509_certificate *c1, ue_x509_certificate *c2
 bool ue_x509_certificate_print(ue_x509_certificate *certificate, FILE *out_fd) {
 	char *error_buffer;
 
-	ue_check_parameter_or_return(certificate);
-	ue_check_parameter_or_return(out_fd);
+	ei_check_parameter_or_return(certificate);
+	ei_check_parameter_or_return(out_fd);
 
 	error_buffer = NULL;
 
@@ -242,7 +240,7 @@ char *ue_x509_certificate_to_pem_string(ue_x509_certificate *certificate, size_t
 	size_t size;
 	int result;
 
-	ue_check_parameter_or_return(certificate);
+	ei_check_parameter_or_return(certificate);
 
 	bio = NULL;
 	pem = NULL;
@@ -261,7 +259,7 @@ char *ue_x509_certificate_to_pem_string(ue_x509_certificate *certificate, size_t
 	}
 
 	if ((size = BIO_pending(bio)) <= 0) {
-		ue_stacktrace_push_msg("Bio have an invalid size");
+		ei_stacktrace_push_msg("Bio have an invalid size");
 		BIO_free_all(bio);
 		return NULL;
 	}
@@ -273,11 +271,11 @@ char *ue_x509_certificate_to_pem_string(ue_x509_certificate *certificate, size_t
 		BIO_free_all(bio);
 		ue_safe_free(pem);
 		if (result == 0) {
-			ue_stacktrace_push_msg("No data read because bio is empty");
+			ei_stacktrace_push_msg("No data read because bio is empty");
 		} else if (result == -1) {
-			ue_stacktrace_push_msg("Reading of bio data failed with an error");
+			ei_stacktrace_push_msg("Reading of bio data failed with an error");
 		} else if (result == -2) {
-			ue_stacktrace_push_msg("This operation is not supported by this bio");
+			ei_stacktrace_push_msg("This operation is not supported by this bio");
 		}
 		return NULL;
 	}
@@ -300,8 +298,8 @@ static bool load_certificate_pair(const char *cert_file_name, const char *privat
 	BIO *bio;
 	char *error_buffer;
 
-	ue_check_parameter_or_return(cert_file_name);
-	ue_check_parameter_or_return(private_key_file_name);
+	ei_check_parameter_or_return(cert_file_name);
+	ei_check_parameter_or_return(private_key_file_name);
 
 	bio = NULL;
 	error_buffer = NULL;

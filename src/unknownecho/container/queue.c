@@ -45,9 +45,7 @@
 
 #include <unknownecho/container/queue.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 
 #include <stdio.h>
 
@@ -76,8 +74,8 @@ ue_queue *ue_queue_create() {
 ue_queue *ue_queue_create_mem(void *(*alloc_func)(void *data), void (*free_func)(void *data)) {
     ue_queue *queue;
 
-    ue_check_parameter_or_return(alloc_func);
-    ue_check_parameter_or_return(free_func);
+    ei_check_parameter_or_return(alloc_func);
+    ei_check_parameter_or_return(free_func);
 
     queue = ue_queue_create();
     queue->user_alloc_func = alloc_func;
@@ -115,8 +113,8 @@ void ue_queue_clean_up(ue_queue *queue) {
 bool ue_queue_push(ue_queue *queue, void *data) {
     bool result;
 
-    ue_check_parameter_or_return(queue);
-    ue_check_parameter_or_return(data);
+    ei_check_parameter_or_return(queue);
+    ei_check_parameter_or_return(data);
 
     uv_mutex_lock(&queue->mutex);
 
@@ -130,8 +128,8 @@ bool ue_queue_push(ue_queue *queue, void *data) {
 bool ue_queue_push_wait(ue_queue *queue, void *data) {
     bool result;
 
-    ue_check_parameter_or_return(queue);
-    ue_check_parameter_or_return(data);
+    ei_check_parameter_or_return(queue);
+    ei_check_parameter_or_return(data);
 
     uv_mutex_lock(&queue->mutex);
 
@@ -143,7 +141,7 @@ bool ue_queue_push_wait(ue_queue *queue, void *data) {
 }
 
 bool ue_queue_pop(ue_queue *queue) {
-    ue_check_parameter_or_return(queue);
+    ei_check_parameter_or_return(queue);
 
     uv_mutex_lock(&queue->mutex);
 
@@ -187,7 +185,7 @@ int ue_queue_size(ue_queue *queue) {
     int size;
 
     if (!queue) {
-        ue_stacktrace_push_code(UNKNOWNECHO_INVALID_PARAMETER);
+        ei_stacktrace_push_code(ERRORINTERCEPTOR_INVALID_PARAMETER);
         return -1;
     }
 
@@ -203,7 +201,7 @@ int ue_queue_size(ue_queue *queue) {
 void *ue_queue_front(ue_queue *queue) {
     void *result;
 
-    ue_check_parameter_or_return(queue);
+    ei_check_parameter_or_return(queue);
 
     uv_mutex_lock(&queue->mutex);
 
@@ -217,7 +215,7 @@ void *ue_queue_front(ue_queue *queue) {
 void *ue_queue_front_wait(ue_queue *queue) {
     void *result;
 
-    ue_check_parameter_or_return(queue);
+    ei_check_parameter_or_return(queue);
 
     uv_mutex_lock(&queue->mutex);
 
@@ -231,7 +229,7 @@ void *ue_queue_front_wait(ue_queue *queue) {
 bool ue_queue_empty(ue_queue *queue) {
     bool result;
 
-    ue_check_parameter_or_return(queue);
+    ei_check_parameter_or_return(queue);
 
     uv_mutex_lock(&queue->mutex);
 
@@ -245,8 +243,8 @@ bool ue_queue_empty(ue_queue *queue) {
 bool ue_queue_print(ue_queue *queue, FILE *fd) {
     bool result;
 
-    ue_check_parameter_or_return(queue);
-    ue_check_parameter_or_return(fd);
+    ei_check_parameter_or_return(queue);
+    ei_check_parameter_or_return(fd);
 
     uv_mutex_lock(&queue->mutex);
 
@@ -258,7 +256,7 @@ bool ue_queue_print(ue_queue *queue, FILE *fd) {
     }
 
     if (queue->user_print_func == NULL) {
-        ue_logger_warn("No print func specified by user");
+        ei_logger_warn("No print func specified by user");
         goto end;
     }
 
@@ -279,8 +277,8 @@ end:
 }
 
 bool ue_queue_set_print_func(ue_queue *queue, void (*print_func)(void *data, FILE *fd)) {
-    ue_check_parameter_or_return(queue);
-    ue_check_parameter_or_return(print_func);
+    ei_check_parameter_or_return(queue);
+    ei_check_parameter_or_return(print_func);
 
     queue->user_print_func = print_func;
 
@@ -293,7 +291,7 @@ static bool ue_queue_push_internal(ue_queue *queue, void *data, bool wait) {
             ue_thread_cond_wait(queue->write_cond, queue->mutex);
         }
     } else if (queue->count == queue->capacity) {
-        ue_stacktrace_push_msg("Max capacity is reached");
+        ei_stacktrace_push_msg("Max capacity is reached");
         return false;
     }*/
 
@@ -335,7 +333,7 @@ static void *ue_queue_front_internal(ue_queue *queue, bool wait) {
     if (wait && queue->count == 0) {
         uv_cond_wait(&queue->read_cond, &queue->mutex);
     } else if (queue->count == 0) {
-        ue_stacktrace_push_msg("Queue is empty");
+        ei_stacktrace_push_msg("Queue is empty");
         return NULL;
     }
 

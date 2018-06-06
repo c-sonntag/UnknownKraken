@@ -143,6 +143,7 @@ else ()
 endif ()
 target_link_libraries(${PROJECT_NAME_SHARED} ${ZLIB_LIBRARIES})
 target_link_libraries(${PROJECT_NAME_SHARED} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${PROJECT_NAME_SHARED} "-lei")
 
 # Build static library
 add_library(${PROJECT_NAME_STATIC} STATIC ${PROGRAM_TARGET_SRC_FILES})
@@ -164,6 +165,7 @@ else ()
 endif ()
 target_link_libraries(${PROJECT_NAME_STATIC} ${ZLIB_LIBRARIES})
 target_link_libraries(${PROJECT_NAME_STATIC} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${PROJECT_NAME_STATIC} "-lei")
 
 
 # --- INSTALL ---
@@ -208,5 +210,7 @@ foreach (filePath ${files} )
 	endif ()
 	target_link_libraries(${executableName} ${ZLIB_LIBRARIES})
     target_link_libraries(${executableName} ${PROJECT_NAME_STATIC})
+    target_link_libraries(${executableName} "-lei")
+    target_link_libraries(${executableName} "/usr/local/lib/libuv.a")
     set_target_properties(${executableName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${EXAMPLES_OUTPUT_PATH})
 endforeach ()

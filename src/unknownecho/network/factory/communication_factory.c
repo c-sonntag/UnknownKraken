@@ -30,8 +30,7 @@
 #include <unknownecho/network/api/socket/socket_server_parameters.h>
 #include <unknownecho/network/api/tls/tls_session.h>
 #include <unknownecho/bool.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/check_parameter.h>
+#include <ei/ei.h>
 #include <unknownecho/defines.h>
 
 #include <stddef.h>
@@ -49,16 +48,16 @@
 ue_communication_context *ue_communication_build_from_type(const char *communication_type) {
     ue_communication_context *context;
 
-    ue_check_parameter_or_return(communication_type);
+    ei_check_parameter_or_return(communication_type);
 
     context = NULL;
 
     if (strcmp(communication_type, "SOCKET") == 0) {
         if (!(context = ue_communication_build_socket())) {
-            ue_stacktrace_push_msg("Failed to create socket communication context");
+            ei_stacktrace_push_msg("Failed to create socket communication context");
         }
     } else {
-        ue_stacktrace_push_msg("Unknown communication type");
+        ei_stacktrace_push_msg("Unknown communication type");
     }
 
     return context;
@@ -99,7 +98,7 @@ ue_communication_context *ue_communication_build_socket() {
         (void *(*)(void *, int ))ue_socket_server_get_connection);
 
     if (!context) {
-        ue_stacktrace_push_msg("Failed to create communication context");
+        ei_stacktrace_push_msg("Failed to create communication context");
         return NULL;
     }
 
@@ -114,14 +113,14 @@ void *ue_communication_build_client_connection_parameters(ue_communication_conte
     unsigned short int tls_server_port;
     ue_tls_session *tls_session;
 
-    ue_check_parameter_or_return(context);
-    ue_check_parameter_or_return(count > 0);
+    ei_check_parameter_or_return(context);
+    ei_check_parameter_or_return(count > 0);
 
     parameters = NULL;
 
     if (strcmp(context->communication_type, "SOCKET") == 0) {
         if (count != 2 && count != 3) {
-            ue_stacktrace_push_msg("Specified number of argments doesn't fit with communication type SOCKET");
+            ei_stacktrace_push_msg("Specified number of argments doesn't fit with communication type SOCKET");
             return NULL;
         }
         va_start(ap, count);
@@ -137,10 +136,10 @@ void *ue_communication_build_client_connection_parameters(ue_communication_conte
         va_end(ap);
         if (!(parameters = (void *)ue_socket_client_connection_parameters_build(
             fd, domain, tls_server_host, tls_server_port, tls_session))) {
-            ue_stacktrace_push_msg("Failed to build socket client connection parameters");
+            ei_stacktrace_push_msg("Failed to build socket client connection parameters");
         }
     } else {
-        ue_stacktrace_push_msg("Unknown communication type");
+        ei_stacktrace_push_msg("Unknown communication type");
     }
 
     return parameters;
@@ -155,12 +154,12 @@ void *ue_communication_build_server_parameters(ue_communication_context *context
     ue_tls_session *tls_session;
 
     if (!context) {
-        ue_stacktrace_push_msg("Specified context object is null");
+        ei_stacktrace_push_msg("Specified context object is null");
         return false;
     }
 
     if (count <= 0) {
-        ue_stacktrace_push_msg("Specified parameter number is invalid");
+        ei_stacktrace_push_msg("Specified parameter number is invalid");
         return false;
     }
 
@@ -168,7 +167,7 @@ void *ue_communication_build_server_parameters(ue_communication_context *context
 
     if (strcmp(context->communication_type, "SOCKET") == 0) {
         if (count != 3 && count != 4) {
-            ue_stacktrace_push_msg("Specified number of argments doesn't fit with communication type SOCKET");
+            ei_stacktrace_push_msg("Specified number of argments doesn't fit with communication type SOCKET");
             return NULL;
         }
         va_start(ap, count);
@@ -182,10 +181,10 @@ void *ue_communication_build_server_parameters(ue_communication_context *context
         }
         va_end(ap);
         if (!(parameters = ue_socket_server_parameters_build(server_port, read_consumer, write_consumer, tls_session))) {
-            ue_stacktrace_push_msg("Failed to build socket server parameters");
+            ei_stacktrace_push_msg("Failed to build socket server parameters");
         }
     } else {
-        ue_stacktrace_push_msg("Unknown communication type");
+        ei_stacktrace_push_msg("Unknown communication type");
     }
 
     return parameters;

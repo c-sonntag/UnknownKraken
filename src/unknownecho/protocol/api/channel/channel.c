@@ -19,8 +19,7 @@
 
 #include <unknownecho/protocol/api/channel/channel.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 
 ue_channel *ue_channel_create() {
     ue_channel *channel;
@@ -48,22 +47,22 @@ bool ue_channel_add_connection(ue_channel *channel, ue_socket_client_connection 
     int i;
 
     if (!channel) {
-        ue_stacktrace_push_msg("Specified channel is null");
+        ei_stacktrace_push_msg("Specified channel is null");
         return false;
     }
 
     if (!connection) {
-        ue_stacktrace_push_msg("Specified connection is null");
+        ei_stacktrace_push_msg("Specified connection is null");
         return false;
     }
 
     if (!ue_socket_client_connection_is_established(connection)) {
-        ue_stacktrace_push_msg("Specified connection isn't establish");
+        ei_stacktrace_push_msg("Specified connection isn't establish");
         return false;
     }
 
     if (channel->connections_number == channel->max_connections_number) {
-        ue_stacktrace_push_msg("No such slot available");
+        ei_stacktrace_push_msg("No such slot available");
         return false;
     }
 
@@ -82,12 +81,12 @@ bool ue_channel_remove_connection_by_nickname(ue_channel *channel, char *nicknam
     int i;
 
     if (!channel) {
-        ue_stacktrace_push_msg("Specified channel is null");
+        ei_stacktrace_push_msg("Specified channel is null");
         return false;
     }
 
     if (!nickname) {
-        ue_stacktrace_push_msg("Specified nickname is null");
+        ei_stacktrace_push_msg("Specified nickname is null");
         return false;
     }
 
@@ -109,7 +108,7 @@ bool ue_channel_remove_connection_by_nickname(ue_channel *channel, char *nicknam
         }
     }
 
-    ue_logger_trace("There's no client connection with this nickname in this channel");
+    ei_logger_trace("There's no client connection with this nickname in this channel");
 
     return true;
 }
@@ -118,18 +117,18 @@ bool ue_channels_remove_connection_by_nickname(ue_channel **channels, int channe
     int i;
 
     if (!channels) {
-        ue_stacktrace_push_msg("Specified channels is null");
+        ei_stacktrace_push_msg("Specified channels is null");
         return false;
     }
 
     if (!nickname) {
-        ue_stacktrace_push_msg("Specified nickname is null");
+        ei_stacktrace_push_msg("Specified nickname is null");
         return false;
     }
 
     for (i = 0; i < channels_number; i++) {
         if (!ue_channel_remove_connection_by_nickname(channels[i], nickname)) {
-            ue_logger_warn("Failed to remove connection by nickname in channel id %d", i);
+            ei_logger_warn("Failed to remove connection by nickname in channel id %d", i);
         }
     }
 

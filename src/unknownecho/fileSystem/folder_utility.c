@@ -23,9 +23,7 @@
 #include <unknownecho/string/string_builder.h>
 #include <unknownecho/string/string_split.h>
 #include <unknownecho/container/string_vector.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 
 #include <string.h>
@@ -73,7 +71,7 @@ int ue_count_dir_files(const char *dir_name, bool recursively) {
     char path[2048];
     int files;
 
-    ue_check_parameter_or_return(dir_name)
+    ei_check_parameter_or_return(dir_name)
 
 #if defined(_WIN32) || defined(_WIN64)
     WIN32_FIND_DATA fd_file;
@@ -93,7 +91,7 @@ int ue_count_dir_files(const char *dir_name, bool recursively) {
 
     d = opendir(dir_name);
     if (!d) {
-        ue_stacktrace_push_errno()
+        ei_stacktrace_push_errno()
         return -1;
     }
 
@@ -123,7 +121,7 @@ int ue_count_dir_files(const char *dir_name, bool recursively) {
     sprintf(path, "%s\\*.*", dir_name);
 
     if((file_handle = FindFirstFile(path, &fd_file)) == INVALID_HANDLE_VALUE) {
-        ue_stacktrace_push_msg("Failed to get first file")
+        ei_stacktrace_push_msg("Failed to get first file")
         return -1;
     }
 
@@ -159,7 +157,7 @@ char **ue_list_directory(char *dir_name, int *files, bool recursively) {
     char **file_names, **new_folder_files, path[2048], slash;
     int i, j, files_count, new_folder_files_count;
 
-    ue_check_parameter_or_return(dir_name)
+    ei_check_parameter_or_return(dir_name)
 
 	file_names = NULL;
     *files = 0;
@@ -191,7 +189,7 @@ char **ue_list_directory(char *dir_name, int *files, bool recursively) {
     files_count = ue_count_dir_files(dir_name, recursively);
 
     if (files_count == -1) {
-        ue_stacktrace_push_msg("Failed to count dir files")
+        ei_stacktrace_push_msg("Failed to count dir files")
         return NULL;
     } else if (files_count == 0) {
         return NULL;
@@ -202,7 +200,7 @@ char **ue_list_directory(char *dir_name, int *files, bool recursively) {
 #if defined(__unix__)
     d = opendir(dir_name);
     if (!d) {
-        ue_stacktrace_push_errno()
+        ei_stacktrace_push_errno()
         return NULL;
     }
 
@@ -262,7 +260,7 @@ char **ue_list_directory(char *dir_name, int *files, bool recursively) {
 
     file_handle = FindFirstFile(path, &fd_file);
     if (file_handle == INVALID_HANDLE_VALUE) {
-        ue_stacktrace_push_msg("Failed to get first file");
+        ei_stacktrace_push_msg("Failed to get first file");
         return NULL;
     }
 
@@ -323,7 +321,7 @@ char *ue_get_current_dir() {
 
 #if defined(__unix__)
     if (!getcwd(dir, 1024)) {
-        ue_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         goto failed;
     }
     return dir;
@@ -331,12 +329,12 @@ char *ue_get_current_dir() {
     ue_safe_alloc(dir, char, MAX_PATH);
     result = GetModuleFileName(NULL, dir, MAX_PATH);
     if (result == ERROR_INSUFFICIENT_BUFFER) {
-        ue_stacktrace_push_msg("Insufficient buffer size to copy current dir");
+        ei_stacktrace_push_msg("Insufficient buffer size to copy current dir");
         goto failed;
     }
     if (GetLastError() != ERROR_SUCCESS) {
         ue_get_last_werror(error_buffer);
-        ue_stacktrace_push_msg(error_buffer);
+        ei_stacktrace_push_msg(error_buffer);
         ue_safe_free(error_buffer);
         goto failed;
     }
@@ -360,7 +358,7 @@ bool ue_create_folder(const char *path_name) {
     int i;
 
     if (ue_is_dir_exists(path_name)) {
-        ue_logger_warn("Folder at path '%s' already exists", path_name);
+        ei_logger_warn("Folder at path '%s' already exists", path_name);
         return true;
     }
 
@@ -377,7 +375,7 @@ bool ue_create_folder(const char *path_name) {
 #elif defined(_WIN32) || defined(_WIN64)
             if (_mkdir((const char *)ue_string_builder_get_data(full_path)) != 0) {
 #endif
-                ue_stacktrace_push_errno();
+                ei_stacktrace_push_errno();
                 goto clean_up;
             }
         }

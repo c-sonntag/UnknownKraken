@@ -8,8 +8,7 @@
 #include <unknownecho/crypto/factory/crypto_metadata_factory.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/byte/byte_writer.h>
-#include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,27 +38,27 @@ int main() {
         fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
         exit(EXIT_FAILURE);
     }
-    ue_logger_info("UnknownEchoLib is correctly initialized");
+    ei_logger_info("UnknownEchoLib is correctly initialized");
 
-    ue_logger_info("Generating crypto metadata for point A...");
+    ei_logger_info("Generating crypto metadata for point A...");
     if (!(our_crypto_metadata = ue_crypto_metadata_create_default())) {
-        ue_stacktrace_push_msg("Failed to generate default crypto metadata for point A");
+        ei_stacktrace_push_msg("Failed to generate default crypto metadata for point A");
         goto clean_up;
     }
 
-    ue_logger_info("Generating crypto metadata for point B...");
+    ei_logger_info("Generating crypto metadata for point B...");
     if (!(b_crypto_metadata = ue_crypto_metadata_create_default())) {
-        ue_stacktrace_push_msg("Failed to generate default crypto metadata for point B");
+        ei_stacktrace_push_msg("Failed to generate default crypto metadata for point B");
         goto clean_up;
     }
 
-    ue_logger_info("Generating crypto metadata for point C...");
+    ei_logger_info("Generating crypto metadata for point C...");
     if (!(c_crypto_metadata = ue_crypto_metadata_create_default())) {
-        ue_stacktrace_push_msg("Failed to generate default crypto metadata for point C");
+        ei_stacktrace_push_msg("Failed to generate default crypto metadata for point C");
         goto clean_up;
     }
 
-    ue_logger_info("Creating route...");
+    ei_logger_info("Creating route...");
 
     /**
      * A: 192.168.0.1
@@ -78,35 +77,35 @@ int main() {
         ),
         step_number))) {
 
-        ue_stacktrace_push_msg("Failed to create route A -> B -> C");
+        ei_stacktrace_push_msg("Failed to create route A -> B -> C");
         goto clean_up;
     }
 
-    ue_logger_info("Encoding route...");
+    ei_logger_info("Encoding route...");
     if (!(encoded_route = ue_relay_route_encode(route))) {
-        ue_stacktrace_push_msg("Failed to encode route A -> B -> C");
+        ei_stacktrace_push_msg("Failed to encode route A -> B -> C");
         goto clean_up;
     }
 
-    ue_logger_info("Encoded route:");
+    ei_logger_info("Encoded route:");
     ue_byte_stream_print_hex(encoded_route, stdout);
 
-    ue_logger_info("Extracting step for B...");
+    ei_logger_info("Extracting step for B...");
     if (!(b_extracted_step = ue_relay_route_decode_pop_step(encoded_route, b_crypto_metadata))) {
-        ue_stacktrace_push_msg("Failed to pop step from encoded route with B crypto metadata");
+        ei_stacktrace_push_msg("Failed to pop step from encoded route with B crypto metadata");
         goto clean_up;
     }
-    ue_logger_info("Step for B extracted: ");
+    ei_logger_info("Step for B extracted: ");
     ue_relay_step_print(b_extracted_step, stdout);
 
-    ue_logger_info("Lets say B send the remaining route to C [...]");
+    ei_logger_info("Lets say B send the remaining route to C [...]");
 
-    ue_logger_info("Extracting step for C...");
+    ei_logger_info("Extracting step for C...");
     if (!(c_extracted_step = ue_relay_route_decode_pop_step(encoded_route, c_crypto_metadata))) {
-        ue_stacktrace_push_msg("Failed to pop step from encoded route with C crypto metadata");
+        ei_stacktrace_push_msg("Failed to pop step from encoded route with C crypto metadata");
         goto clean_up;
     }
-    ue_logger_info("Step for C extracted: ");
+    ei_logger_info("Step for C extracted: ");
     ue_relay_step_print(c_extracted_step, stdout);
 
 clean_up:
@@ -117,9 +116,9 @@ clean_up:
     ue_crypto_metadata_destroy_all(c_crypto_metadata);
     ue_relay_step_destroy(b_extracted_step);
     ue_relay_step_destroy(c_extracted_step);
-    if (ue_stacktrace_is_filled()) {
-        ue_logger_error("An error occurred with the following stacktrace :");
-        ue_stacktrace_print_all();
+    if (ei_stacktrace_is_filled()) {
+        ei_logger_error("An error occurred with the following stacktrace :");
+        ei_stacktrace_print_all();
     }
     ue_uninit();
     return 0;

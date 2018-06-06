@@ -18,8 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/init.h>
-#include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 #include <unknownecho/crypto/api/certificate/x509_certificate_generation.h>
 #include <unknownecho/crypto/api/key/private_key.h>
 #include <unknownecho/crypto/factory/x509_certificate_factory.h>
@@ -43,33 +42,33 @@ int main() {
     }
 
     if (!ue_x509_certificate_generate_self_signed_ca("SWA", &ca_certificate, &ca_private_key)) {
-        ue_logger_error("Failed to generate self signed CA");
+        ei_logger_error("Failed to generate self signed CA");
         goto clean_up;
     }
 
     if (!ue_x509_certificate_print_pair(ca_certificate, ca_private_key, "out/ca_cert.pem", "out/ca_key.pem", NULL)) {
-        ue_logger_error("Failed to print ca certificate and private key to files");
+        ei_logger_error("Failed to print ca certificate and private key to files");
         goto clean_up;
     }
 
     if (!ue_x509_certificate_load_from_files("out/ca_cert.pem", "out/ca_key.pem", NULL, &read_ca_certificate, &read_ca_private_key)) {
-        ue_logger_error("Failed to load ca certificate and private from files");
+        ei_logger_error("Failed to load ca certificate and private from files");
         goto clean_up;
     }
 
     if (!ue_x509_certificate_generate_signed(read_ca_certificate, read_ca_private_key, "SWA", &certificate, &private_key)) {
-        ue_logger_error("Failed to generate certificate signed by CA");
+        ei_logger_error("Failed to generate certificate signed by CA");
         goto clean_up;
     }
 
     if (!ue_x509_certificate_print_pair(ca_certificate, ca_private_key, "out/cert.pem", "out/key.pem", NULL)) {
-        ue_logger_error("Failed to print signed certificate and private key to files");
+        ei_logger_error("Failed to print signed certificate and private key to files");
         goto clean_up;
     }
 
-    if (ue_stacktrace_is_filled()) {
-        ue_logger_error("Error(s) occurred with the following stacktrace(s) :");
-        ue_stacktrace_print_all();
+    if (ei_stacktrace_is_filled()) {
+        ei_logger_error("Error(s) occurred with the following stacktrace(s) :");
+        ei_stacktrace_print_all();
     }
 
 clean_up:

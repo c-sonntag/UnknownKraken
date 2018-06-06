@@ -5,8 +5,7 @@
 #include <unknownecho/byte/byte_reader.h>
 #include <unknownecho/byte/byte_writer.h>
 #include <unknownecho/string/string_utility.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 
 #include <stddef.h>
@@ -31,16 +30,16 @@ ue_relay_step *ue_relay_route_decode_pop_step(ue_byte_stream *encoded_route, ue_
         ue_crypto_metadata_get_cipher_private_key(our_crypto_metadata), NULL, &plain_data, &plain_data_size,
         ue_crypto_metadata_get_cipher_name(our_crypto_metadata), ue_crypto_metadata_get_digest_name(our_crypto_metadata))) {
 
-        ue_stacktrace_push_msg("Failed to decipher data");
+        ei_stacktrace_push_msg("Failed to decipher data");
         return NULL;
     }
 
     if (!ue_byte_writer_append_bytes(payload, plain_data, plain_data_size)) {
-        ue_stacktrace_push_msg("Failed to append plain data to payload");
+        ei_stacktrace_push_msg("Failed to append plain data to payload");
         goto clean_up;
     }
     if (!ue_byte_stream_set_position(payload, 0)) {
-        ue_stacktrace_push_msg("Failed to set position of payload to 0");
+        ei_stacktrace_push_msg("Failed to set position of payload to 0");
         goto clean_up;
     }
 
@@ -48,28 +47,28 @@ ue_relay_step *ue_relay_route_decode_pop_step(ue_byte_stream *encoded_route, ue_
 
     if (has_next_step) {
         if (!ue_byte_read_next_int(payload, &target_communication_metadata_size)) {
-            ue_stacktrace_push_msg("Failed to read target communication metadata size");
+            ei_stacktrace_push_msg("Failed to read target communication metadata size");
             goto clean_up;
         }
 
         ue_safe_free(read_bytes);
 
         if (!ue_byte_read_next_bytes(payload, &read_bytes, target_communication_metadata_size)) {
-            ue_stacktrace_push_msg("Failed to read target communication metadata");
+            ei_stacktrace_push_msg("Failed to read target communication metadata");
             goto clean_up;
         }
         if (!(target_communication_metadata_string = ue_string_create_from_bytes(read_bytes, (size_t)target_communication_metadata_size))) {
-            ue_stacktrace_push_msg("Failed to convert target communication metadata from bytes to string");
+            ei_stacktrace_push_msg("Failed to convert target communication metadata from bytes to string");
             goto clean_up;
         }
 
         if (!(target_communication_metadata = ue_communication_metadata_create_from_string(target_communication_metadata_string))) {
-            ue_stacktrace_push_msg("Failed to create target communication metadata from string");
+            ei_stacktrace_push_msg("Failed to create target communication metadata from string");
             goto clean_up;
         }
 
         if (!(step = ue_relay_step_create(target_communication_metadata, our_crypto_metadata, NULL))) {
-            ue_stacktrace_push_msg("Failed to build relay step from communication metadatas");
+            ei_stacktrace_push_msg("Failed to build relay step from communication metadatas");
             goto clean_up;
         }
     }

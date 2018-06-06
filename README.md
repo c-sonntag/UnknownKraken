@@ -46,6 +46,7 @@ The server is now listening on two ports:
 * libcrypto >= 1.1.0 for encryption.
 * libz >= 1.2.11 for compression.
 * libuv >= 1.20.3 for networking and threading.
+* libei for stacktrace and logging.
 
 # Installation from sources
 See [INSTALL](INSTALL.md).

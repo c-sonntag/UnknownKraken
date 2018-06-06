@@ -25,9 +25,7 @@
   */
 
 #include <unknownecho/init.h>
-#include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/errorHandling/logger_manager.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 #include <unknownecho/protocol/api/channel/channel_server.h>
 #include <unknownecho/protocol/factory/channel_server_factory.h>
 #include <unknownecho/console/input.h>
@@ -48,7 +46,7 @@ static void handle_signal(int sig, void (*h)(int), int options) {
     sigemptyset(&s.sa_mask);
     s.sa_flags = options;
     if (sigaction(sig, &s, NULL) < 0) {
-        ue_stacktrace_push_errno()
+        ei_stacktrace_push_errno()
     }
 }
 
@@ -65,18 +63,18 @@ int main() {
     key_password = NULL;
 
     /* Set log levels for the screen and the log file */
-    ue_logger_set_file_level(ue_logger_manager_get_logger(), UNKNOWNECHO_LOG_TRACE);
-    ue_logger_set_print_level(ue_logger_manager_get_logger(), UNKNOWNECHO_LOG_TRACE);
+    ei_logger_set_file_level(ei_logger_manager_get_logger(), ERRORINTERCEPTOR_LOG_TRACE);
+    ei_logger_set_print_level(ei_logger_manager_get_logger(), ERRORINTERCEPTOR_LOG_TRACE);
 
     /* Get the user keystore password. If it's fail, it will add an error message to the stacktrace. */
     if (!(keystore_password = ue_input_string("Keystore password : "))) {
-        ue_stacktrace_push_msg("Specified keystore password isn't valid");
+        ei_stacktrace_push_msg("Specified keystore password isn't valid");
         goto end;
     }
 
     /* Get the user private keys password. If it's fail, it will add an error message to the stacktrace. */
     if (!(key_password = ue_input_string("Key password : "))) {
-        ue_stacktrace_push_msg("Specified key password isn't valid");
+        ei_stacktrace_push_msg("Specified key password isn't valid");
         goto end;
     }
 
@@ -88,7 +86,7 @@ int main() {
      * If it's fail, it will add an error message to the stacktrace.
      */
     if (!ue_channel_server_create_default(keystore_password, key_password)) {
-        ue_stacktrace_push_msg("Failed to create server channel");
+        ei_stacktrace_push_msg("Failed to create server channel");
         goto end;
     }
 
@@ -101,18 +99,18 @@ int main() {
      * See README.md for more informations.
      */
     if (!ue_channel_server_process()) {
-        ue_stacktrace_push_msg("Failed to start server channel");
+        ei_stacktrace_push_msg("Failed to start server channel");
         goto end;
     }
 
 end:
-    ue_logger_info("Cleaning...");
+    ei_logger_info("Cleaning...");
     /* Remove keystore and key passwords */
     ue_safe_free(keystore_password);
     ue_safe_free(key_password);
     /* Log the stacktrace if it exists */
-	if (ue_stacktrace_is_filled()) {
-		ue_logger_stacktrace("An error occurred with the following stacktrace :");
+	if (ei_stacktrace_is_filled()) {
+		ei_logger_stacktrace("An error occurred with the following stacktrace :");
 	}
     /* Clean-up the channel server. */
     ue_channel_server_destroy();

@@ -19,8 +19,7 @@
 
 #include <unknownecho/init.h>
 #include <unknownecho/crypto/api/compression/compress.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 #include <unknownecho/byte/byte_utility.h>
 #include <unknownecho/alloc.h>
 
@@ -53,35 +52,35 @@ int main(int argc, char **argv) {
         fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
         exit(EXIT_FAILURE);
     }
-    ue_logger_info("UnknownEchoLib is correctly initialized.");
+    ei_logger_info("UnknownEchoLib is correctly initialized.");
 
-    ue_logger_info("Converting parameter '%s' to bytes...", argv[1]);
+    ei_logger_info("Converting parameter '%s' to bytes...", argv[1]);
     if (!(message = ue_bytes_create_from_string(argv[1]))) {
-        ue_stacktrace_push_msg("Failed to convert arg to bytes")
+        ei_stacktrace_push_msg("Failed to convert arg to bytes")
         goto clean_up;
     }
     message_length = strlen(argv[1]);
-    ue_logger_info("Succefully converted parameter to bytes");
+    ei_logger_info("Succefully converted parameter to bytes");
 
-    ue_logger_info("Compressing message...");
+    ei_logger_info("Compressing message...");
     if (!(compressed = ue_compress_buf(message, message_length, &compressed_length))) {
-        ue_stacktrace_push_msg("Failed to compress message")
+        ei_stacktrace_push_msg("Failed to compress message")
         goto clean_up;
     }
-    ue_logger_info("Message has been successfully compressed");
+    ei_logger_info("Message has been successfully compressed");
 
-    ue_logger_info("Decompressing message...");
+    ei_logger_info("Decompressing message...");
     if (!(decompressed = ue_decompress_buf(compressed, compressed_length, message_length))) {
-        ue_stacktrace_push_msg("Failed to decompress message")
+        ei_stacktrace_push_msg("Failed to decompress message")
         goto clean_up;
     }
 
-    ue_logger_info("Messages comparaison...");
+    ei_logger_info("Messages comparaison...");
     if (memcmp(decompressed, message, message_length) == 0) {
-        ue_logger_info("Message has been successfully decompressed");
+        ei_logger_info("Message has been successfully decompressed");
     } else {
-        ue_logger_error("The message was decompressed but isn't the same as the original");
-        ue_stacktrace_push_msg("Failed to decompress message")
+        ei_logger_error("The message was decompressed but isn't the same as the original");
+        ei_stacktrace_push_msg("Failed to decompress message")
         goto clean_up;
     }
 
@@ -91,9 +90,9 @@ clean_up:
     ue_safe_free(message)
     ue_safe_free(compressed)
     ue_safe_free(decompressed)
-    if (ue_stacktrace_is_filled()) {
-        ue_logger_error("An error occurred with the following stacktrace :");
-        ue_stacktrace_print_all();
+    if (ei_stacktrace_is_filled()) {
+        ei_logger_error("An error occurred with the following stacktrace :");
+        ei_stacktrace_print_all();
     }
     ue_uninit();
     return exit_code;

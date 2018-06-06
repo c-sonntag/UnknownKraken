@@ -23,12 +23,12 @@
 #include <unknownecho/alloc.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/defines.h>
-#include <unknownecho/errorHandling/check_parameter.h>
+#include <ei/ei.h>
 
 ue_channel_server_parameters *ue_channel_server_parameters_create(char *keystore_password, char *key_password) {
     ue_channel_server_parameters *parameters;
 
-    ue_check_parameter_or_return(keystore_password);
+    ei_check_parameter_or_return(keystore_password);
 
     ue_safe_alloc(parameters, ue_channel_server_parameters, 1);
     parameters->persistent_path = NULL;

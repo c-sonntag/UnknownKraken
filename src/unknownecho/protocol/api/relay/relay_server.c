@@ -10,9 +10,7 @@
 #include <unknownecho/network/api/communication/communication.h>
 #include <unknownecho/network/factory/communication_factory.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/byte/byte_writer.h>
 #include <unknownecho/container/queue.h>
@@ -47,11 +45,11 @@ ue_relay_server *ue_relay_server_create(ue_communication_metadata *communication
 
     /* Check if communication metadata objet is valid */
     if (!ue_communication_metadata_is_valid(communication_metadata)) {
-        ue_stacktrace_push_msg("Specified communication metadata object is invalid");
+        ei_stacktrace_push_msg("Specified communication metadata object is invalid");
         return NULL;
     }
 
-    ue_check_parameter_or_return(our_crypto_metadata);
+    ei_check_parameter_or_return(our_crypto_metadata);
 
     ue_safe_alloc(relay_server, ue_relay_server, 1);
     relay_server->communication_context = ue_communication_build_from_type(ue_communication_metadata_get_type(communication_metadata));
@@ -72,7 +70,7 @@ ue_relay_server *ue_relay_server_create(ue_communication_metadata *communication
 
         ue_relay_server_destroy(relay_server);
         relay_server = NULL;
-        ue_stacktrace_push_msg("Failed to build communication server parameters context");
+        ei_stacktrace_push_msg("Failed to build communication server parameters context");
         goto clean_up;
     }
 
@@ -82,7 +80,7 @@ ue_relay_server *ue_relay_server_create(ue_communication_metadata *communication
 
         ue_relay_server_destroy(relay_server);
         relay_server = NULL;
-        ue_stacktrace_push_msg("Failed to start establisher server");
+        ei_stacktrace_push_msg("Failed to start establisher server");
         goto clean_up;
     }
 
@@ -119,18 +117,18 @@ void ue_relay_server_destroy(ue_relay_server *relay_server) {
 
 bool ue_relay_server_is_valid(ue_relay_server *relay_server) {
     if (!relay_server) {
-        ue_stacktrace_push_msg("Specified relay server object is null");
+        ei_stacktrace_push_msg("Specified relay server object is null");
         return false;
     }
 
     if (!ue_communication_context_is_valid(relay_server->communication_context)) {
-        ue_stacktrace_push_msg("Communication context is invalid");
+        ei_stacktrace_push_msg("Communication context is invalid");
         return false;
     }
 
     if (relay_server->communication_context->communication_server_is_valid_impl &&
         !relay_server->communication_context->communication_server_is_valid_impl(relay_server->communication_server)) {
-        ue_stacktrace_push_msg("Communication server implementation is invalid");
+        ei_stacktrace_push_msg("Communication server implementation is invalid");
         return false;
     }
 
@@ -140,7 +138,7 @@ bool ue_relay_server_is_valid(ue_relay_server *relay_server) {
 bool ue_relay_server_start(ue_relay_server *relay_server) {
     /* Check if the relay server object is valid */
     if (!ue_relay_server_is_valid(relay_server)) {
-        ue_stacktrace_push_msg("Specified relay server isn't valid");
+        ei_stacktrace_push_msg("Specified relay server isn't valid");
         return false;
     }
 
@@ -148,7 +146,7 @@ bool ue_relay_server_start(ue_relay_server *relay_server) {
     void (*communication_server_process_impl)(void *);
     communication_server_process_impl = NULL;
     if (!ue_communication_server_get_process_impl(relay_server->communication_context, &communication_server_process_impl)) {
-        ue_stacktrace_push_msg("Failed to get server process impl");
+        ei_stacktrace_push_msg("Failed to get server process impl");
         return false;
     }
 
@@ -160,7 +158,7 @@ bool ue_relay_server_start(ue_relay_server *relay_server) {
 bool ue_relay_server_stop(ue_relay_server *relay_server) {
     /* Check if the relay server object is valid */
     if (!ue_relay_server_is_valid(relay_server)) {
-        ue_stacktrace_push_msg("Specified relay server isn't valid");
+        ei_stacktrace_push_msg("Specified relay server isn't valid");
         return false;
     }
 
@@ -170,7 +168,7 @@ bool ue_relay_server_stop(ue_relay_server *relay_server) {
      * in the stacktrace.
      */
     if (!ue_communication_server_stop(relay_server->communication_context, relay_server->communication_server)) {
-        ue_stacktrace_push_msg("Failed to stop communication server");
+        ei_stacktrace_push_msg("Failed to stop communication server");
         return false;
     }
 
@@ -180,7 +178,7 @@ bool ue_relay_server_stop(ue_relay_server *relay_server) {
 bool ue_relay_server_wait(ue_relay_server *relay_server) {
     /* Check if the relay server object is valid */
     if (!ue_relay_server_is_valid(relay_server)) {
-        ue_stacktrace_push_msg("Specified relay server isn't valid");
+        ei_stacktrace_push_msg("Specified relay server isn't valid");
         return false;
     }
 
@@ -194,7 +192,7 @@ ue_communication_context *ue_relay_server_get_communication_context(ue_relay_ser
 
     /* Check if the relay server object is valid */
     if (!ue_relay_server_is_valid(relay_server)) {
-        ue_stacktrace_push_msg("Specified relay server isn't valid");
+        ei_stacktrace_push_msg("Specified relay server isn't valid");
         return NULL;
     }
 
@@ -204,7 +202,7 @@ ue_communication_context *ue_relay_server_get_communication_context(ue_relay_ser
 void *ue_relay_server_get_communication_server(ue_relay_server *relay_server) {
     /* Check if the relay server object is valid */
     if (!ue_relay_server_is_valid(relay_server)) {
-        ue_stacktrace_push_msg("Specified relay server isn't valid");
+        ei_stacktrace_push_msg("Specified relay server isn't valid");
         return NULL;
     }
 
@@ -212,8 +210,8 @@ void *ue_relay_server_get_communication_server(ue_relay_server *relay_server) {
 }
 
 void ue_relay_server_shutdown_signal_callback(int sig) {
-    ue_logger_trace("Signal received %d", sig);
-    ue_logger_info("Shuting down server...");
+    ei_logger_trace("Signal received %d", sig);
+    ei_logger_info("Shuting down server...");
     global_relay_server->signal_caught = true;
     if (global_relay_server->communication_server) {
         ue_communication_server_stop(global_relay_server->communication_context, global_relay_server->communication_server);
@@ -227,7 +225,7 @@ static bool read_consumer(void *connection) {
     size_t received;
     ue_byte_stream *received_message;
 
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(connection);
 
     /**
      * @todo replace global relay_server variable by a thread storage one
@@ -240,12 +238,12 @@ static bool read_consumer(void *connection) {
 
     received = ue_communication_receive_sync(server_communication_context, connection, received_message);
     if (received == 0) {
-        ue_logger_info("read_consumer: client has disconnected.");
+        ei_logger_info("read_consumer: client has disconnected.");
         //ue_communication_server_disconnect(server_communication_context, communication_server, connection);
         disconnect_client_from_server(connection);
     }
     else if (received == ULLONG_MAX) {
-        ue_stacktrace_push_msg("Error while receiving message")
+        ei_stacktrace_push_msg("Error while receiving message")
         ue_communication_client_connection_clean_up(server_communication_context, connection);
         return false;
     }
@@ -254,7 +252,7 @@ static bool read_consumer(void *connection) {
         ue_byte_writer_append_bytes(message, ue_byte_stream_get_data(received_message), ue_byte_stream_get_size(received_message));
         ue_queue_push_wait(ue_communication_client_connection_get_received_messages(global_relay_server->communication_context, connection), (void *)message);
         if (!server_process_messages(connection)) {
-            ue_logger_error("Failed to proceed messages queue");
+            ei_logger_error("Failed to proceed messages queue");
         }
     }
 
@@ -275,7 +273,7 @@ static bool write_consumer(void *connection) {
     }
 
     if (ue_communication_client_connection_is_available(global_relay_server->communication_context, connection)) {
-        ue_logger_error("Client connection isn't available");
+        ei_logger_error("Client connection isn't available");
         return false;
     }
 
@@ -292,15 +290,15 @@ static bool write_consumer(void *connection) {
                 ue_byte_stream_get_size(current_message_to_send));
             sent = ue_communication_send_sync(global_relay_server->communication_context, connection, message_to_send);
             if (sent == 0) {
-                ue_logger_warn("write_consumer: client has disconnected.");
+                ei_logger_warn("write_consumer: client has disconnected.");
                 disconnect_client_from_server(connection);
             }
             else if (sent == ULLONG_MAX) {
-                ue_logger_error("Error while sending message");
+                ei_logger_error("Error while sending message");
                 ue_communication_client_connection_clean_up(global_relay_server->communication_context, connection);
             }
         } else {
-            ue_logger_warn("Received message is empty.");
+            ei_logger_warn("Received message is empty.");
         }
 
         ue_queue_pop(messages_to_send);
@@ -320,11 +318,11 @@ static bool server_process_messages(void *connection) {
     while (!ue_queue_empty(received_messages)) {
         received_message = ue_queue_front_wait(received_messages);
         if (!server_process_message(received_message, connection)) {
-            if (!ue_stacktrace_is_filled()) {
-                ue_logger_error("Current received message failed to proceed, but there's no stacktrace to record");
+            if (!ei_stacktrace_is_filled()) {
+                ei_logger_error("Current received message failed to proceed, but there's no stacktrace to record");
             } else {
-                ue_logger_stacktrace("Failed to proceed current message");
-                ue_stacktrace_clean_up();
+                ei_logger_stacktrace("Failed to proceed current message");
+                ei_stacktrace_clean_up();
             }
         }
         ue_queue_pop(received_messages);
@@ -340,24 +338,24 @@ static bool server_process_message(ue_byte_stream *message, void *connection) {
     ue_queue *messages_to_send;
     ue_relay_client *relay_client;
 
-    ue_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(connection);
 
     result = false;
     received_message = NULL;
     if (!(messages_to_send = ue_communication_client_connection_get_messages_to_send(global_relay_server->communication_context,
         connection))) {
 
-        ue_stacktrace_push_msg("Failed to get messages to send queue from specified connection");
+        ei_stacktrace_push_msg("Failed to get messages to send queue from specified connection");
         return false;
     }
 
     if (!(received_message = ue_relay_message_decode(message, global_relay_server->our_crypto_metadata))) {
-        ue_stacktrace_push_msg("Failed to decode message");
+        ei_stacktrace_push_msg("Failed to decode message");
         goto clean_up;
     }
 
     if (received_message->protocol_id != UNKNOWNECHO_PROTOCOL_ID_RELAY) {
-        ue_stacktrace_push_msg("Receive message with invalid protocol id: %d", received_message->protocol_id);
+        ei_stacktrace_push_msg("Receive message with invalid protocol id: %d", received_message->protocol_id);
         goto clean_up;
     }
 
@@ -365,25 +363,25 @@ static bool server_process_message(ue_byte_stream *message, void *connection) {
      * @todo build a reverse route to send an ACK msg
      */
     if (received_message->unsealed_payload) {
-        ue_logger_trace("Send the unsealed message to the user callback");
+        ei_logger_trace("Send the unsealed message to the user callback");
         global_relay_server->user_received_callback(global_relay_server->user_context, received_message->payload);
     } else {
         if (!(relay_client = find_relay_client(ue_relay_step_get_target_communication_metadata(received_message->next_step)))) {
-            ue_logger_trace("No relay client with this communication metadata exists. Creating a new relay client...");
+            ei_logger_trace("No relay client with this communication metadata exists. Creating a new relay client...");
             if (!(relay_client = create_relay_client(ue_relay_step_get_target_communication_metadata(received_message->next_step),
                     ue_relay_step_get_our_crypto_metadata(received_message->next_step)))) {
 
-                ue_stacktrace_push_msg("Failed to create new client to relay the received message");
+                ei_stacktrace_push_msg("Failed to create new client to relay the received message");
                 goto clean_up;
             }
-            ue_logger_trace("New relay client created");
+            ei_logger_trace("New relay client created");
         } else {
-            ue_logger_trace("Relay client already exists");
+            ei_logger_trace("Relay client already exists");
         }
 
-        ue_logger_trace("Relaying the message...");
+        ei_logger_trace("Relaying the message...");
         if (!ue_relay_client_relay_message(relay_client, received_message)) {
-            ue_stacktrace_push_msg("Failed to relay the message");
+            ei_stacktrace_push_msg("Failed to relay the message");
             goto clean_up;
         }
     }
@@ -398,15 +396,15 @@ clean_up:
 static void disconnect_client_from_server(void *connection) {
     if (connection) {
         if (!global_relay_server) {
-            ue_logger_error("Relay server ptr is null but it shouldn't");
+            ei_logger_error("Relay server ptr is null but it shouldn't");
             return;
         }
         if (!global_relay_server->communication_context) {
-            ue_logger_error("Communication context ptr is null but it shouldn't");
+            ei_logger_error("Communication context ptr is null but it shouldn't");
             return;
         }
         if (!global_relay_server->communication_server) {
-            ue_logger_error("Communication server ptr is null but if shouldn't");
+            ei_logger_error("Communication server ptr is null but if shouldn't");
             return;
         }
         ue_communication_server_disconnect(global_relay_server->communication_context, global_relay_server->communication_server, connection);
@@ -418,7 +416,7 @@ static ue_relay_client *find_relay_client(ue_communication_metadata *client_comm
     int i;
     ue_communication_metadata *current_communication_metadata;
 
-    ue_logger_trace("Searching relay client with this communication metadata...");
+    ei_logger_trace("Searching relay client with this communication metadata...");
 
     if (!global_relay_server->relay_clients) {
         return NULL;
@@ -429,7 +427,7 @@ static ue_relay_client *find_relay_client(ue_communication_metadata *client_comm
             ue_relay_client_get_communication_context(global_relay_server->relay_clients[i]),
             ue_relay_client_get_connection(global_relay_server->relay_clients[i])))) {
 
-            ue_logger_warn("Failed to communication metadata of client #%d", i);
+            ei_logger_warn("Failed to communication metadata of client #%d", i);
             continue;
         }
 
@@ -447,7 +445,7 @@ static ue_relay_client *create_relay_client(ue_communication_metadata *target_co
     ue_relay_client *relay_client;
 
     if (!(relay_client = ue_relay_client_create_as_relay(target_communication_metadata, our_crypto_metadata))) {
-        ue_stacktrace_push_msg("Failed to create new relay client from received message next step");
+        ei_stacktrace_push_msg("Failed to create new relay client from received message next step");
         return NULL;
     }
 

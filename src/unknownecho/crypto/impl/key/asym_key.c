@@ -19,7 +19,7 @@
 
 #include <unknownecho/crypto/api/key/asym_key.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/check_parameter.h>
+#include <ei/ei.h>
 
 ue_asym_key *ue_asym_key_create(ue_public_key *pk, ue_private_key *sk) {
 	ue_asym_key *akey;

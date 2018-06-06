@@ -4,8 +4,7 @@
 #include <unknownecho/console/progress_bar.h>
 #include <unknownecho/console/color.h>
 #include <unknownecho/string/string_utility.h>
-#include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 
 #include <openssl/bn.h>
@@ -59,7 +58,7 @@ RSA *ue_rsa_keypair_gen(int bits) {
 
     /* Seed the PRNG to increase the entropy */
     if (!ue_crypto_random_seed_prng()) {
-        ue_stacktrace_push_msg("Failed to seed PRNG");
+        ei_stacktrace_push_msg("Failed to seed PRNG");
         goto clean_up;
     }
 
@@ -92,7 +91,7 @@ RSA *ue_rsa_keypair_gen(int bits) {
     }
     ue_progress_bar_finish(progress_bar);
 
-    ue_logger_trace("RSA key generated");
+    ei_logger_trace("RSA key generated");
 
 clean_up:
     BN_GENCB_free(cb);

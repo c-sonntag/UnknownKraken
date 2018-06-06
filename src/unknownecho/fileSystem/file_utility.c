@@ -18,7 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/fileSystem/file_utility.h>
-#include <unknownecho/errorHandling/check_parameter.h>
+#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 
 #if defined(__unix__)
@@ -81,15 +81,15 @@ char *ue_read_file(const char *file_name) {
     fd = NULL;
     out = NULL;
 
-    ue_check_parameter_or_return(file_name);
+    ei_check_parameter_or_return(file_name);
 
     if (!(fd = fopen(file_name, "r"))) {
-        ue_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         return NULL;
     }
 
     if ((file_size = ue_get_file_size(fd)) <= 0) {
-        ue_stacktrace_push_msg("Empty file");
+        ei_stacktrace_push_msg("Empty file");
         goto clean_up;
     }
 
@@ -97,7 +97,7 @@ char *ue_read_file(const char *file_name) {
 
     if (fread(out, file_size, 1, fd) == 0) {
 		ue_safe_free(out);
-        ue_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
     }
 
 clean_up:
@@ -112,16 +112,16 @@ bool ue_write_file(const char *file_name, char *data) {
 
     state = false;
 
-    ue_check_parameter_or_return(file_name);
-    ue_check_parameter_or_return(data);
+    ei_check_parameter_or_return(file_name);
+    ei_check_parameter_or_return(data);
 
     if (!(fd = fopen(file_name, "w"))) {
-        ue_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         return false;
     }
 
     if (fwrite(data, strlen(data), 1, fd) != 1) {
-        ue_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         goto clean_up;
     }
 
@@ -140,15 +140,15 @@ unsigned char *ue_read_binary_file(const char *file_name, size_t *size) {
 
     out = NULL;
 
-    ue_check_parameter_or_return(file_name);
+    ei_check_parameter_or_return(file_name);
 
     if (!(fd = fopen(file_name, "rb"))) {
-        ue_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         return NULL;
     }
 
     if ((file_size = ue_get_file_size(fd)) <= 0) {
-        ue_stacktrace_push_msg("Empty file");
+        ei_stacktrace_push_msg("Empty file");
         goto clean_up;
     }
 
@@ -156,7 +156,7 @@ unsigned char *ue_read_binary_file(const char *file_name, size_t *size) {
 
     if (fread(out, file_size, 1, fd) == 0) {
         ue_safe_free(out);
-        ue_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
     }
 
     *size = file_size;
@@ -173,16 +173,16 @@ bool ue_write_binary_file(const char *file_name, unsigned char *data, size_t siz
 
     state = false;
 
-    ue_check_parameter_or_return(file_name);
-    ue_check_parameter_or_return(data);
+    ei_check_parameter_or_return(file_name);
+    ei_check_parameter_or_return(data);
 
     if (!(fd = fopen(file_name, "wb"))) {
-        ue_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         return false;
     }
 
     if (fwrite(data, size, 1, fd) != 1) {
-        ue_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         goto clean_up;
     }
 

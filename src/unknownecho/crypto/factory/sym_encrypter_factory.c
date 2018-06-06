@@ -19,7 +19,7 @@
 
 #include <unknownecho/crypto/factory/sym_encrypter_factory.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/defines.h>
 
@@ -27,12 +27,12 @@ static ue_sym_encrypter *ue_sym_encrypter_create_factory(ue_sym_key *key, const 
 	ue_sym_encrypter *encrypter;
 
 	if (!ue_sym_key_is_valid(key)) {
-		ue_stacktrace_push_msg("Specified key is invalid");
+		ei_stacktrace_push_msg("Specified key is invalid");
 		return NULL;
 	}
 
 	if (key->size < ue_sym_key_get_min_size()) {
-		ue_stacktrace_push_msg("Specified key size is invalid. %d bytes is required.", ue_sym_key_get_min_size());
+		ei_stacktrace_push_msg("Specified key size is invalid. %d bytes is required.", ue_sym_key_get_min_size());
 		return NULL;
 	}
 

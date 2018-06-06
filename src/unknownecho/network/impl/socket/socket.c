@@ -18,9 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/network/api/socket/socket.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 
 #include <string.h>
@@ -129,7 +127,7 @@ static bool ue_socket_is_valid_type(int type) {
 
 static int ue_socket_str_to_type(const char *type) {
     if (!type) {
-        ue_stacktrace_push_code(UNKNOWNECHO_INVALID_PARAMETER);
+        ei_stacktrace_push_code(ERRORINTERCEPTOR_INVALID_PARAMETER);
         return -1;
     }
 
@@ -167,7 +165,7 @@ static int ue_socket_str_to_type(const char *type) {
 
 int ue_socket_str_to_domain(const char *domain) {
     if (!domain) {
-        ue_stacktrace_push_code(UNKNOWNECHO_INVALID_PARAMETER);
+        ei_stacktrace_push_code(ERRORINTERCEPTOR_INVALID_PARAMETER);
         return -1;
     }
 
@@ -229,30 +227,30 @@ int ue_socket_open(int domain, int type) {
     opt = 1;
 
     if (!ue_socket_is_valid_domain(domain)) {
-        ue_stacktrace_push_msg("Invalid domain");
+        ei_stacktrace_push_msg("Invalid domain");
         return -1;
     }
 
     if (!ue_socket_is_valid_type(type)) {
-        ue_stacktrace_push_msg("Invalid socket type");
+        ei_stacktrace_push_msg("Invalid socket type");
         return -1;
     }
 
 #if defined(_WIN32) || defined(_WIN64)
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         ue_get_last_wsa_error(error_buffer);
-        ue_stacktrace_push_msg(error_buffer);
+        ei_stacktrace_push_msg(error_buffer);
         ue_safe_free(error_buffer);
         return -1;
     }
 #endif
     if ((socket_fd = (int)socket(domain , type, 0)) == -1) {
-        ue_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         return -1;
     }
     /* Set the socket reusable */
     if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0) {
-        ue_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         return -1;
     }
 
@@ -263,14 +261,14 @@ int ue_socket_open_s(const char *domain, const char *type) {
     int domain_i, type_i;
     int fd;
 
-    ue_check_parameter_or_return(domain);
-    ue_check_parameter_or_return(type);
+    ei_check_parameter_or_return(domain);
+    ei_check_parameter_or_return(type);
 
     domain_i = ue_socket_str_to_domain(domain);
     type_i = ue_socket_str_to_type(type);
 
     if ((fd = ue_socket_open(domain_i, type_i)) == -1) {
-        ue_stacktrace_push_msg("Failed to create socket from str parameters");
+        ei_stacktrace_push_msg("Failed to create socket from str parameters");
         return -1;
     }
 
@@ -297,21 +295,21 @@ if (fd == -1) {
 #if defined(__unix__)
     if ((error_code = close(fd)) == -1) {
         if (errno == 0) {
-            ue_logger_warn("Failed to close socket fd with error code %d, but errno is set to 0. Maybe it's already closed.", error_code);
+            ei_logger_warn("Failed to close socket fd with error code %d, but errno is set to 0. Maybe it's already closed.", error_code);
         } else {
-            ue_logger_warn("Failed to close file descriptor with error code : %d and with error message '%s'. Maybe it's already closed.", error_code, strerror(errno));
+            ei_logger_warn("Failed to close file descriptor with error code : %d and with error message '%s'. Maybe it's already closed.", error_code, strerror(errno));
         }
     }
 #elif defined(_WIN32) || defined(_WIN64)
     if (closesocket((SOCKET)fd) == SOCKET_ERROR) {
         ue_get_last_wsa_error(error_buffer);
-        ue_stacktrace_push_msg(error_buffer);
+        ei_stacktrace_push_msg(error_buffer);
         ue_safe_free(error_buffer);
         return false;
     }
     if (WSACleanup() == SOCKET_ERROR) {
         ue_get_last_wsa_error(error_buffer);
-        ue_stacktrace_push_msg(error_buffer);
+        ei_stacktrace_push_msg(error_buffer);
         ue_safe_free(error_buffer);
         return false;
     }
@@ -342,11 +340,11 @@ bool ue_socket_set_blocking_mode(int fd, bool is_blocking) {
 #else
     flags = fcntl(fd, F_GETFL, 0);
     if ((flags & O_NONBLOCK) && !is_blocking) {
-        ue_logger_warn("ue_socket_set_blocking_mode(): socket was already in non-blocking mode");
+        ei_logger_warn("ue_socket_set_blocking_mode(): socket was already in non-blocking mode");
         return result;
     }
     if (!(flags & O_NONBLOCK) && is_blocking) {
-        ue_logger_warn("ue_socket_set_blocking_mode(): socket was already in blocking mode");
+        ei_logger_warn("ue_socket_set_blocking_mode(): socket was already in blocking mode");
         return result;
     }
     result = 0 == fcntl(fd, F_SETFL, is_blocking ? flags ^ O_NONBLOCK : flags | O_NONBLOCK);

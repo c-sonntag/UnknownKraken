@@ -20,8 +20,7 @@
 #include <unknownecho/crypto/api/key/private_key.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/alloc.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
@@ -45,7 +44,7 @@ ue_private_key *ue_private_key_create_from_impl(void *impl) {
 		RSA_free(rsa);
 		return sk;
 	} else {
-		ue_stacktrace_push_msg("Specified key type is not supported");
+		ei_stacktrace_push_msg("Specified key type is not supported");
 	}
 
 	return NULL;
@@ -63,7 +62,7 @@ ue_private_key *ue_private_key_create(ue_private_key_type key_type, void *impl, 
 		sk->type = RSA_PRIVATE_KEY;
 	} else {
 		ue_private_key_destroy(sk);
-		ue_stacktrace_push_msg("Specified key type is unknown");
+		ei_stacktrace_push_msg("Specified key type is unknown");
 		return NULL;
 	}
 
@@ -91,7 +90,7 @@ int ue_private_key_size(ue_private_key *sk) {
 		return RSA_size((RSA *)sk->impl);
 	}
 
-	ue_stacktrace_push_msg("Not implemented key type");
+	ei_stacktrace_push_msg("Not implemented key type");
 
 	return -1;
 }
@@ -103,19 +102,19 @@ bool ue_private_key_is_valid(ue_private_key *sk) {
 		return RSA_check_key(EVP_PKEY_get1_RSA(sk->impl)) && ue_private_key_size(sk) == sk->bits;
 	}
 
-	ue_stacktrace_push_msg("Not implemented key type");
+	ei_stacktrace_push_msg("Not implemented key type");
 
 	return false;
 }
 
 void *ue_private_key_get_impl(ue_private_key *sk) {
 	if (!sk) {
-		ue_stacktrace_push_msg("Specified sk ptr is null");
+		ei_stacktrace_push_msg("Specified sk ptr is null");
 		return NULL;
 	}
 
 	if (!sk->impl) {
-		ue_stacktrace_push_msg("Specified sk have no implementation");
+		ei_stacktrace_push_msg("Specified sk have no implementation");
 		return NULL;
 	}
 
@@ -124,12 +123,12 @@ void *ue_private_key_get_impl(ue_private_key *sk) {
 
 void *ue_private_key_get_rsa_impl(ue_private_key *sk) {
 	if (!sk) {
-		ue_stacktrace_push_msg("Specified private key ptr is null");
+		ei_stacktrace_push_msg("Specified private key ptr is null");
 		return NULL;
 	}
 
 	if (!sk->impl) {
-		ue_stacktrace_push_msg("This private key has no implementation");
+		ei_stacktrace_push_msg("This private key has no implementation");
 		return NULL;
 	}
 	return EVP_PKEY_get1_RSA(sk->impl);

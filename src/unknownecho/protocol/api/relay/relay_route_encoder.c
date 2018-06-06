@@ -5,8 +5,7 @@
 #include <unknownecho/crypto/api/cipher/data_cipher.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/byte/byte_writer.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 #include <unknownecho/defines.h>
 #include <unknownecho/alloc.h>
 
@@ -27,12 +26,12 @@ bool encode_step(ue_byte_stream *encoded_route, ue_relay_step *step, ue_relay_st
     cipher_data = NULL;
 
     if (!(target_crypto_metadata = ue_relay_step_get_target_crypto_metadata(step))) {
-        ue_stacktrace_push_msg("Specified step doesn't contain target crypto metadata");
+        ei_stacktrace_push_msg("Specified step doesn't contain target crypto metadata");
         return false;
     }
 
     if (next_step && !(target_communication_metadata_string = ue_communication_metadata_to_string(ue_relay_step_get_target_communication_metadata(next_step)))) {
-        ue_stacktrace_push_msg("Failed to convert target communication metadata to string");
+        ei_stacktrace_push_msg("Failed to convert target communication metadata to string");
         goto clean_up;
     }
 
@@ -47,7 +46,7 @@ bool encode_step(ue_byte_stream *encoded_route, ue_relay_step *step, ue_relay_st
     if (!ue_byte_stream_is_empty(encoded_route)) {
         ue_byte_writer_append_int(payload, ue_byte_stream_get_size(encoded_route));
         if (!ue_byte_writer_append_bytes(payload, ue_byte_stream_get_data(encoded_route), ue_byte_stream_get_size(encoded_route))) {
-            ue_stacktrace_push_msg("Failed to append previous encoded route to payload");
+            ei_stacktrace_push_msg("Failed to append previous encoded route to payload");
             goto clean_up;
         }
     }
@@ -59,12 +58,12 @@ bool encode_step(ue_byte_stream *encoded_route, ue_relay_step *step, ue_relay_st
         ue_crypto_metadata_get_cipher_public_key(target_crypto_metadata), NULL, &cipher_data, &cipher_data_size,
         ue_crypto_metadata_get_cipher_name(crypto_metadata), ue_crypto_metadata_get_digest_name(crypto_metadata))) {
 
-        ue_stacktrace_push_msg("Failed to cipher current step with target crypto metadata");
+        ei_stacktrace_push_msg("Failed to cipher current step with target crypto metadata");
         goto clean_up;
     }
     ue_byte_stream_clean_up(encoded_route);
     if (!ue_byte_writer_append_bytes(encoded_route, cipher_data, cipher_data_size)) {
-        ue_stacktrace_push_msg("Failed to write cipher data of the current step into the encoded route");
+        ei_stacktrace_push_msg("Failed to write cipher data of the current step into the encoded route");
         goto clean_up;
     }
 
@@ -85,7 +84,7 @@ ue_byte_stream *ue_relay_route_encode(ue_relay_route *route) {
     ue_crypto_metadata *our_crypto_metadata;
 
     if (!ue_relay_route_is_valid(route)) {
-        ue_stacktrace_push_msg("Specified route ptr is invalid");
+        ei_stacktrace_push_msg("Specified route ptr is invalid");
         return NULL;
     }
 
@@ -94,7 +93,7 @@ ue_byte_stream *ue_relay_route_encode(ue_relay_route *route) {
     our_crypto_metadata = ue_relay_step_get_our_crypto_metadata(ue_relay_route_get_sender(route));
 
     for (i = route->steps_number - 1, j = 1; i >= 0; i--, j++) {
-        ue_logger_trace("Relay route encoding iteration: %d", i);
+        ei_logger_trace("Relay route encoding iteration: %d", i);
         current_step = route->steps[i];
         if (i == route->steps_number - 1 || route->steps_number == 1) {
             next_step = NULL;
@@ -104,7 +103,7 @@ ue_byte_stream *ue_relay_route_encode(ue_relay_route *route) {
         if (!encode_step(encoded_route, current_step, next_step, payload, our_crypto_metadata)) {
             ue_byte_stream_destroy(encoded_route);
             ue_byte_stream_destroy(payload);
-            ue_stacktrace_push_msg("Failed to encode a step at iteration #%d", j);
+            ei_stacktrace_push_msg("Failed to encode a step at iteration #%d", j);
             return NULL;
         }
     }

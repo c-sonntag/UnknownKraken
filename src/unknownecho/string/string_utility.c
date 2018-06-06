@@ -19,8 +19,7 @@
 
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/string/string_builder.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/stacktrace.h>
+#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 
 #include <string.h>
@@ -53,7 +52,7 @@ char *ue_strcat_variadic(const char *format, ...) {
 	long int l;
 	unsigned int u;
 
-	ue_check_parameter_or_return(format);
+	ei_check_parameter_or_return(format);
 
 	src = NULL;
 	concatenated = NULL;
@@ -62,14 +61,14 @@ char *ue_strcat_variadic(const char *format, ...) {
 		if (format[i] != 's' && format[i] != 'd' && format[i] != 'L' &&
 			format[i] != 'l' && format[i] != 'f' && format[i] != 'c' &&
 			format[i] != 'u') {
-			ue_stacktrace_push_msg(
+			ei_stacktrace_push_msg(
 					"Specified format isn't valid. It must be contains only characters 's', 'd', 'L', 'l', 'f', 'c' and 'u'");
 			return NULL;
 		}
 	}
 
 	if (!(s = ue_string_builder_create())) {
-		ue_stacktrace_push_msg("Failed to create empty string builder");
+		ei_stacktrace_push_msg("Failed to create empty string builder");
 		return NULL;
 	}
 
@@ -391,10 +390,10 @@ bool ue_string_to_int(char *string, int *out, int radix) {
 	char *end;
 	long l;
 
-	ue_check_parameter_or_return(string);
+	ei_check_parameter_or_return(string);
 
 	if (string[0] == '\0' || isspace((unsigned char ) string[0])) {
-		ue_stacktrace_push_msg("String is incovertible");
+		ei_stacktrace_push_msg("String is incovertible");
 		return false;
 	}
 
@@ -403,15 +402,15 @@ bool ue_string_to_int(char *string, int *out, int radix) {
 
 	/* Both checks are needed because INT_MAX == LONG_MAX is possible. */
 	if (l > INT_MAX || (errno == ERANGE && l == LONG_MAX)) {
-		ue_stacktrace_push_msg("String overflow");
+		ei_stacktrace_push_msg("String overflow");
 		return false;
 	}
 	if (l < INT_MIN || (errno == ERANGE && l == LONG_MIN)) {
-		ue_stacktrace_push_msg("String underflow");
+		ei_stacktrace_push_msg("String underflow");
 		return false;
 	}
 	if (*end != '\0') {
-		ue_stacktrace_push_msg("String is incovertible");
+		ei_stacktrace_push_msg("String is incovertible");
 		return false;
 	}
 
@@ -424,10 +423,10 @@ bool ue_string_to_long(char *string, long *out, int radix) {
 	char *end;
 	long l;
 
-	ue_check_parameter_or_return(string);
+	ei_check_parameter_or_return(string);
 
 	if (string[0] == '\0' || isspace((unsigned char ) string[0])) {
-		ue_stacktrace_push_msg("String is incovertible");
+		ei_stacktrace_push_msg("String is incovertible");
 		return false;
 	}
 
@@ -436,15 +435,15 @@ bool ue_string_to_long(char *string, long *out, int radix) {
 
 	/* Both checks are needed because INT_MAX == LONG_MAX is possible. */
 	if (l > INT_MAX || (errno == ERANGE && l == LONG_MAX)) {
-		ue_stacktrace_push_msg("String overflow");
+		ei_stacktrace_push_msg("String overflow");
 		return false;
 	}
 	if (l < INT_MIN || (errno == ERANGE && l == LONG_MIN)) {
-		ue_stacktrace_push_msg("String underflow");
+		ei_stacktrace_push_msg("String underflow");
 		return false;
 	}
 	if (*end != '\0') {
-		ue_stacktrace_push_msg("String is incovertible");
+		ei_stacktrace_push_msg("String is incovertible");
 		return false;
 	}
 
@@ -464,7 +463,7 @@ int ue_digit(char c, int radix) {
 	if (!ue_string_to_int(string, &number, radix)) {
 		error_message = ue_strcat_variadic("scsds", "Failed to convert char `", c,
 				"` to radix `", radix, "`");
-		ue_stacktrace_push_msg(error_message);
+		ei_stacktrace_push_msg(error_message);
 		ue_safe_str_free(error_message);
 	}
 
@@ -478,18 +477,18 @@ char *ue_substring(char *string, int begin_index, int end_index) {
 	char *new_string;
 
 	if (begin_index < 0) {
-		ue_stacktrace_push_msg("Index out of bounds");
+		ei_stacktrace_push_msg("Index out of bounds");
 		return NULL;
 	}
 
 	if (end_index > strlen(string)) {
-		ue_stacktrace_push_msg("Index out of bounds");
+		ei_stacktrace_push_msg("Index out of bounds");
 		return NULL;
 	}
 
 	sub_length = end_index - begin_index;
 	if (sub_length < 0) {
-		ue_stacktrace_push_msg("Index out of bounds exception");
+		ei_stacktrace_push_msg("Index out of bounds exception");
 		return NULL;
 	}
 

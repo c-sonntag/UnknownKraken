@@ -20,8 +20,7 @@
 #include <unknownecho/network/api/socket/socket_receive.h>
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/network/api/tls/tls_connection_read.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
+#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/time/sleep.h>
 #include <unknownecho/time/current_time.h>
@@ -55,7 +54,7 @@
 #endif
 
     if (connection->fd <= 0) {
-        ue_stacktrace_push_code(UNKNOWNECHO_INVALID_PARAMETER);
+        ei_stacktrace_push_code(ERRORINTERCEPTOR_INVALID_PARAMETER);
         return -1;
     }
 
@@ -78,12 +77,12 @@
 
             /* if you got some data, then break after timeout */
             if (received > 0 && timediff > timeout) {
-                ue_logger_debug("ue_socket_receive_sync() received > 0 && timediff > timeout. break");
+                ei_logger_debug("ue_socket_receive_sync() received > 0 && timediff > timeout. break");
                 break;
             }
             /* if you got no data at all, wait a little longer, twice the timeout */
             else if (timediff > timeout) {
-                ue_logger_debug("ue_socket_receive_sync() timediff > timeout. break.");
+                ei_logger_debug("ue_socket_receive_sync() timediff > timeout. break.");
                 break;
             }
 
@@ -102,7 +101,7 @@
                 /* reset beginning time  */
                 ue_time_of_day(&begin);
                 if (!ue_byte_writer_append_bytes(received_message, (unsigned char *)response, bytes)) {
-                    ue_stacktrace_push_msg("Failed to append in byte stream socket response");
+                    ei_stacktrace_push_msg("Failed to append in byte stream socket response");
                     return -1;
                 }
                 break;
@@ -110,14 +109,14 @@
         } while (1);
 
         if (received == total) {
-            ue_stacktrace_push_msg("Failed storing complete response from socket");
+            ei_stacktrace_push_msg("Failed storing complete response from socket");
             return -1;
         }
     } else {
         received = ue_tls_connection_read_sync(connection->tls, received_message);
     }
 
-    ue_logger_trace("%ld bytes received", received);
+    ei_logger_trace("%ld bytes received", received);
 
     return received;
 }
@@ -131,7 +130,7 @@ size_t ue_socket_receive_all_sync(int fd, unsigned char **bytes, size_t size, ue
     received = -1;
 
     if (fd <= 0) {
-        ue_stacktrace_push_code(UNKNOWNECHO_INVALID_PARAMETER);
+        ei_stacktrace_push_code(ERRORINTERCEPTOR_INVALID_PARAMETER);
         return -1;
     }
 
@@ -169,7 +168,7 @@ size_t ue_socket_receive_async(int fd, bool (*flow_consumer)(void *flow, size_t 
     char response[4096];
 
     if (fd <= 0 || !flow_consumer) {
-        ue_stacktrace_push_code(UNKNOWNECHO_INVALID_PARAMETER);
+        ei_stacktrace_push_code(ERRORINTERCEPTOR_INVALID_PARAMETER);
         return -1;
     }
 
@@ -182,7 +181,7 @@ size_t ue_socket_receive_async(int fd, bool (*flow_consumer)(void *flow, size_t 
             memset(response, 0, sizeof(response));
             bytes = recv(fd, response, 1024, 0);
             if (bytes < 0) {
-                ue_stacktrace_push_errno();
+                ei_stacktrace_push_errno();
                 return -1;
             }
             if (bytes == 0) {
@@ -190,20 +189,20 @@ size_t ue_socket_receive_async(int fd, bool (*flow_consumer)(void *flow, size_t 
             }
             received += bytes;
             if (!flow_consumer(response, bytes)) {
-                ue_stacktrace_push_msg("Flow consumer failed");
+                ei_stacktrace_push_msg("Flow consumer failed");
                 return -1;
             }
         } while (1);
 
         if (received == total) {
-            ue_stacktrace_push_msg("Failed storing complete response from socket");
+            ei_stacktrace_push_msg("Failed storing complete response from socket");
             return -1;
         }
     } else {
         received = ue_tls_connection_read_async(tls, flow_consumer);
     }
 
-    ue_logger_trace("%ld bytes received", received);
+    ei_logger_trace("%ld bytes received", received);
 
     return received;
 }

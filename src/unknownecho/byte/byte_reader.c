@@ -19,9 +19,7 @@
 
 #include <unknownecho/byte/byte_reader.h>
 #include <unknownecho/byte/byte_writer.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/errorHandling/check_parameter.h>
+#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/string/string_utility.h>
 
@@ -36,7 +34,7 @@ bool ue_byte_read_is_int(ue_byte_stream *stream, int position, int n) {
     }
 
     if (position + 3 >= stream->size) {
-        ue_stacktrace_push_msg("Failed to get int because this would cause a buffer underflow");
+        ei_stacktrace_push_msg("Failed to get int because this would cause a buffer underflow");
         return false;
     }
 
@@ -54,7 +52,7 @@ bool ue_byte_read_next_int(ue_byte_stream *stream, int *n) {
     }
 
     if (stream->position + 3 >= stream->size) {
-        ue_stacktrace_push_msg("Failed to get int because this would cause a buffer underflow");
+        ei_stacktrace_push_msg("Failed to get int because this would cause a buffer underflow");
         return false;
     }
 
@@ -74,7 +72,7 @@ bool ue_byte_read_next_bytes(ue_byte_stream *stream, unsigned char **bytes, size
     }
 
     if (stream->position + len >= stream->size) {
-        ue_stacktrace_push_msg("Failed to get next bytes because this would cause a buffer underflow");
+        ei_stacktrace_push_msg("Failed to get next bytes because this would cause a buffer underflow");
         return false;
     }
 
@@ -93,21 +91,21 @@ bool ue_byte_read_next_stream(ue_byte_stream *stream, ue_byte_stream *new_stream
         return false;
     }
 
-    ue_check_parameter_or_return(new_stream);
+    ei_check_parameter_or_return(new_stream);
 
     if (!ue_byte_read_next_int(stream, &read_int)) {
-        ue_stacktrace_push_msg("Failed to read new stream size");
+        ei_stacktrace_push_msg("Failed to read new stream size");
         return false;
     }
 
     if (!ue_byte_read_next_bytes(stream, &read_bytes, (size_t)read_int)) {
-        ue_stacktrace_push_msg("Failed to read new stream content");
+        ei_stacktrace_push_msg("Failed to read new stream content");
         return false;
     }
 
     if (!ue_byte_writer_append_bytes(new_stream, read_bytes, (size_t)read_int)) {
         ue_safe_free(read_bytes);
-        ue_stacktrace_push_msg("Failed to write new stream content");
+        ei_stacktrace_push_msg("Failed to write new stream content");
         return false;
     }
 
@@ -119,16 +117,16 @@ bool ue_byte_read_next_stream(ue_byte_stream *stream, ue_byte_stream *new_stream
 bool ue_byte_read_next_string(ue_byte_stream *stream, const char **string, size_t len) {
     unsigned char *bytes;
 
-    ue_check_parameter_or_return(stream);
-    ue_check_parameter_or_return(len > 0);
+    ei_check_parameter_or_return(stream);
+    ei_check_parameter_or_return(len > 0);
 
     if (!ue_byte_read_next_bytes(stream, &bytes, len)) {
-        ue_stacktrace_push_msg("Failed to read next %ld bytes", len);
+        ei_stacktrace_push_msg("Failed to read next %ld bytes", len);
         return false;
     }
 
     if (!(*string = ue_string_create_from_bytes(bytes, len))) {
-        ue_stacktrace_push_msg("Failed to convert %ld bytes to string", len);
+        ei_stacktrace_push_msg("Failed to convert %ld bytes to string", len);
         ue_safe_free(bytes);
         return false;
     }
@@ -145,17 +143,17 @@ bool ue_byte_read_next_string(ue_byte_stream *stream, const char **string, size_
         return false;
     }
 
-    ue_logger_debug("stream->size: %ld", stream->size);
-    ue_logger_debug("stream->position: %ld", stream->position);
-    ue_logger_debug("stream->size - stream->position: %ld", stream->size - stream->position);
+    ei_logger_debug("stream->size: %ld", stream->size);
+    ei_logger_debug("stream->position: %ld", stream->position);
+    ei_logger_debug("stream->size - stream->position: %ld", stream->size - stream->position);
 
     if ((remaining_bytes_size = stream->size - stream->position) <= 0) {
-        ue_stacktrace_push_msg("There's no remaining bytes to read");
+        ei_stacktrace_push_msg("There's no remaining bytes to read");
         return false;
     }
 
     if (!ue_byte_read_next_bytes(stream, bytes, remaining_bytes_size)) {
-        ue_stacktrace_push_msg("Failed to read remaining bytes");
+        ei_stacktrace_push_msg("Failed to read remaining bytes");
         return false;
     }
 

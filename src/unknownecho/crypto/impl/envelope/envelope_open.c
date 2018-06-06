@@ -19,7 +19,7 @@
 
 #include <unknownecho/crypto/impl/envelope/envelope_open.h>
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
-#include <unknownecho/errorHandling/check_parameter.h>
+#include <ei/ei.h>
 
 bool envelope_open_buffer(EVP_PKEY *priv_key, unsigned char *ciphertext, int ciphertext_len,
 	unsigned char *encrypted_key, int encrypted_key_len, unsigned char *iv,
@@ -31,12 +31,12 @@ bool envelope_open_buffer(EVP_PKEY *priv_key, unsigned char *ciphertext, int cip
     const EVP_CIPHER *cipher;
     char *error_buffer;
 
-	ue_check_parameter_or_return(priv_key);
-	ue_check_parameter_or_return(ciphertext);
-	ue_check_parameter_or_return(ciphertext_len > 0);
-	ue_check_parameter_or_return(encrypted_key);
-	ue_check_parameter_or_return(encrypted_key_len > 0);
-	ue_check_parameter_or_return(cipher_name);
+	ei_check_parameter_or_return(priv_key);
+	ei_check_parameter_or_return(ciphertext);
+	ei_check_parameter_or_return(ciphertext_len > 0);
+	ei_check_parameter_or_return(encrypted_key);
+	ei_check_parameter_or_return(encrypted_key_len > 0);
+	ei_check_parameter_or_return(cipher_name);
 
     result = NULL;
     ctx = NULL;

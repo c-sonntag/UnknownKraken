@@ -21,10 +21,7 @@
 #include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
 #include <unknownecho/crypto/impl/key/rsa_keypair_generation.h>
 #include <unknownecho/crypto/utils/crypto_random.h>
-#include <unknownecho/errorHandling/stacktrace.h>
-#include <unknownecho/errorHandling/check_parameter.h>
-#include <unknownecho/errorHandling/logger.h>
-#include <unknownecho/errorHandling/logger_manager.h>
+#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/defines.h>
 
@@ -51,7 +48,7 @@ bool ue_x509_certificate_generate(ue_x509_certificate_parameters *parameters, ue
 	X509_NAME *name;
 	char *error_buffer;
 
-	ue_check_parameter_or_return(parameters);
+	ei_check_parameter_or_return(parameters);
 
 	x = NULL;
 	pk = NULL;
@@ -70,7 +67,7 @@ bool ue_x509_certificate_generate(ue_x509_certificate_parameters *parameters, ue
 	}
 
 	if (!(*private_key = ue_private_key_create(RSA_PRIVATE_KEY, rsa, ue_x509_certificate_parameters_get_bits(parameters)))) {
-		ue_stacktrace_push_msg("Failed to create private key from generated RSA");
+		ei_stacktrace_push_msg("Failed to create private key from generated RSA");
 		RSA_free(rsa);
 		goto clean_up_failed;
 	}
@@ -80,7 +77,7 @@ bool ue_x509_certificate_generate(ue_x509_certificate_parameters *parameters, ue
     pk = ue_private_key_get_impl(*private_key);
 
     if (!(*certificate = ue_x509_certificate_create_empty())) {
-		ue_stacktrace_push_msg("Failed to create new X509 certificate");
+		ei_stacktrace_push_msg("Failed to create new X509 certificate");
 		goto clean_up_failed;
 	}
 
@@ -88,7 +85,7 @@ bool ue_x509_certificate_generate(ue_x509_certificate_parameters *parameters, ue
 	X509_set_version(x, 2);
 
 	if (!set_serial_number(x, ue_x509_certificate_parameters_get_serial(parameters), ue_x509_certificate_parameters_get_serial_length(parameters))) {
-		ue_stacktrace_push_msg("Failed to set serial number to cert impl");
+		ei_stacktrace_push_msg("Failed to set serial number to cert impl");
 		goto clean_up_failed;
 	}
 
@@ -127,13 +124,13 @@ bool ue_x509_certificate_generate(ue_x509_certificate_parameters *parameters, ue
 
 	if (ue_x509_certificate_parameters_get_constraint(parameters)) {
 		if (!add_ext(x, NID_basic_constraints, ue_x509_certificate_parameters_get_constraint(parameters))) {
-			ue_stacktrace_push_msg("Failed to add constraint ext to cert");
+			ei_stacktrace_push_msg("Failed to add constraint ext to cert");
 			goto clean_up_failed;
 		}
 	}
 
 	if (!add_ext(x, NID_subject_key_identifier, ue_x509_certificate_parameters_get_subject_key_identifier(parameters))) {
-		ue_stacktrace_push_msg("Failed to add subject key identifier ext to cert");
+		ei_stacktrace_push_msg("Failed to add subject key identifier ext to cert");
 		goto clean_up_failed;
 	}
 
@@ -158,32 +155,32 @@ bool ue_x509_certificate_print_pair(ue_x509_certificate *certificate, ue_private
 	bool result;
 	FILE *private_key_fd, *certificate_fd;
 
-	ue_check_parameter_or_return(certificate);
-	ue_check_parameter_or_return(private_key);
-	ue_check_parameter_or_return(certificate_file_name);
-	ue_check_parameter_or_return(private_key_file_name);
+	ei_check_parameter_or_return(certificate);
+	ei_check_parameter_or_return(private_key);
+	ei_check_parameter_or_return(certificate_file_name);
+	ei_check_parameter_or_return(private_key_file_name);
 
 	result = false;
 	private_key_fd = NULL;
 	certificate_fd = NULL;
 
 	if (!(certificate_fd = fopen(certificate_file_name, "wb"))) {
-		ue_stacktrace_push_errno();
+		ei_stacktrace_push_errno();
 		goto clean_up;
 	}
 
     if (!(private_key_fd = fopen(private_key_file_name, "wb"))) {
-		ue_stacktrace_push_errno();
+		ei_stacktrace_push_errno();
 		goto clean_up;
 	}
 
     if (!ue_x509_certificate_print(certificate, certificate_fd)) {
-		ue_stacktrace_push_msg("Failed to print certificate to '%s' file", certificate_file_name);
+		ei_stacktrace_push_msg("Failed to print certificate to '%s' file", certificate_file_name);
 		goto clean_up;
 	}
 
     if (!ue_private_key_print(private_key, private_key_fd, passphrase)) {
-		ue_stacktrace_push_msg("Failed to print private key to '%s' file", private_key_file_name);
+		ei_stacktrace_push_msg("Failed to print private key to '%s' file", private_key_file_name);
 		goto clean_up;
 	}
 
@@ -208,12 +205,12 @@ static bool add_ext(X509 *cert, int nid, char *value) {
 	X509V3_set_ctx(&ctx, cert, cert, NULL, NULL, 0);
 
 	if (!(ex = X509V3_EXT_conf_nid(NULL, &ctx, nid, value))) {
-		ue_stacktrace_push_msg("Ext returned is null")
+		ei_stacktrace_push_msg("Ext returned is null")
 		return false;
 	}
 
 	if (!X509_add_ext(cert, ex, -1)) {
-		ue_stacktrace_push_msg("Failed to add ext to cert");
+		ei_stacktrace_push_msg("Failed to add ext to cert");
 		X509_EXTENSION_free(ex);
 		return false;
 	}
@@ -229,9 +226,9 @@ static bool set_serial_number(X509 *x, unsigned char *serial_bytes, int serial_b
 	ASN1_INTEGER *serial;
 	char *error_buffer;
 
-	ue_check_parameter_or_return(x);
-	ue_check_parameter_or_return(serial_bytes);
-	ue_check_parameter_or_return(serial_bytes_length > 0);
+	ei_check_parameter_or_return(x);
+	ei_check_parameter_or_return(serial_bytes);
+	ei_check_parameter_or_return(serial_bytes_length > 0);
 
 	result = false;
 	bn = BN_new();
