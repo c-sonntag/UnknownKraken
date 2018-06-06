@@ -1,55 +1,83 @@
-# Dependencies
-* libssl 1.1.0 for TLS connection support.
-* libcrypto 1.1.0 for encryption support.
-* libz 1.2.11 for compression support.
+# Dependencies list
+* libssl >= 1.1.0 for TLS connection.
+* libcrypto >= 1.1.0 for encryption.
+* libz >= 1.2.11 for compression.
+* libuv >= 1.20.3 for networking and threading.
+* A recent version of CMake.
+* Optional: ccache is supported to reduce build time of LibUnknownEcho.
+* Optional: Valgrind for memory debugging/memory leak detection
 
-***
+# Dependencies installation
 
-# Installation
-
-## Installation with Docker
+## With Docker (outdated)
 
 ### From Docker Hub
-* docker run -it -P swasun/libunknownecho bash
+```bash
+docker run -it -P swasun/libunknownecho bash
+```
 
 ### From Dockerfile
-* wget https://github.com/swasun/LibUnknownEcho/Dockerfile
-* docker build -t libunknownecho .
-* docker run -it -P libunknownecho bash
+```bash
+wget https://github.com/swasun/LibUnknownEcho/Dockerfile && \
+docker build -t libunknownecho . && \
+docker run -it -P libunknownecho bash
+```
 
 ## Installation from sources
-* Install libssl version 1.10 (that contains also libcrypto 1.10) :
-    * wget https://www.openssl.org/source/openssl-1.1.0.tar.gz
-    * tar -zxvf openssl-1.1.0.tar.gz
-    * cd openssl-1.1.0
-    * ./config
-    * make
-    * sudo make install
-* Install zlib version 1.2.11
-    * wget https://zlib.net/zlib-1.2.11.tar.gz
-    * tar -zxvf zlib-1.2.11.tar.gz
-    * cd zlib-1.2.11
-    * ./configure
-    * make
-    * sudo make install
-* Install a recent version of CMake.
-* Compile LibUnknownEcho
-    * In debug mode : ./build_debug.sh
-    * In release mode : ./build_release.sh
-    * Clean all : ./clean.sh
-The static lib will appear in bin folder, and all the examples in bin/debug/examples or bin/release/examples according to the compilation mode.
+* Install libssl version 1.10 (that also contains libcrypto 1.10):
+```bash
+wget https://www.openssl.org/source/openssl-1.1.0.tar.gz && \
+tar -zxvf openssl-1.1.0.tar.gz && \
+cd openssl-1.1.0 && \
+./config && \
+make && \
+sudo make install && \
+cd ..
+```
+    
+* Install zlib version 1.2.11:
+```bash
+wget https://zlib.net/zlib-1.2.11.tar.gz && \
+tar -zxvf zlib-1.2.11.tar.gz && \
+cd zlib-1.2.11 && \
+./configure && \
+make && \
+sudo make install && \
+cd ..
+```
+    
+* Install libuv version 1.20.3:
+```bash
+sudo apt install -y automake libtoolize && \
+git clone https://github.com/libuv/libuv && \
+cd libuv && \
+sh autogen.sh && \
+make && \
+make check && \
+sudo make install && \
+cd ..
+```
 
-***
+# Build LibUnknownEcho
 
+In debug mode:
+```bash
+./build_debug.sh
+```
 
-# Other dependencies
-* Make, CMake for compilation.
-* Valgrind for memory debugging/memory leak detection.
+In release mode:
+```bash
+./build_release.sh
+```
 
-***
+Clean-up build files, binaries:
+```bash
+./clean.sh
+```
 
+The static lib will appear in the `bin` directory, and all the examples in `bin/debug/examples` or `bin/release/examples`, according to the compilation mode.
 
-# Common errors
+# FAQ
 * Could NOT find PkgConfig (missing: PKG_CONFIG_EXECUTABLE)
 On Debian distributions, you can fix this by installating pgk-config packet with :
 sudo apt-get install pkg-config

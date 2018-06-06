@@ -16,7 +16,7 @@ void fake_download(uv_work_t *req) {
     while (current_size < ctx->size) {
         ctx->current_size = current_size;
         uv_async_send(&ctx->async);
-        ue_millisleep(100);
+        ue_millisleep(500);
         current_size += (200 + random()) % 1000;
     }
 }
