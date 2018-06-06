@@ -94,5 +94,7 @@ The static lib will appear in the `bin` directory, and all the examples in `bin/
 
 # FAQ
 * Could NOT find PkgConfig (missing: PKG_CONFIG_EXECUTABLE)
-On Debian distributions, you can fix this by installating pgk-config packet with :
+On Debian distributions, you can fix this by installating `pgk-config` packet with:
+```bash
 sudo apt-get install pkg-config
+```
