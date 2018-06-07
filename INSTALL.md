@@ -25,6 +25,11 @@ docker run -it -P libunknownecho bash
 ```
 
 ## Installation from sources
+* Download last version of LibUnknownEcho
+```bash
+git clone https://github.com/swasun/LibUnknownEcho.git
+```
+
 * Install libssl version 1.10 (that also contains libcrypto 1.10):
 ```bash
 wget https://www.openssl.org/source/openssl-1.1.0.tar.gz && \
@@ -35,7 +40,9 @@ make && \
 sudo make install && \
 cd ..
 ```
-    
+
+Then you can copy libssl and libcrypto librarie files in `lib/<os>`, where os is `linux` or `windows`.
+
 * Install zlib version 1.2.11:
 ```bash
 wget https://zlib.net/zlib-1.2.11.tar.gz && \
@@ -50,7 +57,7 @@ cd ..
 * Install libuv version 1.20.3:
 ```bash
 sudo apt install -y automake libtoolize && \
-git clone https://github.com/libuv/libuv && \
+git clone https://github.com/libuv/libuv.git && \
 cd libuv && \
 sh autogen.sh && \
 make && \
@@ -61,7 +68,7 @@ cd ..
 
 * Install libei:
 ```bash
-git clone https://github.com/swasun/LibErrorInterceptor && \
+git clone https://github.com/swasun/LibErrorInterceptor.git && \
 cd LibErrorInterceptor && \
 ./buid_release && \
 sudo ./install && \
