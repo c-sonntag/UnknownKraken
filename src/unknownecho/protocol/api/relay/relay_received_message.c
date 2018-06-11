@@ -10,6 +10,7 @@ ue_relay_received_message *ue_relay_received_message_create_empty() {
     received_message->next_step = NULL;
     received_message->payload = NULL;
     received_message->remaining_encoded_route = NULL;
+    received_message->remaining_encoded_back_route = NULL;
     received_message->unsealed_payload = false;
 
     return received_message;
@@ -20,6 +21,7 @@ void ue_relay_received_message_destroy(ue_relay_received_message *received_messa
         ue_relay_step_destroy(received_message->next_step);
         ue_byte_stream_destroy(received_message->payload);
         ue_byte_stream_destroy(received_message->remaining_encoded_route);
+        ue_byte_stream_destroy(received_message->remaining_encoded_back_route);
         ue_safe_free(received_message);
     }
 }

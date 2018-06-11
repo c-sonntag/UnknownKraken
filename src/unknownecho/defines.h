@@ -24,6 +24,8 @@
  *  @copyright GNU Public License.
  */
 
+#include <unknownecho/network/api/communication/communication_type.h>
+
 #ifndef UNKNOWNECHO_DEFINES_H
 #define UNKNOWNECHO_DEFINES_H
 
@@ -67,6 +69,7 @@
 #define UNKNOWNECHO_GRAY_COLOR                       "\x1b[90m"
 #define UNKNOWNECHO_WHITE_COLOR                      "\x1b[0m"
 
+/* @todo replace by detecting the terminal type as some Windows user has bash like terminal */
 #elif defined(_WIN32) || defined(_WIN64)
 
 #define UNKNOWNECHO_SKY_BLUE_COLOR                   ""
@@ -89,5 +92,7 @@
 /* By default, network communications use SOCKET */
 #define UNKNOWNECHO_DEFAULT_COMMUNICATION_TYPE       UNKNOWNECHO_COMMUNICATION_SOCKET
 #define UNKNOWNECHO_COMMUNICATION_SOCKET             "SOCKET"
+
+#define UNKNOWNECHO_DEFAULT_COMMUNICATION_TYPE_ID    UNKNOWNECHO_COMMUNICATION_TYPE_SOCKET
 
 #endif

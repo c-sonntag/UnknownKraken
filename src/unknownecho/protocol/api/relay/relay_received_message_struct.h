@@ -12,7 +12,7 @@ typedef struct {
     ue_relay_step *next_step;
     ue_protocol_id protocol_id;
     ue_relay_message_id message_id;
-    ue_byte_stream *remaining_encoded_route;
+    ue_byte_stream *remaining_encoded_route, *remaining_encoded_back_route;
     bool unsealed_payload;
 } ue_relay_received_message;
 

@@ -13,6 +13,21 @@ ue_relay_route *ue_relay_route_create(ue_relay_step **steps, int steps_number) {
     return route;
 }
 
+ue_relay_route *ue_relay_route_create_back_route(ue_relay_route *route) {
+    ue_relay_route *back_route;
+    int i, j;
+
+    ue_safe_alloc(back_route, ue_relay_route, 1);
+    back_route->steps_number = route->steps_number;
+    ue_safe_alloc(back_route->steps, ue_relay_step *, back_route->steps_number);
+
+    for (i = route->steps_number - 1, j = 0; i >= 0; i--, j++) {
+        back_route->steps[j] = ue_relay_step_create_from_step(route->steps[i]);
+    }
+
+    return back_route;
+}
+
 void ue_relay_route_destroy(ue_relay_route *route) {
     int i;
 
@@ -95,4 +110,25 @@ ue_relay_step *ue_relay_route_get_sender(ue_relay_route *route) {
     }
 
     return route->steps[0];
+}
+
+bool ue_relay_route_print(ue_relay_route *route, FILE *fd) {
+    int i;
+
+    if (!route) {
+        ei_stacktrace_push_msg("Specified route ptr is null");
+        return false;
+    }
+
+    if (!route->steps || route->steps_number <= 0) {
+        ei_stacktrace_push_msg("Specified route steps is null");
+        return false;
+    }
+
+    for (i = 0; i < route->steps_number; i++) {
+        printf("#%d ", i + 1);
+        ue_relay_step_print(route->steps[i], fd);
+    }
+
+    return true;
 }

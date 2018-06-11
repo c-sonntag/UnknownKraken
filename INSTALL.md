@@ -6,7 +6,7 @@
 * libei for stacktrace and logging.
 * A recent version of CMake.
 * Optional: ccache is supported to reduce build time of LibUnknownEcho.
-* Optional: Valgrind for memory debugging/memory leak detection
+* Optional: valgrind for memory debugging/memory leak detection
 
 # Dependencies installation
 

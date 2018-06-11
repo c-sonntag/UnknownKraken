@@ -52,7 +52,6 @@ ue_channel_client_parameters *ue_channel_client_parameters_create(char *nickname
     parameters->cipher_name = NULL;
     parameters->digest_name = NULL;
     parameters->user_input_mode = UNKNOWNECHO_STDIN_INPUT;
-    parameters->communication_type = NULL;
 
     return parameters;
 }
@@ -67,7 +66,6 @@ void ue_channel_client_parameters_destroy(ue_channel_client_parameters *paramete
         ue_safe_free(parameters->server_certificates_path);
         ue_safe_free(parameters->cipher_name);
         ue_safe_free(parameters->digest_name);
-        ue_safe_free(parameters->communication_type);
         ue_safe_free(parameters);
     }
 }
@@ -157,8 +155,8 @@ bool ue_channel_client_parameters_set_user_input_mode(ue_channel_client_paramete
     return true;
 }
 
-bool ue_channel_client_parameters_set_communication_type(ue_channel_client_parameters *parameters, const char *communication_type) {
-    parameters->communication_type = ue_string_create_from(communication_type);
+bool ue_channel_client_parameters_set_communication_type(ue_channel_client_parameters *parameters, ue_communication_type communication_type) {
+    parameters->communication_type = communication_type;
     return true;
 }
 
@@ -198,7 +196,7 @@ ue_channel_client *ue_channel_client_parameters_build(ue_channel_client_paramete
     }
 
     if (!parameters->communication_type) {
-        parameters->communication_type = ue_string_create_from(ue_communication_get_default_type());
+        parameters->communication_type = UNKNOWNECHO_DEFAULT_COMMUNICATION_TYPE_ID;
     }
 
     channel_client = ue_channel_client_create(parameters->persistent_path, parameters->nickname, parameters->csr_server_host, parameters->csr_server_port,

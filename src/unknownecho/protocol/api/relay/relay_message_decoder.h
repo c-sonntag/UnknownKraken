@@ -5,6 +5,7 @@
 #include <unknownecho/byte/byte_stream_struct.h>
 #include <unknownecho/crypto/api/crypto_metadata.h>
 
-ue_relay_received_message *ue_relay_message_decode(ue_byte_stream *encoded_message, ue_crypto_metadata *our_crypto_metadata);
+ue_relay_received_message *ue_relay_message_decode(ue_byte_stream *encoded_message,
+    ue_crypto_metadata *our_crypto_metadata);
 
 #endif

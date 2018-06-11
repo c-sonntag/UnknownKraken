@@ -13,7 +13,9 @@
 
 #include <stddef.h>
 
-static bool read_seal_payload(ue_byte_stream *encoded_message, ue_crypto_metadata *our_crypto_metadata, ue_byte_stream *payload) {
+static bool read_seal_payload(ue_byte_stream *encoded_message, ue_crypto_metadata *our_crypto_metadata,
+    ue_byte_stream *payload) {
+    
     bool result;
     int cipher_data_size;
     unsigned char *cipher_data, *plain_data;
@@ -56,7 +58,9 @@ clean_up:
     return result;
 }
 
-ue_relay_received_message *ue_relay_message_decode(ue_byte_stream *encoded_message, ue_crypto_metadata *our_crypto_metadata) {
+ue_relay_received_message *ue_relay_message_decode(ue_byte_stream *encoded_message,
+    ue_crypto_metadata *our_crypto_metadata) {
+    
     ue_relay_received_message *received_message;
     int read_int;
 
@@ -97,6 +101,7 @@ ue_relay_received_message *ue_relay_message_decode(ue_byte_stream *encoded_messa
     ei_logger_trace("Message id: %d", read_int);
 
     received_message->remaining_encoded_route = ue_byte_stream_create();
+    received_message->remaining_encoded_back_route = ue_byte_stream_create();
 
     /* Read the encoded route */
     if (!ue_byte_read_next_stream(encoded_message, received_message->remaining_encoded_route)) {
@@ -105,12 +110,19 @@ ue_relay_received_message *ue_relay_message_decode(ue_byte_stream *encoded_messa
         return NULL;
     }
 
+    /* Read the encoded back route */
+    if (!ue_byte_read_next_stream(encoded_message, received_message->remaining_encoded_back_route)) {
+        ue_relay_received_message_destroy(received_message);
+        ei_stacktrace_push_msg("Failed to read encoded back route from encoded message");
+        return NULL;
+    }
+
     /* Decode the first step of the encoded route and get the remaining route */
     if (!(received_message->next_step = ue_relay_route_decode_pop_step(received_message->remaining_encoded_route,
         our_crypto_metadata))) {
 
         if (ei_stacktrace_is_filled()) {
-            ei_stacktrace_push_msg("Failed to pop next stpe");
+            ei_stacktrace_push_msg("Failed to pop next step");
             ue_relay_received_message_destroy(received_message);
             return NULL;
         }
@@ -119,8 +131,8 @@ ue_relay_received_message *ue_relay_message_decode(ue_byte_stream *encoded_messa
     }
 
     /* Check if there's a payload in the message */
-    if (received_message->message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_SEND ||
-        received_message->message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_RECEIVE) {
+    if (received_message->message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_REQUEST ||
+        received_message->message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_RESPONSE) {
 
         if (!ue_byte_stream_is_empty(received_message->remaining_encoded_route)) {
             ei_logger_trace("Remaining route isn't empty, so the message wasn't meant for us. We cannot unseal it, anyway.");

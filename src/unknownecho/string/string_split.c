@@ -27,7 +27,7 @@
 
 typedef char *multi_tok_t;
 
-static char *multi_tok(char *input, multi_tok_t *string, char *delimiter) {
+static char *multi_tok(char *input, multi_tok_t *string, const char *delimiter) {
     if (input != NULL) {
         *string = input;
     }
@@ -54,9 +54,9 @@ static multi_tok_t init() {
     return NULL;
 }
 
-ue_string_vector *ue_string_split(char *string, char *delimiter) {
+ue_string_vector *ue_string_split(const char *string, const char *delimiter) {
     ue_string_vector *v;
-    char *token;
+    char *token, *input;
     multi_tok_t s;
 
     ei_check_parameter_or_return(string);
@@ -64,8 +64,9 @@ ue_string_vector *ue_string_split(char *string, char *delimiter) {
 
     v = ue_string_vector_create_empty();
     s = init();
+    input = ue_string_create_from(string);
 
-    token = multi_tok(string, &s, delimiter);
+    token = multi_tok(input, &s, delimiter);
 
     while (token != NULL) {
         if (strcmp(token, "") == 0) {
@@ -75,6 +76,7 @@ ue_string_vector *ue_string_split(char *string, char *delimiter) {
         token = multi_tok(NULL, &s, delimiter);
     }
     ue_safe_str_free(token);
+    ue_safe_str_free(input);
 
     return v;
 }

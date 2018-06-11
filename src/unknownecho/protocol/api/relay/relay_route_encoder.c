@@ -12,7 +12,7 @@
 #include <stddef.h>
 #include <string.h>
 
-bool encode_step(ue_byte_stream *encoded_route, ue_relay_step *step, ue_relay_step *next_step,
+static bool encode_step(ue_byte_stream *encoded_route, ue_relay_step *step, ue_relay_step *next_step,
     ue_byte_stream *payload, ue_crypto_metadata *crypto_metadata) {
 
     bool result;
@@ -95,11 +95,16 @@ ue_byte_stream *ue_relay_route_encode(ue_relay_route *route) {
     for (i = route->steps_number - 1, j = 1; i >= 0; i--, j++) {
         ei_logger_trace("Relay route encoding iteration: %d", i);
         current_step = route->steps[i];
-        if (i == route->steps_number - 1 || route->steps_number == 1) {
+        if (i == route->steps_number - 1) {
             next_step = NULL;
         } else {
             next_step = route->steps[i+1];
         }
+        ei_logger_debug("current_step: %s", ue_communication_metadata_to_string(
+            ue_relay_step_get_target_communication_metadata(current_step)));
+        ei_logger_debug("next_step: %s", ue_communication_metadata_to_string(
+            ue_relay_step_get_target_communication_metadata(next_step)));
+        printf("\n");
         if (!encode_step(encoded_route, current_step, next_step, payload, our_crypto_metadata)) {
             ue_byte_stream_destroy(encoded_route);
             ue_byte_stream_destroy(payload);

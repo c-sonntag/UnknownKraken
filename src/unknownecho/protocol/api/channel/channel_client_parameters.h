@@ -22,6 +22,7 @@
 
 #include <unknownecho/protocol/api/channel/channel_client_parameters_struct.h>
 #include <unknownecho/protocol/api/channel/channel_client_struct.h>
+#include <unknownecho/network/api/communication/communication_type.h>
 #include <unknownecho/bool.h>
 #include <unknownecho/byte/byte_stream.h>
 
@@ -63,7 +64,7 @@ bool ue_channel_client_parameters_set_digest_name(ue_channel_client_parameters *
 
 bool ue_channel_client_parameters_set_user_input_mode(ue_channel_client_parameters *parameters, ue_user_input_mode user_input_mode);
 
-bool ue_channel_client_parameters_set_communication_type(ue_channel_client_parameters *parameters, const char *communication_type);
+bool ue_channel_client_parameters_set_communication_type(ue_channel_client_parameters *parameters, ue_communication_type communication_type);
 
 ue_channel_client *ue_channel_client_parameters_build(ue_channel_client_parameters *parameters);
 

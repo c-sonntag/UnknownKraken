@@ -45,14 +45,12 @@
     #error "OS not supported"
 #endif
 
-ue_communication_context *ue_communication_build_from_type(const char *communication_type) {
+ue_communication_context *ue_communication_build_from_type(ue_communication_type type) {
     ue_communication_context *context;
-
-    ei_check_parameter_or_return(communication_type);
 
     context = NULL;
 
-    if (strcmp(communication_type, "SOCKET") == 0) {
+    if (type == UNKNOWNECHO_COMMUNICATION_TYPE_SOCKET) {
         if (!(context = ue_communication_build_socket())) {
             ei_stacktrace_push_msg("Failed to create socket communication context");
         }

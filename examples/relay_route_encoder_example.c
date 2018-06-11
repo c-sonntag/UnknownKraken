@@ -23,7 +23,7 @@ int main() {
     ue_relay_route *route;
     ue_byte_stream *encoded_route;
     ue_crypto_metadata *our_crypto_metadata, *b_crypto_metadata, *c_crypto_metadata;
-    ue_relay_step *b_extracted_step, *c_extracted_step;
+    ue_relay_step *b_extracted_step;
 
     step_number = 2;
     route = NULL;
@@ -32,7 +32,6 @@ int main() {
     b_crypto_metadata = NULL;
     c_crypto_metadata = NULL;
     b_extracted_step = NULL;
-    c_extracted_step = NULL;
 
     if (!ue_init()) {
         fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
@@ -70,9 +69,9 @@ int main() {
     if (!(route = ue_relay_route_create(
         ue_relay_steps_create(
             step_number,
-            ue_relay_step_create(ue_communication_metadata_create_socket_type("192.168.0.2", 5001),
+            ue_relay_step_create(ue_communication_metadata_create_socket_type("B", "192.168.0.2", 5001),
                 our_crypto_metadata, b_crypto_metadata),
-            ue_relay_step_create(ue_communication_metadata_create_socket_type("192.168.0.3", 5002),
+            ue_relay_step_create(ue_communication_metadata_create_socket_type("C", "192.168.0.3", 5002),
                 our_crypto_metadata, c_crypto_metadata)
         ),
         step_number))) {
@@ -100,13 +99,7 @@ int main() {
 
     ei_logger_info("Lets say B send the remaining route to C [...]");
 
-    ei_logger_info("Extracting step for C...");
-    if (!(c_extracted_step = ue_relay_route_decode_pop_step(encoded_route, c_crypto_metadata))) {
-        ei_stacktrace_push_msg("Failed to pop step from encoded route with C crypto metadata");
-        goto clean_up;
-    }
-    ei_logger_info("Step for C extracted: ");
-    ue_relay_step_print(c_extracted_step, stdout);
+    ei_logger_info("No more step to extract, as C is the end point");
 
 clean_up:
     ue_byte_stream_destroy(encoded_route);
@@ -115,7 +108,6 @@ clean_up:
     ue_crypto_metadata_destroy_all(b_crypto_metadata);
     ue_crypto_metadata_destroy_all(c_crypto_metadata);
     ue_relay_step_destroy(b_extracted_step);
-    ue_relay_step_destroy(c_extracted_step);
     if (ei_stacktrace_is_filled()) {
         ei_logger_error("An error occurred with the following stacktrace :");
         ei_stacktrace_print_all();

@@ -27,8 +27,9 @@ int main() {
      */
     steps = ue_relay_steps_create(
         step_number,
-        ue_relay_step_create(ue_communication_metadata_create_socket_type("192.168.0.2", 5001), NULL, NULL),
-        ue_relay_step_create(ue_communication_metadata_create_socket_type("192.168.0.3", 5002), NULL, NULL)
+        //ue_relay_step_create(ue_communication_metadata_create_socket_type("B", "192.168.0.2", 5001), NULL, NULL),
+        ue_relay_step_create(ue_communication_metadata_create_from_string("B:0:192.168.0.3:5001:0"), NULL, NULL),
+        ue_relay_step_create(ue_communication_metadata_create_socket_type("C", "192.168.0.3", 5002), NULL, NULL)
     );
 
     for (i = 0; i < step_number; i++) {

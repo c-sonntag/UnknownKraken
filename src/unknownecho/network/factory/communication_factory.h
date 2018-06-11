@@ -21,8 +21,9 @@
 #define UNKNOWNECHO_COMMUNICATION_FACTORY_H
 
 #include <unknownecho/network/api/communication/communication_context.h>
+#include <unknownecho/network/api/communication/communication_type.h>
 
-ue_communication_context *ue_communication_build_from_type(const char *communication_type);
+ue_communication_context *ue_communication_build_from_type(ue_communication_type type);
 
 ue_communication_context *ue_communication_build_socket();
 

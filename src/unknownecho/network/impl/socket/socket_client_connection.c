@@ -246,10 +246,11 @@ bool ue_socket_client_connection_build_communication_metadata(ue_socket_client_c
     }
 
     ue_communication_metadata_clean_up(connection->communication_metadata);
+    ue_communication_metadata_set_type(connection->communication_metadata, UNKNOWNECHO_COMMUNICATION_TYPE_SOCKET);
     ue_communication_metadata_set_host(connection->communication_metadata, host);
     ue_safe_free(host);
     ue_communication_metadata_set_port(connection->communication_metadata, port);
-    ue_communication_metadata_set_type(connection->communication_metadata, UNKNOWNECHO_COMMUNICATION_SOCKET);
+    ue_communication_metadata_set_destination_type(connection->communication_metadata, UNKNOWNECHO_RELAY_CLIENT);
 
     return true;
 }

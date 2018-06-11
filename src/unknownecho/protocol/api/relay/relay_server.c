@@ -13,6 +13,7 @@
 #include <ei/ei.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/byte/byte_writer.h>
+#include <unknownecho/byte/byte_reader.h>
 #include <unknownecho/container/queue.h>
 
 #include <limits.h>
@@ -31,11 +32,16 @@ static bool server_process_message(ue_byte_stream *message, void *connection);
 
 static void disconnect_client_from_server(void *connection);
 
-static ue_relay_client *find_relay_client(ue_communication_metadata *client_communication_metadata);
+static ue_relay_client *find_relay_client(ue_communication_metadata *client_communication_metadata,
+    ue_crypto_metadata *our_crypto_metadata);
 
 static ue_relay_client *create_relay_client(ue_communication_metadata *target_communication_metadata,
     ue_crypto_metadata *our_crypto_metadata);
 
+static ue_relay_client *create_relay_client_from_connection(ue_communication_metadata *target_communication_metadata,
+    ue_crypto_metadata *our_crypto_metadata, void *connection);
+
+static int process_client_establishing(ue_byte_stream *message, void *connection);
 
 ue_relay_server *ue_relay_server_create(ue_communication_metadata *communication_metadata, void *user_context,
     ue_crypto_metadata *our_crypto_metadata, bool (*user_received_callback)(void *user_context, ue_byte_stream *received_message)) {
@@ -87,7 +93,7 @@ ue_relay_server *ue_relay_server_create(ue_communication_metadata *communication
     relay_server->our_crypto_metadata = our_crypto_metadata;
 
     /**
-     * @todo replace by a thread safe version
+     * @todo replace by a thread safe version (uv_key ?)
      */
     global_relay_server = relay_server;
 
@@ -218,6 +224,7 @@ void ue_relay_server_shutdown_signal_callback(int sig) {
     }
 
     /* @todo cancel the thread properly */
+    exit(0);
 }
 
 static bool read_consumer(void *connection) {
@@ -349,6 +356,26 @@ static bool server_process_message(ue_byte_stream *message, void *connection) {
         return false;
     }
 
+    /**
+     * @brief Quick fix to get the client uid.
+     * 
+     * @todo get this in a more proper way
+     */
+    switch (process_client_establishing(message, connection)) {
+        case 0:
+            ei_logger_trace("Isn't the establish message id. Nothing to do");
+            break;
+        
+        case 1:
+            return true;
+            break;
+
+        case -1:
+            ei_stacktrace_push_msg("Failed to establish client");
+            goto clean_up;
+            break;
+    }
+
     if (!(received_message = ue_relay_message_decode(message, global_relay_server->our_crypto_metadata))) {
         ei_stacktrace_push_msg("Failed to decode message");
         goto clean_up;
@@ -366,7 +393,9 @@ static bool server_process_message(ue_byte_stream *message, void *connection) {
         ei_logger_trace("Send the unsealed message to the user callback");
         global_relay_server->user_received_callback(global_relay_server->user_context, received_message->payload);
     } else {
-        if (!(relay_client = find_relay_client(ue_relay_step_get_target_communication_metadata(received_message->next_step)))) {
+        if (!(relay_client = find_relay_client(ue_relay_step_get_target_communication_metadata(
+            received_message->next_step), ue_relay_step_get_our_crypto_metadata(received_message->next_step)))) {
+
             ei_logger_trace("No relay client with this communication metadata exists. Creating a new relay client...");
             if (!(relay_client = create_relay_client(ue_relay_step_get_target_communication_metadata(received_message->next_step),
                     ue_relay_step_get_our_crypto_metadata(received_message->next_step)))) {
@@ -412,9 +441,12 @@ static void disconnect_client_from_server(void *connection) {
     }
 }
 
-static ue_relay_client *find_relay_client(ue_communication_metadata *client_communication_metadata) {
+static ue_relay_client *find_relay_client(ue_communication_metadata *client_communication_metadata,
+    ue_crypto_metadata *our_crypto_metadata) {
+
     int i;
     ue_communication_metadata *current_communication_metadata;
+    void *current_connection;
 
     ei_logger_trace("Searching relay client with this communication metadata...");
 
@@ -427,12 +459,35 @@ static ue_relay_client *find_relay_client(ue_communication_metadata *client_comm
             ue_relay_client_get_communication_context(global_relay_server->relay_clients[i]),
             ue_relay_client_get_connection(global_relay_server->relay_clients[i])))) {
 
-            ei_logger_warn("Failed to communication metadata of client #%d", i);
+            ei_logger_warn("Failed to get communication metadata of client #%d from global_relay_server", i);
             continue;
         }
 
         if (ue_communication_metadata_equals(current_communication_metadata, client_communication_metadata)) {
             return global_relay_server->relay_clients[i];
+        }
+    }
+
+    for (i = 0; i < ue_communication_server_get_connections_number(
+        global_relay_server->communication_context, global_relay_server->communication_server); i++) {
+        
+        if (!(current_connection = ue_communication_server_get_connection(
+            global_relay_server->communication_context, global_relay_server->communication_server, i))) {
+
+            ei_logger_warn("Failed to get connection #%d from communication server", i);
+            continue;
+        }
+        
+        if (!(current_communication_metadata = ue_communication_client_connection_get_communication_metadata(
+            global_relay_server->communication_context, current_connection))) {
+
+            ei_logger_warn("Failed to get communication metadata of client %d from communication_server", i);
+            continue;
+        }
+
+        if (ue_communication_metadata_equals(current_communication_metadata, client_communication_metadata)) {
+            return create_relay_client_from_connection(client_communication_metadata, our_crypto_metadata,
+                current_connection);
         }
     }
 
@@ -458,4 +513,95 @@ static ue_relay_client *create_relay_client(ue_communication_metadata *target_co
     global_relay_server->relay_clients_number++;
 
     return relay_client;
+}
+
+static ue_relay_client *create_relay_client_from_connection(ue_communication_metadata *target_communication_metadata,
+    ue_crypto_metadata *our_crypto_metadata, void *connection) {
+
+    ue_relay_client *relay_client;
+
+    if (!(relay_client = ue_relay_client_create_as_relay_from_connection(target_communication_metadata,
+        our_crypto_metadata, connection))) {
+
+        ei_stacktrace_push_msg("Failed to create new relay client from received message next step");
+        return NULL;
+    }
+
+    if (!global_relay_server->relay_clients) {
+        ue_safe_alloc(global_relay_server->relay_clients, ue_relay_client *, 1);
+    } else {
+        ue_safe_realloc(global_relay_server->relay_clients, ue_relay_client *, global_relay_server->relay_clients_number, 1);
+    }
+    global_relay_server->relay_clients[global_relay_server->relay_clients_number] = relay_client;
+    global_relay_server->relay_clients_number++;
+
+    return relay_client;
+}
+
+static int process_client_establishing(ue_byte_stream *message, void *connection) {
+    ue_communication_metadata *communication_metadata;
+    int uid_length, read_int;
+    const char *uid;
+    ue_byte_stream *ack_message;
+
+    ei_check_parameter_or_return(message);
+    ei_check_parameter_or_return(connection);
+
+    /* Set the virtual cursor of the encoded message stream to the begining */
+    ue_byte_stream_set_position(message, 0);
+
+    /* Check protocol id */
+    ue_byte_read_next_int(message, &read_int);
+    if (!ue_protocol_id_is_valid(read_int)) {
+        ei_stacktrace_push_msg("Specified protocol id '%d' is invalid", read_int);
+        return -1;
+    }
+    ei_logger_trace("Protocol id: %d", read_int);
+
+    /* Check message id */
+    ue_byte_read_next_int(message, &read_int);
+    if (ue_relay_message_id_is_valid(read_int)) {
+        if ((ue_relay_message_id)read_int != UNKNOWNECHO_RELAY_MESSAGE_ID_ESTABLISH) {
+            return 0;
+        }
+    } else {
+        ei_stacktrace_push_msg("Specified relay message id '%d' is invalid", read_int);
+        return -1;
+    }
+    ei_logger_trace("Message id: %d", read_int);
+
+    if (!(communication_metadata = ue_communication_client_connection_get_communication_metadata(
+        global_relay_server->communication_context, connection))) {
+
+        ei_stacktrace_push_msg("Failed to get communication metadata of this connection");
+        return -1;
+    }
+
+    if (!ue_byte_read_next_int(message, &uid_length)) {
+        ei_stacktrace_push_msg("Failed to read uid length from received message");
+        return -1;
+    }
+
+    if (!ue_byte_read_next_string(message, &uid, (size_t)uid_length)) {
+        ei_stacktrace_push_msg("Failed to read uid from received message");
+        return -1;
+    }
+
+    if (!ue_communication_metadata_set_uid(communication_metadata, uid)) {
+        ei_stacktrace_push_msg("Failed to set uid to communication metadata of this connection");
+        return -1;
+    }
+
+    ack_message = ue_byte_stream_create();
+    ue_byte_writer_append_string(ack_message, "ACK");
+
+    if (!ue_communication_send_sync(global_relay_server->communication_context, connection, ack_message)) {
+        ei_stacktrace_push_msg("Failed to send ack message in synchronous mode");
+        ue_byte_stream_destroy(ack_message);
+        return -1;
+    }
+
+    ue_byte_stream_destroy(ack_message);
+
+    return 1;
 }

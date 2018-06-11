@@ -30,7 +30,7 @@
 #include <unknownecho/bool.h>
 #include <unknownecho/container/string_vector.h>
 
-ue_string_vector *ue_string_split(char *string, char *delimiter);
+ue_string_vector *ue_string_split(const char *string, const char *delimiter);
 
 bool ue_string_split_append(ue_string_vector *v, char *string, char *delimiter);
 

@@ -59,24 +59,31 @@ clean_up:
     return result;
 }
 
-ue_byte_stream *ue_relay_message_encode(ue_relay_route *route, ue_relay_message_id message_id, ue_byte_stream *payload) {
-    ue_byte_stream *encoded_message, *encoded_route;
+ue_byte_stream *ue_relay_message_encode(ue_relay_route *route, ue_relay_route *back_route,
+    ue_relay_message_id message_id, ue_byte_stream *payload) {
+
+    ue_byte_stream *encoded_message, *encoded_route, *encoded_back_route;
     ue_relay_step *first_step;
+
+    encoded_message = NULL;
+    encoded_route = NULL;
+    encoded_back_route = NULL;
+    first_step = NULL;
 
     if (!ue_relay_route_is_valid(route)) {
         ei_stacktrace_push_msg("Specified route ptr is invalid");
         return NULL;
     }
 
-    if ((message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_SEND ||
-        message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_RECEIVE) &&
+    if ((message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_REQUEST ||
+        message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_RESPONSE) &&
         (!payload || ue_byte_stream_is_empty(payload))) {
 
         ei_stacktrace_push_msg("Specified payload is null or empty, but message_id type specify it needs to be filled");
         return NULL;
     }
-    else if (message_id != UNKNOWNECHO_RELAY_MESSAGE_ID_SEND &&
-        message_id != UNKNOWNECHO_RELAY_MESSAGE_ID_RECEIVE &&
+    else if (message_id != UNKNOWNECHO_RELAY_MESSAGE_ID_REQUEST &&
+        message_id != UNKNOWNECHO_RELAY_MESSAGE_ID_RESPONSE &&
         payload && !ue_byte_stream_is_empty(payload)) {
 
         ei_logger_warn("A message payload is specified, but the message id is: %d", message_id);
@@ -87,14 +94,27 @@ ue_byte_stream *ue_relay_message_encode(ue_relay_route *route, ue_relay_message_
         return NULL;
     }
 
+    if (!(encoded_back_route = ue_relay_route_encode(back_route))) {
+        ue_byte_stream_destroy(encoded_route);
+        ei_stacktrace_push_msg("Failed to encode specified back route (route seems valid)");
+        return NULL;
+    }
+
     encoded_message = ue_byte_stream_create();
 
     ue_byte_writer_append_int(encoded_message, (int)UNKNOWNECHO_PROTOCOL_ID_RELAY);
     ue_byte_writer_append_int(encoded_message, (int)message_id);
+
     if (!ue_byte_writer_append_stream(encoded_message, encoded_route)) {
         ei_stacktrace_push_msg("Failed to write encoded route to encoded message stream");
         ue_byte_stream_destroy(encoded_message);
-        return NULL;
+        goto clean_up;
+    }
+
+    if (!ue_byte_writer_append_stream(encoded_message, encoded_back_route)) {
+        ei_stacktrace_push_msg("Failed to write encoded back route to encoded message stream");
+        ue_byte_stream_destroy(encoded_message);
+        goto clean_up;
     }
 
     if (payload && !ue_byte_stream_is_empty(payload)) {
@@ -102,18 +122,19 @@ ue_byte_stream *ue_relay_message_encode(ue_relay_route *route, ue_relay_message_
         if (!write_sealed_payload(first_step, payload, encoded_message)) {
             ei_stacktrace_push_msg("Failed to write sealed payload to encoded message");
             ue_byte_stream_destroy(encoded_message);
-            ue_byte_stream_destroy(encoded_route);
-            return NULL;
+            goto clean_up;
         }
     }
 
+clean_up:
     ue_byte_stream_destroy(encoded_route);
-
+    ue_byte_stream_destroy(encoded_back_route);
     return encoded_message;
 }
 
 ue_byte_stream *ue_relay_message_encode_from_encoded_route(ue_byte_stream *encoded_route,
-    ue_relay_message_id message_id, ue_byte_stream *payload, ue_relay_step *payload_receiver) {
+    ue_byte_stream *encoded_back_route, ue_relay_message_id message_id, ue_byte_stream *payload,
+    ue_relay_step *payload_receiver) {
 
     ue_byte_stream *encoded_message;
 
@@ -122,15 +143,15 @@ ue_byte_stream *ue_relay_message_encode_from_encoded_route(ue_byte_stream *encod
         return NULL;
     }
 
-    if ((message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_SEND ||
-        message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_RECEIVE) &&
+    if ((message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_REQUEST ||
+        message_id == UNKNOWNECHO_RELAY_MESSAGE_ID_RESPONSE) &&
         (!payload || ue_byte_stream_is_empty(payload))) {
 
         ei_stacktrace_push_msg("Specified payload is null or empty, but message_id type specify it needs to be filled");
         return NULL;
     }
-    else if (message_id != UNKNOWNECHO_RELAY_MESSAGE_ID_SEND &&
-        message_id != UNKNOWNECHO_RELAY_MESSAGE_ID_RECEIVE &&
+    else if (message_id != UNKNOWNECHO_RELAY_MESSAGE_ID_REQUEST &&
+        message_id != UNKNOWNECHO_RELAY_MESSAGE_ID_RESPONSE &&
         payload && !ue_byte_stream_is_empty(payload)) {
 
         ei_logger_warn("A message payload is specified, but the message id is: %d", message_id);
@@ -140,8 +161,15 @@ ue_byte_stream *ue_relay_message_encode_from_encoded_route(ue_byte_stream *encod
 
     ue_byte_writer_append_int(encoded_message, (int)UNKNOWNECHO_PROTOCOL_ID_RELAY);
     ue_byte_writer_append_int(encoded_message, (int)message_id);
+
     if (!ue_byte_writer_append_stream(encoded_message, encoded_route)) {
         ei_stacktrace_push_msg("Failed to write encoded route to encoded message stream");
+        ue_byte_stream_destroy(encoded_message);
+        return NULL;
+    }
+
+    if (!ue_byte_writer_append_stream(encoded_message, encoded_back_route)) {
+        ei_stacktrace_push_msg("Failed to write encoded back route to encoded message stream");
         ue_byte_stream_destroy(encoded_message);
         return NULL;
     }
@@ -150,7 +178,6 @@ ue_byte_stream *ue_relay_message_encode_from_encoded_route(ue_byte_stream *encod
         if (!write_sealed_payload(payload_receiver, payload, encoded_message)) {
             ei_stacktrace_push_msg("Failed to write sealed payload to encoded message");
             ue_byte_stream_destroy(encoded_message);
-            ue_byte_stream_destroy(encoded_route);
             return NULL;
         }
     }
@@ -181,6 +208,12 @@ ue_byte_stream *ue_relay_message_encode_relay(ue_relay_received_message *receive
 
     if (!ue_byte_writer_append_stream(encoded_message, received_message->remaining_encoded_route)) {
         ei_stacktrace_push_msg("Failed to write remaining encoded route to encoded message stream");
+        ue_byte_stream_destroy(encoded_message);
+        return NULL;
+    }
+
+    if (!ue_byte_writer_append_stream(encoded_message, received_message->remaining_encoded_back_route)) {
+        ei_stacktrace_push_msg("Failed to write remaining encoded back route to encoded message stream");
         ue_byte_stream_destroy(encoded_message);
         return NULL;
     }

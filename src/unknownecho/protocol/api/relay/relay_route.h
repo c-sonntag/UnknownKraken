@@ -5,7 +5,11 @@
 #include <unknownecho/protocol/api/relay/relay_step_struct.h>
 #include <unknownecho/bool.h>
 
+#include <stdio.h>
+
 ue_relay_route *ue_relay_route_create(ue_relay_step **steps, int steps_number);
+
+ue_relay_route *ue_relay_route_create_back_route(ue_relay_route *route);
 
 void ue_relay_route_destroy(ue_relay_route *route);
 
@@ -16,5 +20,7 @@ bool ue_relay_route_is_valid(ue_relay_route *route);
 ue_relay_step *ue_relay_route_get_receiver(ue_relay_route *route);
 
 ue_relay_step *ue_relay_route_get_sender(ue_relay_route *route);
+
+bool ue_relay_route_print(ue_relay_route *route, FILE *fd);
 
 #endif

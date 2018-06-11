@@ -102,4 +102,6 @@ char *ue_get_until_symbol(char *str, int begin, char symbol, int *end);
 
 char *ue_trim_whitespace(char *str);
 
+char *ue_string_uppercase(const char *input);
+
 #endif

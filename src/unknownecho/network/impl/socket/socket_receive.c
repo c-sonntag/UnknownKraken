@@ -48,9 +48,9 @@
     int timeout, received, total, bytes;
 
 #if defined(_WIN32) || defined(_WIN64)
-    char response[2048];
+    char response[4096];
 #else
-    unsigned char response[2048];
+    unsigned char response[4096];
 #endif
 
     if (connection->fd <= 0) {
@@ -89,9 +89,9 @@
             memset(response, 0, sizeof(response));
 
 #if defined(_WIN32) || defined(_WIN64)
-            if ((bytes = recv((SOCKET)connection->fd, response, 2048, 0)) <= 0) {
+            if ((bytes = recv((SOCKET)connection->fd, response, 4096, 0)) <= 0) {
 #else
-            if ((bytes = recv(connection->fd, response, 2048, 0)) <= 0) {
+            if ((bytes = recv(connection->fd, response, 4096, 0)) <= 0) {
 #endif
                 /* if nothing was received then we want to wait a little before trying again, 1 ms */
                 ue_millisleep(1);
@@ -179,7 +179,7 @@ size_t ue_socket_receive_async(int fd, bool (*flow_consumer)(void *flow, size_t 
 
         do {
             memset(response, 0, sizeof(response));
-            bytes = recv(fd, response, 1024, 0);
+            bytes = recv(fd, response, 4096, 0);
             if (bytes < 0) {
                 ei_stacktrace_push_errno();
                 return -1;

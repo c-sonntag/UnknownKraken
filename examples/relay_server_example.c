@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
         goto clean_up;
     }
 
-    if (!(our_communication_metadata = ue_communication_metadata_create_socket_type("127.0.0.1", atoi(argv[3])))) {
+    if (!(our_communication_metadata = ue_communication_metadata_create_socket_type(argv[1], "127.0.0.1", atoi(argv[3])))) {
         ei_stacktrace_push_msg("Failed to create our communication metadata");
         goto clean_up;
     }

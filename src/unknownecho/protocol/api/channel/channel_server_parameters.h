@@ -22,6 +22,7 @@
 
 #include <unknownecho/protocol/api/channel/channel_server_parameters_struct.h>
 #include <unknownecho/bool.h>
+#include <unknownecho/network/api/communication/communication_type.h>
 
 ue_channel_server_parameters *ue_channel_server_parameters_create(char *keystore_password, char *key_password);
 
@@ -49,7 +50,7 @@ bool ue_channel_server_parameters_set_cipher_name(ue_channel_server_parameters *
 
 bool ue_channel_server_parameters_set_digest_name(ue_channel_server_parameters *parameters, const char *digest_name);
 
-bool ue_channel_server_parameters_set_communication_type(ue_channel_server_parameters *parameters, const char *communication_type);
+bool ue_channel_server_parameters_set_communication_type(ue_channel_server_parameters *parameters, ue_communication_type communication_type);
 
 bool ue_channel_server_parameters_build(ue_channel_server_parameters *parameters);
 

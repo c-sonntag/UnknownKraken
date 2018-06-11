@@ -13,9 +13,11 @@ ue_communication_metadata *ue_communication_metadata_create_empty() {
     ue_communication_metadata *metadata;
 
     ue_safe_alloc(metadata, ue_communication_metadata, 1);
+    metadata->uid = NULL;
     metadata->host = NULL;
     metadata->port = 0;
-    metadata->type = NULL;
+    metadata->type = 0;
+    metadata->destination_type = 0;
 
     return metadata;
 }
@@ -23,36 +25,38 @@ ue_communication_metadata *ue_communication_metadata_create_empty() {
 ue_communication_metadata *ue_communication_metadata_create_from_string(const char *string) {
     ue_communication_metadata *metadata;
     ue_string_vector *vector;
-    int elements;
+    int elements_number;
 
     metadata = NULL;
 
     ei_check_parameter_or_return(string);
 
-    if (!(vector = ue_string_split((char *)string, ":"))) {
+    if (!(vector = ue_string_split(string, ":"))) {
         ei_stacktrace_push_msg("Failed to split strint metadata");
         return NULL;
     }
 
-    if ((elements = ue_string_vector_size(vector)) != 3) {
-        ei_stacktrace_push_msg("Split string metadata doesn't contains 3 elements: %d", elements);
+    if ((elements_number = ue_string_vector_size(vector)) != 5) {
+        ei_stacktrace_push_msg("Input metadata string have an invalid number of arguments '%d'", elements_number);
         goto clean_up;
     }
 
     metadata = ue_communication_metadata_create_empty();
-    ue_communication_metadata_set_type(metadata, ue_string_vector_get(vector, 0));
-    ue_communication_metadata_set_host(metadata, ue_string_vector_get(vector, 1));
-    ue_communication_metadata_set_port(metadata, atoi(ue_string_vector_get(vector, 2)));
+    /* @todo fix memory leak here */
+    ue_communication_metadata_set_uid(metadata, ue_string_create_from(ue_string_vector_get(vector, 0)));
+    ue_communication_metadata_set_type(metadata, atoi(ue_string_vector_get(vector, 1)));
+    ue_communication_metadata_set_host(metadata, ue_string_create_from(ue_string_vector_get(vector, 2)));
+    ue_communication_metadata_set_port(metadata, atoi(ue_string_vector_get(vector, 3)));
+    ue_communication_metadata_set_destination_type(metadata, atoi(ue_string_vector_get(vector, 4)));
 
 clean_up:
-    ue_string_vector_destroy(vector);
+    //ue_string_vector_destroy(vector);
     return metadata;
 }
 
 void ue_communication_metadata_destroy(ue_communication_metadata *metadata) {
     if (metadata) {
         ue_safe_free(metadata->host);
-        ue_safe_free(metadata->type);
         ue_safe_free(metadata);
     }
 }
@@ -60,8 +64,50 @@ void ue_communication_metadata_destroy(ue_communication_metadata *metadata) {
 void ue_communication_metadata_clean_up(ue_communication_metadata *metadata) {
     if (metadata) {
         ue_safe_free(metadata->host);
-        ue_safe_free(metadata->type);
     }
+}
+
+ue_communication_metadata *ue_communication_metadata_copy(ue_communication_metadata *metadata) {
+    ue_communication_metadata *copy;
+
+    copy = ue_communication_metadata_create_empty();
+    copy->type = metadata->type;
+    copy->uid = ue_string_create_from(metadata->uid);
+    if (metadata->type == UNKNOWNECHO_COMMUNICATION_TYPE_SOCKET) {
+        copy->host = ue_string_create_from(metadata->host);
+        copy->port = metadata->port;
+    }
+    copy->destination_type = metadata->destination_type;
+
+    return copy;   
+}
+
+const char *ue_communication_metadata_get_uid(ue_communication_metadata *metadata) {
+    ei_check_parameter_or_return(metadata);
+
+    return metadata->uid;
+}
+
+bool ue_communication_metadata_set_uid(ue_communication_metadata *metadata, const char *uid) {
+    ei_check_parameter_or_return(metadata);
+
+    metadata->uid = uid;
+
+    return true;
+}
+
+ue_communication_type ue_communication_metadata_get_type(ue_communication_metadata *metadata) {
+    ei_check_parameter_or_return(metadata);
+
+    return metadata->type;
+}
+
+bool ue_communication_metadata_set_type(ue_communication_metadata *metadata, ue_communication_type type) {
+    ei_check_parameter_or_return(metadata);
+
+    metadata->type = type;
+
+    return true;
 }
 
 const char *ue_communication_metadata_get_host(ue_communication_metadata *metadata) {
@@ -94,17 +140,16 @@ bool ue_communication_metadata_set_port(ue_communication_metadata *metadata, uns
     return true;
 }
 
-const char *ue_communication_metadata_get_type(ue_communication_metadata *metadata) {
+ue_communication_destination_type ue_communication_metadata_get_destination_type(ue_communication_metadata *metadata) {
     ei_check_parameter_or_return(metadata);
 
-    return metadata->type;
+    return metadata->destination_type;
 }
 
-bool ue_communication_metadata_set_type(ue_communication_metadata *metadata, const char *type) {
+bool ue_communication_metadata_set_destination_type(ue_communication_metadata *metadata, ue_communication_destination_type destination_type) {
     ei_check_parameter_or_return(metadata);
-    ei_check_parameter_or_return(type);
 
-    metadata->type = ue_string_create_from(type);
+    metadata->destination_type = destination_type;
 
     return true;
 }
@@ -115,12 +160,23 @@ bool ue_communication_metadata_is_valid(ue_communication_metadata *metadata) {
         return false;
     }
 
-    if (!metadata->type) {
-        ei_stacktrace_push_msg("Specified metadata has null type");
+    if (!metadata->uid) {
+        ei_stacktrace_push_msg("Specified metadata object had a null uid");
         return false;
     }
 
-    if (strcmp(metadata->type, UNKNOWNECHO_COMMUNICATION_SOCKET) == 0) {
+    if (metadata->type != UNKNOWNECHO_COMMUNICATION_TYPE_SOCKET) {
+        ei_stacktrace_push_msg("Only UNKNOWNECHO_COMMUNICATION_TYPE_SOCKET is supported for now");
+        return false;
+    }
+
+    if (metadata->destination_type != UNKNOWNECHO_RELAY_SERVER &&
+        metadata->destination_type != UNKNOWNECHO_RELAY_CLIENT) {
+        ei_stacktrace_push_msg("Destination type '%d' is invalid", metadata->destination_type);
+        return false;
+    }
+
+    if (metadata->type == UNKNOWNECHO_COMMUNICATION_TYPE_SOCKET) {
         if (!metadata->host) {
             ei_stacktrace_push_msg("The metadata type is of UNKNOWNECHO_COMMUNICATION_SOCKET but no host is provide");
             return false;
@@ -140,12 +196,17 @@ bool ue_communication_metadata_is_valid(ue_communication_metadata *metadata) {
 const char *ue_communication_metadata_to_string(ue_communication_metadata *metadata) {
     const char *string;
 
-    ei_check_parameter_or_return(metadata);
+    if (!ue_communication_metadata_is_valid(metadata)) {
+        ei_stacktrace_push_msg("Specified metadata object is invalid")
+        return NULL;
+    }
 
-    if (strcmp(metadata->type, UNKNOWNECHO_COMMUNICATION_SOCKET) == 0) {
-        string = ue_strcat_variadic("ssssd", ue_communication_metadata_get_type(metadata), ":",
+    if (metadata->type == UNKNOWNECHO_COMMUNICATION_TYPE_SOCKET) {
+        string = ue_strcat_variadic("ssdsssdsd", ue_communication_metadata_get_uid(metadata), ":",
+            ue_communication_metadata_get_type(metadata), ":",
             ue_communication_metadata_get_host(metadata), ":",
-            ue_communication_metadata_get_port(metadata));
+            ue_communication_metadata_get_port(metadata), ":",
+            ue_communication_metadata_get_destination_type(metadata));
     } else {
         ei_stacktrace_push_msg("Unknown communication metadata type");
         return NULL;
@@ -184,11 +245,14 @@ bool ue_communication_metadata_equals(ue_communication_metadata *m1, ue_communic
         return false;
     }*/
 
-    if (!m1 || !m2 || !m1->type || !m2->type || !m1->host || !m2->host) {
+    if (!m1 || !m2 || !m1->uid || !m2->uid || !m1->type || !m2->type || !m1->host || !m2->host) {
         return false;
     }
 
-    if (strcmp(m1->type, m2->type) == 0 && strcmp(m1->type, UNKNOWNECHO_COMMUNICATION_SOCKET) == 0) {
+    if (strcmp(m1->uid, m2->uid) == 0 &&
+        m1->destination_type == m2->destination_type &&
+        m1->type == m2->type && m1->type == UNKNOWNECHO_COMMUNICATION_TYPE_SOCKET) {
+
         if (strcmp(m1->host, m2->host) == 0 && m1->port == m2->port) {
             return true;
         }

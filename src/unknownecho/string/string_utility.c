@@ -24,7 +24,7 @@
 
 #include <string.h>
 #include <stdarg.h>
-#include <ctype.h> /* for isspace() */
+#include <ctype.h> /* for isspace(), toupper() */
 #include <errno.h>
 #include <limits.h>
 #include <stdint.h>
@@ -550,4 +550,21 @@ char *ue_trim_whitespace(char *str) {
 	*(end + 1) = 0;
 
 	return str;
+}
+
+char *ue_string_uppercase(const char *input) {
+	char *output;
+	size_t length, i;
+
+	ei_check_parameter_or_return(input);
+
+	length = strlen(input);
+
+	ue_safe_alloc(output, char, length);
+
+	for (i = 0; i < length; i++) {
+		output[i] = toupper(input[i]);
+	}
+
+	return output;
 }

@@ -59,7 +59,6 @@ void ue_channel_server_parameters_destroy(ue_channel_server_parameters *paramete
         ue_safe_free(parameters->key_password);
         ue_safe_free(parameters->cipher_name);
         ue_safe_free(parameters->digest_name);
-        ue_safe_free(parameters->communication_type);
         ue_safe_free(parameters);
     }
 }
@@ -119,8 +118,8 @@ bool ue_channel_server_parameters_set_digest_name(ue_channel_server_parameters *
     return true;
 }
 
-bool ue_channel_server_parameters_set_communication_type(ue_channel_server_parameters *parameters, const char *communication_type) {
-    parameters->communication_type = ue_string_create_from(communication_type);
+bool ue_channel_server_parameters_set_communication_type(ue_channel_server_parameters *parameters, ue_communication_type communication_type) {
+    parameters->communication_type = communication_type;
     return true;
 }
 
@@ -150,7 +149,7 @@ bool ue_channel_server_parameters_build(ue_channel_server_parameters *parameters
     }
 
     if (!parameters->communication_type) {
-        parameters->communication_type = ue_string_create_from(UNKNOWNECHO_DEFAULT_COMMUNICATION_TYPE);
+        parameters->communication_type = UNKNOWNECHO_DEFAULT_COMMUNICATION_TYPE_ID;
     }
 
     return ue_channel_server_create(parameters->persistent_path, parameters->csr_server_port,

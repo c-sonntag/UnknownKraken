@@ -90,6 +90,8 @@ bool ue_progress_bar_finish(ue_progress_bar *progress_bar);
 
 bool ue_progress_bar_print(ue_progress_bar *progress_bar);
 
+bool ue_progress_bar_finish_and_print(ue_progress_bar *progress_bar);
+
 bool ue_progress_bar_update_and_print(ue_progress_bar *progress_bar, int idx);
 
 bool ue_progress_bar_update_by_increasing_and_print(ue_progress_bar *progress_bar, int idx);

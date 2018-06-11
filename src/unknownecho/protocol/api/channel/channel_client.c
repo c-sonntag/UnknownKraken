@@ -172,7 +172,7 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 	bool (*initialization_end_callback)(void *user_context), bool (*uninitialization_begin_callback)(void *user_context),
 	bool (*uninitialization_end_callback)(void *user_context), bool (*connection_begin_callback)(void *user_context),
 	bool (*connection_end_callback)(void *user_context), char *(*user_input_callback)(void *user_context),
-    const char *cipher_name, const char *digest_name, ue_user_input_mode user_input_mode, const char *communication_type) {
+    const char *cipher_name, const char *digest_name, ue_user_input_mode user_input_mode, ue_communication_type communication_type) {
 
 	ue_channel_client *channel_client;
 	bool result;

@@ -19,6 +19,17 @@ ue_relay_step *ue_relay_step_create(ue_communication_metadata *target_communicat
     return step;
 }
 
+ue_relay_step *ue_relay_step_create_from_step(ue_relay_step *step) {
+    ue_relay_step *copy;
+
+    ue_safe_alloc(copy, ue_relay_step, 1);
+    copy->target_communication_metadata = ue_communication_metadata_copy(step->target_communication_metadata);
+    copy->our_crypto_metadata = step->our_crypto_metadata;
+    copy->target_crypto_metadata = step->target_crypto_metadata;
+
+    return copy;
+}
+
 ue_relay_step **ue_relay_steps_create(int step_number, ...) {
     ue_relay_step **steps;
     va_list ap;

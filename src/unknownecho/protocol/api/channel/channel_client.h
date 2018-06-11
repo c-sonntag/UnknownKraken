@@ -24,6 +24,7 @@
 #include <unknownecho/protocol/api/channel/channel_client_struct.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/console/input.h>
+#include <unknownecho/network/api/communication/communication_type.h>
 
 #include <stddef.h>
 
@@ -37,7 +38,7 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 	bool (*initialization_end_callback)(void *user_context), bool (*uninitialization_begin_callback)(void *user_context),
 	bool (*uninitialization_end_callback)(void *user_context), bool (*connection_begin_callback)(void *user_context),
 	bool (*connection_end_callback)(void *user_context), char *(*user_input_callback)(void *user_context),
-    const char *cipher_name, const char *digest_name, ue_user_input_mode user_input_mode, const char *communication_type);
+    const char *cipher_name, const char *digest_name, ue_user_input_mode user_input_mode, ue_communication_type communication_type);
 
 void ue_channel_client_destroy(ue_channel_client *channel_client);
 

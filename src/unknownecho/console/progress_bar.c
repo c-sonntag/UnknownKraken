@@ -236,6 +236,10 @@ bool ue_progress_bar_print(ue_progress_bar *progress_bar) {
     return true;
 }
 
+bool ue_progress_bar_finish_and_print(ue_progress_bar *progress_bar) {
+    return ue_progress_bar_finish(progress_bar) && ue_progress_bar_print(progress_bar);
+}
+
 bool ue_progress_bar_update_and_print(ue_progress_bar *progress_bar, int idx) {
     return ue_progress_bar_update(progress_bar, idx) && ue_progress_bar_print(progress_bar);
 }

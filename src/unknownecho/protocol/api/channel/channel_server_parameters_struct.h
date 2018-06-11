@@ -21,6 +21,7 @@
 #define UNKNOWNECHO_CHANNEL_SERVER_PARAMETERS_STRUCT_H
 
 #include <unknownecho/bool.h>
+#include <unknownecho/network/api/communication/communication_type.h>
 
 typedef struct {
     char *persistent_path;
@@ -35,7 +36,7 @@ typedef struct {
     bool (*uninitialization_begin_callback)(void *user_context);
     bool (*uninitialization_end_callback)(void *user_context);
     const char *cipher_name, *digest_name;
-    const char *communication_type;
+    ue_communication_type communication_type;
 } ue_channel_server_parameters;
 
 #endif

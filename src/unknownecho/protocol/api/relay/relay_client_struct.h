@@ -9,8 +9,8 @@
 typedef struct {
     ue_communication_context *communication_context;
     void *connection;
-    ue_relay_route *route;
-    ue_byte_stream *encoded_route;
+    ue_relay_route *route, *back_route;
+    ue_byte_stream *encoded_route, *encoded_back_route;
     ue_crypto_metadata *our_crypto_metadata;
 } ue_relay_client;
 

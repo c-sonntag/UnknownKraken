@@ -89,8 +89,14 @@ RSA *ue_rsa_keypair_gen(int bits) {
         rsa_key_pair = NULL;
         goto clean_up;
     }
-    ue_progress_bar_finish(progress_bar);
+    ue_progress_bar_finish_and_print(progress_bar);
 
+    /**
+     * @todo fix this
+     */
+    //fprintf(ei_logger_get_fp(ei_logger_manager_get_logger()), "\n");
+
+    fprintf(stdout, "\n");
     ei_logger_trace("RSA key generated");
 
 clean_up:
