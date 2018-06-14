@@ -1,6 +1,6 @@
 ## Description
 
-LibMemorySlot provides an API to save/load slot from/to executable. A slot is a chunck of data identified by an integer ID, saved directory in the executable. The creation of the slot have to be when the executable isn't running ; however, the update and the load can be at the running time of the process.
+LibMemorySlot provides an API to save/load slot from/to executable. A slot is a chunck of data identified by an integer ID, saved directly in the executable. The creation of the slot have to be when the executable isn't running ; however, the update and the load can be at the running time of the process.
 
 ## API
 
