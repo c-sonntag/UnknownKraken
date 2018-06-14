@@ -40,6 +40,10 @@ Loading the saved slot.
 [INFO] Content of the slot: Hello world ! of size 13
 ```
 
+## Dependencies
+
+* [LibErrorInterceptor](https://github.com/swasun/LibErrorInterceptor) a lightweight an cross-plateform library to handle stacktrace and logging in C99.
+
 ## Implementation
 
 The Windows implementation manipulate the Resource API. No Linux implementation for now.
