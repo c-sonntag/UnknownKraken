@@ -36,7 +36,7 @@ if (MSVC)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /D _CRT_NONSTDC_NO_WARNINGS=1 /D _CRT_SECURE_NO_WARNINGS=1")
 endif ()
 
-if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")     ## (not debug)
+if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")     ## (not debug)
     if(CMAKE_COMPILER_IS_GNUCXX)              ## (GNU COMMAND)
         add_compile_options("-O3")            ### No Optimization
         set(CMAKE_EXE_LINKER_FLAGS "-s")      ### Strip binary (only in release mode)
@@ -51,13 +51,15 @@ elseif (WIN32)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         add_compile_options("static-libgcc" "ggdb")
     endif ()
-	set(CMAKE_C_FLAGS "${CMAKE_ENABLE_C99}")
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 else ()
     add_compile_options("-std=c99")
 endif ()
 
 if (UNIX)
 	add_compile_options("-Wall" "-pedantic" "-fno-builtin")
+elseif (WIN32)
+	set(CMAKE_C_FLAGS "${CMAKE_ENABLE_C99}")
 endif ()
 
 
@@ -72,8 +74,6 @@ if (WIN32)
     endmacro()
     get_WIN32_WINNT(ver)
     add_definitions(-D_WIN32_WINNT=${ver})
-
-	set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif ()
 
 # CCache
