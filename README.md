@@ -6,7 +6,7 @@ LibMemorySlot provides an API to save/load slot from/to executable. A slot is a 
 
 Example of use of API without error handling for sake of simplicity.
 
-In `save_slot_example`, load a slot from a file, and save it to the executable we want.
+In `save_slot_example.exe`, load a slot from a file, and save it to the executable we want.
 ```c
 ms_slot *slot = ms_slot_create_from_file("data.txt");
 ms_slot_save_to_file(slot, SLOT_ID, "load_slot_example.exe");
