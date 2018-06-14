@@ -42,7 +42,7 @@ Loading the saved slot.
 
 ## Dependencies
 
-* [LibErrorInterceptor](https://github.com/swasun/LibErrorInterceptor) a lightweight an cross-plateform library to handle stacktrace and logging in C99.
+* [LibErrorInterceptor](https://github.com/swasun/LibErrorInterceptor) a lightweight and cross-plateform library to handle stacktrace and logging in C99.
 
 ## Implementation
 
