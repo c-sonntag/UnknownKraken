@@ -44,6 +44,10 @@ bool ms_slot_save_to_file(ms_slot *slot, int id, const char *file_name);
 
 bool ms_slot_save_to_memory(ms_slot *slot, int id);
 
-ms_slot *ms_slot_load(int id);
+ms_slot *ms_slot_load_from_memory(int id);
 
+bool ms_slot_exist_from_file(int id, const char *file_name);
+
+bool ms_slot_exist_from_memory(int id);
+	
 #endif

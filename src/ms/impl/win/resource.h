@@ -30,4 +30,6 @@ unsigned char *ms_resource_load_from_memory(int id, size_t *size);
 
 bool ms_resource_save(const char *target_path, unsigned char *data, size_t size, int id);
 
+bool ms_resource_exist(const char *target_path, int id);
+
 #endif

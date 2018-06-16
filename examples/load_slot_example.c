@@ -34,8 +34,21 @@ int main() {
 
 	slot = NULL;
 
-	ei_logger_info("Loading slot id %d", SLOT_ID);
-	if (!(slot = ms_slot_load(SLOT_ID))) {
+	ei_logger_info("Check if slot exist...");
+	if (!ms_slot_exist_from_memory(SLOT_ID)) {
+		if (ei_stacktrace_is_filled()) {
+			ei_stacktrace_push_msg("Failed to check if slot exist");
+			goto clean_up;
+		}
+		else {
+			ei_logger_error("Specified slot doesn't exist");
+			goto clean_up;
+		}
+	}
+	ei_logger_info("Slot exist");
+
+	ei_logger_info("Loading slot id %d...", SLOT_ID);
+	if (!(slot = ms_slot_load_from_memory(SLOT_ID))) {
 		ei_stacktrace_push_msg("Failed to load slot %d", SLOT_ID);
 		goto clean_up;
 	}

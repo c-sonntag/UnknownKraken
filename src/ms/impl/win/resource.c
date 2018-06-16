@@ -173,3 +173,50 @@ clean_up:
 	CloseHandle(hResource);
 	return result;
 }
+
+typedef struct {
+	int id;
+	bool found;
+} res_name_search;
+
+BOOL CALLBACK ResNameProc(HANDLE hModule, LPCTSTR lpszType, LPTSTR lpszName, LONG lParam) {
+	res_name_search *rns;
+	char *resource_name;
+
+	rns = (res_name_search *)lParam;
+
+	if (IS_INTRESOURCE(lpszName)) {
+		ei_safe_alloc(resource_name, char, 3);
+		wsprintf(resource_name, "%d", (USHORT)lpszName);
+		rns->found = atoi(resource_name) == rns->id;
+		ei_safe_free(resource_name);
+	}
+
+	return TRUE;
+}
+
+bool ms_resource_exist(const char *target_path, int id) {
+	HANDLE hResource;
+	res_name_search rns;
+	char *error_buffer;
+
+	rns.id = id;
+	rns.found = false;
+
+	if (!(hResource = LoadLibraryA(target_path))) {
+		ei_get_last_werror(error_buffer);
+		ei_stacktrace_push_msg("Failed to load library with error message: %s", error_buffer);
+		return false;
+	}
+
+	if (!EnumResourceNames(hResource, RT_RCDATA, (ENUMRESNAMEPROC)ResNameProc, &rns)) {
+		ei_get_last_werror(error_buffer);
+		ei_stacktrace_push_msg("Failed to enum resource names with error message: %s", error_buffer);
+		FreeLibrary(hResource);
+		return false;
+	}
+
+	FreeLibrary(hResource);
+
+	return rns.found;
+}

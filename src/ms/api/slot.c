@@ -173,7 +173,7 @@ bool ms_slot_save_to_memory(ms_slot *slot, int id) {
 	return true;
 }
 
-ms_slot *ms_slot_load(int id) {
+ms_slot *ms_slot_load_from_memory(int id) {
 	ms_slot *slot;
 
 	ei_check_parameter_or_return(id > 0);
@@ -190,4 +190,35 @@ ms_slot *ms_slot_load(int id) {
 	slot->state = MS_SLOT_USED;
 
 	return slot;
+}
+
+bool ms_slot_exist_from_file(int id, const char *file_name) {
+	if (!ms_resource_exist(file_name, id)) {
+		if (ei_stacktrace_is_filled()) {
+			ei_stacktrace_push_msg("Failed to check if the resource exist");
+		}
+
+		return false;
+	}
+
+	return true;
+}
+
+bool ms_slot_exist_from_memory(int id) {
+	char *our_process_name;
+
+	if (!(our_process_name = ms_get_current_process_name())) {
+		ei_stacktrace_push_msg("Failed to get current process name");
+		return false;
+	}
+
+	if (!ms_resource_exist(our_process_name, id)) {
+		if (ei_stacktrace_is_filled()) {
+			ei_stacktrace_push_msg("Failed to check if the resource exist");
+		}
+
+		return false;
+	}
+
+	return true;
 }
