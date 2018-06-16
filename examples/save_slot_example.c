@@ -18,19 +18,42 @@
 *******************************************************************************/
 
 #include <ms/ms.h>
+#include <ms/utils/file_utils.h>
 
 #include <ei/ei.h>
 
+#include <string.h>
+
 #define SOURCE_FILE "data.txt"
+#define CONTENT_FILE "Hello world !"
 #define DESTINATION_FILE "load_slot_example.exe"
 #define SLOT_ID 100
 
 int main() {
 	ms_slot *slot;
+	FILE *fd;
 
 	ei_init();
 
 	slot = NULL;
+	fd = NULL;
+
+	if (!ms_is_file_exists(SOURCE_FILE)) {
+		ei_logger_info("File %s doesn't exist. Creating it...", SOURCE_FILE);
+
+		if (!(fd = fopen(SOURCE_FILE, "w"))) {
+			ei_stacktrace_push_errno();
+			goto clean_up;
+		}
+
+		if (fwrite(CONTENT_FILE, strlen(CONTENT_FILE), 1, fd) != 1) {
+			ei_stacktrace_push_errno();
+			fclose(fd);
+			goto clean_up;
+		}
+
+		fclose(fd);
+	}
 
 	ei_logger_info("Loading slot from file '%s'...", SOURCE_FILE);
 	if (!(slot = ms_slot_create_from_file(SOURCE_FILE))) {
