@@ -222,3 +222,26 @@ bool ms_slot_exist_from_memory(int id) {
 
 	return true;
 }
+
+int ms_slot_find_id_from_path(const char *file_name, ms_slot *slot) {
+	if (!file_name) {
+		ei_stacktrace_push_msg("Specified file_name ptr is null");
+		return -1;
+	}
+
+	if (!slot) {
+		ei_stacktrace_push_msg("Specified slot ptr is null");
+		return -1;
+	}
+
+	return ms_resource_find_id_from_path(file_name, slot->data, slot->size);
+}
+
+int ms_slot_find_id_from_memory(ms_slot *slot) {
+	if (!slot) {
+		ei_stacktrace_push_msg("Specified slot ptr is null");
+		return -1;
+	}
+
+	return ms_resource_find_id_from_memory(slot->data, slot->size);
+}
