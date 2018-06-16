@@ -3,6 +3,7 @@
 
   "environments": [
     {
+      "namespace": "${name}",
       "buildPath": "${projectDir}/build/${name}",
       //"installPath": "${env.PROGRAMFILES}\\LibMemorySlot\\${name}"
       "installPath": "C:\\LibMemorySlot\\${name}"

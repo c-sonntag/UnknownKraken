@@ -87,7 +87,8 @@ endif ()
 # Search LibErrorInterceptor
 
 if (WIN32)
-	set(LIBERRORINTERCEPTOR_INCLUDE "C:\\LibErrorInterceptor\\x86-Release\\include")
+	set(LIBERRORINTERCEPTOR_INCLUDE "C:\\LibErrorInterceptor\\$ENV{name}\\include")
+	set(LIBERRORINTERCEPTOR_LIB "C:\\LibErrorInterceptor\\$ENV{name}\\lib\\ei_static.lib")
 endif ()
 
 # --- BUILD LIBERRORINTERCEPTOR ---
@@ -106,7 +107,7 @@ set_target_properties(${PROJECT_NAME_SHARED} PROPERTIES OUTPUT_NAME ms)
 target_link_libraries(${PROJECT_NAME_SHARED} ${CMAKE_THREAD_LIBS_INIT})
 if (WIN32)
 	target_include_directories(${PROJECT_NAME_SHARED} PUBLIC "${LIBERRORINTERCEPTOR_INCLUDE}")
-	target_link_libraries(${PROJECT_NAME_SHARED} ${CMAKE_CURRENT_SOURCE_DIR}/lib/ei.lib)
+	target_link_libraries(${PROJECT_NAME_SHARED} "${LIBERRORINTERCEPTOR_LIB}")
 endif ()
 
 # Build static library
@@ -116,7 +117,7 @@ set_target_properties(${PROJECT_NAME_STATIC} PROPERTIES OUTPUT_NAME ms_static)
 target_link_libraries(${PROJECT_NAME_STATIC} ${CMAKE_THREAD_LIBS_INIT})
 if (WIN32)
 	target_include_directories(${PROJECT_NAME_STATIC} PUBLIC "${LIBERRORINTERCEPTOR_INCLUDE}")
-	target_link_libraries(${PROJECT_NAME_STATIC} ${CMAKE_CURRENT_SOURCE_DIR}/lib/ei.lib)
+	target_link_libraries(${PROJECT_NAME_STATIC} "${LIBERRORINTERCEPTOR_LIB}")
 endif ()
 
 # --- INSTALL ---
@@ -156,7 +157,7 @@ foreach (filePath ${files} )
     target_link_libraries(${executableName} ${PROJECT_NAME_STATIC})
 	if (WIN32)
 		target_include_directories(${executableName} PUBLIC "${LIBERRORINTERCEPTOR_INCLUDE}")
-		target_link_libraries(${executableName} ${CMAKE_CURRENT_SOURCE_DIR}/lib/ei_static.lib)
+		target_link_libraries(${executableName} "${LIBERRORINTERCEPTOR_LIB}")
 	endif ()
 	set_target_properties(${executableName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${EXAMPLES_OUTPUT_PATH})
 endforeach ()
