@@ -17,22 +17,25 @@
 *   along with LibMemorySlot.  If not, see <http://www.gnu.org/licenses/>.    *
 *******************************************************************************/
 
-#include <stdio.h>
-#include <stddef.h>
-
 #include <ms/ms.h>
 
 #include <ei/ei.h>
+
+#include <stdio.h>
+#include <stddef.h>
+#include <string.h>
 
 #define SLOT_ID 100
 
 int main() {
 	ms_slot *slot;
 	size_t i;
+	char *string;
 
 	ei_init();
 
 	slot = NULL;
+	string = NULL;
 
 	ei_logger_info("Check if slot exist...");
 	if (!ms_slot_exist_from_memory(SLOT_ID)) {
@@ -52,9 +55,12 @@ int main() {
 		ei_stacktrace_push_msg("Failed to load slot %d", SLOT_ID);
 		goto clean_up;
 	}
-	ei_logger_info("Slot loaded.");
+	ei_logger_info("Slot of size %ld loaded", slot->size);
 	
-	ei_logger_info("Content of the slot: %s of size %ld", slot->data, slot->size);
+	ei_safe_alloc(string, char, slot->size + 1);
+	memcpy(string, slot->data, slot->size * sizeof(char));
+	ei_logger_info("Content of the slot: %s", string);
+	ei_safe_free(string);
 
 	ei_logger_info("Searching slot id with retreived data...");
 	if (ms_resource_find_id_from_memory(slot->data, slot->size) != SLOT_ID) {

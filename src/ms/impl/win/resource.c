@@ -154,7 +154,7 @@ unsigned char *ms_resource_load_from_path(const char *target_path, int id, size_
 	ei_check_parameter_or_return(target_path);
 	ei_check_parameter_or_return(id > 0);
 
-	data = NULL;*
+	data = NULL;
 	error_buffer = NULL;
 
 	if (!ms_is_file_exists(target_path)) {
@@ -269,7 +269,7 @@ bool ms_resource_exist(const char *target_path, int id) {
 		return false;
 	}
 
-	if (!EnumResourceNames(hResource, RT_RCDATA, (ENUMRESNAMEPROC)ResNameProc, &ctx)) {
+	if (!EnumResourceNames(hResource, RT_RCDATA, (ENUMRESNAMEPROC)ResNameProc, (LONG_PTR)&ctx)) {
 		ei_get_last_werror(error_buffer);
 		ei_stacktrace_push_msg("Failed to enum resource names with error message: %s", error_buffer);
 		FreeLibrary(hResource);
@@ -318,7 +318,7 @@ int ms_resource_find_id_from_path(const char *target_path, unsigned char *data, 
 	ctx.searched_data = data;
 	ctx.searched_data_size = size;
 
-	if (!EnumResourceNames(hLibrary, RT_RCDATA, (ENUMRESNAMEPROC)ResDataProc, &ctx)) {
+	if (!EnumResourceNames(hLibrary, RT_RCDATA, (ENUMRESNAMEPROC)ResDataProc, (LONG_PTR)&ctx)) {
 		ei_get_last_werror(error_buffer);
 		ei_stacktrace_push_msg("Failed to enum resource names with error message: %s", error_buffer);
 		FreeLibrary(hLibrary);
@@ -357,7 +357,7 @@ int ms_resource_find_id_from_memory(unsigned char *data, size_t size) {
 	ctx.searched_data = data;
 	ctx.searched_data_size = size;
 
-	if (!EnumResourceNames(hLibrary, RT_RCDATA, (ENUMRESNAMEPROC)ResDataProc, &ctx)) {
+	if (!EnumResourceNames(hLibrary, RT_RCDATA, (ENUMRESNAMEPROC)ResDataProc, (LONG_PTR)&ctx)) {
 		ei_get_last_werror(error_buffer);
 		ei_stacktrace_push_msg("Failed to enum resource names with error message: %s", error_buffer);
 		FreeLibrary(hLibrary);
