@@ -26,13 +26,14 @@
 
 /**
  * @todo add unix version
+ * @todo check if there is an error in Windows XP as it doesn't return ERROR_INSUFFICIENT_BUFFER
  */
 char *ms_get_current_process_name() {
 	char *szFileName, *error_buffer;
 
 	ms_safe_alloc(szFileName, char, MAX_PATH + 1);
 
-	if (GetModuleFileNameA(NULL, szFileName, MAX_PATH + 1) != ERROR_SUCCESS) {
+	if (GetModuleFileNameA(NULL, szFileName, MAX_PATH + 1) == ERROR_INSUFFICIENT_BUFFER) {
 		ei_get_last_werror(error_buffer);
 		ei_stacktrace_push_msg("GetModuleFileNameA failed error message: %s", error_buffer);
 		ms_safe_free(szFileName);

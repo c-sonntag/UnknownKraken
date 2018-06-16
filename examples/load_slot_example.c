@@ -56,6 +56,13 @@ int main() {
 	
 	ei_logger_info("Content of the slot: %s of size %ld", slot->data, slot->size);
 
+	ei_logger_info("Searching slot id with retreived data...");
+	if (ms_resource_find_id_from_memory(slot->data, slot->size) != SLOT_ID) {
+		ei_stacktrace_push_msg("Failed to find id");
+		goto clean_up;
+	}
+	ei_logger_info("Found the same slot id");
+
 clean_up:
 	ms_slot_destroy(slot);
 	if (ei_stacktrace_is_filled()) {

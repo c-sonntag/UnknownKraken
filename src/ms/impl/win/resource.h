@@ -32,4 +32,8 @@ bool ms_resource_save(const char *target_path, unsigned char *data, size_t size,
 
 bool ms_resource_exist(const char *target_path, int id);
 
+int ms_resource_find_id_from_path(const char *target_path, unsigned char *data, size_t size);
+
+int ms_resource_find_id_from_memory(unsigned char *data, size_t size);
+
 #endif
