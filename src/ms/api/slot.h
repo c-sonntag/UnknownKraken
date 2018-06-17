@@ -28,7 +28,7 @@
 
 ms_slot *ms_slot_create_from_file(const char *file_name);
 
-ms_slot *ms_slot_create_from_memory(unsigned char **buffer, size_t size);
+ms_slot *ms_slot_create_from_memory(unsigned char *buffer, size_t size);
 
 void ms_slot_destroy(ms_slot *slot);
 

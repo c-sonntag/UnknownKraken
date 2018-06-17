@@ -54,7 +54,7 @@ ms_slot *ms_slot_create_from_file(const char *file_name) {
 	return slot;
 }
 
-ms_slot *ms_slot_create_from_memory(unsigned char **buffer, size_t size) {
+ms_slot *ms_slot_create_from_memory(unsigned char *buffer, size_t size) {
 	ms_slot *slot;
 
 	ei_check_parameter_or_return(buffer);
