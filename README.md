@@ -48,7 +48,7 @@ Loading the saved slot.
 
 The Windows implementation manipulate the Resource API. No Linux implementation for now.
 
-### Cross-plateform
+## Cross-plateform
 
 Tested on:
 * Windows x86
