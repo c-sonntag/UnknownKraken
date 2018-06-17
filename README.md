@@ -34,14 +34,14 @@ int plugin_id;
 plugin = mp_memory_plugin_create_empty();
 
 /**
- * save the plugin into the target path (exec or shared object). It returned the
+ * Save the plugin into the target path (exec or shared object). It returned the
  * corresponding id of the created plugin. Since the plugin specified in parammeter
  * is empty, the default content and size will be fixed, in order to easily know it's
  * an available slot to update with a new plugin.
  */
 plugin_id = mp_memory_plugin_save(plugin, target_path);
 
-/* destroy only the object content and not the saved plugin */
+/* Destroy only the object content and not the saved plugin */
 mp_memory_plugin_destroy(plugin);
 ```
 
@@ -53,12 +53,12 @@ mp_memory_plugin *plugin;
 /* Load plugin from id */
 plugin = mp_memory_plugin_load(plugin_id);
 
-/* get a function from the plugin */
+/* Get a function from the plugin */
 hello_world = mp_memory_plugin_get_function(plugin, "hello_world");
 
 hello_world();
 
-/* unload the plugin */
+/* Unload the plugin */
 mp_memory_plugin_unload(plugin);
 ```
 
@@ -67,7 +67,7 @@ mp_memory_plugin_unload(plugin);
 ```c
 mp_memory_plugin *plugin;
 
-/* Lad plugin from id */
+/* Load plugin from id */
 plugin = mp_memory_plugin_load(plugin_id);
 
 /* Update the content of the plugin with data/size */
