@@ -53,5 +53,3 @@ The Windows implementation manipulate the Resource API. No Linux implementation 
 Tested on:
 * Windows x86
 * Windows 64
-* Ubuntu 14.04
-* Ubuntu 16.04
