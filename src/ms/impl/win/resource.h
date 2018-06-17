@@ -36,4 +36,8 @@ int ms_resource_find_id_from_path(const char *target_path, unsigned char *data, 
 
 int ms_resource_find_id_from_memory(unsigned char *data, size_t size);
 
+int *ms_resource_find_ids_from_path(const char *target_path, int *number);
+
+int *ms_resource_find_ids_from_memory(int *number);
+
 #endif

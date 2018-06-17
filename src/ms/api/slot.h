@@ -53,5 +53,9 @@ bool ms_slot_exist_from_memory(int id);
 int ms_slot_find_id_from_path(const char *file_name, ms_slot *slot);
 
 int ms_slot_find_id_from_memory(ms_slot *slot);
+
+int *ms_slot_find_ids_from_file(const char *file_name, int *number);
+
+int *ms_slot_find_ids_from_memory(int *number);
 	
 #endif

@@ -38,6 +38,11 @@ typedef struct {
 	int found_id;
 } resource_data_search_ctx;
 
+typedef struct {
+	int *ids;
+	int number;
+} resource_id_search_ctx;
+
 static unsigned char *resource_load_internal(HMODULE hLibrary, int id, size_t *size) {
 	unsigned char *data, *loaded_data;
 	HRSRC hResource;
@@ -86,14 +91,14 @@ BOOL CALLBACK ResNameProc(HANDLE hModule, LPCTSTR lpszType, LPTSTR lpszName, LON
 	ctx = (resource_name_search_ctx *)lParam;
 
 	if (!IS_INTRESOURCE(lpszName)) {
-		ei_stacktrace_push_msg("Resource id isn't integer");
+		ei_stacktrace_push_msg("Resource id isn't an integer");
 		return FALSE;
 	}
 
-	ei_safe_alloc(resource_name, char, 3);
+	ms_safe_alloc(resource_name, char, 3);
 	wsprintf(resource_name, "%d", (USHORT)lpszName);
 	ctx->found = atoi(resource_name) == ctx->id;
-	ei_safe_free(resource_name);
+	ms_safe_free(resource_name);
 
 	return TRUE;
 }
@@ -112,37 +117,63 @@ BOOL CALLBACK ResDataProc(HANDLE hModule, LPCTSTR lpszType, LPTSTR lpszName, LON
 	}
 
 	if (!IS_INTRESOURCE(lpszName)) {
-		ei_stacktrace_push_msg("Resource id isn't integer");
+		ei_stacktrace_push_msg("Resource id isn't an integer");
 		return FALSE;
 	}
 
-	ei_safe_alloc(resource_name, char, 3);
+	ms_safe_alloc(resource_name, char, 3);
 	wsprintf(resource_name, "%d", (USHORT)lpszName);
 	current_id = atoi(resource_name);
 
 	if (!(current_data = resource_load_internal(hModule, current_id, &current_data_size))) {
 		ei_stacktrace_push_msg("Failed to load current resource with id %d", current_id);
-		ei_safe_free(resource_name);
+		ms_safe_free(resource_name);
 		return FALSE;
 	}
 
 	if (ctx->searched_data_size != current_data_size) {
 		ei_logger_debug("Size doesn't matched ; skipping");
-		ei_safe_free(resource_name);
+		ms_safe_free(resource_name);
 		return TRUE;
 	}
 
 	if (memcmp(ctx->searched_data, current_data, ctx->searched_data_size) != 0) {
 		ei_logger_debug("Size are equals but data doesn't matched ; skipping");
-		ei_safe_free(resource_name);
+		ms_safe_free(resource_name);
 		return TRUE;
 	}
 
 	ctx->searching = false;
 	ctx->found_id = current_id;
 
-	ei_safe_free(resource_name);
+	ms_safe_free(resource_name);
 
+	return TRUE;
+}
+
+BOOL CALLBACK ResIdProc(HANDLE hModule, LPCTSTR lpszType, LPTSTR lpszName, LONG lParam) {
+	resource_id_search_ctx *ctx;
+	char *resource_name;
+
+	ctx = (resource_id_search_ctx *)lParam;
+
+	if (!IS_INTRESOURCE(lpszName)) {
+		ei_stacktrace_push_msg("Resource id isn't an integer");
+		return FALSE;
+	}
+
+	ms_safe_alloc(resource_name, char, 3);
+	wsprintf(resource_name, "%d", (USHORT)lpszName);
+	if (!ctx->ids) {
+		ms_safe_alloc(ctx->ids, int, 1);
+	}
+	else {
+		ms_safe_realloc(ctx->ids, int, ctx->number, 1);
+	}
+	ctx->ids[ctx->number] = atoi(resource_name);
+	ctx->number++;
+	ms_safe_free(resource_name);
+	
 	return TRUE;
 }
 
@@ -368,3 +399,70 @@ int ms_resource_find_id_from_memory(unsigned char *data, size_t size) {
 
 	return ctx.found_id;
 }
+
+int *ms_resource_find_ids_from_path(const char *target_path, int *number) {
+	HMODULE hLibrary;
+	char *error_buffer;
+	resource_id_search_ctx ctx;
+
+	if (!target_path) {
+		ei_stacktrace_push_msg("Specified target_path ptr is null");
+		return -1;
+	}
+
+	if (!ms_is_file_exists(target_path)) {
+		ei_stacktrace_push_msg("Specified target path doesn't exist");
+		return -1;
+	}
+
+	if (!(hLibrary = LoadLibraryA(target_path))) {
+		ei_get_last_werror(error_buffer);
+		ei_stacktrace_push_msg("LoadLibraryA failed with error message: '%s'", error_buffer);
+		return -1;
+	}
+
+	ctx.ids = NULL;
+	ctx.number = 0;
+
+	if (!EnumResourceNames(hLibrary, RT_RCDATA, (ENUMRESNAMEPROC)ResIdProc, (LONG_PTR)&ctx)) {
+		ei_get_last_werror(error_buffer);
+		ei_stacktrace_push_msg("Failed to enum resource names with error message: %s", error_buffer);
+		FreeLibrary(hLibrary);
+		return -1;
+	}
+
+	FreeLibrary(hLibrary);
+
+	*number = ctx.number;
+
+	return ctx.ids;
+}
+
+int *ms_resource_find_ids_from_memory(int *number) {
+	HMODULE hLibrary;
+	char *error_buffer;
+	resource_id_search_ctx ctx;
+
+	if (!(hLibrary = GetModuleHandle(NULL))) {
+		ei_get_last_werror(error_buffer);
+		ei_stacktrace_push_msg("Failed to get our module handle with error message: '%s'", error_buffer);
+		return -1;
+	}
+
+	ctx.ids = NULL;
+	ctx.number = 0;
+
+	if (!EnumResourceNames(hLibrary, RT_RCDATA, (ENUMRESNAMEPROC)ResIdProc, (LONG_PTR)&ctx)) {
+		ei_get_last_werror(error_buffer);
+		ei_stacktrace_push_msg("Failed to enum resource names with error message: %s", error_buffer);
+		FreeLibrary(hLibrary);
+		return -1;
+	}
+
+	FreeLibrary(hLibrary);
+
+	*number = ctx.number;
+
+	return ctx.ids;
+}
+

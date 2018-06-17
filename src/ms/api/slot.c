@@ -245,3 +245,37 @@ int ms_slot_find_id_from_memory(ms_slot *slot) {
 
 	return ms_resource_find_id_from_memory(slot->data, slot->size);
 }
+
+int *ms_slot_find_ids_from_file(const char *file_name, int *number) {
+	int *ids, temp_number;
+
+	temp_number = 0;
+
+	if (!(ids = ms_resource_find_ids_from_path(file_name, &temp_number))) {
+		if (ei_stacktrace_is_filled()) {
+			ei_stacktrace_push_msg("Failed to list all ids of specified file");
+		}
+		return NULL;
+	}
+
+	*number = temp_number;
+
+	return ids;
+}
+
+int *ms_slot_find_ids_from_memory(int *number) {
+	int *ids, temp_number;
+
+	temp_number = 0;
+
+	if (!(ids = ms_resource_find_ids_from_memory(&temp_number))) {
+		if (ei_stacktrace_is_filled()) {
+			ei_stacktrace_push_msg("Failed to list all ids of current object");
+		}
+		return NULL;
+	}
+
+	*number = temp_number;
+
+	return ids;
+}
