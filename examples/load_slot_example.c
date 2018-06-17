@@ -73,7 +73,7 @@ clean_up:
 	ms_slot_destroy(slot);
 	if (ei_stacktrace_is_filled()) {
 		ei_logger_stacktrace("Stacktrace is filled with following error(s):");
-		ei_uninit();
 	}
+	ei_uninit();
 	return 0;
 }

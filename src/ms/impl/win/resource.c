@@ -407,28 +407,30 @@ int *ms_resource_find_ids_from_path(const char *target_path, int *number) {
 
 	if (!target_path) {
 		ei_stacktrace_push_msg("Specified target_path ptr is null");
-		return -1;
+		return NULL;
 	}
 
 	if (!ms_is_file_exists(target_path)) {
 		ei_stacktrace_push_msg("Specified target path doesn't exist");
-		return -1;
+		return NULL;
 	}
 
 	if (!(hLibrary = LoadLibraryA(target_path))) {
 		ei_get_last_werror(error_buffer);
 		ei_stacktrace_push_msg("LoadLibraryA failed with error message: '%s'", error_buffer);
-		return -1;
+		return NULL;
 	}
 
 	ctx.ids = NULL;
 	ctx.number = 0;
 
 	if (!EnumResourceNames(hLibrary, RT_RCDATA, (ENUMRESNAMEPROC)ResIdProc, (LONG_PTR)&ctx)) {
-		ei_get_last_werror(error_buffer);
-		ei_stacktrace_push_msg("Failed to enum resource names with error message: %s", error_buffer);
+		if (ei_stacktrace_is_filled()) {
+			ei_get_last_werror(error_buffer);
+			ei_stacktrace_push_msg("Failed to enum resource names with error message: %s", error_buffer);
+		}
 		FreeLibrary(hLibrary);
-		return -1;
+		return NULL;
 	}
 
 	FreeLibrary(hLibrary);
@@ -446,17 +448,19 @@ int *ms_resource_find_ids_from_memory(int *number) {
 	if (!(hLibrary = GetModuleHandle(NULL))) {
 		ei_get_last_werror(error_buffer);
 		ei_stacktrace_push_msg("Failed to get our module handle with error message: '%s'", error_buffer);
-		return -1;
+		return NULL;
 	}
 
 	ctx.ids = NULL;
 	ctx.number = 0;
 
 	if (!EnumResourceNames(hLibrary, RT_RCDATA, (ENUMRESNAMEPROC)ResIdProc, (LONG_PTR)&ctx)) {
-		ei_get_last_werror(error_buffer);
-		ei_stacktrace_push_msg("Failed to enum resource names with error message: %s", error_buffer);
+		if (ei_stacktrace_is_filled()) {
+			ei_get_last_werror(error_buffer);
+			ei_stacktrace_push_msg("Failed to enum resource names with error message: %s", error_buffer);
+		}
 		FreeLibrary(hLibrary);
-		return -1;
+		return NULL;
 	}
 
 	FreeLibrary(hLibrary);
