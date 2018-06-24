@@ -19,7 +19,9 @@
 #include <limits.h>
 #include <string.h>
 
-static ue_relay_client *ue_relay_client_create(ue_communication_metadata *target_communication_metadata) {
+static ue_relay_client *ue_relay_client_create(ue_communication_metadata *our_communication_metadata,
+    ue_communication_metadata *target_communication_metadata) {
+
     ue_relay_client *relay_client;
     void *client_connection_parameters;
     ue_byte_stream *message_to_send, *received_message;
@@ -36,6 +38,8 @@ static ue_relay_client *ue_relay_client_create(ue_communication_metadata *target
     relay_client->encoded_route = NULL;
     relay_client->encoded_back_route = NULL;
     relay_client->our_crypto_metadata = NULL;
+    relay_client->our_communication_metadata = our_communication_metadata;
+
     message_to_send = NULL;
     received_message = NULL;
     uid = NULL;
@@ -80,7 +84,7 @@ static ue_relay_client *ue_relay_client_create(ue_communication_metadata *target
         goto clean_up;
     }
 
-    if (!(uid = ue_communication_metadata_get_uid(target_communication_metadata))) {
+    if (!(uid = ue_communication_metadata_get_uid(our_communication_metadata))) {
         ei_stacktrace_push_msg("Failed to get our communication metadata uid");
         ue_relay_client_destroy(relay_client);
         goto clean_up;
@@ -133,7 +137,7 @@ clean_up:
     return relay_client;
 }
 
-static ue_relay_client *ue_relay_client_create_from_connection(
+static ue_relay_client *ue_relay_client_create_from_connection(ue_communication_metadata *our_communication_metadata,
     ue_communication_metadata *target_communication_metadata, void *connection) {
 
     ue_relay_client *relay_client;
@@ -150,6 +154,7 @@ static ue_relay_client *ue_relay_client_create_from_connection(
     relay_client->encoded_route = NULL;
     relay_client->encoded_back_route = NULL;
     relay_client->our_crypto_metadata = NULL;
+    relay_client->our_communication_metadata = our_communication_metadata;
 
     /* Create the communication context from the type of communication specified in the metadata of target */
     relay_client->communication_context = ue_communication_build_from_type(ue_communication_metadata_get_type(target_communication_metadata));
@@ -159,6 +164,7 @@ static ue_relay_client *ue_relay_client_create_from_connection(
      * or record an error if it's failed.
      * @warning At this point of the POC, the optional third arg of secure layer isn't used, nor the crypto_metadata of the
      * step object.
+     * @todo fix this warning this setting the use of the secure layer mandatory
      **/
     if (!(client_connection_parameters = ue_communication_build_client_connection_parameters(relay_client->communication_context, 2,
         ue_communication_metadata_get_host(target_communication_metadata), ue_communication_metadata_get_port(target_communication_metadata)))) {
@@ -174,7 +180,7 @@ clean_up:
     return relay_client;
 }
 
-ue_relay_client *ue_relay_client_create_from_route(ue_relay_route *route) {
+ue_relay_client *ue_relay_client_create_from_route(ue_communication_metadata *our_communication_metadata, ue_relay_route *route) {
     ue_relay_client *client;
     ue_relay_step *step;
     ue_communication_metadata *target_communication_metadata;
@@ -205,7 +211,7 @@ ue_relay_client *ue_relay_client_create_from_route(ue_relay_route *route) {
         return NULL;
     }
 
-    if (!(client = ue_relay_client_create(target_communication_metadata))) {
+    if (!(client = ue_relay_client_create(our_communication_metadata, target_communication_metadata))) {
         ei_stacktrace_push_msg("Failed to create new relay client from target communication metadata");
         return NULL;
     }
@@ -233,12 +239,12 @@ ue_relay_client *ue_relay_client_create_from_route(ue_relay_route *route) {
     return client;
 }
 
-ue_relay_client *ue_relay_client_create_as_relay(ue_communication_metadata *target_communication_metadata,
-    ue_crypto_metadata *our_crypto_metadata) {
+ue_relay_client *ue_relay_client_create_as_relay(ue_communication_metadata *our_communication_metadata,
+    ue_communication_metadata *target_communication_metadata, ue_crypto_metadata *our_crypto_metadata) {
 
     ue_relay_client *relay_client;
 
-    if (!(relay_client = ue_relay_client_create(target_communication_metadata))) {
+    if (!(relay_client = ue_relay_client_create(our_communication_metadata, target_communication_metadata))) {
         ei_stacktrace_push_msg("Failed to create relay client with next step");
         return NULL;
     }
@@ -247,12 +253,12 @@ ue_relay_client *ue_relay_client_create_as_relay(ue_communication_metadata *targ
     return relay_client;
 }
 
-ue_relay_client *ue_relay_client_create_as_relay_from_connection(ue_communication_metadata *target_communication_metadata,
-    ue_crypto_metadata *our_crypto_metadata, void *connection) {
+ue_relay_client *ue_relay_client_create_as_relay_from_connection(ue_communication_metadata *our_communication_metadata,
+    ue_communication_metadata *target_communication_metadata, ue_crypto_metadata *our_crypto_metadata, void *connection) {
 
     ue_relay_client *relay_client;
 
-    if (!(relay_client = ue_relay_client_create_from_connection(target_communication_metadata, connection))) {
+    if (!(relay_client = ue_relay_client_create_from_connection(our_communication_metadata, target_communication_metadata, connection))) {
         ei_stacktrace_push_msg("Failed to create relay client with next step");
         return NULL;
     }

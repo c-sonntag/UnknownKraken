@@ -5,7 +5,6 @@
 #include <unknownecho/protocol/api/relay/relay_route.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/network/factory/communication_metadata_factory.h>
-#include <ei/ei.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/byte/byte_writer.h>
 #include <unknownecho/crypto/api/crypto_metadata.h>
@@ -13,6 +12,8 @@
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/bool.h>
 #include <unknownecho/console/input.h>
+
+#include <ei/ei.h>
 
 #include <uv.h>
 
@@ -273,6 +274,7 @@ static void write_consumer(void *parameter) {
 
 int main(int argc, char **argv) {
     ue_relay_route *route;
+    ue_communication_metadata *our_communication_metadata;
     ue_crypto_metadata *our_crypto_metadata;
     int i;
 
@@ -280,6 +282,7 @@ int main(int argc, char **argv) {
     our_crypto_metadata = NULL;
     remote_crypto_metadatas = NULL;
     remote_crypto_metadatas_number = 0;
+    our_communication_metadata = NULL;
 
     if (argc < 4) {
         fprintf(stdout, "Usage: %s <client_uid> <client_password> <server_uid> <server_port> [server_uid server_port ...]\n", argv[0]);
@@ -313,7 +316,9 @@ int main(int argc, char **argv) {
         goto clean_up;
     }
 
-    if (!(context.client = ue_relay_client_create_from_route(route))) {
+    our_communication_metadata = ue_communication_metadata_create_socket_type(argv[1], "127.0.0.1", 0);
+
+    if (!(context.client = ue_relay_client_create_from_route(our_communication_metadata, route))) {
         ei_stacktrace_push_msg("Failed to create new relay client");
         goto clean_up;
     }
@@ -342,6 +347,7 @@ clean_up:
         }
         ue_safe_free(remote_crypto_metadatas);
     }
+    ue_communication_metadata_destroy(our_communication_metadata);
     if (ei_stacktrace_is_filled()) {
         ei_logger_error("An error occurred with the following stacktrace :");
         ei_stacktrace_print_all();

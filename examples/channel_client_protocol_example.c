@@ -22,7 +22,7 @@
   *  @brief     Create and launch a channel client.
   *             For the example, the output of messages
   *             is a consola.
-  *  @warn      Only work on Unix for now, because of use of
+  *  @warn      Only work on Unix for now, because of use of fork/pipe
   *  @author    Charly Lamothe
   *  @copyright GNU Public License.
   */

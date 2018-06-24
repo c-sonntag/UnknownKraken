@@ -9,13 +9,13 @@
 #include <unknownecho/byte/byte_stream_struct.h>
 #include <unknownecho/bool.h>
 
-ue_relay_client *ue_relay_client_create_from_route(ue_relay_route *route);
+ue_relay_client *ue_relay_client_create_from_route(ue_communication_metadata *our_communication_metadata, ue_relay_route *route);
 
-ue_relay_client *ue_relay_client_create_as_relay(ue_communication_metadata *target_communication_metadata,
-    ue_crypto_metadata *our_crypto_metadata);
+ue_relay_client *ue_relay_client_create_as_relay(ue_communication_metadata *our_communication_metadata,
+    ue_communication_metadata *target_communication_metadata, ue_crypto_metadata *our_crypto_metadata);
 
-ue_relay_client *ue_relay_client_create_as_relay_from_connection(ue_communication_metadata *target_communication_metadata,
-    ue_crypto_metadata *our_crypto_metadata, void *connection);
+ue_relay_client *ue_relay_client_create_as_relay_from_connection(ue_communication_metadata *our_communication_metadata,
+    ue_communication_metadata *target_communication_metadata, ue_crypto_metadata *our_crypto_metadata, void *connection);
 
 void ue_relay_client_destroy(ue_relay_client *client);
 

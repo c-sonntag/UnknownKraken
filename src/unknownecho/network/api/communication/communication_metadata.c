@@ -133,7 +133,6 @@ unsigned int ue_communication_metadata_get_port(ue_communication_metadata *metad
 
 bool ue_communication_metadata_set_port(ue_communication_metadata *metadata, unsigned int port) {
     ei_check_parameter_or_return(metadata);
-    ei_check_parameter_or_return(port > 0);
 
     metadata->port = port;
 
