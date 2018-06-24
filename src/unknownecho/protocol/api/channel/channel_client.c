@@ -52,8 +52,7 @@
 #include <unknownecho/fileSystem/file_utility.h>
 #include <unknownecho/fileSystem/folder_utility.h>
 #include <unknownecho/time/sleep.h>
-
-#include <uv.h>
+#include <unknownecho/thread/thread.h>
 
 #include <string.h>
 #include <limits.h>
@@ -243,9 +242,9 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
 		channel_client->initialization_begin_callback(channel_client->user_context);
 	}
 
-    uv_mutex_init(&channel_client->mutex);
+    channel_client->mutex = ue_thread_mutex_create();
 
-    uv_cond_init(&channel_client->cond);
+    channel_client->cond = ue_thread_cond_create();
 
     if (!(channel_client->push_mode_queue = ue_queue_create())) {
         ei_stacktrace_push_msg("Failed to create push mode queue");
@@ -343,8 +342,8 @@ void ue_channel_client_destroy(ue_channel_client *channel_client) {
 	if (channel_client->uninitialization_begin_callback) {
 		channel_client->uninitialization_begin_callback(channel_client->user_context);
 	}
-    uv_mutex_destroy(&channel_client->mutex);
-    uv_cond_destroy(&channel_client->cond);
+    ue_thread_mutex_destroy(channel_client->mutex);
+    ue_thread_cond_destroy(channel_client->cond);
     if (channel_client->communication_secure_layer_session) {
         ue_communication_secure_layer_destroy(channel_client->communication_context, channel_client->communication_secure_layer_session);
 	}
@@ -463,22 +462,25 @@ bool ue_channel_client_start(ue_channel_client *channel_client) {
     ue_communication_client_connection_set_user_data(channel_client->communication_context,
         channel_client->connection, channel_client);
 
-    uv_thread_create(&channel_client->read_thread, csl_read_consumer, channel_client);
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic ignored \"-Wpedantic\"")
+    channel_client->read_thread = ue_thread_create(csl_read_consumer, channel_client);
     if (channel_client->user_input_mode == UNKNOWNECHO_STDIN_INPUT) {
-        uv_thread_create(&channel_client->write_thread, csl_write_consumer_stdin, channel_client);
+        channel_client->write_thread = ue_thread_create(csl_write_consumer_stdin, channel_client);
     } else if (channel_client->user_input_mode == UNKNOWNECHO_PUSH_INPUT) {
-        uv_thread_create(&channel_client->write_thread, csl_write_consumer_push, channel_client);
+        channel_client->write_thread = ue_thread_create(csl_write_consumer_push, channel_client);
     } else {
         ei_stacktrace_push_msg("Unknown user input mode");
         return false;
     }
+_Pragma("GCC diagnostic pop")
 
 	if (channel_client->connection_end_callback) {
 		channel_client->connection_end_callback(channel_client->user_context);
 	}
 
-    uv_thread_join(&channel_client->read_thread);
-    uv_thread_join(&channel_client->write_thread);
+    ue_thread_join(channel_client->read_thread, NULL);
+    ue_thread_join(channel_client->write_thread, NULL);
 
     return true;
 }
@@ -495,8 +497,8 @@ void ue_channel_client_shutdown_signal_callback(int sig) {
 		ei_logger_info("Shuting down client #%d...", i);
 		channel_clients[i]->running = false;
 		channel_clients[i]->transmission_state = CLOSING_STATE;
-        uv_cond_signal(&channel_clients[i]->cond);
-        /* @todo check if thread needs a cancel */
+        ue_thread_cond_signal(channel_clients[i]->cond);
+        ue_thread_cancel(channel_clients[i]->read_thread);
 	}
 }
 
@@ -520,12 +522,12 @@ static bool send_message(ue_channel_client *channel_client, void *connection, ue
 	ei_check_parameter_or_return(message_to_send);
 	ei_check_parameter_or_return(ue_byte_stream_get_size(message_to_send) > 0);
 
-    uv_mutex_lock(&channel_client->mutex);
+    ue_thread_mutex_lock(channel_client->mutex);
 	channel_client->transmission_state = WRITING_STATE;
     sent = ue_communication_send_sync(channel_client->communication_context, connection, message_to_send);
 	channel_client->transmission_state = READING_STATE;
-    uv_cond_signal(&channel_client->cond);
-    uv_mutex_unlock(&channel_client->mutex);
+    ue_thread_cond_signal(channel_client->cond);
+    ue_thread_mutex_unlock(channel_client->mutex);
 
     if (sent == 0 || sent == ULLONG_MAX) {
 		ei_logger_info("Connection is interrupted.");
@@ -540,14 +542,22 @@ static bool send_message(ue_channel_client *channel_client, void *connection, ue
 static size_t receive_message(ue_channel_client *channel_client, void *connection) {
 	size_t received;
 
-    uv_mutex_lock(&channel_client->mutex);
+	ei_logger_debug("0.1");
+    ue_thread_mutex_lock(channel_client->mutex);
+	ei_logger_debug("0.2");
     while (channel_client->transmission_state == WRITING_STATE) {
-        uv_cond_wait(&channel_client->cond, &channel_client->mutex);
+		ei_logger_debug("0.3");
+        ue_thread_cond_wait(channel_client->cond, channel_client->mutex);
+		ei_logger_debug("0.4");
     }
-    uv_mutex_unlock(&channel_client->mutex);
+	ei_logger_debug("0.5");
+    ue_thread_mutex_unlock(channel_client->mutex);
+	ei_logger_debug("0.6");
     ue_byte_stream_clean_up(channel_client->received_message);
+	ei_logger_debug("0.7");
     received = ue_communication_receive_sync(channel_client->communication_context, connection,
         channel_client->received_message);
+	ei_logger_debug("0.8");
 
     return received;
 }
@@ -1119,7 +1129,9 @@ static void csl_read_consumer(void *parameter) {
     connection = channel_client->connection;
 
 	while (channel_client->running) {
+		ei_logger_debug("1.1");
 		received = receive_cipher_message(channel_client, connection);
+		ei_logger_debug("1.2");
 		result = true;
 
 		// @todo set timeout in case of server lag or reboot

@@ -12,10 +12,12 @@
 #include <unknownecho/string/string_utility.h>
 #include <unknownecho/bool.h>
 #include <unknownecho/console/input.h>
+#include <unknownecho/thread/thread_mutex.h>
+#include <unknownecho/thread/thread_cond.h>
+#include <unknownecho/thread/thread_id_struct.h>
+#include <unknownecho/thread/thread.h>
 
 #include <ei/ei.h>
-
-#include <uv.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,11 +31,11 @@ typedef enum {
 
 typedef struct {
     ue_relay_client *client;
-    uv_mutex_t mutex;
-    uv_cond_t cond;
+    ue_thread_mutex *mutex;
+    ue_thread_cond *cond;
     ue_data_transmission_state transmission_state;
     bool running;
-    uv_thread_t read_consumer_thread, write_consumer_thread;
+    ue_thread_id *read_consumer_thread, *write_consumer_thread;
 } global_context;
 
 ue_crypto_metadata **remote_crypto_metadatas = NULL;
@@ -115,22 +117,22 @@ static bool send_message(ue_byte_stream *message_to_send) {
 
     result = false;
 
-    uv_mutex_lock(&context.mutex);
+    ue_thread_mutex_lock(context.mutex);
     context.transmission_state = WRITING_STATE;
     result = ue_relay_client_send_message(context.client, message_to_send);
     context.transmission_state = READING_STATE;
-    uv_cond_signal(&context.cond);
-    uv_mutex_unlock(&context.mutex);
+    ue_thread_cond_signal(context.cond);
+    ue_thread_mutex_unlock(context.mutex);
 
     return result;
 }
 
 static bool receive_message(ue_byte_stream *received_message) {
-    uv_mutex_lock(&context.mutex);
+    ue_thread_mutex_lock(context.mutex);
     while (context.transmission_state == WRITING_STATE) {
-        uv_cond_wait(&context.cond, &context.mutex);
+        ue_thread_cond_wait(context.cond, context.mutex);
     }
-    uv_mutex_unlock(&context.mutex);
+    ue_thread_mutex_unlock(context.mutex);
 
     return ue_relay_client_receive_message(context.client, received_message);
 }
@@ -295,8 +297,8 @@ int main(int argc, char **argv) {
     }
     ei_logger_info("UnknownEchoLib is correctly initialized.");
 
-    uv_mutex_init(&context.mutex);
-    uv_cond_init(&context.cond);
+    context.mutex = ue_thread_mutex_create();
+    context.cond = ue_thread_cond_create();
     context.client = NULL;
     context.transmission_state = WRITING_STATE;
     context.running = true;
@@ -329,16 +331,19 @@ int main(int argc, char **argv) {
     }
     ei_logger_info("New relay client is valid");
 
-    uv_thread_create(&context.read_consumer_thread, read_consumer, NULL);
-    uv_thread_create(&context.write_consumer_thread, write_consumer, NULL);
+    _Pragma("GCC diagnostic push")
+    _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
+        context.read_consumer_thread = ue_thread_create(read_consumer, NULL);
+        context.write_consumer_thread = ue_thread_create(write_consumer, NULL);
+    _Pragma("GCC diagnostic pop")
 
-    uv_thread_join(&context.read_consumer_thread);
-    uv_thread_join(&context.write_consumer_thread);
+    ue_thread_join(context.read_consumer_thread, NULL);
+    ue_thread_join(context.write_consumer_thread, NULL);
 
 clean_up:
     ue_relay_client_destroy(context.client);
-    uv_mutex_destroy(&context.mutex);
-    uv_cond_destroy(&context.cond);
+    ue_thread_mutex_destroy(context.mutex);
+    ue_thread_cond_destroy(context.cond);
     ue_crypto_metadata_destroy_all(our_crypto_metadata);
     ue_relay_route_destroy(route);
     if (remote_crypto_metadatas) {

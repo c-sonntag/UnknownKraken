@@ -14,6 +14,7 @@
 #include <unknownecho/byte/byte_writer.h>
 #include <unknownecho/byte/byte_reader.h>
 #include <unknownecho/container/queue.h>
+#include <unknownecho/thread/thread.h>
 
 #include <ei/ei.h>
 
@@ -96,7 +97,7 @@ ue_relay_server *ue_relay_server_create(ue_communication_metadata *communication
     relay_server->our_crypto_metadata = our_crypto_metadata;
 
     /**
-     * @todo replace by a thread safe version (uv_key ?)
+     * @todo replace by a thread safe version
      */
     global_relay_server = relay_server;
 
@@ -159,7 +160,10 @@ bool ue_relay_server_start(ue_relay_server *relay_server) {
         return false;
     }
 
-    uv_thread_create(&relay_server->server_thread, communication_server_process_impl, relay_server->communication_server);
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic ignored \"-Wpedantic\"")
+    relay_server->server_thread = ue_thread_create(communication_server_process_impl, relay_server->communication_server);
+_Pragma("GCC diagnostic pop")
 
     return true;
 }
@@ -192,7 +196,7 @@ bool ue_relay_server_wait(ue_relay_server *relay_server) {
     }
 
     /* Wait the server thread finished */
-    uv_thread_join(&relay_server->server_thread);
+    ue_thread_join(relay_server->server_thread, NULL);
 
     return true;
 }

@@ -20,12 +20,11 @@
 
 #include <ei/ei.h>
 
-#include <uv.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 typedef enum {
     READING_STATE,
@@ -35,13 +34,10 @@ typedef enum {
 
 typedef struct {
     ue_relay_client *client;
-    //uv_mutex_t mutex;
     ue_thread_mutex *mutex;
-    //uv_cond_t cond;
     ue_thread_cond *cond;
     ue_data_transmission_state transmission_state;
     bool running;
-    //uv_thread_t read_consumer_thread, write_consumer_thread;
     ue_thread_id *read_consumer_thread, *write_consumer_thread;
 } global_context;
 
@@ -188,28 +184,17 @@ ue_relay_route *generate_route_as_client2(ue_crypto_metadata *client1_crypto_met
 static bool send_message(ue_byte_stream *message_to_send) {
     bool result;
 
-    ei_logger_debug("1");
-
     ei_check_parameter_or_return(message_to_send);
     ei_check_parameter_or_return(!ue_byte_stream_is_empty(message_to_send));
 
-    ei_logger_debug("1.1");
-
     result = false;
 
-    //uv_mutex_lock(&context.mutex);
     ue_thread_mutex_lock(context.mutex);
-    ei_logger_debug("1.2");
     context.transmission_state = WRITING_STATE;
     result = ue_relay_client_send_message(context.client, message_to_send);
-    ei_logger_debug("1.3");
     context.transmission_state = READING_STATE;
-    //uv_cond_signal(&context.cond);
     ue_thread_cond_signal(context.cond);
-    ei_logger_debug("1.4");
-    //uv_mutex_unlock(&context.mutex);
     ue_thread_mutex_unlock(context.mutex);
-    ei_logger_debug("1.5");
 
     return result;
 }
@@ -217,51 +202,28 @@ static bool send_message(ue_byte_stream *message_to_send) {
 static bool receive_message(ue_byte_stream *received_message) {
     bool result;
 
-    ei_logger_debug("2");
-
-    //uv_mutex_lock(&context.mutex);
     ue_thread_mutex_lock(context.mutex);
-    ei_logger_debug("2.1");
     while (context.transmission_state == WRITING_STATE) {
-        ei_logger_debug("2.2");
-        //uv_cond_wait(&context.cond, &context.mutex);
         ue_thread_cond_wait(context.cond, context.mutex);
     }
-    ei_logger_debug("2.3");
-    //uv_mutex_unlock(&context.mutex);
     ue_thread_mutex_unlock(context.mutex);
-    ei_logger_debug("2.4");
 
     result = ue_relay_client_receive_message(context.client, received_message);
-    ei_logger_debug("2.5");
     return result;
 }
 
 /*static bool send_message(ue_byte_stream *message_to_send) {
     bool result;
 
-    ei_logger_debug("1");
-
     ei_check_parameter_or_return(message_to_send);
     ei_check_parameter_or_return(!ue_byte_stream_is_empty(message_to_send));
 
-    ei_logger_debug("1.1");
-
-    result = false;
-
-    //uv_mutex_lock(&context.mutex);
-    //ue_thread_mutex_lock(context.mutex);
-    ei_logger_debug("1.2");
+    result = false;    
     //context.transmission_state = WRITING_STATE;
     result = ue_relay_client_send_message(context.client, message_to_send);
-    ei_logger_debug("1.3");
     //context.transmission_state = READING_STATE;
-    //uv_cond_signal(&context.cond);
-    //uv_mutex_unlock(&context.mutex);
     //ue_thread_cond_signal(context.cond);
     //ue_thread_mutex_unlock(context.mutex);
-    ei_logger_debug("1.4");
-    ei_logger_debug("1.5");
 
     return result;
 }
@@ -269,23 +231,13 @@ static bool receive_message(ue_byte_stream *received_message) {
 static bool receive_message(ue_byte_stream *received_message) {
     bool result;
 
-    ei_logger_debug("2");
-
-    //uv_mutex_lock(&context.mutex);
     //ue_thread_mutex_lock(context.mutex);
-    ei_logger_debug("2.1");
     //while (context.transmission_state == WRITING_STATE) {
-        ei_logger_debug("2.2");
-        //uv_cond_wait(&context.cond, &context.mutex);
         //ue_thread_cond_wait(context.cond, context.mutex);
     //}
-    ei_logger_debug("2.3");
-    //uv_mutex_unlock(&context.mutex);
     //ue_thread_mutex_unlock(context.mutex);
-    ei_logger_debug("2.4");
 
     result = ue_relay_client_receive_message(context.client, received_message);
-    ei_logger_debug("2.5");
     return result;
 }*/
 
@@ -531,9 +483,7 @@ int main(int argc, char **argv) {
         /* Close the unused child process */
         close(fds[0]);
 
-        //uv_mutex_init(&context.mutex);
         context.mutex = ue_thread_mutex_create();
-        //uv_cond_init(&context.cond);
         context.cond = ue_thread_cond_create();
         
         context.client = NULL;
@@ -585,16 +535,12 @@ int main(int argc, char **argv) {
         }
         ei_logger_info("New relay client is valid");
 
-        //uv_thread_create(&context.read_consumer_thread, read_consumer, NULL);
-        //uv_thread_create(&context.write_consumer_thread, write_consumer, NULL);
     _Pragma("GCC diagnostic push")
     _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
         context.read_consumer_thread = ue_thread_create(read_consumer, NULL);
         context.write_consumer_thread = ue_thread_create(write_consumer, NULL);
     _Pragma("GCC diagnostic pop")
 
-        //uv_thread_join(&context.read_consumer_thread);
-        //uv_thread_join(&context.write_consumer_thread);
         ue_thread_join(context.read_consumer_thread, NULL);
         ue_thread_join(context.write_consumer_thread, NULL);
     }
@@ -606,8 +552,6 @@ clean_up:
     }
     ue_communication_metadata_destroy(our_communication_metadata);
     ue_relay_client_destroy(context.client);
-    //uv_mutex_destroy(&context.mutex);
-    //uv_cond_destroy(&context.cond);
     ue_thread_mutex_destroy(context.mutex);
     ue_thread_cond_destroy(context.cond);
     ue_crypto_metadata_destroy_all(client1_crypto_metadata);

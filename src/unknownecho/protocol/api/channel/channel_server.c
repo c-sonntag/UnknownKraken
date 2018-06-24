@@ -54,8 +54,7 @@
 #include <unknownecho/fileSystem/file_utility.h>
 #include <unknownecho/fileSystem/folder_utility.h>
 #include <unknownecho/time/sleep.h>
-
-#include <uv.h>
+#include <unknownecho/thread/thread.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -309,11 +308,11 @@ bool ue_channel_server_create(char *persistent_path, int csr_server_port, int cs
 
     ei_logger_info("CSL server waiting on port %d", csl_server_port);
 
-    uv_mutex_init(&channel_server->csl_server_mutex);
-    uv_cond_init(&channel_server->csl_server_cond);
+    channel_server->csl_server_mutex = ue_thread_mutex_create();
+    channel_server->csl_server_cond = ue_thread_cond_create();
     channel_server->csl_server_processing_state = FREE_STATE;
-    uv_mutex_init(&channel_server->csr_server_mutex);
-    uv_cond_init(&channel_server->csr_server_cond);
+    channel_server->csr_server_mutex = ue_thread_mutex_create();
+    channel_server->csr_server_cond = ue_thread_cond_create();
     channel_server->csr_server_processing_state = FREE_STATE;
     channel_server->signal_caught = false;
 
@@ -333,10 +332,10 @@ void ue_channel_server_destroy() {
         if (channel_server->uninitialization_begin_callback) {
             channel_server->uninitialization_begin_callback(channel_server->user_context);
         }
-        uv_mutex_destroy(&channel_server->csl_server_mutex);
-        uv_mutex_destroy(&channel_server->csr_server_mutex);
-        uv_cond_destroy(&channel_server->csl_server_cond);
-        uv_cond_destroy(&channel_server->csr_server_cond);
+        ue_thread_mutex_destroy(channel_server->csl_server_mutex);
+        ue_thread_mutex_destroy(channel_server->csr_server_mutex);
+        ue_thread_cond_destroy(channel_server->csl_server_cond);
+        ue_thread_cond_destroy(channel_server->csr_server_cond);
         ue_communication_server_destroy(channel_server->communication_context, channel_server->csl_server);
         ue_communication_server_destroy(channel_server->communication_context, channel_server->csr_server);
         ue_communication_secure_layer_destroy(channel_server->communication_context, channel_server->communication_secure_layer_session);
@@ -387,11 +386,15 @@ bool ue_channel_server_process() {
         ei_stacktrace_push_msg("Failed to get server process impl");
         return false;
     }
-    uv_thread_create(&channel_server->csr_server_thread, communication_server_process_impl, channel_server->csr_server);
-    uv_thread_create(&channel_server->csl_server_thread, communication_server_process_impl, channel_server->csl_server);
 
-    uv_thread_join(&channel_server->csr_server_thread);
-    uv_thread_join(&channel_server->csl_server_thread);
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic ignored \"-Wpedantic\"")
+    channel_server->csr_server_thread = ue_thread_create(communication_server_process_impl, channel_server->csr_server);
+    channel_server->csl_server_thread = ue_thread_create(communication_server_process_impl, channel_server->csl_server);
+_Pragma("GCC diagnostic pop")
+
+    ue_thread_join(channel_server->csr_server_thread, NULL);
+    ue_thread_join(channel_server->csl_server_thread, NULL);
 
     return true;
 }
@@ -407,7 +410,8 @@ void ue_channel_server_shutdown_signal_callback(int sig) {
         ue_communication_server_stop(channel_server->communication_context, channel_server->csr_server);
     }
 
-    /* @todo cancel blocked threads due to shutdown before join */
+    ue_thread_cancel(channel_server->csr_server_thread);
+    ue_thread_cancel(channel_server->csl_server_thread);
 }
 
 static size_t send_cipher_message(void *connection, ue_byte_stream *message_to_send) {
@@ -1155,7 +1159,8 @@ static bool csl_server_read_consumer(void *connection) {
     }
 
     if (channel_server->signal_caught) {
-        /* @todo free thread properly in case of shutdown before join */
+        ue_thread_cancel(channel_server->csl_server_thread);
+        ue_thread_cancel(channel_server->csr_server_thread);
     }
 
     ei_check_parameter_or_return(connection);

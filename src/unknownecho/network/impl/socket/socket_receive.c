@@ -165,7 +165,7 @@ size_t ue_socket_receive_all_sync(int fd, unsigned char **bytes, size_t size, ue
 
 size_t ue_socket_receive_async(int fd, bool (*flow_consumer)(void *flow, size_t flow_size), ue_tls_connection *tls) {
     size_t received, total, bytes;
-    char response[4096];
+    char response[1024];
 
     if (fd <= 0 || !flow_consumer) {
         ei_stacktrace_push_code(ERRORINTERCEPTOR_INVALID_PARAMETER);
@@ -179,7 +179,8 @@ size_t ue_socket_receive_async(int fd, bool (*flow_consumer)(void *flow, size_t 
 
         do {
             memset(response, 0, sizeof(response));
-            bytes = recv(fd, response, 4096, 0);
+            //bytes = recv(fd, response, 4096, 0);
+            bytes = recv(fd, response, 1024, 0);
             if (bytes < 0) {
                 ei_stacktrace_push_errno();
                 return -1;

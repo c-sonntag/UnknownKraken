@@ -28,8 +28,9 @@
 #include <unknownecho/crypto/api/key/private_key.h>
 #include <unknownecho/container/queue.h>
 #include <unknownecho/console/input.h>
-
-#include <uv.h>
+#include <unknownecho/thread/thread_id_struct.h>
+#include <unknownecho/thread/thread_mutex.h>
+#include <unknownecho/thread/thread_cond.h>
 
 #include <stdio.h>
 #include <stddef.h>
@@ -60,10 +61,10 @@ typedef struct {
 	char *nickname, *keystore_password;
     void *communication_secure_layer_session;
     void *connection;
-    uv_thread_t read_thread, write_thread;
+    ue_thread_id *read_thread, *write_thread;
 	ue_processing_state csr_processing_state;
-    uv_mutex_t mutex;
-    uv_cond_t cond;
+    ue_thread_mutex *mutex;
+    ue_thread_cond *cond;
     ue_queue *push_mode_queue;
 	ue_data_transmission_state transmission_state;
 	bool running;

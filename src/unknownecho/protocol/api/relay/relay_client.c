@@ -12,6 +12,7 @@
 #include <unknownecho/alloc.h>
 #include <unknownecho/byte/byte_stream.h>
 #include <unknownecho/byte/byte_writer.h>
+#include <unknownecho/thread/thread.h>
 
 #include <ei/ei.h>
 

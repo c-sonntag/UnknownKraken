@@ -47,8 +47,8 @@
 #define UNKNOWNECHO_QUEUE_H
 
 #include <unknownecho/bool.h>
-
-#include <uv.h>
+#include <unknownecho/thread/thread_mutex.h>
+#include <unknownecho/thread/thread_cond.h>
 
 #include <stdio.h>
 
@@ -63,8 +63,8 @@ typedef struct {
     void (*user_print_func)(void *data, FILE *fd);
     void *(*user_alloc_func)(void *data);
     void (*user_free_func)(void *data);
-    uv_mutex_t mutex;
-    uv_cond_t write_cond, read_cond;
+    ue_thread_mutex *mutex;
+    ue_thread_cond *write_cond, *read_cond;
 } ue_queue;
 
 ue_queue *ue_queue_create();
