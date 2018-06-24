@@ -18,7 +18,6 @@
 ******************************************************************************/
 
 #include <mp/mp.h>
-
 #include <ei/ei.h>
 
 #include <stdlib.h>
@@ -42,14 +41,14 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	srand(time(0));
+	srand((unsigned int)time(0));
 	plugin = NULL;
 	plugin_id = atoi(argv[1]);
 	ei_init();
 
 	/* Load plugin from id */
 	ei_logger_info("Loading memory plugin from id %d", plugin_id);
-	if (!(plugin = mp_memory_plugin_load(plugin_id))) {
+	if ((plugin = mp_memory_plugin_load(plugin_id, NULL)) == NULL) {
 		ei_stacktrace_push_msg("Failed to load plugin with id %d", plugin_id);
 		goto clean_up;
 	}

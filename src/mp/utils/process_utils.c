@@ -17,14 +17,28 @@
 *   along with LibMemoryPlugin.  If not, see <http://www.gnu.org/licenses/>. *
 ******************************************************************************/
 
-#ifndef MEMORYPLUGIN_FILE_UTILS_H
-#define MEMORYPLUGIN_FILE_UTILS_H
+#include <mp/utils/process_utils.h>
+#include <ueum/ueum.h>
 
-#include <ms/utils/bool.h>
+#include <ei/ei.h>
 
-#include <stddef.h>
-#include <stdio.h>
+#include <Windows.h>
 
-bool mp_is_file_exists(const char *file_name);
+/**
+ * @todo add unix version
+ * @todo check if there is an error in Windows XP as it doesn't return ERROR_INSUFFICIENT_BUFFER
+ */
+char *mp_get_current_process_name() {
+	char *szFileName, *error_buffer;
 
-#endif
+	ueum_safe_alloc(szFileName, char, MAX_PATH + 1);
+
+	if (GetModuleFileNameA(NULL, szFileName, MAX_PATH + 1) == ERROR_INSUFFICIENT_BUFFER) {
+		ei_get_last_werror(error_buffer);
+		ei_stacktrace_push_msg("GetModuleFileNameA failed error message: %s", error_buffer);
+		ueum_safe_free(szFileName);
+		return NULL;
+	}
+
+	return szFileName;
+}

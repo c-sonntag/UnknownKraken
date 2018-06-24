@@ -1,4 +1,4 @@
-﻿## @brief LibMemorySlot
+﻿## @brief LibMemoryPlugin
 ## @author Charly Lamothe
 
 
@@ -11,6 +11,20 @@ cmake_minimum_required(VERSION 3.8)
 # --- GLOBAL OPTIONS ---
 
 set(CMAKE_VERBOSE_MAKEFILE on)
+#add_definitions(-DWITH_CRYPTO)
+
+set(WITH_CRYPTO FALSE)
+set(CMAKE_CXX_FLAGS "-DWITH_CRYPTO=${WITH_CRYPTO}")
+
+if (${WITH_CRYPTO} STREQUAL FALSE)
+	set(WITH_CRYPTO TRUE)
+endif ()
+
+if (WITH_CRYPTO)
+	message(STATUS "Using encryption")
+	# Set as TRUE to link with openssl dependencies in lib folder. Set to FALSE otherwise.
+	set(OPENSSL_LOCAL_LINK FALSE)
+endif ()
 
 # --- PATH ---
 
@@ -29,31 +43,79 @@ endif ()
 
 # --- COMPILE OPTIONS ---
 
+# Compile options for Microsoft Visual Studio
 if (MSVC)
-    # Use secure functions by defaualt and suppress warnings about
-    #"deprecated" functions
+	# Add O2 optimization if build type is Release
+	if (CMAKE_BUILD_TYPE STREQUAL "Release")
+		add_compile_options("$<$<CONFIG:RELEASE>:/O2>")
+	endif ()
+	add_compile_options("/W4")
+	if (MSVC_VERSION GREATER_EQUAL 1900)
+		add_compile_options("/permissive-") # Add /permissive- (kind of -pedantic) available since Visual Studio 2017
+	endif ()
+    add_compile_options("/W4") 
+	set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON) # This variable is used to initialize the property on each target as it is created
+	set(CMAKE_C_FLAGS "${CMAKE_ENABLE_C99}") # Compile with C99 rules
+
+	# Use secure functions by defaualt and suppress warnings about
+    # deprecated" functions
+	# TODO: try to remove this flags and fix the issue raised
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /D _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /D _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /D _CRT_NONSTDC_NO_WARNINGS=1 /D _CRT_SECURE_NO_WARNINGS=1")
-endif ()
-
-if (LINUX)
-	if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")     ## (not debug)
-		if(CMAKE_COMPILER_IS_GNUCXX)              ## (GNU COMMAND)
-			add_compile_options("-O3")            ### No Optimization
-			set(CMAKE_EXE_LINKER_FLAGS "-s")      ### Strip binary (only in release mode)
-		endif ()
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") # If compiler is Clang
+	if (CMAKE_BUILD_TYPE STREQUAL "Release") # Release build mode
+		# Set all this flags explicitly, even if some of them may be covered by -Wall, in order to fine-tune the warning flags we want
+		# Note that -Weverything isn't available in some version of Mac and iOS
+		# Source: https://github.com/macmade/SeriousCode
+		add_compile_options("-Wall" "-Wbad-function-cast" "-Wcast-align" "-Wconversion" "-Wdeclaration-after-statement"
+			"-Wdeprecated-implementations" "-Wextra" "-Wfloat-equal" "-Wformat=2" "-Wformat-nonliteral" "-Wfour-char-constants"
+			"-Wimplicit-atomic-properties" "-Wmissing-braces" "-Wmissing-declarations" "-Wmissing-field-initializers"
+			"-Wmissing-format-attribute" "-Wmissing-noreturn" "-Wmissing-prototypes" "-Wnested-externs" "-Wnewline-eof"
+			"-Wold-style-definition" "-Woverlength-strings" "-Wparentheses" "-Wpointer-arith" "-Wredundant-decls"
+			"-Wreturn-type" "-Wsequence-point" "-Wshadow" "-Wshorten-64-to-32" "-Wsign-compare" "-Wsign-conversion"
+			"-Wstrict-prototypes" "-Wstrict-selector-match" "-Wswitch -Wswitch-default" "-Wswitch-enum" "-Wundeclared-selector"
+			"-Wuninitialized" "-Wunknown-pragmas" "-Wunreachable-code" "-Wunused-function" "-Wunused-label" "-Wunused-parameter"
+			"-Wunused-value" "-Wunused-variable" "-Wwrite-strings")
 	else ()
-		add_compile_options("-g")
+		# Minimum flags for debug mode
+		add_compile_options("-Wall" "-Werror" "-Wextra" "-g")
 	endif ()
-endif ()
+else ()
+	# Unix plateform
+	if (UNIX)
+		add_compile_options("-std=gnu99" "-pthread" "-ldl")
+		if (CMAKE_BUILD_TYPE STREQUAL "Release") # Release build mode
+			if (CMAKE_COMPILER_IS_GNUCC) # GNU compiler
+				add_compile_options("-O2") # O2 optimization
+				set(CMAKE_EXE_LINKER_FLAGS "-s") # Strip binary (only in release mode as it prevent debugging)
 
-if (UNIX)
-    add_compile_options("-std=gnu99" "-pthread" "-ldl")
-	add_compile_options("-Wall" "-pedantic" "-fno-builtin")
-elseif (WIN32)
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-	set(CMAKE_C_FLAGS "${CMAKE_ENABLE_C99}")
+				# Hardening options
+				## -fstack-protector-strong
+				### Stack smashing protector
+				## -D_FORTIFY_SOURCE=2
+				### Compile-time protection against static sized buffer overflows.
+				### No known regressions or performance loss
+				## -Wl,-z,now
+				### Disable lazy binding
+				## -Wl,-z,relro
+				### Read-only segments after relocation
+				add_compile_options("-fstack-protector-strong" "-D_FORTIFY_SOURCE=2" "-Wl,-z,now" "-Wl,-z,relro")
+			endif ()
+		else () # Debug mode
+			add_compile_options("-g") # Add debug symbols
+		endif ()
+	endif ()
+	# It should work on any unix platform ?
+	if (CMAKE_BUILD_TYPE STREQUAL "Release") # Release mode
+		add_compile_options("$<$<CONFIG:RELEASE>:-O2>" "-fno-builtin")
+	endif ()
+	## -Werror=format-security
+	### Reject potentially unsafe format string arguments
+	## -Werror=implicit-function-declaration
+	### Reject missing function prototypes
+    	#add_compile_options("-Wall" "-Wextra" "-Werror" "-pedantic" "-Werror=format-security" "-Werror=implicit-function-declaration")
+	add_compile_options("-Wall" "-Wextra" "-pedantic" "-Werror=format-security" "-Werror=implicit-function-declaration")
 endif ()
 
 if (WIN32)
@@ -106,6 +168,48 @@ if (WIN32)
 	set(LIBSHAREDMEMORYOBJECT_LIB "C:\\LibSharedMemoryObject\\$ENV{name}\\lib\\smo_static.lib")
 endif ()
 
+# Search LibUnknownEchoUtilsModule
+
+if (WIN32)
+	set(LIBUNKNOWNECHOUTILSMODULE_INCLUDE "C:\\LibUnknownEchoUtilsModule\\$ENV{name}\\include")
+	set(LIBUNKNOWNECHOUTILSMODULE_LIB "C:\\LibUnknownEchoUtilsModule\\$ENV{name}\\lib\\ueum_static.lib")
+endif ()
+
+if (WITH_CRYPTO)
+	# Search LibUnknownEchoCryptoModule
+
+	if (WIN32)
+		set(LIBUNKNOWNECHOCRYPTOMODULE_INCLUDE "C:\\LibUnknownEchoCryptoModule\\$ENV{name}\\include")
+		set(LIBUNKNOWNECHOCRYPTOMODULE_LIB "C:\\LibUnknownEchoCryptoModule\\$ENV{name}\\lib\\uecm_static.lib")
+	endif ()
+
+	# Search OpenSSL
+	if (UNIX)
+		find_package(PkgConfig REQUIRED)
+		if (NOT OPENSSL_LOCAL_LINK)
+			include_directories(${OPENSSL_INCLUDE_DIR})
+			pkg_search_module(OPENSSL REQUIRED openssl)
+			find_package(OPENSSL REQUIRED)
+			message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
+		endif ()
+	elseif (WIN32)
+		#set(OPENSSL_ROOT_DIR CACHE PATH "C:/OpenSSL-Win64")
+		set(OPENSSL_INCLUDE "C:\\OpenSSL-Win64\\include")
+		set(LIBSSL_LIB "C:\\OpenSSL-Win64\\lib\\libssl.lib")
+		set(LIBCRYPTO_LIB "C:\\OpenSSL-Win64\\lib\\libcrypto.lib")
+	endif ()
+
+	# Search ZLib
+	if (UNIX)
+		include_directories(${ZLIB_INCLUDE_DIRS})
+		pkg_search_module(ZLIB REQUIRED zlib)
+		message(STATUS "Using ZLib ${ZLIB_VERSION}")
+	elseif (WIN32)
+		set(ZLIB_INCLUDE "C:\\zlib\\$ENV{name}\\include")
+		set(ZLIB_LIB "C:\\zlib\\$ENV{name}\\lib\\zlibstatic.lib")
+	endif ()
+endif ()
+
 # --- BUILD LIBMEMORYPLUGIN ---
 
 # Options
@@ -120,6 +224,28 @@ add_library(${PROJECT_NAME_SHARED} SHARED ${PROGRAM_TARGET_SRC_FILES})
 target_include_directories(${PROJECT_NAME_SHARED} PUBLIC "${SRC_PATH}")
 set_target_properties(${PROJECT_NAME_SHARED} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME_SHARED} ${CMAKE_THREAD_LIBS_INIT})
+target_include_directories(${PROJECT_NAME_SHARED} PUBLIC "${LIBUNKNOWNECHOUTILSMODULE_INCLUDE}")
+target_link_libraries(${PROJECT_NAME_SHARED} "${LIBUNKNOWNECHOUTILSMODULE_LIB}")
+if (WITH_CRYPTO)
+	if (WIN32)
+		target_include_directories(${PROJECT_NAME_SHARED} PUBLIC "${LIBUNKNOWNECHOCRYPTOMODULE_INCLUDE}")
+		target_link_libraries(${PROJECT_NAME_SHARED} "${LIBUNKNOWNECHOCRYPTOMODULE_LIB}")
+		target_link_libraries(${PROJECT_NAME_SHARED} "${ZLIB_LIB}")
+	endif ()
+	if (OPENSSL_LOCAL_LINK)
+		if (UNIX)
+			target_link_libraries(${PROJECT_NAME_SHARED} "${CMAKE_SOURCE_DIR}/lib/linux/libssl.so.1.1" -ldl)
+			target_link_libraries(${PROJECT_NAME_SHARED} "${CMAKE_SOURCE_DIR}/lib/linux/libcrypto.so.1.1" -ldl)
+		elseif (WIN32)
+			target_link_libraries(${PROJECT_NAME_SHARED} "${CMAKE_SOURCE_DIR}/lib/windows/libssl.lib")
+			target_link_libraries(${PROJECT_NAME_SHARED} "${CMAKE_SOURCE_DIR}/lib/windows/libcrypto.lib")
+		endif ()
+	elseif (WIN32)
+		target_include_directories(${PROJECT_NAME_SHARED} PUBLIC "${OPENSSL_INCLUDE}")
+		target_link_libraries(${PROJECT_NAME_SHARED} "${LIBSSL_LIB}")
+		target_link_libraries(${PROJECT_NAME_SHARED} "${LIBCRYPTO_LIB}")
+	endif ()
+endif ()
 if (WIN32)
 	target_include_directories(${PROJECT_NAME_SHARED} PUBLIC "${LIBERRORINTERCEPTOR_INCLUDE}")
 	target_link_libraries(${PROJECT_NAME_SHARED} "${LIBERRORINTERCEPTOR_LIB}")
@@ -134,6 +260,28 @@ add_library(${PROJECT_NAME_STATIC} STATIC ${PROGRAM_TARGET_SRC_FILES})
 target_include_directories(${PROJECT_NAME_STATIC} PUBLIC "${SRC_PATH}")
 set_target_properties(${PROJECT_NAME_STATIC} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}_static")
 target_link_libraries(${PROJECT_NAME_STATIC} ${CMAKE_THREAD_LIBS_INIT})
+target_include_directories(${PROJECT_NAME_STATIC} PUBLIC "${LIBUNKNOWNECHOUTILSMODULE_INCLUDE}")
+target_link_libraries(${PROJECT_NAME_STATIC} "${LIBUNKNOWNECHOUTILSMODULE_LIB}")
+if (WITH_CRYPTO)
+	if (WIN32)
+		target_include_directories(${PROJECT_NAME_STATIC} PUBLIC "${LIBUNKNOWNECHOCRYPTOMODULE_INCLUDE}")
+		target_link_libraries(${PROJECT_NAME_STATIC} "${LIBUNKNOWNECHOCRYPTOMODULE_LIB}")
+		target_link_libraries(${PROJECT_NAME_STATIC} "${ZLIB_LIB}")
+	endif ()
+	if (OPENSSL_LOCAL_LINK)
+		if (UNIX)
+			target_link_libraries(${PROJECT_NAME_STATIC} "${CMAKE_SOURCE_DIR}/lib/linux/libssl.so.1.1" -ldl)
+			target_link_libraries(${PROJECT_NAME_STATIC} "${CMAKE_SOURCE_DIR}/lib/linux/libcrypto.so.1.1" -ldl)
+		elseif (WIN32)
+			target_link_libraries(${PROJECT_NAME_STATIC} "${CMAKE_SOURCE_DIR}/lib/windows/libssl.lib")
+			target_link_libraries(${PROJECT_NAME_STATIC} "${CMAKE_SOURCE_DIR}/lib/windows/libcrypto.lib")
+		endif ()
+	elseif (WIN32)
+		target_include_directories(${PROJECT_NAME_STATIC} PUBLIC "${OPENSSL_INCLUDE}")
+		target_link_libraries(${PROJECT_NAME_STATIC} "${LIBSSL_LIB}")
+		target_link_libraries(${PROJECT_NAME_STATIC} "${LIBCRYPTO_LIB}")
+	endif ()
+endif ()
 if (WIN32)
 	target_include_directories(${PROJECT_NAME_STATIC} PUBLIC "${LIBERRORINTERCEPTOR_INCLUDE}")
 	target_link_libraries(${PROJECT_NAME_STATIC} "${LIBERRORINTERCEPTOR_LIB}")
@@ -178,6 +326,28 @@ foreach (filePath ${files} )
 	message(STATUS "Build Program : ${executableName}")
 	add_executable(${executableName} ${filePath})
     target_link_libraries(${executableName} ${PROJECT_NAME_STATIC})
+	target_include_directories(${executableName} PUBLIC "${LIBUNKNOWNECHOUTILSMODULE_INCLUDE}")
+	target_link_libraries(${executableName} "${LIBUNKNOWNECHOUTILSMODULE_LIB}")
+	if (WITH_CRYPTO)
+		if (WIN32)
+			target_include_directories(${executableName} PUBLIC "${LIBUNKNOWNECHOCRYPTOMODULE_INCLUDE}")
+			target_link_libraries(${executableName} "${LIBUNKNOWNECHOCRYPTOMODULE_LIB}")
+			target_link_libraries(${executableName} "${ZLIB_LIB}")
+		endif ()
+		if (OPENSSL_LOCAL_LINK)
+			if (UNIX)
+				target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/linux/libssl.so.1.1" -ldl)
+				target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/linux/libcrypto.so.1.1" -ldl)
+			elseif (WIN32)
+				target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/windows/libssl.lib")
+				target_link_libraries(${executableName} "${CMAKE_SOURCE_DIR}/lib/windows/libcrypto.lib")
+			endif ()
+		elseif (WIN32)
+			target_include_directories(${executableName} PUBLIC "${OPENSSL_INCLUDE}")
+			target_link_libraries(${executableName} "${LIBSSL_LIB}")
+			target_link_libraries(${executableName} "${LIBCRYPTO_LIB}")
+		endif ()
+	endif ()
 	if (WIN32)
 		target_include_directories(${executableName} PUBLIC "${LIBERRORINTERCEPTOR_INCLUDE}")
 		target_link_libraries(${executableName} "${LIBERRORINTERCEPTOR_LIB}")

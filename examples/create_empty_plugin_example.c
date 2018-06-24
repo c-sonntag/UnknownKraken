@@ -18,8 +18,7 @@
 ******************************************************************************/
 
 #include <mp/mp.h>
-#include <mp/utils/file_utils.h>
-
+#include <ueum/ueum.h>
 #include <ei/ei.h>
 
 #include <stdlib.h>
@@ -42,16 +41,17 @@ int main(int argc, char **argv) {
 
 	ei_init();
 
-	if (!mp_is_file_exists(argv[1])) {
+	plugin = NULL;
+
+	if (!ueum_is_file_exists(argv[1])) {
 		ei_stacktrace_push_msg("Specified plugin target file '%s' doesn't exist", argv[1]);
 		goto clean_up;
 	}
 
-	srand(time(0));
-	plugin = NULL;
+	srand((unsigned int)time(0));
 
 	ei_logger_info("Creating empty plugin...");
-	if (!(plugin = mp_memory_plugin_create_empty())) {
+	if ((plugin = mp_memory_plugin_create_empty()) == NULL) {
 		ei_stacktrace_push_msg("Failed to create new plugin");
 		goto clean_up;
 	}
@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
 	* corresponding id of the created plugin.
 	*/
 	ei_logger_info("Saving plugin to target file...");
-	if ((plugin_id = mp_memory_plugin_save(plugin, argv[1])) == -1) {
+	if ((plugin_id = mp_memory_plugin_save(plugin, argv[1], NULL)) == -1) {
 		ei_stacktrace_push_msg("Failed to save new plugin to %s", argv[1]);
 		goto clean_up;
 	}

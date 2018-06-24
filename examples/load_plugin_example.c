@@ -18,8 +18,13 @@
 ******************************************************************************/
 
 #include <mp/mp.h>
-
 #include <ei/ei.h>
+
+#if defined(WITH_CRYPTO)
+
+#include <uecm/uecm.h>
+
+#endif
 
 #include <stdlib.h>
 #include <time.h>
@@ -37,20 +42,40 @@ int main(int argc, char **argv) {
 	typedef void(*hello_world_func)(void);
 	hello_world_func hello_world;
 	int plugin_id;
+	void *crypto_metadata;
 
 	if (argc != 2) {
 		fprintf(stderr, "Usage: %s <plugin_id>\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
-	srand(time(0));
+	ei_init();
+
+	srand((unsigned int)time(0));
 	plugin = NULL;
 	plugin_id = atoi(argv[1]);
-	ei_init();
+
+#if defined(WITH_CRYPTO)
+	uecm_init();
+
+	if ((crypto_metadata = (void *)uecm_crypto_metadata_create_empty()) == NULL) {
+		ei_stacktrace_push_msg("Failed to create empty crypto metadata object");
+		goto clean_up;
+	}
+
+	if (!uecm_crypto_metadata_read((uecm_crypto_metadata *)crypto_metadata,
+		"metadata", "uid", "password")) {
+
+		ei_stacktrace_push_msg("Failed to read crypto metadata");
+		goto clean_up;
+	}
+#else
+	crypto_metadata = NULL;
+#endif
 
 	/* Load plugin from id */
 	ei_logger_info("Loading memory plugin from id %d...", plugin_id);
-	if (!(plugin = mp_memory_plugin_load(plugin_id))) {
+	if ((plugin = mp_memory_plugin_load(plugin_id, crypto_metadata)) == NULL) {
 		ei_stacktrace_push_msg("Failed to load plugin with id %d", plugin_id);
 		goto clean_up;
 	}
@@ -58,7 +83,9 @@ int main(int argc, char **argv) {
 
 	/* Get a function from the plugin */
 	ei_logger_info("Getting function hello_world() from loaded memory plugin...");
-	if (!(hello_world = mp_memory_plugin_get_function(plugin, "hello_world"))) {
+DISABLE_WIN32_PRAGMA_WARN(4152)
+	if ((hello_world = mp_memory_plugin_get_function(plugin, "hello_world")) == NULL) {
+DISABLE_WIN32_PRAGMA_WARN_END
 		ei_stacktrace_push_msg("Failed to get hello_world function from loaded plugin of id", plugin_id);
 		goto clean_up;
 	}
@@ -71,6 +98,10 @@ clean_up:
 		/* Unload the plugin */
 		mp_memory_plugin_unload(plugin);
 	}
+#if defined(WITH_CRYPTO)
+	uecm_crypto_metadata_destroy((uecm_crypto_metadata *)crypto_metadata);
+	uecm_uninit();
+#endif
 	if (ei_stacktrace_is_filled()) {
 		ei_logger_stacktrace("Error occurs with the following stacktrace:");
 	}

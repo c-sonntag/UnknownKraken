@@ -6,7 +6,8 @@
       "name": "${name}",
       "buildPath": "${projectDir}/build/${name}",
       //"installPath": "${env.PROGRAMFILES}\\LibMemoryPlugin\\${name}"
-      "installPath": "C:\\LibMemoryPlugin\\${name}"
+      "installPath": "C:\\LibMemoryPlugin\\${name}",
+      "buildCommandArgs": "-DWITH_CRYPTO"
     }
   ],
 

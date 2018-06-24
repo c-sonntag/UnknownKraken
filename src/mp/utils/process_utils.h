@@ -17,35 +17,9 @@
 *   along with LibMemoryPlugin.  If not, see <http://www.gnu.org/licenses/>. *
 ******************************************************************************/
 
-/**
- *  @file      bool.h
- *  @brief     Portable way to represent bool type.
- *  @author    Charly Lamothe
- *  @copyright GNU Public License.
- */
+#ifndef MEMORYPLUGIN_PROCESS_UTILS_H
+#define MEMORYPLUGIN_PROCESS_UTILS_H
 
-#ifndef MEMORYPLUGIN_BOOL_H
-#define MEMORYPLUGIN_BOOL_H
-
-/* C99 */
-#if __STDC_VERSION__ >= 199901L
-
-#include <stdbool.h>
-
-#elif defined(_MSC_VER)
-
-#define bool _Bool
-#define true 1
-#define false 0
-#define __bool_true_false_are_defined 1
-
-#else /* Not C99 */
-
-typedef enum {
-	false,
-	true
-} bool;
+char *mp_get_current_process_name();
 
 #endif
-
-#endif /* BOOL_H */

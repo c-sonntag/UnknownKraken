@@ -21,5 +21,6 @@
 #define MEMORYPLUGIN_MP_H
 
 #include <mp/api/memory_plugin.h>
+#include <mp/api/entry.h>
 
 #endif
