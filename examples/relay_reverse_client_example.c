@@ -208,38 +208,11 @@ static bool receive_message(ue_byte_stream *received_message) {
     }
     ue_thread_mutex_unlock(context.mutex);
 
+    ei_logger_debug("1.0");
     result = ue_relay_client_receive_message(context.client, received_message);
+    ei_logger_debug("1.1");
     return result;
 }
-
-/*static bool send_message(ue_byte_stream *message_to_send) {
-    bool result;
-
-    ei_check_parameter_or_return(message_to_send);
-    ei_check_parameter_or_return(!ue_byte_stream_is_empty(message_to_send));
-
-    result = false;    
-    //context.transmission_state = WRITING_STATE;
-    result = ue_relay_client_send_message(context.client, message_to_send);
-    //context.transmission_state = READING_STATE;
-    //ue_thread_cond_signal(context.cond);
-    //ue_thread_mutex_unlock(context.mutex);
-
-    return result;
-}
-
-static bool receive_message(ue_byte_stream *received_message) {
-    bool result;
-
-    //ue_thread_mutex_lock(context.mutex);
-    //while (context.transmission_state == WRITING_STATE) {
-        //ue_thread_cond_wait(context.cond, context.mutex);
-    //}
-    //ue_thread_mutex_unlock(context.mutex);
-
-    result = ue_relay_client_receive_message(context.client, received_message);
-    return result;
-}*/
 
 /*static bool send_cipher_message(ue_channel_client *channel_client, void *connection, ue_byte_stream *message_to_send) {
     bool result;
@@ -380,9 +353,7 @@ static void write_consumer(void *parameter) {
     }
 
     while (context.running) {
-        //input = ue_input_string(">");
-        sleep(1);
-        input = ue_string_create_from("ha !");
+        input = ue_input_string(">");
 
         if (!input) {
             continue;
@@ -416,15 +387,6 @@ int main(int argc, char **argv) {
     ue_communication_metadata *our_communication_metadata;
     int child_pid;
 
-    route = NULL;
-    client1_crypto_metadata = NULL;
-    client2_crypto_metadata = NULL;
-    server1_crypto_metadata = NULL;
-    server2_crypto_metadata = NULL;
-    our_communication_metadata = NULL;
-    fds[1] = -1;
-    child_pid = -1;
-
     if (argc != 2) {
         fprintf(stdout, "Usage: %s <1|2> \n", argv[0]);
         exit(EXIT_FAILURE);
@@ -435,6 +397,14 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
     ei_logger_info("UnknownEchoLib is correctly initialized.");
+
+    route = NULL;
+    client1_crypto_metadata = NULL;
+    client2_crypto_metadata = NULL;
+    server1_crypto_metadata = NULL;
+    server2_crypto_metadata = NULL;
+    our_communication_metadata = NULL;
+    fds[1] = -1;
 
     /**
      * Create a pipe for interprocess communication,
@@ -453,6 +423,7 @@ int main(int argc, char **argv) {
      * deciphered messages.
      */
     child_pid = fork();
+
     /* Check if fork() failed. */
     if (child_pid == -1) {
 		ei_stacktrace_push_errno();
@@ -487,7 +458,7 @@ int main(int argc, char **argv) {
         context.cond = ue_thread_cond_create();
         
         context.client = NULL;
-        context.transmission_state = WRITING_STATE;
+        context.transmission_state = READING_STATE;
         context.running = true;
 
         if (atoi(argv[1]) == 1) {
@@ -550,15 +521,17 @@ clean_up:
     if (fds[1] != 1) {
         close(fds[1]);
     }
-    ue_communication_metadata_destroy(our_communication_metadata);
-    ue_relay_client_destroy(context.client);
-    ue_thread_mutex_destroy(context.mutex);
-    ue_thread_cond_destroy(context.cond);
-    ue_crypto_metadata_destroy_all(client1_crypto_metadata);
-    ue_crypto_metadata_destroy_all(client2_crypto_metadata);
-    ue_crypto_metadata_destroy_all(server1_crypto_metadata);
-    ue_crypto_metadata_destroy_all(server2_crypto_metadata);
-    ue_relay_route_destroy(route);
+    if (child_pid != 0) {
+        ue_communication_metadata_destroy(our_communication_metadata);
+        ue_relay_client_destroy(context.client);
+        ue_thread_mutex_destroy(context.mutex);
+        ue_thread_cond_destroy(context.cond);
+        ue_crypto_metadata_destroy_all(client1_crypto_metadata);
+        ue_crypto_metadata_destroy_all(client2_crypto_metadata);
+        ue_crypto_metadata_destroy_all(server1_crypto_metadata);
+        ue_crypto_metadata_destroy_all(server2_crypto_metadata);
+        ue_relay_route_destroy(route);
+    }
     if (ei_stacktrace_is_filled()) {
         ei_logger_error("An error occurred with the following stacktrace :");
         ei_stacktrace_print_all();

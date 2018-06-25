@@ -88,7 +88,6 @@ int main(int argc, char **argv) {
     char *nickname, *password;
     ue_channel_client *channel_client;
     int child_pid;
-    FILE *log_file;
 
     if (argc > 2) {
         fprintf(stderr, "[FATAL] Only one optional argument is possible.\n");
@@ -107,7 +106,6 @@ int main(int argc, char **argv) {
     channel_client = NULL;
     fds[1] = -1;
     child_pid = -1;
-    log_file = NULL;
 
     /* Set log levels for the screen and the log file */
     ei_logger_set_file_level(ei_logger_manager_get_logger(), ERRORINTERCEPTOR_LOG_TRACE);
@@ -182,10 +180,6 @@ int main(int argc, char **argv) {
         /* Close the unused child process */
         close(fds[0]);
 
-        log_file = fopen("pouet.log", "w");
-        ei_logger_set_fp(ei_logger_manager_get_logger(), log_file);
-        ei_logger_set_details(ei_logger_manager_get_logger(), true);
-
         /* Init channel client list with this max channel number */
         ue_channel_client_init(MAX_CHANNEL_CLIENTS_NUMBER);
 
@@ -228,7 +222,6 @@ end:
     if (fds[1] != 1) {
         close(fds[1]);
     }
-    ue_safe_fclose(log_file);
     /* Clean-up nickname and password */
     ue_safe_free(nickname);
     ue_safe_free(password);

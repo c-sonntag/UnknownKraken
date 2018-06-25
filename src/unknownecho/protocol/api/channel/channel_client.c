@@ -542,22 +542,14 @@ static bool send_message(ue_channel_client *channel_client, void *connection, ue
 static size_t receive_message(ue_channel_client *channel_client, void *connection) {
 	size_t received;
 
-	ei_logger_debug("0.1");
     ue_thread_mutex_lock(channel_client->mutex);
-	ei_logger_debug("0.2");
     while (channel_client->transmission_state == WRITING_STATE) {
-		ei_logger_debug("0.3");
         ue_thread_cond_wait(channel_client->cond, channel_client->mutex);
-		ei_logger_debug("0.4");
     }
-	ei_logger_debug("0.5");
     ue_thread_mutex_unlock(channel_client->mutex);
-	ei_logger_debug("0.6");
     ue_byte_stream_clean_up(channel_client->received_message);
-	ei_logger_debug("0.7");
     received = ue_communication_receive_sync(channel_client->communication_context, connection,
         channel_client->received_message);
-	ei_logger_debug("0.8");
 
     return received;
 }
@@ -1129,9 +1121,7 @@ static void csl_read_consumer(void *parameter) {
     connection = channel_client->connection;
 
 	while (channel_client->running) {
-		ei_logger_debug("1.1");
 		received = receive_cipher_message(channel_client, connection);
-		ei_logger_debug("1.2");
 		result = true;
 
 		// @todo set timeout in case of server lag or reboot
