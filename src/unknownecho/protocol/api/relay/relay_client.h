@@ -15,7 +15,8 @@ ue_relay_client *ue_relay_client_create_as_relay(ue_communication_metadata *our_
     ue_communication_metadata *target_communication_metadata, ue_crypto_metadata *our_crypto_metadata);
 
 ue_relay_client *ue_relay_client_create_as_relay_from_connection(ue_communication_metadata *our_communication_metadata,
-    ue_communication_metadata *target_communication_metadata, ue_crypto_metadata *our_crypto_metadata, void *connection);
+    ue_communication_metadata *target_communication_metadata, ue_crypto_metadata *our_crypto_metadata, void *read_connection,
+    void *write_connection);
 
 void ue_relay_client_destroy(ue_relay_client *client);
 
@@ -23,7 +24,9 @@ bool ue_relay_client_is_valid(ue_relay_client *client);
 
 ue_communication_context *ue_relay_client_get_communication_context(ue_relay_client *client);
 
-void *ue_relay_client_get_connection(ue_relay_client *client);
+void *ue_relay_client_get_read_connection(ue_relay_client *client);
+
+void *ue_relay_client_get_write_connection(ue_relay_client *client);
 
 bool ue_relay_client_send_message(ue_relay_client *client, ue_byte_stream *message);
 

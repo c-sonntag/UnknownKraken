@@ -22,6 +22,7 @@
 
 #include <unknownecho/network/api/communication/communication_context.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
+#include <unknownecho/network/api/communication/communication_connection_direction.h>
 #include <unknownecho/bool.h>
 
 #include <stddef.h>
@@ -42,7 +43,10 @@ ue_communication_context *ue_communication_create(const char *communication_type
     void *(*communication_client_connection_get_messages_to_send_impl)(void *connection),
     ue_communication_connection_state (*communication_client_connection_get_state_impl)(void *connection),
     bool (*communication_client_connection_set_state_impl)(void *connection, ue_communication_connection_state state),
-    ue_communication_metadata *communication_client_connection_get_communication_metadata(void *connection),
+    ue_communication_metadata *(*communication_client_connection_get_communication_metadata_impl)(void *connection),
+    ue_communication_connection_direction (*communication_client_connection_get_direction_impl)(void *connection),
+    bool (*communication_client_connection_set_direction_impl)(void *connection, ue_communication_connection_direction
+	    connection_direction),
 
     size_t (*communication_receive_sync_impl)(void *connection, void *received_message),
     size_t (*communication_send_sync_impl)(void *connection, void *message_to_send),
@@ -94,6 +98,11 @@ ue_communication_connection_state ue_communication_client_connection_get_state(u
 bool ue_communication_client_connection_set_state(ue_communication_context *context, void *connection, ue_communication_connection_state state);
 
 ue_communication_metadata *ue_communication_client_connection_get_communication_metadata(ue_communication_context *context, void *connection);
+
+ue_communication_connection_direction ue_communication_client_connection_get_direction(ue_communication_context *context, void *connection);
+
+bool ue_communication_client_connection_set_direction(ue_communication_context *context, void *connection,
+    ue_communication_connection_direction connection_direction);
 
 /* Send and receive message for both client/server */
 

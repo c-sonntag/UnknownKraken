@@ -42,7 +42,8 @@ static ue_relay_client *create_relay_client(ue_communication_metadata *our_commu
     ue_communication_metadata *target_communication_metadata, ue_crypto_metadata *our_crypto_metadata);
 
 static ue_relay_client *create_relay_client_from_connection(ue_communication_metadata *our_communication_metadata,
-    ue_communication_metadata *target_communication_metadata, ue_crypto_metadata *our_crypto_metadata, void *connection);
+    ue_communication_metadata *target_communication_metadata, ue_crypto_metadata *our_crypto_metadata,
+    void *read_connection, void *write_connection);
 
 static int process_client_establishing(ue_byte_stream *message, void *connection);
 
@@ -461,9 +462,12 @@ static void disconnect_client_from_server(void *connection) {
 static ue_relay_client *find_relay_client(ue_communication_metadata *our_communication_metadata,
     ue_communication_metadata *client_communication_metadata, ue_crypto_metadata *our_crypto_metadata) {
 
-    int i;
+    int i, j;
     ue_communication_metadata *current_communication_metadata;
-    void *current_connection;
+    void *current_connection, *read_connection, *write_connection;
+
+    read_connection = NULL;
+    write_connection = NULL;
 
     ei_logger_trace("Searching relay client with this communication metadata...");
 
@@ -472,13 +476,26 @@ static ue_relay_client *find_relay_client(ue_communication_metadata *our_communi
     for (i = 0; i < global_relay_server->relay_clients_number; i++) {
         if (!(current_communication_metadata = ue_communication_client_connection_get_communication_metadata(
             ue_relay_client_get_communication_context(global_relay_server->relay_clients[i]),
-            ue_relay_client_get_connection(global_relay_server->relay_clients[i])))) {
+            ue_relay_client_get_write_connection(global_relay_server->relay_clients[i])))) {
 
             ei_logger_warn("Failed to get communication metadata of client #%d from global_relay_server", i);
             continue;
         }
 
-        if (ue_communication_metadata_equals(current_communication_metadata, client_communication_metadata)) {
+        ei_logger_debug("0 ue_communication_metadata_get_uid(current_communication_metadata): %s",
+            ue_communication_metadata_get_uid(current_communication_metadata));
+
+        ei_logger_debug("0 ue_communication_metadata_get_uid(client_communication_metadata): %s",
+            ue_communication_metadata_get_uid(client_communication_metadata));
+
+        /*if (ue_communication_metadata_equals(current_communication_metadata, client_communication_metadata)) {
+            return global_relay_server->relay_clients[i];
+        }*/
+
+        if (strcmp(ue_communication_metadata_get_uid(current_communication_metadata),
+            ue_communication_metadata_get_uid(client_communication_metadata)) == 0 &&
+            current_communication_metadata->destination_type == client_communication_metadata->destination_type) {
+
             return global_relay_server->relay_clients[i];
         }
     }
@@ -522,8 +539,16 @@ static ue_relay_client *find_relay_client(ue_communication_metadata *our_communi
         if (strcmp(ue_communication_metadata_get_uid(current_communication_metadata),
             ue_communication_metadata_get_uid(client_communication_metadata)) == 0) {
 
+            if (ue_communication_client_connection_get_direction(global_relay_server->communication_context,
+                current_connection) == UNKNOWNECHO_COMMUNICATION_CONNECTION_UNIDIRECTIONAL_READ) {
+                read_connection = current_connection;
+            } else {
+                write_connection = current_connection;
+            }
+
             return create_relay_client_from_connection(our_communication_metadata,
-                client_communication_metadata, our_crypto_metadata, current_connection);
+                client_communication_metadata, our_crypto_metadata, read_connection,
+                write_connection);
         }
     }
 
@@ -552,12 +577,13 @@ static ue_relay_client *create_relay_client(ue_communication_metadata *our_commu
 }
 
 static ue_relay_client *create_relay_client_from_connection(ue_communication_metadata *our_communication_metadata,
-    ue_communication_metadata *target_communication_metadata, ue_crypto_metadata *our_crypto_metadata, void *connection) {
+    ue_communication_metadata *target_communication_metadata, ue_crypto_metadata *our_crypto_metadata,
+    void *read_connection, void *write_connection) {
 
     ue_relay_client *relay_client;
 
     if (!(relay_client = ue_relay_client_create_as_relay_from_connection(our_communication_metadata,
-        target_communication_metadata, our_crypto_metadata, connection))) {
+        target_communication_metadata, our_crypto_metadata, read_connection, write_consumer))) {
 
         ei_stacktrace_push_msg("Failed to create new relay client from received message next step");
         return NULL;
@@ -579,6 +605,7 @@ static int process_client_establishing(ue_byte_stream *message, void *connection
     int uid_length, read_int;
     const char *uid;
     ue_byte_stream *ack_message;
+    int connection_direction;
 
     ei_check_parameter_or_return(message);
     ei_check_parameter_or_return(connection);
@@ -617,6 +644,18 @@ static int process_client_establishing(ue_byte_stream *message, void *connection
         ei_stacktrace_push_msg("Failed to read uid length from received message");
         return -1;
     }
+
+    if (!ue_byte_read_next_int(message, &connection_direction)) {
+        ei_stacktrace_push_msg("Failed to read connection direction from received message");
+        return -1;
+    }
+
+    /**
+     * @todo delegate the direction protocol setting inside the communication connection
+     * and not the above protocol
+     */
+    ue_communication_client_connection_set_direction(global_relay_server->communication_context,
+        connection, (ue_communication_connection_direction)connection_direction);
 
     if (!ue_byte_read_next_string(message, &uid, (size_t)uid_length)) {
         ei_stacktrace_push_msg("Failed to read uid from received message");

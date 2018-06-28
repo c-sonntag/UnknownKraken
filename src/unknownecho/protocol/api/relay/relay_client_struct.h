@@ -10,7 +10,7 @@
 typedef struct {
     ue_communication_metadata *our_communication_metadata;
     ue_communication_context *communication_context;
-    void *connection;
+    void *read_connection, *write_connection;
     ue_relay_route *route, *back_route;
     ue_byte_stream *encoded_route, *encoded_back_route;
     ue_crypto_metadata *our_crypto_metadata;

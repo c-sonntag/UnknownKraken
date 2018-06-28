@@ -67,6 +67,7 @@ ue_socket_client_connection *ue_socket_client_connection_init() {
 	connection->received_messages = ue_queue_create_mem(byte_stream_alloc_func, byte_stream_free_func);
 	connection->messages_to_send = ue_queue_create(byte_stream_alloc_func, byte_stream_free_func);
     connection->communication_metadata = ue_communication_metadata_create_empty();
+    connection->connection_direction = UNKNOWNECHO_COMMUNICATION_CONNECTION_UNIDIRECTIONAL_BIDIRECTIONAL;
 
 	return connection;
 
@@ -259,4 +260,15 @@ ue_communication_metadata *ue_socket_client_connection_get_communication_metadat
     ei_check_parameter_or_return(connection);
 
     return connection->communication_metadata;
+}
+
+ue_communication_connection_direction ue_socket_client_connection_get_direction(ue_socket_client_connection *connection) {
+    return connection->connection_direction;
+}
+
+bool ue_socket_client_connection_set_direction(ue_socket_client_connection *connection, ue_communication_connection_direction
+	connection_direction) {
+
+    connection->connection_direction = connection_direction;
+    return true;
 }

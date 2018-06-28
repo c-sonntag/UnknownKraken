@@ -48,6 +48,8 @@ global_context context;
 /* The file descriptor of the output consola */
 int fds[2];
 
+int client_id = 1;
+
 #define try_or_clean_up(exp, error_message, label) \
     if (!(exp)) { \
         ei_stacktrace_push_msg("%s", error_message); \
@@ -210,110 +212,9 @@ static bool receive_message(ue_byte_stream *received_message) {
 
     ei_logger_debug("1.0");
     result = ue_relay_client_receive_message(context.client, received_message);
-    ei_logger_debug("1.1");
+    //ei_logger_debug("1.1");
     return result;
 }
-
-/*static bool send_cipher_message(ue_channel_client *channel_client, void *connection, ue_byte_stream *message_to_send) {
-    bool result;
-    unsigned char *cipher_data;
-    size_t cipher_data_size;
-    ue_x509_certificate *server_certificate;
-    ue_public_key *server_public_key;
-
-    result = false;
-    cipher_data = NULL;
-    server_public_key = NULL;
-
-    if (!(server_certificate = ue_pkcs12_keystore_find_certificate_by_friendly_name(context.cipher_keystore, (const unsigned char *)"CIPHER_SERVER", strlen("CIPHER_SERVER")))) {
-        ei_stacktrace_push_msg("Failed to get cipher client certificate");
-        goto clean_up;
-    }
-
-    if (!(server_public_key = ue_rsa_public_key_from_x509_certificate(server_certificate))) {
-        ei_stacktrace_push_msg("Failed to get server public key from server certificate");
-        goto clean_up;
-    }
-
-    if (!ue_cipher_plain_data(ue_byte_stream_get_data(message_to_send), ue_byte_stream_get_size(message_to_send),
-        server_public_key, context.signer_keystore->private_key, &cipher_data, &cipher_data_size, context.cipher_name,
-        context.digest_name)) {
-
-        ei_stacktrace_push_msg("Failed to cipher plain data");
-        goto clean_up;
-    }
-
-    ue_byte_stream_clean_up(context.message_to_send);
-
-    if (!ue_byte_writer_append_bytes(context.message_to_send, cipher_data, cipher_data_size)) {
-        ei_stacktrace_push_msg("Failed to write cipher data to message to send");
-        goto clean_up;
-    }
-
-    if (!send_message(channel_client, connection, context.message_to_send)) {
-        ei_stacktrace_push_msg("Failed to send cipher message");
-        goto clean_up;
-    }
-
-    result = true;
-
-clean_up:
-    ue_safe_free(cipher_data);
-    ue_public_key_destroy(server_public_key);
-    return result;
-}
-
-static size_t receive_cipher_message(ue_channel_client *channel_client, void *connection) {
-    unsigned char *plain_data;
-    size_t received, plain_data_size;
-    ue_x509_certificate *server_certificate;
-    ue_public_key *server_public_key;
-
-    plain_data = NULL;
-    server_public_key = NULL;
-
-    received = receive_message(channel_client, connection);
-
-    if (received <= 0 || received == ULLONG_MAX) {
-        ei_logger_warn("Connection with server is interrupted.");
-        goto clean_up;
-    }
-
-    if (!(server_certificate = ue_pkcs12_keystore_find_certificate_by_friendly_name(context.signer_keystore, (const unsigned char *)"SIGNER_SERVER", strlen("SIGNER_SERVER")))) {
-        ei_stacktrace_push_msg("Failed to find server signer certificate");
-        received = -1;
-        goto clean_up;
-    }
-
-    if (!(server_public_key = ue_rsa_public_key_from_x509_certificate(server_certificate))) {
-        ei_stacktrace_push_msg("Failed to get server public key from server certificate");
-        received = -1;
-        goto clean_up;
-    }
-
-    if (!ue_decipher_cipher_data(ue_byte_stream_get_data(context.received_message),
-        ue_byte_stream_get_size(context.received_message), context.cipher_keystore->private_key,
-        server_public_key, &plain_data, &plain_data_size, context.cipher_name,
-        context.digest_name)) {
-
-        received = -1;
-        ei_stacktrace_push_msg("Failed decipher message data");
-        goto clean_up;
-    }
-
-    ue_byte_stream_clean_up(context.received_message);
-
-    if (!ue_byte_writer_append_bytes(context.received_message, plain_data, plain_data_size)) {
-        received = -1;
-        ei_stacktrace_push_msg("Failed to write plain data to received message");
-        goto clean_up;
-    }
-
-clean_up:
-    ue_public_key_destroy(server_public_key);
-    ue_safe_free(plain_data);
-    return received;
-}*/
 
 static void read_consumer(void *parameter) {
     ue_byte_stream *received_message;
@@ -325,10 +226,12 @@ static void read_consumer(void *parameter) {
             ei_logger_stacktrace("Failed to receive message");
             ei_stacktrace_clean_up();
         } else {
+            //ei_logger_debug("1.2");
             if (memcmp(ue_byte_stream_get_data(received_message), "-s", strlen("-s")) == 0) {
                 context.running = false;
                 break;
             }
+            //ei_logger_debug("1.3");
             // Append \n and \0 to correctly print the message on the consola
             if (!ue_byte_writer_append_bytes(received_message, (unsigned char *)"\n\0", 2)) {
                 ei_stacktrace_push_msg("Failed to write \n\0 to printer");
@@ -336,7 +239,9 @@ static void read_consumer(void *parameter) {
                 ei_stacktrace_clean_up();
                 continue;
             }
+            //ei_logger_debug("1.4");
             write(fds[1], ue_byte_stream_get_data(received_message), ue_byte_stream_get_size(received_message));
+            ei_logger_debug("1.5");
         }
     }
 
@@ -442,6 +347,7 @@ int main(int argc, char **argv) {
         char f[PATH_MAX + 1];
         sprintf(f, "/dev/fd/%d", fds[0]);
         execlp("xterm", "xterm", "-e", "cat", f, NULL);
+        client2_crypto_metadata = NULL;
 		ei_stacktrace_push_errno();
         goto clean_up;
     }
@@ -488,6 +394,8 @@ int main(int argc, char **argv) {
             goto clean_up;
         }
 
+        client_id = atoi(argv[1]);
+
         ue_relay_route_print(route, stdout);
 
         if (!ue_relay_route_is_valid(route)) {
@@ -509,11 +417,15 @@ int main(int argc, char **argv) {
     _Pragma("GCC diagnostic push")
     _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
         context.read_consumer_thread = ue_thread_create(read_consumer, NULL);
-        context.write_consumer_thread = ue_thread_create(write_consumer, NULL);
+        if (client_id == 1) {
+            context.write_consumer_thread = ue_thread_create(write_consumer, NULL);
+        }
     _Pragma("GCC diagnostic pop")
 
         ue_thread_join(context.read_consumer_thread, NULL);
-        ue_thread_join(context.write_consumer_thread, NULL);
+        if (client_id == 1) {
+            ue_thread_join(context.write_consumer_thread, NULL);
+        }
     }
 
 clean_up:

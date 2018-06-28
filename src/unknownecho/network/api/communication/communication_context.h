@@ -24,6 +24,7 @@
 #include <unknownecho/bool.h>
 #include <unknownecho/network/api/communication/communication_connection_state.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
+#include <unknownecho/network/api/communication/communication_connection_direction.h>
 
 #include <stddef.h>
 
@@ -53,6 +54,9 @@ typedef struct {
     ue_communication_connection_state (*communication_client_connection_get_state_impl)(void *connection);
     bool (*communication_client_connection_set_state_impl)(void *connection, ue_communication_connection_state state);
     ue_communication_metadata *(*communication_client_connection_get_communication_metadata_impl)(void *connection);
+    ue_communication_connection_direction (*communication_client_connection_get_direction_impl)(void *connection);
+    bool (*communication_client_connection_set_direction_impl)(void *connection, ue_communication_connection_direction
+	    connection_direction);
 
     /* Send and receive message for both client/server */
     size_t (*communication_receive_sync_impl)(void *connection, void *received_message);

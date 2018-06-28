@@ -63,7 +63,7 @@ else ()
     add_compile_options("-std=c99")
 endif ()
 
-add_compile_options("-Wall" "-Werror" "-pedantic" "-fno-builtin")
+add_compile_options("-Wall" "-pedantic" "-fno-builtin")
 
 if (WIN32)
     macro(get_WIN32_WINNT version)

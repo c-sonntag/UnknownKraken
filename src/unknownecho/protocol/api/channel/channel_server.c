@@ -22,7 +22,6 @@
 #include <unknownecho/protocol/api/channel/channel_message_type.h>
 #include <unknownecho/protocol/api/channel/channel.h>
 #include <unknownecho/string/string_utility.h>
-#include <ei/ei.h>
 #include <unknownecho/alloc.h>
 #include <unknownecho/console/input.h>
 #include <unknownecho/network/api/communication/communication.h>
@@ -55,6 +54,8 @@
 #include <unknownecho/fileSystem/folder_utility.h>
 #include <unknownecho/time/sleep.h>
 #include <unknownecho/thread/thread.h>
+
+#include <ei/ei.h>
 
 #include <stdio.h>
 #include <string.h>

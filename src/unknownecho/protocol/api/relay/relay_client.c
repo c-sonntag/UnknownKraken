@@ -7,6 +7,7 @@
 #include <unknownecho/protocol/api/relay/relay_route_encoder.h>
 #include <unknownecho/protocol/api/relay/relay_received_message.h>
 #include <unknownecho/network/api/communication/communication.h>
+#include <unknownecho/network/api/communication/communication_connection_direction.h>
 #include <unknownecho/network/factory/communication_factory.h>
 #include <unknownecho/crypto/api/crypto_metadata.h>
 #include <unknownecho/alloc.h>
@@ -20,20 +21,94 @@
 #include <limits.h>
 #include <string.h>
 
+static bool ue_relay_client_connection(ue_relay_client *relay_client,
+    void *client_connection_parameters, void *connection, ue_communication_connection_direction connection_direction,
+    const char *uid, size_t uid_size) {
+
+    ue_byte_stream *message_to_send, *received_message;
+
+    message_to_send = NULL;
+    received_message = NULL;
+
+    if (!(connection = ue_communication_connect(relay_client->communication_context,
+        client_connection_parameters))) {
+        
+        ei_stacktrace_push_msg("Failed to connect socket to server");
+        return false;
+    }
+
+    if (!(message_to_send = ue_communication_client_connection_get_message_to_send(
+        relay_client->communication_context, connection))) {
+
+        ei_stacktrace_push_msg("Failed to get message to send of the previous connection. Closing the connection");
+        return false;
+    }
+
+    if (!(received_message = ue_communication_client_connection_get_received_message(
+        relay_client->communication_context, connection))) {
+
+        ei_stacktrace_push_msg("Failed to get received message of the previous connection. Closing the connection");
+        return false;
+    }
+
+    if (!ue_byte_writer_append_int(message_to_send, UNKNOWNECHO_PROTOCOL_ID_RELAY)) {
+        ei_stacktrace_push_msg("Failed to write protocol id to message to send");
+        return false;
+    }
+
+    if (!ue_byte_writer_append_int(message_to_send, UNKNOWNECHO_RELAY_MESSAGE_ID_ESTABLISH)) {
+        ei_stacktrace_push_msg("Failed to write message id to message to send");
+        return false;
+    }
+
+    if (!ue_byte_writer_append_int(message_to_send, connection_direction)) {
+        ei_stacktrace_push_msg("Failed to write connection direction");
+        return false;
+    }
+
+    if (!ue_byte_writer_append_int(message_to_send, uid_size)) {
+        ei_stacktrace_push_msg("Failed to write uid length");
+        return false;
+    }
+
+    if (!ue_byte_writer_append_string(message_to_send, uid)) {
+        ei_stacktrace_push_msg("Failed to write our uid to message to send. Closing the connection");
+        return false;
+    }
+
+    if (!ue_communication_send_sync(relay_client->communication_context, connection, message_to_send)) {
+        ei_stacktrace_push_msg("Failed to send our uid to server. Closing the connection");
+        return false;
+    }
+
+    if (!ue_communication_receive_sync(relay_client->communication_context, connection, received_message)) {
+        ei_stacktrace_push_msg("Failed to received ack message. Closing the connection");
+        return false;
+    }
+
+    if (memcmp(ue_byte_stream_get_data(received_message), "ACK", 3) != 0) {
+        ei_stacktrace_push_msg("Received message isn't a correct ACK. Closing the connection");
+        return false;
+    }
+
+    return true;
+}
+
 static ue_relay_client *ue_relay_client_create(ue_communication_metadata *our_communication_metadata,
     ue_communication_metadata *target_communication_metadata) {
 
     ue_relay_client *relay_client;
     void *client_connection_parameters;
-    ue_byte_stream *message_to_send, *received_message;
     const char *uid;
+    size_t uid_size;
 
     ei_check_parameter_or_return(target_communication_metadata);
 
     /* Alloc the client objet */
     ue_safe_alloc(relay_client, ue_relay_client, 1);
     relay_client->communication_context = NULL;
-    relay_client->connection = NULL;
+    relay_client->read_connection = NULL;
+    relay_client->write_connection = NULL;
     relay_client->route = NULL;
     relay_client->back_route = NULL;
     relay_client->encoded_route = NULL;
@@ -41,8 +116,6 @@ static ue_relay_client *ue_relay_client_create(ue_communication_metadata *our_co
     relay_client->our_crypto_metadata = NULL;
     relay_client->our_communication_metadata = our_communication_metadata;
 
-    message_to_send = NULL;
-    received_message = NULL;
     uid = NULL;
 
     /* Create the communication context from the type of communication specified in the metadata of target */
@@ -61,74 +134,28 @@ static ue_relay_client *ue_relay_client_create(ue_communication_metadata *our_co
         goto clean_up;
     }
 
-    /* Finally connect the client or record an error if it's failed */
-    if (!(relay_client->connection = ue_communication_connect(relay_client->communication_context,
-        client_connection_parameters))) {
-        ue_safe_free(relay_client);
-        ei_stacktrace_push_msg("Failed to connect socket to server");
-        goto clean_up;
-    }
-
-    if (!(message_to_send = ue_communication_client_connection_get_message_to_send(
-        relay_client->communication_context, relay_client->connection))) {
-
-        ei_stacktrace_push_msg("Failed to get message to send of the previous connection. Closing the connection");
-        ue_relay_client_destroy(relay_client);
-        goto clean_up;
-    }
-
-    if (!(received_message = ue_communication_client_connection_get_received_message(
-        relay_client->communication_context, relay_client->connection))) {
-
-        ei_stacktrace_push_msg("Failed to get received message of the previous connection. Closing the connection");
-        ue_relay_client_destroy(relay_client);
-        goto clean_up;
-    }
-
     if (!(uid = ue_communication_metadata_get_uid(our_communication_metadata))) {
         ei_stacktrace_push_msg("Failed to get our communication metadata uid");
         ue_relay_client_destroy(relay_client);
         goto clean_up;
     }
 
-    if (!ue_byte_writer_append_int(message_to_send, UNKNOWNECHO_PROTOCOL_ID_RELAY)) {
-        ei_stacktrace_push_msg("Failed to write protocol id to message to send");
+    uid_size = strlen(uid);
+
+    if (!ue_relay_client_connection(relay_client,
+        client_connection_parameters, relay_client->read_connection,
+        UNKNOWNECHO_COMMUNICATION_CONNECTION_UNIDIRECTIONAL_READ, uid, uid_size)) {
+
+        ei_stacktrace_push_msg("Failed to establish read connection");
         ue_relay_client_destroy(relay_client);
         goto clean_up;
     }
 
-    if (!ue_byte_writer_append_int(message_to_send, UNKNOWNECHO_RELAY_MESSAGE_ID_ESTABLISH)) {
-        ei_stacktrace_push_msg("Failed to write message id to message to send");
-        ue_relay_client_destroy(relay_client);
-        goto clean_up;
-    }
+    if (!ue_relay_client_connection(relay_client,
+        client_connection_parameters, relay_client->write_connection,
+        UNKNOWNECHO_COMMUNICATION_CONNECTION_UNIDIRECTIONAL_WRITE, uid, uid_size)) {
 
-    if (!ue_byte_writer_append_int(message_to_send, strlen(uid))) {
-        ei_stacktrace_push_msg("Failed to write uid length");
-        ue_relay_client_destroy(relay_client);
-        goto clean_up;
-    }
-
-    if (!ue_byte_writer_append_string(message_to_send, uid)) {
-        ei_stacktrace_push_msg("Failed to write our uid to message to send. Closing the connection");
-        ue_relay_client_destroy(relay_client);
-        goto clean_up;
-    }
-
-    if (!ue_communication_send_sync(relay_client->communication_context, relay_client->connection, message_to_send)) {
-        ei_stacktrace_push_msg("Failed to send our uid to server. Closing the connection");
-        ue_relay_client_destroy(relay_client);
-        goto clean_up;
-    }
-
-    if (!ue_communication_receive_sync(relay_client->communication_context, relay_client->connection, received_message)) {
-        ei_stacktrace_push_msg("Failed to received ack message. Closing the connection");
-        ue_relay_client_destroy(relay_client);
-        goto clean_up;
-    }
-
-    if (memcmp(ue_byte_stream_get_data(received_message), "ACK", 3) != 0) {
-        ei_stacktrace_push_msg("Received message isn't a correct ACK. Closing the connection");
+        ei_stacktrace_push_msg("Failed to establish write connection");
         ue_relay_client_destroy(relay_client);
         goto clean_up;
     }
@@ -139,17 +166,17 @@ clean_up:
 }
 
 static ue_relay_client *ue_relay_client_create_from_connection(ue_communication_metadata *our_communication_metadata,
-    ue_communication_metadata *target_communication_metadata, void *connection) {
+    ue_communication_metadata *target_communication_metadata, void *read_connection, void *write_connection) {
 
     ue_relay_client *relay_client;
-    void *client_connection_parameters;
 
     ei_check_parameter_or_return(target_communication_metadata);
 
     /* Alloc the client objet */
     ue_safe_alloc(relay_client, ue_relay_client, 1);
     relay_client->communication_context = NULL;
-    relay_client->connection = NULL;
+    relay_client->read_connection = read_connection;
+    relay_client->write_connection = write_connection;
     relay_client->route = NULL;
     relay_client->back_route = NULL;
     relay_client->encoded_route = NULL;
@@ -160,24 +187,6 @@ static ue_relay_client *ue_relay_client_create_from_connection(ue_communication_
     /* Create the communication context from the type of communication specified in the metadata of target */
     relay_client->communication_context = ue_communication_build_from_type(ue_communication_metadata_get_type(target_communication_metadata));
 
-    /**
-     * Build client connection parameters from communication builder, with host and port of target communication metadata
-     * or record an error if it's failed.
-     * @warning At this point of the POC, the optional third arg of secure layer isn't used, nor the crypto_metadata of the
-     * step object.
-     * @todo fix this warning this setting the use of the secure layer mandatory
-     **/
-    if (!(client_connection_parameters = ue_communication_build_client_connection_parameters(relay_client->communication_context, 2,
-        ue_communication_metadata_get_host(target_communication_metadata), ue_communication_metadata_get_port(target_communication_metadata)))) {
-        ue_safe_free(relay_client);
-        ei_stacktrace_push_msg("Failed to create client connection parameters context");
-        goto clean_up;
-    }
-
-    relay_client->connection = connection;
-
-clean_up:
-    ue_safe_free(client_connection_parameters);
     return relay_client;
 }
 
@@ -255,11 +264,14 @@ ue_relay_client *ue_relay_client_create_as_relay(ue_communication_metadata *our_
 }
 
 ue_relay_client *ue_relay_client_create_as_relay_from_connection(ue_communication_metadata *our_communication_metadata,
-    ue_communication_metadata *target_communication_metadata, ue_crypto_metadata *our_crypto_metadata, void *connection) {
+    ue_communication_metadata *target_communication_metadata, ue_crypto_metadata *our_crypto_metadata, void *read_connection,
+    void *write_connection) {
 
     ue_relay_client *relay_client;
 
-    if (!(relay_client = ue_relay_client_create_from_connection(our_communication_metadata, target_communication_metadata, connection))) {
+    if (!(relay_client = ue_relay_client_create_from_connection(our_communication_metadata, target_communication_metadata, read_connection,
+        write_connection))) {
+
         ei_stacktrace_push_msg("Failed to create relay client with next step");
         return NULL;
     }
@@ -270,7 +282,8 @@ ue_relay_client *ue_relay_client_create_as_relay_from_connection(ue_communicatio
 
 void ue_relay_client_destroy(ue_relay_client *client) {
     if (client) {
-        ue_communication_client_connection_destroy(client->communication_context, client->connection);
+        ue_communication_client_connection_destroy(client->communication_context, client->read_connection);
+        ue_communication_client_connection_destroy(client->communication_context, client->write_connection);
         ue_communication_destroy(client->communication_context);
         ue_byte_stream_destroy(client->encoded_route);
         ue_safe_free(client);
@@ -279,8 +292,10 @@ void ue_relay_client_destroy(ue_relay_client *client) {
 
 bool ue_relay_client_is_valid(ue_relay_client *client) {
     return client && ue_communication_context_is_valid(client->communication_context) &&
-        client->connection && (client->communication_context->communication_client_connection_is_established_impl ?
-        client->communication_context->communication_client_connection_is_established_impl(client->connection) : true);
+        client->read_connection && (client->communication_context->communication_client_connection_is_established_impl ?
+        client->communication_context->communication_client_connection_is_established_impl(client->read_connection) : true) &&
+        client->write_connection && (client->communication_context->communication_client_connection_is_established_impl ?
+        client->communication_context->communication_client_connection_is_established_impl(client->write_connection) : true);
 }
 
 ue_communication_context *ue_relay_client_get_communication_context(ue_relay_client *client) {
@@ -293,14 +308,24 @@ ue_communication_context *ue_relay_client_get_communication_context(ue_relay_cli
     return client->communication_context;
 }
 
-void *ue_relay_client_get_connection(ue_relay_client *client) {
+void *ue_relay_client_get_read_connection(ue_relay_client *client) {
     /* Check first if the specified client is valid */
     if (!ue_relay_client_is_valid(client)) {
         ei_stacktrace_push_msg("Specified client isn't valid. The connection is maybe isn't established");
         return NULL;
     }
 
-    return client->connection;
+    return client->read_connection;
+}
+
+void *ue_relay_client_get_write_connection(ue_relay_client *client) {
+    /* Check first if the specified client is valid */
+    if (!ue_relay_client_is_valid(client)) {
+        ei_stacktrace_push_msg("Specified client isn't valid. The connection is maybe isn't established");
+        return NULL;
+    }
+
+    return client->write_connection;
 }
 
 bool ue_relay_client_send_message(ue_relay_client *client, ue_byte_stream *message) {
@@ -353,7 +378,7 @@ bool ue_relay_client_send_message(ue_relay_client *client, ue_byte_stream *messa
         goto clean_up;
     }
 
-    if (!ue_communication_send_sync(client->communication_context, client->connection, encoded_message)) {
+    if (!ue_communication_send_sync(client->communication_context, client->write_connection, encoded_message)) {
         ei_stacktrace_push_msg("Failed to send encoded message in synchronous mode");
         goto clean_up;
     }
@@ -382,7 +407,7 @@ bool ue_relay_client_relay_message(ue_relay_client *client, ue_relay_received_me
         goto clean_up;
     }
 
-    if (!ue_communication_send_sync(client->communication_context, client->connection, encoded_message)) {
+    if (!ue_communication_send_sync(client->communication_context, client->write_connection, encoded_message)) {
         ei_stacktrace_push_msg("Failed to send encoded message in synchronous mode");
         goto clean_up;
     }
@@ -413,7 +438,7 @@ bool ue_relay_client_receive_message(ue_relay_client *client, ue_byte_stream *me
 
     received_message = ue_byte_stream_create();
 
-    received = ue_communication_receive_sync(client->communication_context, client->connection, received_message);
+    received = ue_communication_receive_sync(client->communication_context, client->read_connection, received_message);
     if (received == 0) {
         ei_stacktrace_push_msg("Failed to received bytes");
         goto clean_up;

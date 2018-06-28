@@ -277,14 +277,21 @@ bool ue_socket_server_accept(ue_socket_server *server) {
                 server->connections[i]->peer_certificate = ue_tls_connection_get_peer_certificate(peer_tls);
 			}
             if (ue_socket_client_connection_build_communication_metadata(server->connections[i], &sa)) {
-                if ((communication_metadata_string = ue_communication_metadata_to_string(ue_socket_client_connection_get_communication_metadata(server->connections[i])))) {
+
+                if ((communication_metadata_string = ue_communication_metadata_to_string(
+                    ue_socket_client_connection_get_communication_metadata(server->connections[i]))) == NULL) {
+
+                    if (ei_stacktrace_is_filled()) {
+                        ei_logger_warn("Failed to get communication metadata string from new connected client:");
+                        ei_stacktrace_clean_up();
+                    }
+                } else {
                     ei_logger_trace("Client connected with communication metadata: %s", communication_metadata_string);
                     ue_safe_free(communication_metadata_string);
-                } else {
-                    ei_logger_warn("Failed to get communication metadata string from new connected client");
                 }
             } else {
                 ei_logger_warn("Failed to set sockaddr_in structure to client connection ptr");
+                return false;
             }
             established = true;
             break;
@@ -292,7 +299,7 @@ bool ue_socket_server_accept(ue_socket_server *server) {
     }
 
     if (!established) {
-        ei_logger_warn("Failed to accept new client, because there's no such slot available");
+        ei_stacktrace_push_msg("Failed to accept new client, because there's no such slot available");
     } else {
         ei_logger_info("Client client successfully accepted");
     }
@@ -407,16 +414,14 @@ bool ue_socket_server_process_polling(ue_socket_server *server) {
                 ei_logger_warn("select() failed with error code : %d, but errno is set to 0", r);
             } else {
                 error_buffer = strerror(errno);
-                ei_logger_warn("select() failed with error code : %d and error message : '%s'", r, error_buffer);
+                ei_logger_warn("select() failed with error code : %d and error message: '%s'", r, error_buffer);
             }
         }
         else {
             if (FD_ISSET(server->ue_socket_fd, &read_set)) {
                 if (!ue_socket_server_accept(server)) {
                     if (ei_stacktrace_is_filled()) {
-                        ei_logger_warn("Failed to accept a new client");
-                        ei_logger_trace("Stacktrace is filled :");
-                        ei_stacktrace_print();
+                        ei_logger_stacktrace("Failed to accept a new client with following stacktrace:");
                         ei_stacktrace_clean_up();
                     } else {
                         ei_logger_warn("Failed to accept a new client, but no error was detected. There's probably no such slot available.");

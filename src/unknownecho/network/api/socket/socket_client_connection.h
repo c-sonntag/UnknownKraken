@@ -38,6 +38,7 @@
 #include <unknownecho/network/api/tls/tls_connection.h>
 #include <unknownecho/network/api/communication/communication_connection_state.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
+#include <unknownecho/network/api/communication/communication_connection_direction.h>
 #include <unknownecho/thread/thread_id_struct.h>
 
 #if defined(__unix__)
@@ -60,6 +61,7 @@ typedef struct {
 	bool established;
 	void *optional_data;
     ue_communication_metadata *communication_metadata;
+	ue_communication_connection_direction connection_direction;
 } ue_socket_client_connection;
 
 ue_socket_client_connection *ue_socket_client_connection_init();
@@ -97,5 +99,10 @@ bool ue_socket_client_connection_set_state(ue_socket_client_connection *connecti
 bool ue_socket_client_connection_build_communication_metadata(ue_socket_client_connection *connection, struct sockaddr *sa);
 
 ue_communication_metadata *ue_socket_client_connection_get_communication_metadata(ue_socket_client_connection *connection);
+
+ue_communication_connection_direction ue_socket_client_connection_get_direction(ue_socket_client_connection *connection);
+
+bool ue_socket_client_connection_set_direction(ue_socket_client_connection *connection, ue_communication_connection_direction
+	connection_direction);
 
 #endif

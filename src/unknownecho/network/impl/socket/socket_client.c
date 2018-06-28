@@ -23,8 +23,9 @@
 #include <unknownecho/network/api/tls/tls_connection.h>
 #include <unknownecho/network/api/tls/tls_context.h>
 #include <unknownecho/alloc.h>
-#include <ei/ei.h>
 #include <unknownecho/crypto/api/errorHandling/crypto_error_handling.h>
+
+#include <ei/ei.h>
 
 #include <string.h>
 
