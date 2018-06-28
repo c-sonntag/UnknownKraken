@@ -18,8 +18,8 @@
  *******************************************************************************/
 
 #include <unknownecho/network/api/socket/socket.h>
+#include <ueum/ueum.h>
 #include <ei/ei.h>
-#include <unknownecho/alloc.h>
 
 #include <string.h>
 #include <errno.h>
@@ -240,7 +240,7 @@ int ue_socket_open(int domain, int type) {
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         ue_get_last_wsa_error(error_buffer);
         ei_stacktrace_push_msg(error_buffer);
-        ue_safe_free(error_buffer);
+        ueum_safe_free(error_buffer);
         return -1;
     }
 #endif
@@ -304,13 +304,13 @@ if (fd == -1) {
     if (closesocket((SOCKET)fd) == SOCKET_ERROR) {
         ue_get_last_wsa_error(error_buffer);
         ei_stacktrace_push_msg(error_buffer);
-        ue_safe_free(error_buffer);
+        ueum_safe_free(error_buffer);
         return false;
     }
     if (WSACleanup() == SOCKET_ERROR) {
         ue_get_last_wsa_error(error_buffer);
         ei_stacktrace_push_msg(error_buffer);
-        ue_safe_free(error_buffer);
+        ueum_safe_free(error_buffer);
         return false;
     }
 #else

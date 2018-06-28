@@ -3,7 +3,6 @@
 
 #include <unknownecho/protocol/api/relay/relay_step_struct.h>
 
-
 typedef struct {
     ue_relay_step **steps;
     int steps_number;

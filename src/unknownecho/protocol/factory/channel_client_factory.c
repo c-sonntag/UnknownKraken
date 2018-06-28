@@ -52,7 +52,7 @@ static bool connection_end_callback(void *user_context) {
     return true;
 }
 
-ue_channel_client *ue_channel_client_create_default_local(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ue_byte_stream *printer)) {
+ue_channel_client *ue_channel_client_create_default_local(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ueum_byte_stream *printer)) {
     ue_channel_client_parameters *parameters;
     ue_channel_client *channel_client;
 
@@ -77,7 +77,7 @@ ue_channel_client *ue_channel_client_create_default_local(char *nickname, char *
     return channel_client;
 }
 
-ue_channel_client *ue_channel_client_create_default_remote(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ue_byte_stream *printer),
+ue_channel_client *ue_channel_client_create_default_remote(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ueum_byte_stream *printer),
     const char *host) {
     ue_channel_client_parameters *parameters;
     ue_channel_client *channel_client;

@@ -23,7 +23,7 @@
 #include <unknownecho/network/api/communication/communication_context.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/network/api/communication/communication_connection_direction.h>
-#include <unknownecho/bool.h>
+#include <ueum/ueum.h>
 
 #include <stddef.h>
 

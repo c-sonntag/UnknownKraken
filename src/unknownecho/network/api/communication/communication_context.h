@@ -20,8 +20,7 @@
 #ifndef UNKNOWNECHO_COMMUNICATION_CONTEXT_H
 #define UNKNOWNECHO_COMMUNICATION_CONTEXT_H
 
-#include <unknownecho/byte/byte_stream_struct.h>
-#include <unknownecho/bool.h>
+#include <ueum/ueum.h>
 #include <unknownecho/network/api/communication/communication_connection_state.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/network/api/communication/communication_connection_direction.h>

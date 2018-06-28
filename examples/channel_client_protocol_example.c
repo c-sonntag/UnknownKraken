@@ -28,16 +28,11 @@
   */
 
 #include <unknownecho/init.h>
-#include <ei/ei.h>
 #include <unknownecho/protocol/api/channel/channel_client.h>
 #include <unknownecho/protocol/api/channel/channel_client_struct.h>
 #include <unknownecho/protocol/factory/channel_client_factory.h>
-#include <unknownecho/string/string_utility.h>
-#include <unknownecho/alloc.h>
-#include <unknownecho/console/input.h>
-#include <unknownecho/bool.h>
-#include <unknownecho/byte/byte_stream.h>
-#include <unknownecho/byte/byte_writer.h>
+#include <ueum/ueum.h>
+#include <ei/ei.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,15 +64,15 @@ static void handle_signal(int sig, void (*h)(int), int options) {
  * The user callback to process the decipher received message.
  * It print the result on the second consola.
  */
-bool write_callback(void *user_context, ue_byte_stream *printer) {
+bool write_callback(void *user_context, ueum_byte_stream *printer) {
     /* Append \n and \0 to correctly print the message on the consola */
-    if (!ue_byte_writer_append_bytes(printer, (unsigned char *)"\n\0", 2)) {
+    if (!ueum_byte_writer_append_bytes(printer, (unsigned char *)"\n\0", 2)) {
 		ei_stacktrace_push_msg("Failed to write \n\0 to printer");
 		return false;
 	}
 
     /* Print the result */
-    return write(fds[1], ue_byte_stream_get_data(printer), ue_byte_stream_get_size(printer));
+    return write(fds[1], ueum_byte_stream_get_data(printer), ueum_byte_stream_get_size(printer));
 }
 
 void print_usage(char *name) {
@@ -118,7 +113,7 @@ int main(int argc, char **argv) {
      * nickname.
      * If it's fail, it will add an error message to the stacktrace.
      */
-    if (!(nickname = ue_input_string("Nickname : "))) {
+    if (!(nickname = ueum_input_string("Nickname : "))) {
         ei_stacktrace_push_msg("Specified nickname isn't valid");
         goto end;
     }
@@ -128,7 +123,7 @@ int main(int argc, char **argv) {
      * The password is used to encrypt/decrypt the keystores.
      * If it's fail, it will add an error message to the stacktrace.
      */
-    if (!(password = ue_input_string("Password : "))) {
+    if (!(password = ueum_input_string("Password : "))) {
         ei_stacktrace_push_msg("Specified password isn't valid");
         goto end;
     }
@@ -223,8 +218,8 @@ end:
         close(fds[1]);
     }
     /* Clean-up nickname and password */
-    ue_safe_free(nickname);
-    ue_safe_free(password);
+    ueum_safe_free(nickname);
+    ueum_safe_free(password);
     /* Log the stacktrace if it exists */
     if (ei_stacktrace_is_filled()) {
 		ei_logger_stacktrace("An error occurred with the following stacktrace :");

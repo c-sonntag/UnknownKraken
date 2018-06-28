@@ -22,11 +22,9 @@
 #include <unknownecho/network/api/socket/socket_client_connection.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/network/api/tls/tls_connection.h>
-#include <unknownecho/alloc.h>
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 #include <ei/ei.h>
-#include <unknownecho/string/string_utility.h>
-#include <unknownecho/crypto/api/errorHandling/crypto_error_handling.h>
-#include <unknownecho/crypto/api/certificate/x509_certificate.h>
 
 #include <string.h>
 #include <errno.h>
@@ -67,7 +65,7 @@ ue_socket_server *ue_socket_server_create(ue_socket_server_parameters *parameter
 
     server = NULL;
 
-    ue_safe_alloc_or_goto(server, ue_socket_server, 1, clean_up);
+    ueum_safe_alloc_or_goto(server, ue_socket_server, 1, clean_up);
 
     server->tls_session = parameters->tls_session;
     if ((server->ue_socket_fd = ue_socket_open_tcp()) == -1) {
@@ -78,7 +76,7 @@ ue_socket_server *ue_socket_server_create(ue_socket_server_parameters *parameter
     server->simultaneous_connections_number = DEFAULT_SIMULTANEOUS_CONNECTIONS_NUMBER;
     server->read_consumer = parameters->read_consumer;
     server->write_consumer = parameters->write_consumer;
-    ue_safe_alloc_or_goto(server->connections, ue_socket_client_connection *, server->connections_number, clean_up);
+    ueum_safe_alloc_or_goto(server->connections, ue_socket_client_connection *, server->connections_number, clean_up);
     for (i = 0; i < server->connections_number; i++) {
         if ((server->connections[i] = ue_socket_client_connection_init()) == NULL) {
             ei_stacktrace_push_msg("Failed to init client connections");
@@ -112,16 +110,16 @@ void ue_socket_server_destroy(ue_socket_server *server) {
         if (server->connections) {
             for (i = 0; i < server->connections_number; i++) {
                 if (server->connections[i]->tls) {
-                    ue_tls_connection_destroy(server->connections[i]->tls);
+                    uecm_tls_connection_destroy(server->connections[i]->tls);
                     server->connections[i]->tls = NULL;
                 }
                 ue_socket_client_connection_destroy(server->connections[i]);
                 server->connections[i] = NULL;
             }
-            ue_safe_free(server->connections);
+            ueum_safe_free(server->connections);
         }
         ue_socket_close(server->ue_socket_fd);
-        ue_safe_free(server);
+        ueum_safe_free(server);
     }
 }
 
@@ -193,8 +191,8 @@ bool ue_socket_server_accept(ue_socket_server *server) {
     struct sockaddr sa;
     int new_socket, i;
     bool established;
-    ue_tls_connection *peer_tls;
-    ue_x509_certificate *certificate;
+    uecm_tls_connection *peer_tls;
+    uecm_x509_certificate *certificate;
     const char *communication_metadata_string;
 
     established = false;
@@ -212,23 +210,23 @@ bool ue_socket_server_accept(ue_socket_server *server) {
     if (server->tls_session) {
         ei_logger_info("Server have a TLS session");
 
-        peer_tls = ue_tls_connection_create(server->tls_session->ctx);
+        peer_tls = uecm_tls_connection_create(server->tls_session->ctx);
 		if (!peer_tls) {
 			ei_stacktrace_push_msg("Failed to create TLS peer connection");
 			return false;
 		}
         ei_logger_trace("Peer have a TLS connection");
 
-        if (!ue_tls_connection_set_fd(peer_tls, new_socket)) {
+        if (!uecm_tls_connection_set_fd(peer_tls, new_socket)) {
             ei_stacktrace_push_msg("Failed to set new socket file descriptor to peer TLS connection");
-            ue_tls_connection_destroy(peer_tls);
+            uecm_tls_connection_destroy(peer_tls);
             return false;
         }
         ei_logger_trace("File descriptor set to peer TLS connection");
 
-        if (!ue_tls_connection_accept(peer_tls)) {
+        if (!uecm_tls_connection_accept(peer_tls)) {
             ei_stacktrace_push_msg("Failed to accept new socket file descriptor into the TLS connection");
-            ue_tls_connection_destroy(peer_tls);
+            uecm_tls_connection_destroy(peer_tls);
             return false;
         }
         ei_logger_trace("Peer accepted");
@@ -236,9 +234,9 @@ bool ue_socket_server_accept(ue_socket_server *server) {
 		if (server->tls_session->verify_peer) {
             ei_logger_trace("Verify peer...");
 
-            if (!ue_tls_connection_verify_peer_certificate(peer_tls)) {
+            if (!uecm_tls_connection_verify_peer_certificate(peer_tls)) {
 				ei_stacktrace_push_msg("Client certificate verification failed");
-                ue_tls_connection_destroy(peer_tls);
+                uecm_tls_connection_destroy(peer_tls);
                 return false;
 			}
             ei_logger_trace("Peer TLS connection verified successfully");
@@ -246,16 +244,16 @@ bool ue_socket_server_accept(ue_socket_server *server) {
             ei_logger_trace("Check if client is already connected");
             for (i = 0; i < server->connections_number; i++) {
                 if (server->connections[i] && server->connections[i]->peer_certificate) {
-                    certificate = ue_tls_connection_get_peer_certificate(peer_tls);
-                    if (ue_x509_certificate_equals(certificate, server->connections[i]->peer_certificate)) {
+                    certificate = uecm_tls_connection_get_peer_certificate(peer_tls);
+                    if (uecm_x509_certificate_equals(certificate, server->connections[i]->peer_certificate)) {
                         ei_logger_warn("Client already connected");
                         /* @todo response to client he's already connected ? */
                         /* ue_socket_send_sync_string(new_socket, "ALREADY_CONNECTED", peer_tls); */
-                        ue_x509_certificate_destroy(certificate);
-                        ue_tls_connection_destroy(peer_tls);
+                        uecm_x509_certificate_destroy(certificate);
+                        uecm_tls_connection_destroy(peer_tls);
                         return false;
                     }
-                    ue_x509_certificate_destroy(certificate);
+                    uecm_x509_certificate_destroy(certificate);
                 }
             }
             ei_logger_trace("TLS client isn't already connected");
@@ -271,10 +269,10 @@ bool ue_socket_server_accept(ue_socket_server *server) {
             }
 			if (server->tls_session) {
 				if (server->connections[i]->tls) {
-                    ue_tls_connection_destroy(server->connections[i]->tls);
+                    uecm_tls_connection_destroy(server->connections[i]->tls);
 				}
 				server->connections[i]->tls = peer_tls;
-                server->connections[i]->peer_certificate = ue_tls_connection_get_peer_certificate(peer_tls);
+                server->connections[i]->peer_certificate = uecm_tls_connection_get_peer_certificate(peer_tls);
 			}
             if (ue_socket_client_connection_build_communication_metadata(server->connections[i], &sa)) {
 
@@ -287,7 +285,7 @@ bool ue_socket_server_accept(ue_socket_server *server) {
                     }
                 } else {
                     ei_logger_trace("Client connected with communication metadata: %s", communication_metadata_string);
-                    ue_safe_free(communication_metadata_string);
+                    ueum_safe_free(communication_metadata_string);
                 }
             } else {
                 ei_logger_warn("Failed to set sockaddr_in structure to client connection ptr");

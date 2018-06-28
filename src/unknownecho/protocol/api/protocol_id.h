@@ -1,7 +1,7 @@
 #ifndef UNKNOWNECHO_PROTOCOL_ID_H
 #define UNKNOWNECHO_PROTOCOL_ID_H
 
-#include <unknownecho/bool.h>
+#include <ueum/ueum.h>
 
 typedef enum {
     UNKNOWNECHO_PROTOCOL_ID_CHANNEL = 0,

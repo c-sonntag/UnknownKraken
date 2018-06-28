@@ -5,9 +5,8 @@
 #include <unknownecho/protocol/api/relay/relay_route_decoder.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/network/factory/communication_metadata_factory.h>
-#include <unknownecho/crypto/factory/crypto_metadata_factory.h>
-#include <unknownecho/byte/byte_stream.h>
-#include <unknownecho/byte/byte_writer.h>
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 #include <ei/ei.h>
 
 #include <stdio.h>
@@ -21,8 +20,8 @@
 int main() {
     int step_number;
     ue_relay_route *route;
-    ue_byte_stream *encoded_route;
-    ue_crypto_metadata *our_crypto_metadata, *b_crypto_metadata, *c_crypto_metadata;
+    ueum_byte_stream *encoded_route;
+    uecm_crypto_metadata *our_crypto_metadata, *b_crypto_metadata, *c_crypto_metadata;
     ue_relay_step *b_extracted_step;
 
     step_number = 2;
@@ -40,19 +39,19 @@ int main() {
     ei_logger_info("UnknownEchoLib is correctly initialized");
 
     ei_logger_info("Generating crypto metadata for point A...");
-    if (!(our_crypto_metadata = ue_crypto_metadata_create_default())) {
+    if (!(our_crypto_metadata = uecm_crypto_metadata_create_default())) {
         ei_stacktrace_push_msg("Failed to generate default crypto metadata for point A");
         goto clean_up;
     }
 
     ei_logger_info("Generating crypto metadata for point B...");
-    if (!(b_crypto_metadata = ue_crypto_metadata_create_default())) {
+    if (!(b_crypto_metadata = uecm_crypto_metadata_create_default())) {
         ei_stacktrace_push_msg("Failed to generate default crypto metadata for point B");
         goto clean_up;
     }
 
     ei_logger_info("Generating crypto metadata for point C...");
-    if (!(c_crypto_metadata = ue_crypto_metadata_create_default())) {
+    if (!(c_crypto_metadata = uecm_crypto_metadata_create_default())) {
         ei_stacktrace_push_msg("Failed to generate default crypto metadata for point C");
         goto clean_up;
     }
@@ -87,7 +86,7 @@ int main() {
     }
 
     ei_logger_info("Encoded route:");
-    ue_byte_stream_print_hex(encoded_route, stdout);
+    ueum_byte_stream_print_hex(encoded_route, stdout);
 
     ei_logger_info("Extracting step for B...");
     if (!(b_extracted_step = ue_relay_route_decode_pop_step(encoded_route, b_crypto_metadata))) {
@@ -102,11 +101,11 @@ int main() {
     ei_logger_info("No more step to extract, as C is the end point");
 
 clean_up:
-    ue_byte_stream_destroy(encoded_route);
+    ueum_byte_stream_destroy(encoded_route);
     ue_relay_route_destroy(route);
-    ue_crypto_metadata_destroy_all(our_crypto_metadata);
-    ue_crypto_metadata_destroy_all(b_crypto_metadata);
-    ue_crypto_metadata_destroy_all(c_crypto_metadata);
+    uecm_crypto_metadata_destroy_all(our_crypto_metadata);
+    uecm_crypto_metadata_destroy_all(b_crypto_metadata);
+    uecm_crypto_metadata_destroy_all(c_crypto_metadata);
     ue_relay_step_destroy(b_extracted_step);
     if (ei_stacktrace_is_filled()) {
         ei_logger_error("An error occurred with the following stacktrace :");

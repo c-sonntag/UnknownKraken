@@ -1,8 +1,8 @@
 #ifndef UNKNOWNECHO_COMMUNICATION_METADATA_H
 #define UNKNOWNECHO_COMMUNICATION_METADATA_H
 
-#include <unknownecho/bool.h>
 #include <unknownecho/network/api/communication/communication_type.h>
+#include <ueum/ueum.h>
 
 #include <stdio.h>
 

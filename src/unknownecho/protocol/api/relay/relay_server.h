@@ -3,11 +3,11 @@
 
 #include <unknownecho/protocol/api/relay/relay_server_struct.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
-#include <unknownecho/bool.h>
-#include <unknownecho/crypto/api/crypto_metadata.h>
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 
 ue_relay_server *ue_relay_server_create(ue_communication_metadata *communication_metadata, void *user_context,
-    ue_crypto_metadata *our_crypto_metadata, bool (*user_received_callback)(void *user_context, ue_byte_stream *received_message));
+    uecm_crypto_metadata *our_crypto_metadata, bool (*user_received_callback)(void *user_context, ueum_byte_stream *received_message));
 
 void ue_relay_server_destroy(ue_relay_server *relay_server);
 

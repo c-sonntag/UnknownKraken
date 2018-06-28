@@ -18,16 +18,16 @@
  *******************************************************************************/
 
 #include <unknownecho/protocol/api/channel/channel.h>
-#include <unknownecho/alloc.h>
+#include <ueum/ueum.h>
 #include <ei/ei.h>
 
 ue_channel *ue_channel_create() {
     ue_channel *channel;
     int i;
 
-    ue_safe_alloc(channel, ue_channel, 1);
+    ueum_safe_alloc(channel, ue_channel, 1);
     channel->max_connections_number = 10;
-    ue_safe_alloc(channel->connections, ue_socket_client_connection *, channel->max_connections_number);
+    ueum_safe_alloc(channel->connections, ue_socket_client_connection *, channel->max_connections_number);
     for (i = 0; i < channel->max_connections_number; i++) {
         channel->connections[i] = NULL;
     }
@@ -38,8 +38,8 @@ ue_channel *ue_channel_create() {
 
 void ue_channel_destroy(ue_channel *channel) {
     if (channel) {
-        ue_safe_free(channel->connections);
-        ue_safe_free(channel);
+        ueum_safe_free(channel->connections);
+        ueum_safe_free(channel);
     }
 }
 
@@ -100,7 +100,7 @@ bool ue_channel_remove_connection_by_nickname(ue_channel *channel, char *nicknam
 
     for (i = 0; i < channel->max_connections_number; i++) {
         if (channel->connections[i] && strcmp(channel->connections[i]->nickname, nickname) == 0) {
-            ue_safe_free(channel->connections[i]->optional_data);
+            ueum_safe_free(channel->connections[i]->optional_data);
             channel->connections[i]->optional_data = NULL;
             channel->connections[i] = NULL;
             channel->connections_number--;

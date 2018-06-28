@@ -21,13 +21,12 @@
 #define UNKNOWNECHO_TLS_CONNECTION_READ_H
 
 #include <unknownecho/network/api/tls/tls_connection.h>
-#include <unknownecho/bool.h>
-#include <unknownecho/byte/byte_stream.h>
+#include <ueum/ueum.h>
 
 #include <stddef.h>
 
-size_t ue_tls_connection_read_sync(ue_tls_connection *connection, ue_byte_stream *stream);
+size_t uecm_tls_connection_read_sync(uecm_tls_connection *connection, ueum_byte_stream *stream);
 
-size_t ue_tls_connection_read_async(ue_tls_connection *connection, bool (*flow_consumer)(void *flow, size_t flow_size));
+size_t uecm_tls_connection_read_async(uecm_tls_connection *connection, bool (*flow_consumer)(void *flow, size_t flow_size));
 
 #endif

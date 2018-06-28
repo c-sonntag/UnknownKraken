@@ -28,28 +28,27 @@
 #define UNKNOWNECHO_TLS_UNKNOWNECHO_CONNECTION_H
 
 #include <unknownecho/network/api/tls/tls_context.h>
-#include <unknownecho/crypto/api/certificate/x509_certificate.h>
-#include <unknownecho/bool.h>
-#include <unknownecho/byte/byte_stream.h>
+#include <uecm/uecm.h>
+#include <ueum/ueum.h>
 
 #include <stddef.h>
 
-typedef struct ue_tls_connection ue_tls_connection;
+typedef struct uecm_tls_connection uecm_tls_connection;
 
-ue_tls_connection *ue_tls_connection_create(ue_tls_context *context);
+uecm_tls_connection *uecm_tls_connection_create(uecm_tls_context *context);
 
-void ue_tls_connection_destroy(ue_tls_connection *connection);
+void uecm_tls_connection_destroy(uecm_tls_connection *connection);
 
-bool ue_tls_connection_set_fd(ue_tls_connection *connection, int fd);
+bool uecm_tls_connection_set_fd(uecm_tls_connection *connection, int fd);
 
-void *ue_tls_connection_get_impl(ue_tls_connection *connection);
+void *uecm_tls_connection_get_impl(uecm_tls_connection *connection);
 
-bool ue_tls_connection_connect(ue_tls_connection *connection);
+bool uecm_tls_connection_connect(uecm_tls_connection *connection);
 
-bool ue_tls_connection_accept(ue_tls_connection *connection);
+bool uecm_tls_connection_accept(uecm_tls_connection *connection);
 
-ue_x509_certificate *ue_tls_connection_get_peer_certificate(ue_tls_connection *connection);
+uecm_x509_certificate *uecm_tls_connection_get_peer_certificate(uecm_tls_connection *connection);
 
-bool ue_tls_connection_verify_peer_certificate(ue_tls_connection *connection);
+bool uecm_tls_connection_verify_peer_certificate(uecm_tls_connection *connection);
 
 #endif

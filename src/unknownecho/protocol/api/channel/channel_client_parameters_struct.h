@@ -20,10 +20,8 @@
 #ifndef UNKNOWNECHO_CHANNEL_CLIENT_PARAMETERS_STRUCT_H
 #define UNKNOWNECHO_CHANNEL_CLIENT_PARAMETERS_STRUCT_H
 
-#include <unknownecho/bool.h>
-#include <unknownecho/byte/byte_stream.h>
-#include <unknownecho/console/input.h>
 #include <unknownecho/network/api/communication/communication_type.h>
+#include <ueum/ueum.h>
 
 typedef struct {
     char *persistent_path;
@@ -35,7 +33,7 @@ typedef struct {
     char *keystore_password;
     const char *server_certificates_path;
     void *user_context;
-    bool (*write_callback)(void *user_context, ue_byte_stream *printer);
+    bool (*write_callback)(void *user_context, ueum_byte_stream *printer);
     bool (*initialization_begin_callback)(void *user_context);
 	bool (*initialization_end_callback)(void *user_context);
     bool (*uninitialization_begin_callback)(void *user_context);
@@ -44,7 +42,7 @@ typedef struct {
 	bool (*connection_end_callback)(void *user_context);
     char *(*user_input_callback)(void *user_context);
     const char *cipher_name, *digest_name;
-    ue_user_input_mode user_input_mode;
+    ueum_user_input_mode user_input_mode;
     ue_communication_type communication_type;
 } ue_channel_client_parameters;
 

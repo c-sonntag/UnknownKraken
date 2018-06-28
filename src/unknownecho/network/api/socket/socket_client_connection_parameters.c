@@ -18,14 +18,14 @@
  *******************************************************************************/
 
 #include <unknownecho/network/api/socket/socket_client_connection_parameters.h>
-#include <unknownecho/alloc.h>
+#include <ueum/ueum.h>
 
 ue_socket_client_connection_parameters *ue_socket_client_connection_parameters_build(int fd, int domain,
-    const char *host, unsigned short int port, ue_tls_session *tls_session) {
+    const char *host, unsigned short int port, uecm_tls_session *tls_session) {
 
     ue_socket_client_connection_parameters *parameters;
 
-    ue_safe_alloc(parameters, ue_socket_client_connection_parameters, 1);
+    ueum_safe_alloc(parameters, ue_socket_client_connection_parameters, 1);
     parameters->fd = fd;
     parameters->domain = domain;
     parameters->domain_s = NULL;
@@ -38,11 +38,11 @@ ue_socket_client_connection_parameters *ue_socket_client_connection_parameters_b
 }
 
 ue_socket_client_connection_parameters *ue_socket_client_connection_parameters_build_s(int fd, const char *domain,
-    const char *host, const char *port, ue_tls_session *tls_session) {
+    const char *host, const char *port, uecm_tls_session *tls_session) {
 
     ue_socket_client_connection_parameters *parameters;
 
-    ue_safe_alloc(parameters, ue_socket_client_connection_parameters, 1);
+    ueum_safe_alloc(parameters, ue_socket_client_connection_parameters, 1);
     parameters->fd = fd;
     parameters->domain_s = domain;
     parameters->domain = -1;

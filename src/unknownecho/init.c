@@ -18,8 +18,8 @@
  *******************************************************************************/
 
 #include <unknownecho/init.h>
-#include <unknownecho/crypto/api/crypto_init.h>
-#include <unknownecho/bool.h>
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 #include <ei/ei.h>
 
 static bool errorInterceptor_initialized = false;
@@ -31,7 +31,7 @@ int ue_init() {
 	}
 
 	if (errorInterceptor_initialized && !crypto_initialized) {
-		crypto_initialized = ue_crypto_init();
+		crypto_initialized = uecm_crypto_init();
 	}
 
 	return errorInterceptor_initialized && crypto_initialized;
@@ -39,7 +39,7 @@ int ue_init() {
 
 void ue_uninit() {
 	if (crypto_initialized) {
-		ue_crypto_uninit();
+		uecm_crypto_uninit();
 	}
 
 	if (errorInterceptor_initialized) {

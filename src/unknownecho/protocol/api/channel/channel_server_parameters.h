@@ -21,8 +21,8 @@
 #define UNKNOWNECHO_CHANNEL_SERVER_PARAMETERS_H
 
 #include <unknownecho/protocol/api/channel/channel_server_parameters_struct.h>
-#include <unknownecho/bool.h>
 #include <unknownecho/network/api/communication/communication_type.h>
+#include <ueum/ueum.h>
 
 ue_channel_server_parameters *ue_channel_server_parameters_create(char *keystore_password, char *key_password);
 

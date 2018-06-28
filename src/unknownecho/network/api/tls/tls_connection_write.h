@@ -24,6 +24,6 @@
 
 #include <stddef.h>
 
-size_t ue_tls_connection_write_sync(ue_tls_connection *connection, const void *data, int size);
+size_t uecm_tls_connection_write_sync(uecm_tls_connection *connection, const void *data, int size);
 
 #endif

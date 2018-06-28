@@ -22,11 +22,8 @@
 
 #include <unknownecho/network/api/communication/communication_context.h>
 #include <unknownecho/protocol/api/channel/channel.h>
-#include <unknownecho/crypto/api/keystore/pkcs12_keystore.h>
-#include <unknownecho/bool.h>
-#include <unknownecho/thread/thread_id_struct.h>
-#include <unknownecho/thread/thread_mutex.h>
-#include <unknownecho/thread/thread_cond.h>
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 
 #include <stdio.h>
 #include <stddef.h>
@@ -38,17 +35,17 @@ typedef enum {
 
 typedef struct {
     void *csr_server, *csl_server;
-    ue_thread_mutex *csr_server_mutex, *csl_server_mutex;
-    ue_thread_cond *csr_server_cond, *csl_server_cond;
+    ueum_thread_mutex *csr_server_mutex, *csl_server_mutex;
+    ueum_thread_cond *csr_server_cond, *csl_server_cond;
     ue_processing_state csr_server_processing_state, csl_server_processing_state;
     ue_communication_context *communication_context;
     void *communication_secure_layer_session;
     ue_channel **channels;
     int channels_number;
-    ue_thread_id *csr_server_thread, *csl_server_thread;
+    ueum_thread_id *csr_server_thread, *csl_server_thread;
     bool signal_caught;
     char *keystore_password;
-    ue_pkcs12_keystore *csr_keystore, *csl_keystore, *cipher_keystore, *signer_keystore;
+    uecm_pkcs12_keystore *csr_keystore, *csl_keystore, *cipher_keystore, *signer_keystore;
     FILE *logs_file;
     char *persistent_path, *csr_server_certificate_path, *csr_server_key_path,
         *csl_server_certificate_path, *csl_server_key_path, *cipher_server_certificate_path,

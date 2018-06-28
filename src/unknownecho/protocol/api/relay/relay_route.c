@@ -1,12 +1,12 @@
 #include <unknownecho/protocol/api/relay/relay_route.h>
 #include <unknownecho/protocol/api/relay/relay_step.h>
+#include <ueum/ueum.h>
 #include <ei/ei.h>
-#include <unknownecho/alloc.h>
 
 ue_relay_route *ue_relay_route_create(ue_relay_step **steps, int steps_number) {
     ue_relay_route *route;
 
-    ue_safe_alloc(route, ue_relay_route, 1);
+    ueum_safe_alloc(route, ue_relay_route, 1);
     route->steps = steps;
     route->steps_number = steps_number;
 
@@ -17,9 +17,9 @@ ue_relay_route *ue_relay_route_create_back_route(ue_relay_route *route) {
     ue_relay_route *back_route;
     int i, j;
 
-    ue_safe_alloc(back_route, ue_relay_route, 1);
+    ueum_safe_alloc(back_route, ue_relay_route, 1);
     back_route->steps_number = route->steps_number;
-    ue_safe_alloc(back_route->steps, ue_relay_step *, back_route->steps_number);
+    ueum_safe_alloc(back_route->steps, ue_relay_step *, back_route->steps_number);
 
     for (i = route->steps_number - 1, j = 0; i >= 0; i--, j++) {
         back_route->steps[j] = ue_relay_step_create_from_step(route->steps[i]);
@@ -36,9 +36,9 @@ void ue_relay_route_destroy(ue_relay_route *route) {
             for (i = 0; i < route->steps_number; i++) {
                 ue_relay_step_destroy(route->steps[i]);
             }
-            ue_safe_free(route->steps);
+            ueum_safe_free(route->steps);
         }
-        ue_safe_free(route);
+        ueum_safe_free(route);
     }
 }
 
@@ -50,9 +50,9 @@ void ue_relay_route_destroy_all(ue_relay_route *route) {
             for (i = 0; i < route->steps_number; i++) {
                 ue_relay_step_destroy_all(route->steps[i]);
             }
-            ue_safe_free(route->steps);
+            ueum_safe_free(route->steps);
         }
-        ue_safe_free(route);
+        ueum_safe_free(route);
     }
 }
 

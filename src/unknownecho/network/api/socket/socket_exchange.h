@@ -20,12 +20,11 @@
 #ifndef UNKNOWNECHO_SOCKET_EXCHANGE_H
 #define UNKNOWNECHO_SOCKET_EXCHANGE_H
 
-#include <unknownecho/bool.h>
 #include <unknownecho/network/api/socket/socket_client_connection.h>
-#include <unknownecho/byte/byte_stream_struct.h>
+#include <ueum/ueum.h>
 
-bool ue_socket_exchange_send(ue_socket_client_connection *connection, ue_byte_stream *message_to_send);
+bool ue_socket_exchange_send(ue_socket_client_connection *connection, ueum_byte_stream *message_to_send);
 
-bool ue_socket_exchange_receive(ue_socket_client_connection *connection, ue_byte_stream *received_message);
+bool ue_socket_exchange_receive(ue_socket_client_connection *connection, ueum_byte_stream *received_message);
 
 #endif

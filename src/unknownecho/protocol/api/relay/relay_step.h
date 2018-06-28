@@ -2,12 +2,12 @@
 #define UNKNWOWNECHO_RELAY_STEP_H
 
 #include <unknownecho/protocol/api/relay/relay_step_struct.h>
-#include <unknownecho/bool.h>
+#include <ueum/ueum.h>
 
 #include <stdio.h>
 
 ue_relay_step *ue_relay_step_create(ue_communication_metadata *target_communication_metadata,
-    ue_crypto_metadata *our_crypto_metadata, ue_crypto_metadata *target_crypto_metadata);
+    uecm_crypto_metadata *our_crypto_metadata, uecm_crypto_metadata *target_crypto_metadata);
 
 ue_relay_step *ue_relay_step_create_from_step(ue_relay_step *step);
 
@@ -19,9 +19,9 @@ void ue_relay_step_destroy_all(ue_relay_step *step);
 
 ue_communication_metadata *ue_relay_step_get_target_communication_metadata(ue_relay_step *step);
 
-ue_crypto_metadata *ue_relay_step_get_our_crypto_metadata(ue_relay_step *step);
+uecm_crypto_metadata *ue_relay_step_get_our_crypto_metadata(ue_relay_step *step);
 
-ue_crypto_metadata *ue_relay_step_get_target_crypto_metadata(ue_relay_step *step);
+uecm_crypto_metadata *ue_relay_step_get_target_crypto_metadata(ue_relay_step *step);
 
 void ue_relay_step_print(ue_relay_step *step, FILE *fd);
 

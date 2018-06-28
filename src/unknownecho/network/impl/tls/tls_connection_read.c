@@ -18,7 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/network/api/tls/tls_connection_read.h>
-#include <unknownecho/byte/byte_writer.h>
+#include <ueum/ueum.h>
 #include <ei/ei.h>
 
 #include <openssl/ssl.h>
@@ -26,7 +26,7 @@
 
 #include <string.h>
 
-size_t ue_tls_connection_read_sync(ue_tls_connection *connection, ue_byte_stream *stream) {
+size_t uecm_tls_connection_read_sync(uecm_tls_connection *connection, ueum_byte_stream *stream) {
 	int32_t ssl_error;
     size_t received, total, bytes;
     unsigned char response[4096];
@@ -36,7 +36,7 @@ size_t ue_tls_connection_read_sync(ue_tls_connection *connection, ue_byte_stream
 	total = sizeof(response) - 1;
 	received = 0;
 	ssl_error = SSL_ERROR_NONE;
-	ssl = ue_tls_connection_get_impl(connection);
+	ssl = uecm_tls_connection_get_impl(connection);
 
 	do {
 		memset(response, 0, sizeof(response));
@@ -68,7 +68,7 @@ size_t ue_tls_connection_read_sync(ue_tls_connection *connection, ue_byte_stream
 
 		if ((bytes > 0) && (ssl_error == SSL_ERROR_NONE)) {
 			received += bytes;
-			if (!ue_byte_writer_append_bytes(stream, response, bytes)) {
+			if (!ueum_byte_writer_append_bytes(stream, response, bytes)) {
 				ei_stacktrace_push_msg("Failed to append in bytes stream socket response");
 				return -1;
 			}
@@ -96,7 +96,7 @@ size_t ue_tls_connection_read_sync(ue_tls_connection *connection, ue_byte_stream
 	return received;
 }
 
-size_t ue_tls_connection_read_async(ue_tls_connection *connection, bool (*flow_consumer)(void *flow, size_t flow_size)) {
+size_t uecm_tls_connection_read_async(uecm_tls_connection *connection, bool (*flow_consumer)(void *flow, size_t flow_size)) {
 	int32_t ssl_error;
     size_t received, total, bytes;
     char response[4096];
@@ -106,7 +106,7 @@ size_t ue_tls_connection_read_async(ue_tls_connection *connection, bool (*flow_c
 	total = sizeof(response) - 1;
 	received = 0;
 	ssl_error = SSL_ERROR_NONE;
-	ssl = ue_tls_connection_get_impl(connection);
+	ssl = uecm_tls_connection_get_impl(connection);
 
 	do {
 		memset(response, 0, sizeof(response));

@@ -1,27 +1,24 @@
 #include <unknownecho/init.h>
-#include <unknownecho/bool.h>
 #include <unknownecho/protocol/api/relay/relay_server.h>
 #include <unknownecho/protocol/api/relay/relay_step.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/network/factory/communication_metadata_factory.h>
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 #include <ei/ei.h>
-#include <unknownecho/byte/byte_stream.h>
-#include <unknownecho/crypto/api/crypto_metadata.h>
-#include <unknownecho/crypto/api/certificate/x509_certificate.h>
-#include <unknownecho/crypto/factory/crypto_metadata_factory.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
 
-bool received_message_callback(void *user_context, ue_byte_stream *received_message) {
-    if (!received_message || ue_byte_stream_is_empty(received_message)) {
+bool received_message_callback(void *user_context, ueum_byte_stream *received_message) {
+    if (!received_message || ueum_byte_stream_is_empty(received_message)) {
         ei_logger_error("Received message consumer called, but received message ptr is null or message is empty");
         return false;
     }
 
     ei_logger_info("Received the following message:");
-    ue_byte_stream_print_string(received_message, stdout);
+    ueum_byte_stream_print_string(received_message, stdout);
 
     return true;
 }
@@ -40,11 +37,9 @@ static void handle_signal(int sig, void (*h)(int), int options) {
     }
 }
 
-#include <unknownecho/string/string_utility.h>
-
 int main(int argc, char **argv) {
     ue_relay_server *server;
-    ue_crypto_metadata *our_crypto_metadata;
+    uecm_crypto_metadata *our_crypto_metadata;
     ue_communication_metadata *our_communication_metadata;
 
     server = NULL;
@@ -61,7 +56,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    if (!(our_crypto_metadata = ue_crypto_metadata_write_if_not_exist("out/private", "out/public", argv[1], argv[2]))) {
+    if (!(our_crypto_metadata = uecm_crypto_metadata_write_if_not_exist("out/private", "out/public", argv[1], argv[2]))) {
         ei_stacktrace_push_msg("Failed to get crypto metadata");
         goto clean_up;
     }
@@ -95,7 +90,7 @@ int main(int argc, char **argv) {
 
 clean_up:
     ue_relay_server_destroy(server);
-    ue_crypto_metadata_destroy_all(our_crypto_metadata);
+    uecm_crypto_metadata_destroy_all(our_crypto_metadata);
     ue_communication_metadata_destroy(our_communication_metadata);
     if (ei_stacktrace_is_filled()) {
         ei_logger_error("An error occurred with the following stacktrace :");

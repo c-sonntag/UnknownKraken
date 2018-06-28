@@ -30,7 +30,7 @@
 #include <unknownecho/network/api/socket/socket_client_connection.h>
 #include <unknownecho/network/api/socket/socket_server_parameters.h>
 #include <unknownecho/network/api/tls/tls_session.h>
-#include <unknownecho/bool.h>
+#include <ueum/ueum.h>
 
 typedef struct {
 	int ue_socket_fd;
@@ -39,7 +39,7 @@ typedef struct {
 	bool (*read_consumer)(ue_socket_client_connection *connection);
 	bool (*write_consumer)(ue_socket_client_connection *connection);
 	bool running;
-	ue_tls_session *tls_session;
+	uecm_tls_session *tls_session;
 } ue_socket_server;
 
 ue_socket_server *ue_socket_server_create(ue_socket_server_parameters *parameters);

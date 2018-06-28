@@ -22,14 +22,14 @@
 
 #include <unknownecho/network/api/tls/tls_connection.h>
 #include <unknownecho/network/api/socket/socket_client_connection.h>
-#include <unknownecho/bool.h>
+#include <ueum/ueum.h>
 
 #include <stddef.h>
 
-size_t ue_socket_receive_sync(ue_socket_client_connection *connection, ue_byte_stream *received_message);
+size_t ue_socket_receive_sync(ue_socket_client_connection *connection, ueum_byte_stream *received_message);
 
-size_t ue_socket_receive_all_sync(int fd, unsigned char **bytes, size_t size, ue_tls_connection *tls);
+size_t ue_socket_receive_all_sync(int fd, unsigned char **bytes, size_t size, uecm_tls_connection *tls);
 
-size_t ue_socket_receive_async(int fd, bool (*flow_consumer)(void *flow, size_t flow_size), ue_tls_connection *tls);
+size_t ue_socket_receive_async(int fd, bool (*flow_consumer)(void *flow, size_t flow_size), uecm_tls_connection *tls);
 
 #endif

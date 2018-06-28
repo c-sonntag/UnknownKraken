@@ -18,16 +18,16 @@
  *******************************************************************************/
 
 #include <unknownecho/network/api/socket/socket_server_parameters.h>
-#include <unknownecho/alloc.h>
+#include <ueum/ueum.h>
 
 ue_socket_server_parameters *ue_socket_server_parameters_build(unsigned short int port,
     bool (*read_consumer)(ue_socket_client_connection *connection),
     bool (*write_consumer)(ue_socket_client_connection *connection),
-    ue_tls_session *tls_session) {
+    uecm_tls_session *tls_session) {
 
     ue_socket_server_parameters *parameters;
 
-    ue_safe_alloc(parameters, ue_socket_server_parameters, 1);
+    ueum_safe_alloc(parameters, ue_socket_server_parameters, 1);
     parameters->port = port;
     parameters->read_consumer = read_consumer;
     parameters->write_consumer = write_consumer;

@@ -10,12 +10,8 @@
 #include <unknownecho/protocol/api/relay/relay_received_message_struct.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/network/factory/communication_metadata_factory.h>
-#include <unknownecho/crypto/factory/crypto_metadata_factory.h>
-#include <unknownecho/byte/byte_stream.h>
-#include <unknownecho/byte/byte_writer.h>
-#include <unknownecho/string/string_utility.h>
-#include <unknownecho/alloc.h>
-
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 #include <ei/ei.h>
 
 #include <stdio.h>
@@ -27,30 +23,30 @@
         goto label; \
     } \
 
-static bool generate_crypto_metadatas(ue_crypto_metadata **a_crypto_metadata,
-    ue_crypto_metadata **b_crypto_metadata, ue_crypto_metadata **c_crypto_metadata,
-    ue_crypto_metadata **d_crypto_metadata) {
+static bool generate_crypto_metadatas(uecm_crypto_metadata **a_crypto_metadata,
+    uecm_crypto_metadata **b_crypto_metadata, uecm_crypto_metadata **c_crypto_metadata,
+    uecm_crypto_metadata **d_crypto_metadata) {
 
     ei_logger_info("Generating crypto metadata for point A...");
-    if (!(*a_crypto_metadata = ue_crypto_metadata_create_default())) {
+    if (!(*a_crypto_metadata = uecm_crypto_metadata_create_default())) {
         ei_stacktrace_push_msg("Failed to generate default crypto metadata for point A");
         return false;
     }
 
     ei_logger_info("Generating crypto metadata for point B...");
-    if (!(*b_crypto_metadata = ue_crypto_metadata_create_default())) {
+    if (!(*b_crypto_metadata = uecm_crypto_metadata_create_default())) {
         ei_stacktrace_push_msg("Failed to generate default crypto metadata for point B");
         return false;
     }
 
     ei_logger_info("Generating crypto metadata for point C...");
-    if (!(*c_crypto_metadata = ue_crypto_metadata_create_default())) {
+    if (!(*c_crypto_metadata = uecm_crypto_metadata_create_default())) {
         ei_stacktrace_push_msg("Failed to generate default crypto metadata for point C");
         return false;
     }
 
     ei_logger_info("Generating crypto metadata for point D...");
-    if (!(*d_crypto_metadata = ue_crypto_metadata_create_default())) {
+    if (!(*d_crypto_metadata = uecm_crypto_metadata_create_default())) {
         ei_stacktrace_push_msg("Failed to generate default crypto metadata for point D");
         return false;
     }
@@ -59,8 +55,8 @@ static bool generate_crypto_metadatas(ue_crypto_metadata **a_crypto_metadata,
 }
 
 static bool generate_routes(ue_relay_route **route, ue_relay_route **back_route, int step_number,
-    ue_crypto_metadata *a_crypto_metadata, ue_crypto_metadata *b_crypto_metadata,
-    ue_crypto_metadata *c_crypto_metadata, ue_crypto_metadata *d_crypto_metadata) {
+    uecm_crypto_metadata *a_crypto_metadata, uecm_crypto_metadata *b_crypto_metadata,
+    uecm_crypto_metadata *c_crypto_metadata, uecm_crypto_metadata *d_crypto_metadata) {
 
     ei_logger_info("Creating route...");
 
@@ -117,13 +113,13 @@ static bool generate_routes(ue_relay_route **route, ue_relay_route **back_route,
     return true;
 }
 
-static bool send_request(ue_byte_stream *message_payload, ue_relay_route *route, ue_relay_route *back_route,
-    ue_byte_stream **encoded_message, ue_relay_received_message **b_received_message,
+static bool send_request(ueum_byte_stream *message_payload, ue_relay_route *route, ue_relay_route *back_route,
+    ueum_byte_stream **encoded_message, ue_relay_received_message **b_received_message,
     ue_relay_received_message **c_received_message, ue_relay_received_message **d_received_message,
-    ue_crypto_metadata *b_crypto_metadata, ue_crypto_metadata *c_crypto_metadata, ue_crypto_metadata *d_crypto_metadata) {
+    uecm_crypto_metadata *b_crypto_metadata, uecm_crypto_metadata *c_crypto_metadata, uecm_crypto_metadata *d_crypto_metadata) {
     
     /* The payload is just an simple Hello world ! */
-    ue_byte_writer_append_string(message_payload, "Hello world !");
+    ueum_byte_writer_append_string(message_payload, "Hello world !");
 
     ei_logger_info("A -> B");
 
@@ -144,7 +140,7 @@ static bool send_request(ue_byte_stream *message_payload, ue_relay_route *route,
 
     ei_logger_info("B -> C");
 
-    ue_byte_stream_destroy(*encoded_message);
+    ueum_byte_stream_destroy(*encoded_message);
 
     ei_logger_info("Encoding route and message for C...");
     if (!(*encoded_message = ue_relay_message_encode_relay(*b_received_message))) {
@@ -163,7 +159,7 @@ static bool send_request(ue_byte_stream *message_payload, ue_relay_route *route,
 
     ei_logger_info("C -> D");
 
-    ue_byte_stream_destroy(*encoded_message);
+    ueum_byte_stream_destroy(*encoded_message);
 
     ei_logger_info("Encoding route and message for D...");
     if (!(*encoded_message = ue_relay_message_encode_relay(*c_received_message))) {
@@ -186,28 +182,28 @@ static bool send_request(ue_byte_stream *message_payload, ue_relay_route *route,
     }
 
     ei_logger_info("Print message payload of D:");
-    ue_byte_stream_print_string((*d_received_message)->payload, stdout);
+    ueum_byte_stream_print_string((*d_received_message)->payload, stdout);
 
-    ue_byte_stream_destroy(*encoded_message);
+    ueum_byte_stream_destroy(*encoded_message);
 
     return true;
 }
 
-static bool send_response(ue_byte_stream *message_payload, ue_relay_route *route, ue_relay_route *back_route,
-    ue_byte_stream **encoded_message, ue_relay_received_message **c_received_message,
+static bool send_response(ueum_byte_stream *message_payload, ue_relay_route *route, ue_relay_route *back_route,
+    ueum_byte_stream **encoded_message, ue_relay_received_message **c_received_message,
     ue_relay_received_message **b_received_message, ue_relay_received_message **a_received_message,
-    ue_crypto_metadata *a_crypto_metadata, ue_crypto_metadata *b_crypto_metadata, ue_crypto_metadata *c_crypto_metadata) {
+    uecm_crypto_metadata *a_crypto_metadata, uecm_crypto_metadata *b_crypto_metadata, uecm_crypto_metadata *c_crypto_metadata) {
     
     char *uppercase;
 
-    uppercase = ue_string_uppercase((const char *)ue_byte_stream_get_data(message_payload));
+    uppercase = ueum_string_uppercase((const char *)ueum_byte_stream_get_data(message_payload));
 
-    ue_byte_stream_clean_up(message_payload);
+    ueum_byte_stream_clean_up(message_payload);
 
     /* The payload is the uppercase of the received message */
-    ue_byte_writer_append_string(message_payload, uppercase);
+    ueum_byte_writer_append_string(message_payload, uppercase);
 
-    ue_safe_free(uppercase);
+    ueum_safe_free(uppercase);
 
     ei_logger_info("D -> C");
 
@@ -229,7 +225,7 @@ static bool send_response(ue_byte_stream *message_payload, ue_relay_route *route
 
     ei_logger_info("C -> B");
 
-    ue_byte_stream_destroy(*encoded_message);
+    ueum_byte_stream_destroy(*encoded_message);
 
     ei_logger_info("Encoding route and message for B...");
     if (!(*encoded_message = ue_relay_message_encode_relay(*c_received_message))) {
@@ -248,7 +244,7 @@ static bool send_response(ue_byte_stream *message_payload, ue_relay_route *route
 
     ei_logger_info("B -> A");
 
-    ue_byte_stream_destroy(*encoded_message);
+    ueum_byte_stream_destroy(*encoded_message);
 
     ei_logger_info("Encoding route and message for A...");
     if (!(*encoded_message = ue_relay_message_encode_relay(*b_received_message))) {
@@ -271,7 +267,7 @@ static bool send_response(ue_byte_stream *message_payload, ue_relay_route *route
     }
 
     ei_logger_info("Print message payload of A:");
-    ue_byte_stream_print_string((*a_received_message)->payload, stdout);
+    ueum_byte_stream_print_string((*a_received_message)->payload, stdout);
 
     return true;
 }
@@ -279,8 +275,8 @@ static bool send_response(ue_byte_stream *message_payload, ue_relay_route *route
 int main() {
     int step_number;
     ue_relay_route *route, *back_route;
-    ue_crypto_metadata *a_crypto_metadata, *b_crypto_metadata, *c_crypto_metadata, *d_crypto_metadata;
-    ue_byte_stream *encoded_message, *message_payload;
+    uecm_crypto_metadata *a_crypto_metadata, *b_crypto_metadata, *c_crypto_metadata, *d_crypto_metadata;
+    ueum_byte_stream *encoded_message, *message_payload;
     ue_relay_received_message *a_received_message, *b_received_message, *c_received_message, *d_received_message;
 
     step_number = 3;
@@ -295,7 +291,7 @@ int main() {
     b_received_message = NULL;
     c_received_message = NULL;
     d_received_message = NULL;
-    message_payload = ue_byte_stream_create();
+    message_payload = ueum_byte_stream_create();
 
     if (!ue_init()) {
         fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
@@ -319,16 +315,16 @@ int main() {
 
 clean_up:
     ue_relay_route_destroy(route);
-    ue_crypto_metadata_destroy_all(a_crypto_metadata);
-    ue_crypto_metadata_destroy_all(b_crypto_metadata);
-    ue_crypto_metadata_destroy_all(c_crypto_metadata);
-    ue_crypto_metadata_destroy_all(d_crypto_metadata);
-    ue_byte_stream_destroy(encoded_message);
+    uecm_crypto_metadata_destroy_all(a_crypto_metadata);
+    uecm_crypto_metadata_destroy_all(b_crypto_metadata);
+    uecm_crypto_metadata_destroy_all(c_crypto_metadata);
+    uecm_crypto_metadata_destroy_all(d_crypto_metadata);
+    ueum_byte_stream_destroy(encoded_message);
     ue_relay_received_message_destroy(a_received_message);
     ue_relay_received_message_destroy(b_received_message);
     ue_relay_received_message_destroy(c_received_message);
     ue_relay_received_message_destroy(d_received_message);
-    ue_byte_stream_destroy(message_payload);
+    ueum_byte_stream_destroy(message_payload);
     if (ei_stacktrace_is_filled()) {
         ei_logger_error("An error occurred with the following stacktrace :");
         ei_stacktrace_print_all();

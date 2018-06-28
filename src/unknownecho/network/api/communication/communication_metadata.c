@@ -1,10 +1,7 @@
 #include <unknownecho/network/api/communication/communication_metadata.h>
-#include <ei/ei.h>
-#include <unknownecho/string/string_utility.h>
-#include <unknownecho/string/string_split.h>
-#include <unknownecho/container/string_vector.h>
-#include <unknownecho/alloc.h>
 #include <unknownecho/defines.h>
+#include <ei/ei.h>
+#include <ueum/ueum.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -12,7 +9,7 @@
 ue_communication_metadata *ue_communication_metadata_create_empty() {
     ue_communication_metadata *metadata;
 
-    ue_safe_alloc(metadata, ue_communication_metadata, 1);
+    ueum_safe_alloc(metadata, ue_communication_metadata, 1);
     metadata->uid = NULL;
     metadata->host = NULL;
     metadata->port = 0;
@@ -24,46 +21,46 @@ ue_communication_metadata *ue_communication_metadata_create_empty() {
 
 ue_communication_metadata *ue_communication_metadata_create_from_string(const char *string) {
     ue_communication_metadata *metadata;
-    ue_string_vector *vector;
+    ueum_string_vector *vector;
     int elements_number;
 
     metadata = NULL;
 
     ei_check_parameter_or_return(string);
 
-    if (!(vector = ue_string_split(string, ":"))) {
+    if (!(vector = ueum_string_split(string, ":"))) {
         ei_stacktrace_push_msg("Failed to split strint metadata");
         return NULL;
     }
 
-    if ((elements_number = ue_string_vector_size(vector)) != 5) {
+    if ((elements_number = ueum_string_vector_size(vector)) != 5) {
         ei_stacktrace_push_msg("Input metadata string have an invalid number of arguments '%d'", elements_number);
         goto clean_up;
     }
 
     metadata = ue_communication_metadata_create_empty();
     /* @todo fix memory leak here */
-    ue_communication_metadata_set_uid(metadata, ue_string_create_from(ue_string_vector_get(vector, 0)));
-    ue_communication_metadata_set_type(metadata, atoi(ue_string_vector_get(vector, 1)));
-    ue_communication_metadata_set_host(metadata, ue_string_create_from(ue_string_vector_get(vector, 2)));
-    ue_communication_metadata_set_port(metadata, atoi(ue_string_vector_get(vector, 3)));
-    ue_communication_metadata_set_destination_type(metadata, atoi(ue_string_vector_get(vector, 4)));
+    ue_communication_metadata_set_uid(metadata, ueum_string_create_from(ueum_string_vector_get(vector, 0)));
+    ue_communication_metadata_set_type(metadata, atoi(ueum_string_vector_get(vector, 1)));
+    ue_communication_metadata_set_host(metadata, ueum_string_create_from(ueum_string_vector_get(vector, 2)));
+    ue_communication_metadata_set_port(metadata, atoi(ueum_string_vector_get(vector, 3)));
+    ue_communication_metadata_set_destination_type(metadata, atoi(ueum_string_vector_get(vector, 4)));
 
 clean_up:
-    //ue_string_vector_destroy(vector);
+    //ueum_string_vector_destroy(vector);
     return metadata;
 }
 
 void ue_communication_metadata_destroy(ue_communication_metadata *metadata) {
     if (metadata) {
-        ue_safe_free(metadata->host);
-        ue_safe_free(metadata);
+        ueum_safe_free(metadata->host);
+        ueum_safe_free(metadata);
     }
 }
 
 void ue_communication_metadata_clean_up(ue_communication_metadata *metadata) {
     if (metadata) {
-        ue_safe_free(metadata->host);
+        ueum_safe_free(metadata->host);
     }
 }
 
@@ -72,9 +69,9 @@ ue_communication_metadata *ue_communication_metadata_copy(ue_communication_metad
 
     copy = ue_communication_metadata_create_empty();
     copy->type = metadata->type;
-    copy->uid = ue_string_create_from(metadata->uid);
+    copy->uid = ueum_string_create_from(metadata->uid);
     if (metadata->type == UNKNOWNECHO_COMMUNICATION_TYPE_SOCKET) {
-        copy->host = ue_string_create_from(metadata->host);
+        copy->host = ueum_string_create_from(metadata->host);
         copy->port = metadata->port;
     }
     copy->destination_type = metadata->destination_type;
@@ -120,7 +117,7 @@ bool ue_communication_metadata_set_host(ue_communication_metadata *metadata, con
    ei_check_parameter_or_return(metadata);
    ei_check_parameter_or_return(host);
 
-   metadata->host = ue_string_create_from(host);
+   metadata->host = ueum_string_create_from(host);
 
    return true;
 }
@@ -201,7 +198,7 @@ const char *ue_communication_metadata_to_string(ue_communication_metadata *metad
     }
 
     if (metadata->type == UNKNOWNECHO_COMMUNICATION_TYPE_SOCKET) {
-        string = ue_strcat_variadic("ssdsssdsd", ue_communication_metadata_get_uid(metadata), ":",
+        string = ueum_strcat_variadic("ssdsssdsd", ue_communication_metadata_get_uid(metadata), ":",
             ue_communication_metadata_get_type(metadata), ":",
             ue_communication_metadata_get_host(metadata), ":",
             ue_communication_metadata_get_port(metadata), ":",
@@ -224,7 +221,7 @@ bool ue_communication_metadata_print(ue_communication_metadata *metadata, FILE *
 
     fprintf(fd, "%s", string);
 
-    ue_safe_free(string);
+    ueum_safe_free(string);
 
     return true;
 }

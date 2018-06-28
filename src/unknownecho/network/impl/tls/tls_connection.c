@@ -18,11 +18,8 @@
  *******************************************************************************/
 
 #include <unknownecho/network/api/tls/tls_connection.h>
-#include <unknownecho/alloc.h>
-#include <unknownecho/crypto/api/certificate/x509_certificate.h>
-#include <unknownecho/crypto/api/errorHandling/crypto_error_handling.h>
-#include <unknownecho/string/string_utility.h>
-#include <unknownecho/byte/byte_writer.h>
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 #include <ei/ei.h>
 
 #include <openssl/ssl.h>
@@ -30,77 +27,77 @@
 
 #include <string.h>
 
-struct ue_tls_connection {
+struct uecm_tls_connection {
 	SSL *impl;
 };
 
-ue_tls_connection *ue_tls_connection_create(ue_tls_context *context) {
-	ue_tls_connection *connection;
+uecm_tls_connection *uecm_tls_connection_create(uecm_tls_context *context) {
+	uecm_tls_connection *connection;
 	char *error_buffer;
 
-	ue_safe_alloc(connection, ue_tls_connection, 1);
+	ueum_safe_alloc(connection, uecm_tls_connection, 1);
 
-	connection->impl = SSL_new((SSL_CTX *)ue_tls_context_get_impl(context));
+	connection->impl = SSL_new((SSL_CTX *)uecm_tls_context_get_impl(context));
 	if (!connection->impl) {
-		ue_openssl_error_handling(error_buffer, "Error SSL_new");
-		ue_safe_free(connection);
+		uecm_openssl_error_handling(error_buffer, "Error SSL_new");
+		ueum_safe_free(connection);
 		return NULL;
 	}
 
 	return connection;
 }
 
-void ue_tls_connection_destroy(ue_tls_connection *connection) {
+void uecm_tls_connection_destroy(uecm_tls_connection *connection) {
 	if (connection) {
 		if (connection->impl) {
 			SSL_shutdown(connection->impl);
 			SSL_free(connection->impl);
 		}
-		ue_safe_free(connection);
+		ueum_safe_free(connection);
 	}
 }
 
-bool ue_tls_connection_set_fd(ue_tls_connection *connection, int fd) {
+bool uecm_tls_connection_set_fd(uecm_tls_connection *connection, int fd) {
 	char *error_buffer;
 
 	error_buffer = NULL;
 
 	if (SSL_set_fd(connection->impl, fd) == 0) {
-		ue_crypto_error_handling(error_buffer, "Failed to set file descriptor to TLS connection");
+		uecm_crypto_error_handling(error_buffer, "Failed to set file descriptor to TLS connection");
 		return false;
 	}
 
 	return true;
 }
 
-void *ue_tls_connection_get_impl(ue_tls_connection *connection) {
+void *uecm_tls_connection_get_impl(uecm_tls_connection *connection) {
 	return connection->impl;
 }
 
-bool ue_tls_connection_connect(ue_tls_connection *connection) {
+bool uecm_tls_connection_connect(uecm_tls_connection *connection) {
 	char *error_buffer;
 
 	if (SSL_connect(connection->impl) != 1) {
-		ue_openssl_error_handling(error_buffer, "Handshake connection");
+		uecm_openssl_error_handling(error_buffer, "Handshake connection");
 		return false;
 	}
 
 	return true;
 }
 
-bool ue_tls_connection_accept(ue_tls_connection *connection) {
+bool uecm_tls_connection_accept(uecm_tls_connection *connection) {
 	char *error_buffer;
 
 	if (SSL_accept(connection->impl) != 1) {
-		ue_openssl_error_handling(error_buffer, "Handshake accept");
+		uecm_openssl_error_handling(error_buffer, "Handshake accept");
 		return false;
 	}
 
 	return true;
 }
 
-ue_x509_certificate *ue_tls_connection_get_peer_certificate(ue_tls_connection *connection) {
-	ue_x509_certificate *peer_certificate;
+uecm_x509_certificate *uecm_tls_connection_get_peer_certificate(uecm_tls_connection *connection) {
+	uecm_x509_certificate *peer_certificate;
 	X509 *peer_tls_certificate;
     long verify_result;
 
@@ -120,8 +117,8 @@ ue_x509_certificate *ue_tls_connection_get_peer_certificate(ue_tls_connection *c
         return NULL;
     }
 
-	peer_certificate = ue_x509_certificate_create_empty();
-	if (!ue_x509_certificate_set_impl(peer_certificate, peer_tls_certificate)) {
+	peer_certificate = uecm_x509_certificate_create_empty();
+	if (!uecm_x509_certificate_set_impl(peer_certificate, peer_tls_certificate)) {
 		ei_logger_warn("This implementation of x509 isn't valid");
 		return NULL;
 	}
@@ -129,11 +126,11 @@ ue_x509_certificate *ue_tls_connection_get_peer_certificate(ue_tls_connection *c
     return peer_certificate;
 }
 
-bool ue_tls_connection_verify_peer_certificate(ue_tls_connection *connection) {
-	ue_x509_certificate *certificate;
+bool uecm_tls_connection_verify_peer_certificate(uecm_tls_connection *connection) {
+	uecm_x509_certificate *certificate;
 
-	if ((certificate = ue_tls_connection_get_peer_certificate(connection))) {
-		ue_x509_certificate_destroy(certificate);
+	if ((certificate = uecm_tls_connection_get_peer_certificate(connection))) {
+		uecm_x509_certificate_destroy(certificate);
 		return true;
 	}
 

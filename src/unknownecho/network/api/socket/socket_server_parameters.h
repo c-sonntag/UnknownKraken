@@ -20,20 +20,20 @@
 #ifndef UNKNOWNECHO_SOCKET_SERVER_PARAMETERS_H
 #define UNKNOWNECHO_SOCKET_SERVER_PARAMETERS_H
 
-#include <unknownecho/bool.h>
 #include <unknownecho/network/api/socket/socket_client.h>
 #include <unknownecho/network/api/tls/tls_session.h>
+#include <ueum/ueum.h>
 
 typedef struct {
     unsigned short int port;
     bool (*read_consumer)(ue_socket_client_connection *connection);
     bool (*write_consumer)(ue_socket_client_connection *connection);
-    ue_tls_session *tls_session;
+    uecm_tls_session *tls_session;
 } ue_socket_server_parameters;
 
 ue_socket_server_parameters *ue_socket_server_parameters_build(unsigned short int port,
     bool (*read_consumer)(ue_socket_client_connection *connection),
     bool (*write_consumer)(ue_socket_client_connection *connection),
-    ue_tls_session *tls_session);
+    uecm_tls_session *tls_session);
 
 #endif

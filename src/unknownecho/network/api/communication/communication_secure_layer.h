@@ -21,8 +21,8 @@
 #define UNKNOWNECHO_COMMUNICATION_SECURE_LAYER_H
 
 #include <unknownecho/network/api/communication/communication_context.h>
-#include <unknownecho/crypto/api/keystore/pkcs12_keystore.h>
-#include <unknownecho/bool.h>
+#include <uecm/uecm.h>
+#include <ueum/ueum.h>
 
 void *ue_communication_secure_layer_build_client(ue_communication_context *context, int count, ...);
 
@@ -30,6 +30,6 @@ void *ue_communication_secure_layer_build_server(ue_communication_context *conte
 
 bool ue_communication_secure_layer_destroy(ue_communication_context *context, void *csl);
 
-ue_pkcs12_keystore *ue_communication_secure_layer_get_keystore(ue_communication_context *context, void *csl);
+uecm_pkcs12_keystore *ue_communication_secure_layer_get_keystore(ue_communication_context *context, void *csl);
 
 #endif

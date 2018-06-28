@@ -27,19 +27,12 @@
 #ifndef UNKNOWNECHO_SOCKET_CLIENT_UNKNOWNECHO_CONNECTION_H
 #define UNKNOWNECHO_SOCKET_CLIENT_UNKNOWNECHO_CONNECTION_H
 
-#include <unknownecho/bool.h>
-#include <unknownecho/string/string_builder.h>
-#include <unknownecho/string/string_utility.h>
-#include <unknownecho/container/string_vector.h>
-#include <unknownecho/container/byte_vector.h>
-#include <unknownecho/container/queue.h>
-#include <unknownecho/byte/byte_stream.h>
-#include <unknownecho/crypto/api/certificate/x509_certificate.h>
 #include <unknownecho/network/api/tls/tls_connection.h>
 #include <unknownecho/network/api/communication/communication_connection_state.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/network/api/communication/communication_connection_direction.h>
-#include <unknownecho/thread/thread_id_struct.h>
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 
 #if defined(__unix__)
     #include <netinet/in.h>
@@ -49,15 +42,15 @@
 
 typedef struct {
 	int fd;
-	ue_byte_stream *received_message, *message_to_send, *tmp_stream;
-	ue_queue *received_messages, *messages_to_send;
-    ue_thread_id *read_messages_consumer_thread, *write_messages_consumer_thread;
+	ueum_byte_stream *received_message, *message_to_send, *tmp_stream;
+	ueum_queue *received_messages, *messages_to_send;
+    ueum_thread_id *read_messages_consumer_thread, *write_messages_consumer_thread;
     ue_communication_connection_state state;
 	char *nickname;
-	ue_byte_vector *split_message, *all_messages, *tmp_message, *current_message;
-	ue_tls_connection *tls;
-	ue_x509_certificate *peer_certificate;
-	ue_byte_stream *received_message_stream;
+	ueum_byte_vector *split_message, *all_messages, *tmp_message, *current_message;
+	uecm_tls_connection *tls;
+	uecm_x509_certificate *peer_certificate;
+	ueum_byte_stream *received_message_stream;
 	bool established;
 	void *optional_data;
     ue_communication_metadata *communication_metadata;
@@ -84,13 +77,13 @@ char *ue_socket_client_connection_get_nickname(ue_socket_client_connection *conn
 
 bool ue_socket_client_connection_set_nickname(ue_socket_client_connection *connection, char *nickname);
 
-ue_byte_stream *ue_socket_client_connection_get_received_message(ue_socket_client_connection *connection);
+ueum_byte_stream *ue_socket_client_connection_get_received_message(ue_socket_client_connection *connection);
 
-ue_byte_stream *ue_socket_client_connection_get_message_to_send(ue_socket_client_connection *connection);
+ueum_byte_stream *ue_socket_client_connection_get_message_to_send(ue_socket_client_connection *connection);
 
-ue_queue *ue_socket_client_connection_get_received_messages(ue_socket_client_connection *connection);
+ueum_queue *ue_socket_client_connection_get_received_messages(ue_socket_client_connection *connection);
 
-ue_queue *ue_socket_client_connection_get_messages_to_send(ue_socket_client_connection *connection);
+ueum_queue *ue_socket_client_connection_get_messages_to_send(ue_socket_client_connection *connection);
 
 ue_communication_connection_state ue_socket_client_connection_get_state(ue_socket_client_connection *connection);
 

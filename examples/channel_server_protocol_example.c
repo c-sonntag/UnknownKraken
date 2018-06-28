@@ -25,12 +25,10 @@
   */
 
 #include <unknownecho/init.h>
-#include <ei/ei.h>
 #include <unknownecho/protocol/api/channel/channel_server.h>
 #include <unknownecho/protocol/factory/channel_server_factory.h>
-#include <unknownecho/console/input.h>
-#include <unknownecho/alloc.h>
-#include <unknownecho/string/string_utility.h>
+#include <ueum/ueum.h>
+#include <ei/ei.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -67,13 +65,13 @@ int main() {
     ei_logger_set_print_level(ei_logger_manager_get_logger(), ERRORINTERCEPTOR_LOG_TRACE);
 
     /* Get the user keystore password. If it's fail, it will add an error message to the stacktrace. */
-    if (!(keystore_password = ue_input_string("Keystore password : "))) {
+    if (!(keystore_password = ueum_input_string("Keystore password : "))) {
         ei_stacktrace_push_msg("Specified keystore password isn't valid");
         goto end;
     }
 
     /* Get the user private keys password. If it's fail, it will add an error message to the stacktrace. */
-    if (!(key_password = ue_input_string("Key password : "))) {
+    if (!(key_password = ueum_input_string("Key password : "))) {
         ei_stacktrace_push_msg("Specified key password isn't valid");
         goto end;
     }
@@ -106,8 +104,8 @@ int main() {
 end:
     ei_logger_info("Cleaning...");
     /* Remove keystore and key passwords */
-    ue_safe_free(keystore_password);
-    ue_safe_free(key_password);
+    ueum_safe_free(keystore_password);
+    ueum_safe_free(key_password);
     /* Log the stacktrace if it exists */
 	if (ei_stacktrace_is_filled()) {
 		ei_logger_stacktrace("An error occurred with the following stacktrace :");

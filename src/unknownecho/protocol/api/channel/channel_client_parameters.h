@@ -23,10 +23,9 @@
 #include <unknownecho/protocol/api/channel/channel_client_parameters_struct.h>
 #include <unknownecho/protocol/api/channel/channel_client_struct.h>
 #include <unknownecho/network/api/communication/communication_type.h>
-#include <unknownecho/bool.h>
-#include <unknownecho/byte/byte_stream.h>
+#include <ueum/ueum.h>
 
-ue_channel_client_parameters *ue_channel_client_parameters_create(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ue_byte_stream *printer));
+ue_channel_client_parameters *ue_channel_client_parameters_create(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ueum_byte_stream *printer));
 
 void ue_channel_client_parameters_destroy(ue_channel_client_parameters *parameters);
 
@@ -62,7 +61,7 @@ bool ue_channel_client_parameters_set_cipher_name(ue_channel_client_parameters *
 
 bool ue_channel_client_parameters_set_digest_name(ue_channel_client_parameters *parameters, const char *digest_name);
 
-bool ue_channel_client_parameters_set_user_input_mode(ue_channel_client_parameters *parameters, ue_user_input_mode user_input_mode);
+bool ue_channel_client_parameters_set_user_input_mode(ue_channel_client_parameters *parameters, ueum_user_input_mode user_input_mode);
 
 bool ue_channel_client_parameters_set_communication_type(ue_channel_client_parameters *parameters, ue_communication_type communication_type);
 

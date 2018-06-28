@@ -2,7 +2,7 @@
 #include <unknownecho/protocol/api/relay/relay_step.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/network/factory/communication_metadata_factory.h>
-#include <unknownecho/alloc.h>
+#include <ueum/ueum.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,7 +37,7 @@ int main() {
         ue_relay_step_destroy(steps[i]);
     }
 
-    ue_safe_free(steps);
+    ueum_safe_free(steps);
     ue_uninit();
 
     return 0;

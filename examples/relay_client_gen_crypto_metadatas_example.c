@@ -1,7 +1,6 @@
-#include <unknownecho/crypto/api/crypto_metadata.h>
-#include <unknownecho/crypto/factory/crypto_metadata_factory.h>
 #include <unknownecho/init.h>
-
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 #include <ei/ei.h>
 
 #include <stdlib.h>
@@ -13,7 +12,7 @@
     } \
 
 int main() {
-    ue_crypto_metadata *crypto_metadata;
+    uecm_crypto_metadata *crypto_metadata;
 
     if (!ue_init()) {
         fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
@@ -21,21 +20,21 @@ int main() {
     }
     ei_logger_info("UnknownEchoLib is correctly initialized.");
 
-    try_or_clean_up(crypto_metadata = ue_crypto_metadata_write_if_not_exist("out/private", "out/public",
+    try_or_clean_up(crypto_metadata = uecm_crypto_metadata_write_if_not_exist("out/private", "out/public",
         "client1", "password"), "Failed to write crypto metadata for client1", end);
-    ue_crypto_metadata_destroy(crypto_metadata);
+    uecm_crypto_metadata_destroy(crypto_metadata);
 
-    try_or_clean_up(crypto_metadata = ue_crypto_metadata_write_if_not_exist("out/private", "out/public",
+    try_or_clean_up(crypto_metadata = uecm_crypto_metadata_write_if_not_exist("out/private", "out/public",
         "client2", "password"), "Failed to write crypto metadata for client2", end);
-    ue_crypto_metadata_destroy(crypto_metadata);
+    uecm_crypto_metadata_destroy(crypto_metadata);
 
-    try_or_clean_up(crypto_metadata = ue_crypto_metadata_write_if_not_exist("out/private", "out/public",
+    try_or_clean_up(crypto_metadata = uecm_crypto_metadata_write_if_not_exist("out/private", "out/public",
         "server1", "password"), "Failed to write crypto metadata for server1", end);
-    ue_crypto_metadata_destroy(crypto_metadata);
+    uecm_crypto_metadata_destroy(crypto_metadata);
 
-    try_or_clean_up(crypto_metadata = ue_crypto_metadata_write_if_not_exist("out/private", "out/public",
+    try_or_clean_up(crypto_metadata = uecm_crypto_metadata_write_if_not_exist("out/private", "out/public",
         "server2", "password"), "Failed to write crypto metadata for server2", end);
-    ue_crypto_metadata_destroy(crypto_metadata);
+    uecm_crypto_metadata_destroy(crypto_metadata);
 
 end:
     if (ei_stacktrace_is_filled()) {

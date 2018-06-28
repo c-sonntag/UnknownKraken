@@ -20,8 +20,8 @@
 #ifndef UNKNOWNECHO_CHANNEL_H
 #define UNKNOWNECHO_CHANNEL_H
 
-#include <unknownecho/bool.h>
 #include <unknownecho/network/api/socket/socket_client_connection.h>
+#include <ueum/ueum.h>
 
 typedef struct {
     ue_socket_client_connection **connections;

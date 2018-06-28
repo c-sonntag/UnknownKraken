@@ -20,8 +20,8 @@
 #ifndef UNKNOWNECHO_CHANNEL_SERVER_PARAMETERS_STRUCT_H
 #define UNKNOWNECHO_CHANNEL_SERVER_PARAMETERS_STRUCT_H
 
-#include <unknownecho/bool.h>
 #include <unknownecho/network/api/communication/communication_type.h>
+#include <ueum/ueum.h>
 
 typedef struct {
     char *persistent_path;

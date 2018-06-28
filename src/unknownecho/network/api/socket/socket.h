@@ -29,7 +29,7 @@
 #ifndef UNKNOWNECHO_SOCKET_H
 #define UNKNOWNECHO_SOCKET_H
 
-#include <unknownecho/bool.h>
+#include <ueum/ueum.h>
 
 bool ue_socket_is_valid_domain(int domain);
 

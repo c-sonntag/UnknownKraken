@@ -23,8 +23,7 @@
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/network/api/socket/socket_receive.h>
 #include <unknownecho/network/api/socket/socket_send.h>
-#include <unknownecho/bool.h>
-#include <unknownecho/alloc.h>
+#include <ueum/ueum.h>
 #include <ei/ei.h>
 
 #include <stddef.h>
@@ -60,7 +59,7 @@ static bool recv_all(int socket_fd, unsigned char *data, size_t data_size) {
 	for (i = 0; i < data_size; i++) {
 		data[i] = bytes[i];
 	}
-	ue_safe_free(bytes);
+	ueum_safe_free(bytes);
 
 	return true;
 }

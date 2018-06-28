@@ -1,17 +1,16 @@
 #include <unknownecho/protocol/api/relay/relay_step.h>
-#include <unknownecho/alloc.h>
 #include <ei/ei.h>
 
 #include <stdarg.h>
 
 ue_relay_step *ue_relay_step_create(ue_communication_metadata *target_communication_metadata,
-    ue_crypto_metadata *our_crypto_metadata, ue_crypto_metadata *target_crypto_metadata) {
+    uecm_crypto_metadata *our_crypto_metadata, uecm_crypto_metadata *target_crypto_metadata) {
 
     ue_relay_step *step;
 
     ei_check_parameter_or_return(target_communication_metadata);
 
-    ue_safe_alloc(step, ue_relay_step, 1);
+    ueum_safe_alloc(step, ue_relay_step, 1);
     step->target_communication_metadata = target_communication_metadata;
     step->our_crypto_metadata = our_crypto_metadata;
     step->target_crypto_metadata = target_crypto_metadata;
@@ -22,7 +21,7 @@ ue_relay_step *ue_relay_step_create(ue_communication_metadata *target_communicat
 ue_relay_step *ue_relay_step_create_from_step(ue_relay_step *step) {
     ue_relay_step *copy;
 
-    ue_safe_alloc(copy, ue_relay_step, 1);
+    ueum_safe_alloc(copy, ue_relay_step, 1);
     copy->target_communication_metadata = ue_communication_metadata_copy(step->target_communication_metadata);
     copy->our_crypto_metadata = step->our_crypto_metadata;
     copy->target_crypto_metadata = step->target_crypto_metadata;
@@ -37,7 +36,7 @@ ue_relay_step **ue_relay_steps_create(int step_number, ...) {
 
     ei_check_parameter_or_return(step_number > 0);
 
-    ue_safe_alloc(steps, ue_relay_step *, step_number);
+    ueum_safe_alloc(steps, ue_relay_step *, step_number);
 
     va_start(ap, step_number);
 
@@ -53,16 +52,16 @@ ue_relay_step **ue_relay_steps_create(int step_number, ...) {
 void ue_relay_step_destroy(ue_relay_step *step) {
     if (step) {
         ue_communication_metadata_destroy(step->target_communication_metadata);
-        ue_safe_free(step);
+        ueum_safe_free(step);
     }
 }
 
 void ue_relay_step_destroy_all(ue_relay_step *step) {
     if (step) {
         ue_communication_metadata_destroy(step->target_communication_metadata);
-        ue_crypto_metadata_destroy_all(step->our_crypto_metadata);
-        ue_crypto_metadata_destroy_all(step->target_crypto_metadata);
-        ue_safe_free(step);
+        uecm_crypto_metadata_destroy_all(step->our_crypto_metadata);
+        uecm_crypto_metadata_destroy_all(step->target_crypto_metadata);
+        ueum_safe_free(step);
     }
 }
 
@@ -75,7 +74,7 @@ ue_communication_metadata *ue_relay_step_get_target_communication_metadata(ue_re
     return step->target_communication_metadata;
 }
 
-ue_crypto_metadata *ue_relay_step_get_our_crypto_metadata(ue_relay_step *step) {
+uecm_crypto_metadata *ue_relay_step_get_our_crypto_metadata(ue_relay_step *step) {
     if (!ue_relay_step_is_valid(step)) {
         ei_stacktrace_push_msg("Specified step ptr is invalid");
         return NULL;
@@ -84,7 +83,7 @@ ue_crypto_metadata *ue_relay_step_get_our_crypto_metadata(ue_relay_step *step) {
     return step->our_crypto_metadata;
 }
 
-ue_crypto_metadata *ue_relay_step_get_target_crypto_metadata(ue_relay_step *step) {
+uecm_crypto_metadata *ue_relay_step_get_target_crypto_metadata(ue_relay_step *step) {
     if (!ue_relay_step_is_valid(step)) {
         ei_stacktrace_push_msg("Specified step ptr is invalid");
         return NULL;

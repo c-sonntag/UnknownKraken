@@ -28,21 +28,20 @@
 #define UNKNOWNECHO_TLS_CONTEXT_H
 
 #include <unknownecho/network/api/tls/tls_method.h>
-#include <unknownecho/bool.h>
-#include <unknownecho/crypto/api/keystore/pkcs12_keystore.h>
-#include <unknownecho/crypto/api/certificate/x509_certificate.h>
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 
-typedef struct ue_tls_context ue_tls_context;
+typedef struct uecm_tls_context uecm_tls_context;
 
-ue_tls_context *ue_tls_context_create(ue_tls_method *method);
+uecm_tls_context *uecm_tls_context_create(uecm_tls_method *method);
 
-void ue_tls_context_destroy(ue_tls_context *context);
+void uecm_tls_context_destroy(uecm_tls_context *context);
 
-//bool ue_tls_context_load_certificates(ue_tls_context *context, ue_pkcs12_keystore *keystore, ue_x509_certificate *ca_certificate);
-bool ue_tls_context_load_certificates(ue_tls_context *context, ue_pkcs12_keystore *keystore, ue_x509_certificate **ca_certificates, int ca_certificate_count);
+//bool uecm_tls_context_load_certificates(uecm_tls_context *context, uecm_pkcs12_keystore *keystore, uecm_x509_certificate *ca_certificate);
+bool uecm_tls_context_load_certificates(uecm_tls_context *context, uecm_pkcs12_keystore *keystore, uecm_x509_certificate **ca_certificates, int ca_certificate_count);
 
-bool ue_tls_context_load_certificates_from_path(ue_tls_context *context, char *passphrase, char *ca_pk_path, char *pk_path, char *sk_path);
+bool uecm_tls_context_load_certificates_from_path(uecm_tls_context *context, char *passphrase, char *ca_pk_path, char *pk_path, char *sk_path);
 
-const void *ue_tls_context_get_impl(ue_tls_context *context);
+const void *uecm_tls_context_get_impl(uecm_tls_context *context);
 
 #endif

@@ -19,26 +19,25 @@
 
 #include <unknownecho/protocol/api/channel/channel_client_parameters.h>
 #include <unknownecho/protocol/api/channel/channel_client.h>
-#include <ei/ei.h>
-#include <unknownecho/alloc.h>
-#include <unknownecho/string/string_utility.h>
-#include <unknownecho/defines.h>
 #include <unknownecho/network/factory/communication_factory.h>
+#include <unknownecho/defines.h>
+#include <ueum/ueum.h>
+#include <ei/ei.h>
 
-ue_channel_client_parameters *ue_channel_client_parameters_create(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ue_byte_stream *printer)) {
+ue_channel_client_parameters *ue_channel_client_parameters_create(char *nickname, char *keystore_password, bool (*write_callback)(void *user_context, ueum_byte_stream *printer)) {
     ue_channel_client_parameters *parameters;
 
     ei_check_parameter_or_return(nickname);
     ei_check_parameter_or_return(keystore_password);
 
-    ue_safe_alloc(parameters, ue_channel_client_parameters, 1);
+    ueum_safe_alloc(parameters, ue_channel_client_parameters, 1);
     parameters->persistent_path = NULL;
-    parameters->nickname = ue_string_create_from(nickname);
+    parameters->nickname = ueum_string_create_from(nickname);
     parameters->csr_server_host = NULL;
     parameters->csr_server_port = -1;
     parameters->csl_server_host = NULL;
     parameters->csl_server_port = -1;
-    parameters->keystore_password = ue_string_create_from(keystore_password);
+    parameters->keystore_password = ueum_string_create_from(keystore_password);
     parameters->server_certificates_path = NULL;
     parameters->user_context = NULL;
     parameters->write_callback = write_callback;
@@ -51,32 +50,32 @@ ue_channel_client_parameters *ue_channel_client_parameters_create(char *nickname
     parameters->user_input_callback = NULL;
     parameters->cipher_name = NULL;
     parameters->digest_name = NULL;
-    parameters->user_input_mode = UNKNOWNECHO_STDIN_INPUT;
+    parameters->user_input_mode = UNKNOWNECHOUTILSMODULE_STDIN_INPUT;
 
     return parameters;
 }
 
 void ue_channel_client_parameters_destroy(ue_channel_client_parameters *parameters) {
     if (parameters) {
-        ue_safe_free(parameters->persistent_path);
-        ue_safe_free(parameters->nickname);
-        ue_safe_free(parameters->csr_server_host);
-        ue_safe_free(parameters->csl_server_host);
-        ue_safe_free(parameters->keystore_password);
-        ue_safe_free(parameters->server_certificates_path);
-        ue_safe_free(parameters->cipher_name);
-        ue_safe_free(parameters->digest_name);
-        ue_safe_free(parameters);
+        ueum_safe_free(parameters->persistent_path);
+        ueum_safe_free(parameters->nickname);
+        ueum_safe_free(parameters->csr_server_host);
+        ueum_safe_free(parameters->csl_server_host);
+        ueum_safe_free(parameters->keystore_password);
+        ueum_safe_free(parameters->server_certificates_path);
+        ueum_safe_free(parameters->cipher_name);
+        ueum_safe_free(parameters->digest_name);
+        ueum_safe_free(parameters);
     }
 }
 
 bool ue_channel_client_parameters_set_persistent_path(ue_channel_client_parameters *parameters, char *persistent_path) {
-    parameters->persistent_path = ue_string_create_from(persistent_path);
+    parameters->persistent_path = ueum_string_create_from(persistent_path);
     return true;
 }
 
 bool ue_channel_client_parameters_set_csr_host(ue_channel_client_parameters *parameters, const char *host) {
-    parameters->csr_server_host = ue_string_create_from(host);
+    parameters->csr_server_host = ueum_string_create_from(host);
     return true;
 }
 
@@ -86,7 +85,7 @@ bool ue_channel_client_parameters_set_csr_port(ue_channel_client_parameters *par
 }
 
 bool ue_channel_client_parameters_set_csl_host(ue_channel_client_parameters *parameters, const char *host) {
-    parameters->csl_server_host = ue_string_create_from(host);
+    parameters->csl_server_host = ueum_string_create_from(host);
     return true;
 }
 
@@ -96,7 +95,7 @@ bool ue_channel_client_parameters_set_csl_port(ue_channel_client_parameters *par
 }
 
 bool ue_channel_client_parameters_set_certificates_path(ue_channel_client_parameters *parameters, const char *certificates_path) {
-    parameters->server_certificates_path = ue_string_create_from(certificates_path);
+    parameters->server_certificates_path = ueum_string_create_from(certificates_path);
     return true;
 }
 
@@ -141,16 +140,16 @@ bool ue_channel_client_parameters_set_user_input_callback(ue_channel_client_para
 }
 
 bool ue_channel_client_parameters_set_cipher_name(ue_channel_client_parameters *parameters, const char *cipher_name) {
-    parameters->cipher_name = ue_string_create_from(cipher_name);
+    parameters->cipher_name = ueum_string_create_from(cipher_name);
     return true;
 }
 
 bool ue_channel_client_parameters_set_digest_name(ue_channel_client_parameters *parameters, const char *digest_name) {
-    parameters->digest_name = ue_string_create_from(digest_name);
+    parameters->digest_name = ueum_string_create_from(digest_name);
     return true;
 }
 
-bool ue_channel_client_parameters_set_user_input_mode(ue_channel_client_parameters *parameters, ue_user_input_mode user_input_mode) {
+bool ue_channel_client_parameters_set_user_input_mode(ue_channel_client_parameters *parameters, ueum_user_input_mode user_input_mode) {
     parameters->user_input_mode = user_input_mode;
     return true;
 }
@@ -164,11 +163,11 @@ ue_channel_client *ue_channel_client_parameters_build(ue_channel_client_paramete
     ue_channel_client *channel_client;
 
     if (!parameters->persistent_path) {
-        parameters->persistent_path = ue_string_create_from(UNKNOWNECHO_DEFAULT_CLIENT_PERSISTENT_PATH);
+        parameters->persistent_path = ueum_string_create_from(UNKNOWNECHO_DEFAULT_CLIENT_PERSISTENT_PATH);
     }
 
     if (!parameters->csr_server_host) {
-        parameters->csr_server_host = ue_string_create_from(UNKNOWNECHO_LOCALHOST);
+        parameters->csr_server_host = ueum_string_create_from(UNKNOWNECHO_LOCALHOST);
     }
 
     if (parameters->csr_server_port == -1) {
@@ -176,7 +175,7 @@ ue_channel_client *ue_channel_client_parameters_build(ue_channel_client_paramete
     }
 
     if (!parameters->csl_server_host) {
-        parameters->csl_server_host = ue_string_create_from(UNKNOWNECHO_LOCALHOST);
+        parameters->csl_server_host = ueum_string_create_from(UNKNOWNECHO_LOCALHOST);
     }
 
     if (parameters->csl_server_port == -1) {
@@ -184,15 +183,15 @@ ue_channel_client *ue_channel_client_parameters_build(ue_channel_client_paramete
     }
 
     if (!parameters->server_certificates_path) {
-        parameters->server_certificates_path = ue_string_create_from(UNKNOWNECHO_DEFAULT_SERVER_CERTIFICATES_PATH);
+        parameters->server_certificates_path = ueum_string_create_from(UNKNOWNECHO_DEFAULT_SERVER_CERTIFICATES_PATH);
     }
 
     if (!parameters->cipher_name) {
-        parameters->cipher_name = ue_string_create_from(UNKNOWNECHO_DEFAULT_CIPHER_NAME);
+        parameters->cipher_name = ueum_string_create_from(UNKNOWNECHO_DEFAULT_CIPHER_NAME);
     }
 
     if (!parameters->digest_name) {
-        parameters->digest_name = ue_string_create_from(UNKNOWNECHO_DEFAULT_DIGEST_NAME);
+        parameters->digest_name = ueum_string_create_from(UNKNOWNECHO_DEFAULT_DIGEST_NAME);
     }
 
     if (!parameters->communication_type) {

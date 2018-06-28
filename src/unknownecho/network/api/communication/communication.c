@@ -18,8 +18,7 @@
  *******************************************************************************/
 
 #include <unknownecho/network/api/communication/communication.h>
-#include <unknownecho/alloc.h>
-#include <unknownecho/string/string_utility.h>
+#include <ueum/ueum.h>
 #include <ei/ei.h>
 
 ue_communication_context *ue_communication_create(const char *communication_type,
@@ -80,9 +79,9 @@ ue_communication_context *ue_communication_create(const char *communication_type
     ei_check_parameter_or_return(communication_server_process_impl);
     ei_check_parameter_or_return(communication_server_disconnect_impl);
 
-    ue_safe_alloc(context, ue_communication_context, 1);
+    ueum_safe_alloc(context, ue_communication_context, 1);
 
-    context->communication_type = (const char *)ue_string_create_from(communication_type);
+    context->communication_type = (const char *)ueum_string_create_from(communication_type);
 
     context->communication_connect_impl = communication_connect_impl;
     context->communication_client_connection_destroy_impl = communication_client_connection_destroy_impl;
@@ -121,8 +120,8 @@ ue_communication_context *ue_communication_create(const char *communication_type
 
 void ue_communication_destroy(ue_communication_context *context) {
     if (context) {
-        ue_safe_free(context->communication_type);
-        ue_safe_free(context);
+        ueum_safe_free(context->communication_type);
+        ueum_safe_free(context);
     }
 }
 

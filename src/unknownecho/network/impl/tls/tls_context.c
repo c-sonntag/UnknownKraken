@@ -18,15 +18,15 @@
  *******************************************************************************/
 
 #include <unknownecho/network/api/tls/tls_context.h>
-#include <unknownecho/alloc.h>
-#include <unknownecho/crypto/impl/errorHandling/openssl_error_handling.h>
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 #include <ei/ei.h>
 
 #include <openssl/ssl.h>
 
 #include <string.h>
 
-struct ue_tls_context {
+struct uecm_tls_context {
 	SSL_CTX *impl;
 };
 
@@ -46,14 +46,14 @@ static int password_callback(char *buf, int num, int rwflag, void *userdata) {
     return strlen(local_passphrase);
 }
 
-ue_tls_context *ue_tls_context_create(ue_tls_method *method) {
-	ue_tls_context *context;
+uecm_tls_context *uecm_tls_context_create(uecm_tls_method *method) {
+	uecm_tls_context *context;
 	char *error_buffer;
 
-	ue_safe_alloc(context, ue_tls_context, 1);
-	if (!(context->impl = SSL_CTX_new(ue_tls_method_get_impl(method)))) {
-		ue_openssl_error_handling(error_buffer, "SSL_CTX_new");
-		ue_safe_free(context);
+	ueum_safe_alloc(context, uecm_tls_context, 1);
+	if (!(context->impl = SSL_CTX_new(uecm_tls_method_get_impl(method)))) {
+		uecm_openssl_error_handling(error_buffer, "SSL_CTX_new");
+		ueum_safe_free(context);
 		return NULL;
 	}
 
@@ -63,10 +63,10 @@ ue_tls_context *ue_tls_context_create(ue_tls_method *method) {
 	return context;
 }
 
-void ue_tls_context_destroy(ue_tls_context *context) {
+void uecm_tls_context_destroy(uecm_tls_context *context) {
 	if (context) {
 		SSL_CTX_free(context->impl);
-		ue_safe_free(context);
+		ueum_safe_free(context);
 	}
 }
 
@@ -190,7 +190,7 @@ int verify_callback(int ok, X509_STORE_CTX *ctx) {
 return ok;
 }*/
 
-bool ue_tls_context_load_certificates(ue_tls_context *context, ue_pkcs12_keystore *keystore, ue_x509_certificate **ca_certificates, int ca_certificate_count) {
+bool uecm_tls_context_load_certificates(uecm_tls_context *context, uecm_pkcs12_keystore *keystore, uecm_x509_certificate **ca_certificates, int ca_certificate_count) {
 	char *error_buffer;
 	X509_STORE *store;
 	int i;
@@ -200,29 +200,29 @@ bool ue_tls_context_load_certificates(ue_tls_context *context, ue_pkcs12_keystor
 
 	//bio = BIO_new_fp(stdout, BIO_NOCLOSE);
 
-	if (SSL_CTX_use_certificate(context->impl, ue_x509_certificate_get_impl(keystore->certificate)) <= 0) {
-        ue_openssl_error_handling(error_buffer, "Load keystore certificate into to context");
+	if (SSL_CTX_use_certificate(context->impl, uecm_x509_certificate_get_impl(keystore->certificate)) <= 0) {
+        uecm_openssl_error_handling(error_buffer, "Load keystore certificate into to context");
         return false;
     }
 
-	if (SSL_CTX_use_PrivateKey(context->impl, ue_private_key_get_impl(keystore->private_key)) <= 0) {
-		ue_openssl_error_handling(error_buffer, "Load keystore private key into context");
+	if (SSL_CTX_use_PrivateKey(context->impl, uecm_private_key_get_impl(keystore->private_key)) <= 0) {
+		uecm_openssl_error_handling(error_buffer, "Load keystore private key into context");
         return false;
 	}
 
 	if (SSL_CTX_check_private_key(context->impl) != 1) {
-        ue_openssl_error_handling(error_buffer, "Private key and certificate are not matching");
+        uecm_openssl_error_handling(error_buffer, "Private key and certificate are not matching");
         return false;
     }
 
 	/*if (ca_certificate) {
 		if (!(store = SSL_CTX_get_cert_store(context->impl))) {
-			ue_openssl_error_handling(error_buffer, "Failed to get store of TLS context");
+			uecm_openssl_error_handling(error_buffer, "Failed to get store of TLS context");
 			return false;
 		}
 
-		if (!X509_STORE_add_cert(store, ue_x509_certificate_get_impl(ca_certificate))) {
-			ue_openssl_error_handling(error_buffer, "Failed to add ca certificate to TLS context store");
+		if (!X509_STORE_add_cert(store, uecm_x509_certificate_get_impl(ca_certificate))) {
+			uecm_openssl_error_handling(error_buffer, "Failed to add ca certificate to TLS context store");
 			return false;
 		}
 
@@ -232,13 +232,13 @@ bool ue_tls_context_load_certificates(ue_tls_context *context, ue_pkcs12_keystor
 
 	if (ca_certificates && ca_certificate_count > 0) {
 		if (!(store = SSL_CTX_get_cert_store(context->impl))) {
-			ue_openssl_error_handling(error_buffer, "Failed to get store of TLS context");
+			uecm_openssl_error_handling(error_buffer, "Failed to get store of TLS context");
 			return false;
 		}
 
 		for (i = 0; i < ca_certificate_count; i++) {
-			if (!X509_STORE_add_cert(store, ue_x509_certificate_get_impl(ca_certificates[i]))) {
-				ue_openssl_error_handling(error_buffer, "Failed to add ca certificate to TLS context store");
+			if (!X509_STORE_add_cert(store, uecm_x509_certificate_get_impl(ca_certificates[i]))) {
+				uecm_openssl_error_handling(error_buffer, "Failed to add ca certificate to TLS context store");
 				return false;
 			}
 		}
@@ -250,7 +250,7 @@ bool ue_tls_context_load_certificates(ue_tls_context *context, ue_pkcs12_keystor
 	return true;
 }
 
-bool ue_tls_context_load_certificates_from_path(ue_tls_context *context, char *passphrase, char *ca_pk_path, char *pk_path, char *sk_path) {
+bool uecm_tls_context_load_certificates_from_path(uecm_tls_context *context, char *passphrase, char *ca_pk_path, char *pk_path, char *sk_path) {
 	char *error_buffer;
 
     error_buffer = NULL;
@@ -258,23 +258,23 @@ bool ue_tls_context_load_certificates_from_path(ue_tls_context *context, char *p
 
     SSL_CTX_set_default_passwd_cb(context->impl, password_callback);
     if (SSL_CTX_use_certificate_file(context->impl, pk_path, SSL_FILETYPE_PEM) <= 0) {
-        ue_openssl_error_handling(error_buffer, "get server certificate");
+        uecm_openssl_error_handling(error_buffer, "get server certificate");
         return false;
     }
 
     if (SSL_CTX_use_PrivateKey_file(context->impl, sk_path, SSL_FILETYPE_PEM) <= 0) {
-        ue_openssl_error_handling(error_buffer, "get server private key");
+        uecm_openssl_error_handling(error_buffer, "get server private key");
         return false;
     }
 
     if (SSL_CTX_check_private_key(context->impl) != 1) {
-        ue_openssl_error_handling(error_buffer, "Private key and certificate are not matching");
+        uecm_openssl_error_handling(error_buffer, "Private key and certificate are not matching");
         return false;
     }
 
     if (ca_pk_path) {
         if (!SSL_CTX_load_verify_locations(context->impl, ca_pk_path, NULL)) {
-            ue_openssl_error_handling(error_buffer, "verify locations of RSA CA certificate file");
+            uecm_openssl_error_handling(error_buffer, "verify locations of RSA CA certificate file");
             return false;
         }
 
@@ -285,6 +285,6 @@ bool ue_tls_context_load_certificates_from_path(ue_tls_context *context, char *p
     return true;
 }
 
-const void *ue_tls_context_get_impl(ue_tls_context *context) {
+const void *uecm_tls_context_get_impl(uecm_tls_context *context) {
 	return context->impl;
 }

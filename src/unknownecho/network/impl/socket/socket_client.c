@@ -22,8 +22,8 @@
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/network/api/tls/tls_connection.h>
 #include <unknownecho/network/api/tls/tls_context.h>
-#include <unknownecho/alloc.h>
-#include <unknownecho/crypto/api/errorHandling/crypto_error_handling.h>
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 
 #include <ei/ei.h>
 
@@ -45,7 +45,7 @@
 ue_socket_client_connection *ue_socket_connect(ue_socket_client_connection_parameters *parameter) {
     struct sockaddr_in serv_addr;
     ue_socket_client_connection *connection;
-    ue_tls_connection *tls;
+    uecm_tls_connection *tls;
 
     tls = NULL;
 
@@ -76,35 +76,35 @@ ue_socket_client_connection *ue_socket_connect(ue_socket_client_connection_param
         ei_logger_info("Keystore manager isn't null, so it will create a TLS connection");
 
         ei_logger_info("Creating TLS connection...");
-        tls = ue_tls_connection_create(parameter->tls_session->ctx);
+        tls = uecm_tls_connection_create(parameter->tls_session->ctx);
     	if (!tls) {
             ei_logger_error("Failed to create TLS connection");
             ei_stacktrace_push_msg("Failed to create tls connection");
-            ue_tls_connection_destroy(tls);
+            uecm_tls_connection_destroy(tls);
             return NULL;
         }
         ei_logger_info("TLS connection created");
 
         ei_logger_info("Setting socket file descriptor %d to TLS connection...", parameter->fd);
-        if (!ue_tls_connection_set_fd(tls, parameter->fd)) {
+        if (!uecm_tls_connection_set_fd(tls, parameter->fd)) {
             ei_stacktrace_push_msg("Failed to set socket fd to tls connection");
-            ue_tls_connection_destroy(tls);
+            uecm_tls_connection_destroy(tls);
             return NULL;
         }
         ei_logger_info("Socket file descriptor linked to TLS connection");
 
         ei_logger_info("Establishing TLS connection...");
-        if (!ue_tls_connection_connect(tls)) {
+        if (!uecm_tls_connection_connect(tls)) {
             ei_stacktrace_push_msg("Failed to establish TLS connection");
-            ue_tls_connection_destroy(tls);
+            uecm_tls_connection_destroy(tls);
             return NULL;
         }
         ei_logger_info("TLS connection established");
 
-        if (parameter->tls_session->verify_peer && !ue_tls_connection_verify_peer_certificate(tls)) {
+        if (parameter->tls_session->verify_peer && !uecm_tls_connection_verify_peer_certificate(tls)) {
             ei_logger_error("Verify peer is enable but peer certificate isn't valid");
             ei_stacktrace_push_msg("Peer certificate verification failed");
-            ue_tls_connection_destroy(tls);
+            uecm_tls_connection_destroy(tls);
             return NULL;
         } else if (parameter->tls_session->verify_peer) {
             ei_logger_info("Verify peer is enable and peer certificate is valid");
@@ -115,14 +115,14 @@ ue_socket_client_connection *ue_socket_connect(ue_socket_client_connection_param
 
     if (!(connection = ue_socket_client_connection_init())) {
         ei_stacktrace_push_msg("Failed to create socket connection");
-        ue_tls_connection_destroy(tls);
+        uecm_tls_connection_destroy(tls);
         return NULL;
     }
 
     if (!ue_socket_client_connection_establish(connection, parameter->fd)) {
         ei_stacktrace_push_msg("Failed to establish socket connection");
         ue_socket_client_connection_destroy(connection);
-        ue_tls_connection_destroy(tls);
+        uecm_tls_connection_destroy(tls);
         return NULL;
     }
 
@@ -130,7 +130,7 @@ ue_socket_client_connection *ue_socket_connect(ue_socket_client_connection_param
         connection->tls = tls;
         parameter->tls_session->tls = tls;
         if (parameter->tls_session->verify_peer) {
-            connection->peer_certificate = ue_tls_connection_get_peer_certificate(connection->tls);
+            connection->peer_certificate = uecm_tls_connection_get_peer_certificate(connection->tls);
         }
     }
 

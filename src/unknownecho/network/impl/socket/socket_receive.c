@@ -20,11 +20,8 @@
 #include <unknownecho/network/api/socket/socket_receive.h>
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/network/api/tls/tls_connection_read.h>
+#include <ueum/ueum.h>
 #include <ei/ei.h>
-#include <unknownecho/alloc.h>
-#include <unknownecho/time/sleep.h>
-#include <unknownecho/time/current_time.h>
-#include <unknownecho/byte/byte_writer.h>
 
 #include <string.h>
 
@@ -42,7 +39,7 @@
     #error "OS not supported"
 #endif
 
- size_t ue_socket_receive_sync(ue_socket_client_connection *connection, ue_byte_stream *received_message) {
+ size_t ue_socket_receive_sync(ue_socket_client_connection *connection, ueum_byte_stream *received_message) {
     struct timeval begin, now;
     double timediff;
     int timeout, received, total, bytes;
@@ -67,10 +64,10 @@
 
         ue_socket_set_blocking_mode(connection->fd, true);
 
-        ue_time_of_day(&begin);
+        ueum_time_of_day(&begin);
 
         do {
-            ue_time_of_day(&now);
+            ueum_time_of_day(&now);
 
             /* time elapsed in seconds */
             timediff = (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
@@ -94,13 +91,13 @@
             if ((bytes = recv(connection->fd, response, 4096, 0)) <= 0) {
 #endif
                 /* if nothing was received then we want to wait a little before trying again, 1 ms */
-                ue_millisleep(1);
+                ueum_millisleep(1);
             }
             else {
                 received += bytes;
                 /* reset beginning time  */
-                ue_time_of_day(&begin);
-                if (!ue_byte_writer_append_bytes(received_message, (unsigned char *)response, bytes)) {
+                ueum_time_of_day(&begin);
+                if (!ueum_byte_writer_append_bytes(received_message, (unsigned char *)response, bytes)) {
                     ei_stacktrace_push_msg("Failed to append in byte stream socket response");
                     return -1;
                 }
@@ -113,7 +110,7 @@
             return -1;
         }
     } else {
-        received = ue_tls_connection_read_sync(connection->tls, received_message);
+        received = uecm_tls_connection_read_sync(connection->tls, received_message);
     }
 
     ei_logger_trace("%ld bytes received", received);
@@ -121,7 +118,7 @@
     return received;
 }
 
-size_t ue_socket_receive_all_sync(int fd, unsigned char **bytes, size_t size, ue_tls_connection *tls) {
+size_t ue_socket_receive_all_sync(int fd, unsigned char **bytes, size_t size, uecm_tls_connection *tls) {
     size_t received, total;
 #if defined(_WIN32) || defined(_WIN64)
         char **temp_bytes = NULL;
@@ -136,9 +133,9 @@ size_t ue_socket_receive_all_sync(int fd, unsigned char **bytes, size_t size, ue
 
     if (!tls) {
 #if defined(__unix__)
-        ue_safe_alloc(*bytes, unsigned char, size);
+        ueum_safe_alloc(*bytes, unsigned char, size);
 #elif defined(_WIN32) || defined(_WIN64)
-        ue_safe_alloc(*temp_bytes, char, size);
+        ueum_safe_alloc(*temp_bytes, char, size);
 #endif
         for (total = 0; total < size;) {
 #if defined(__unix__)
@@ -147,7 +144,7 @@ size_t ue_socket_receive_all_sync(int fd, unsigned char **bytes, size_t size, ue
             received = recv((SOCKET)fd, temp_bytes[total], size - total, 0x8);
 #endif
             if (received < 0) {
-                ue_safe_free(*bytes);
+                ueum_safe_free(*bytes);
                 return -1;
             }
             total += received;
@@ -163,7 +160,7 @@ size_t ue_socket_receive_all_sync(int fd, unsigned char **bytes, size_t size, ue
     return received;
 }
 
-size_t ue_socket_receive_async(int fd, bool (*flow_consumer)(void *flow, size_t flow_size), ue_tls_connection *tls) {
+size_t ue_socket_receive_async(int fd, bool (*flow_consumer)(void *flow, size_t flow_size), uecm_tls_connection *tls) {
     size_t received, total, bytes;
     char response[1024];
 
@@ -200,7 +197,7 @@ size_t ue_socket_receive_async(int fd, bool (*flow_consumer)(void *flow, size_t 
             return -1;
         }
     } else {
-        received = ue_tls_connection_read_async(tls, flow_consumer);
+        received = uecm_tls_connection_read_async(tls, flow_consumer);
     }
 
     ei_logger_trace("%ld bytes received", received);

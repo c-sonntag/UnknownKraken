@@ -29,29 +29,28 @@
 #ifndef UNKNOWNECHO_TLS_SESSION_H
 #define UNKNOWNECHO_TLS_SESSION_H
 
-#include <unknownecho/bool.h>
 #include <unknownecho/network/api/tls/tls_connection.h>
 #include <unknownecho/network/api/tls/tls_context.h>
 #include <unknownecho/network/api/tls/tls_method.h>
-#include <unknownecho/crypto/api/keystore/pkcs12_keystore.h>
-#include <unknownecho/crypto/api/certificate/x509_certificate.h>
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 
 typedef struct {
-	ue_tls_connection *tls;
-	ue_tls_context *ctx;
+	uecm_tls_connection *tls;
+	uecm_tls_context *ctx;
 	bool verify_peer;
-	ue_tls_method *method;
-	ue_pkcs12_keystore *keystore;
-} ue_tls_session;
+	uecm_tls_method *method;
+	uecm_pkcs12_keystore *keystore;
+} uecm_tls_session;
 
-ue_tls_session *ue_tls_session_create(char *keystore_path, char *passphrase, ue_tls_method *method, ue_x509_certificate **ca_certificates, int ca_certificate_count);
+uecm_tls_session *uecm_tls_session_create(char *keystore_path, char *passphrase, uecm_tls_method *method, uecm_x509_certificate **ca_certificates, int ca_certificate_count);
 
-ue_tls_session *ue_tls_session_create_server(char *keystore_path, char *passphrase, ue_x509_certificate **ca_certificates, int ca_certificate_count);
+uecm_tls_session *uecm_tls_session_create_server(char *keystore_path, char *passphrase, uecm_x509_certificate **ca_certificates, int ca_certificate_count);
 
-ue_tls_session *ue_tls_session_create_client(char *keystore_path, char *passphrase, ue_x509_certificate **ca_certificates, int ca_certificate_count);
+uecm_tls_session *uecm_tls_session_create_client(char *keystore_path, char *passphrase, uecm_x509_certificate **ca_certificates, int ca_certificate_count);
 
-void ue_tls_session_destroy(ue_tls_session *tls_session);
+void uecm_tls_session_destroy(uecm_tls_session *tls_session);
 
-bool ue_tls_session_verify_peer(ue_tls_session *tls_session);
+bool uecm_tls_session_verify_peer(uecm_tls_session *tls_session);
 
 #endif

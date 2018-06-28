@@ -27,13 +27,13 @@ typedef struct {
     int domain;
     const char *host, *domain_s, *port_s;
     unsigned short int port;
-    ue_tls_session *tls_session;
+    uecm_tls_session *tls_session;
 } ue_socket_client_connection_parameters;
 
 ue_socket_client_connection_parameters *ue_socket_client_connection_parameters_build(int fd, int domain,
-    const char *host, unsigned short int port, ue_tls_session *tls_session);
+    const char *host, unsigned short int port, uecm_tls_session *tls_session);
 
 ue_socket_client_connection_parameters *ue_socket_client_connection_parameters_build_s(int fd, const char *domain,
-    const char *host, const char *port, ue_tls_session *tls_session);
+    const char *host, const char *port, uecm_tls_session *tls_session);
 
 #endif

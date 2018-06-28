@@ -30,8 +30,8 @@
 #include <unknownecho/network/api/socket/socket_client_connection_parameters.h>
 #include <unknownecho/network/api/socket/socket_server_parameters.h>
 #include <unknownecho/network/api/tls/tls_session.h>
-#include <unknownecho/bool.h>
 #include <unknownecho/defines.h>
+#include <ueum/ueum.h>
 
 #include <ei/ei.h>
 
@@ -113,7 +113,7 @@ void *ue_communication_build_client_connection_parameters(ue_communication_conte
     int fd, domain;
     const char *tls_server_host;
     unsigned short int tls_server_port;
-    ue_tls_session *tls_session;
+    uecm_tls_session *tls_session;
 
     ei_check_parameter_or_return(context);
     ei_check_parameter_or_return(count > 0);
@@ -133,7 +133,7 @@ void *ue_communication_build_client_connection_parameters(ue_communication_conte
         if (count == 2) {
             tls_session = NULL;
         } else {
-            tls_session = va_arg(ap, ue_tls_session *);
+            tls_session = va_arg(ap, uecm_tls_session *);
         }
         va_end(ap);
         if (!(parameters = (void *)ue_socket_client_connection_parameters_build(
@@ -153,7 +153,7 @@ void *ue_communication_build_server_parameters(ue_communication_context *context
     unsigned short int server_port;
     bool (*read_consumer)(ue_socket_client_connection *connection);
     bool (*write_consumer)(ue_socket_client_connection *connection);
-    ue_tls_session *tls_session;
+    uecm_tls_session *tls_session;
 
     if (!context) {
         ei_stacktrace_push_msg("Specified context object is null");
@@ -179,7 +179,7 @@ void *ue_communication_build_server_parameters(ue_communication_context *context
         if (count == 3) {
             tls_session = NULL;
         } else {
-            tls_session = va_arg(ap, ue_tls_session *);
+            tls_session = va_arg(ap, uecm_tls_session *);
         }
         va_end(ap);
         if (!(parameters = ue_socket_server_parameters_build(server_port, read_consumer, write_consumer, tls_session))) {

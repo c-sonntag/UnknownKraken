@@ -9,12 +9,8 @@
 #include <unknownecho/network/api/communication/communication.h>
 #include <unknownecho/network/api/communication/communication_connection_direction.h>
 #include <unknownecho/network/factory/communication_factory.h>
-#include <unknownecho/crypto/api/crypto_metadata.h>
-#include <unknownecho/alloc.h>
-#include <unknownecho/byte/byte_stream.h>
-#include <unknownecho/byte/byte_writer.h>
-#include <unknownecho/thread/thread.h>
-
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 #include <ei/ei.h>
 
 #include <stddef.h>
@@ -25,7 +21,7 @@ static bool ue_relay_client_connection(ue_relay_client *relay_client,
     void *client_connection_parameters, void *connection, ue_communication_connection_direction connection_direction,
     const char *uid, size_t uid_size) {
 
-    ue_byte_stream *message_to_send, *received_message;
+    ueum_byte_stream *message_to_send, *received_message;
 
     message_to_send = NULL;
     received_message = NULL;
@@ -51,27 +47,27 @@ static bool ue_relay_client_connection(ue_relay_client *relay_client,
         return false;
     }
 
-    if (!ue_byte_writer_append_int(message_to_send, UNKNOWNECHO_PROTOCOL_ID_RELAY)) {
+    if (!ueum_byte_writer_append_int(message_to_send, UNKNOWNECHO_PROTOCOL_ID_RELAY)) {
         ei_stacktrace_push_msg("Failed to write protocol id to message to send");
         return false;
     }
 
-    if (!ue_byte_writer_append_int(message_to_send, UNKNOWNECHO_RELAY_MESSAGE_ID_ESTABLISH)) {
+    if (!ueum_byte_writer_append_int(message_to_send, UNKNOWNECHO_RELAY_MESSAGE_ID_ESTABLISH)) {
         ei_stacktrace_push_msg("Failed to write message id to message to send");
         return false;
     }
 
-    if (!ue_byte_writer_append_int(message_to_send, connection_direction)) {
+    if (!ueum_byte_writer_append_int(message_to_send, connection_direction)) {
         ei_stacktrace_push_msg("Failed to write connection direction");
         return false;
     }
 
-    if (!ue_byte_writer_append_int(message_to_send, uid_size)) {
+    if (!ueum_byte_writer_append_int(message_to_send, uid_size)) {
         ei_stacktrace_push_msg("Failed to write uid length");
         return false;
     }
 
-    if (!ue_byte_writer_append_string(message_to_send, uid)) {
+    if (!ueum_byte_writer_append_string(message_to_send, uid)) {
         ei_stacktrace_push_msg("Failed to write our uid to message to send. Closing the connection");
         return false;
     }
@@ -86,7 +82,7 @@ static bool ue_relay_client_connection(ue_relay_client *relay_client,
         return false;
     }
 
-    if (memcmp(ue_byte_stream_get_data(received_message), "ACK", 3) != 0) {
+    if (memcmp(ueum_byte_stream_get_data(received_message), "ACK", 3) != 0) {
         ei_stacktrace_push_msg("Received message isn't a correct ACK. Closing the connection");
         return false;
     }
@@ -105,7 +101,7 @@ static ue_relay_client *ue_relay_client_create(ue_communication_metadata *our_co
     ei_check_parameter_or_return(target_communication_metadata);
 
     /* Alloc the client objet */
-    ue_safe_alloc(relay_client, ue_relay_client, 1);
+    ueum_safe_alloc(relay_client, ue_relay_client, 1);
     relay_client->communication_context = NULL;
     relay_client->read_connection = NULL;
     relay_client->write_connection = NULL;
@@ -129,7 +125,7 @@ static ue_relay_client *ue_relay_client_create(ue_communication_metadata *our_co
      **/
     if (!(client_connection_parameters = ue_communication_build_client_connection_parameters(relay_client->communication_context, 2,
         ue_communication_metadata_get_host(target_communication_metadata), ue_communication_metadata_get_port(target_communication_metadata)))) {
-        ue_safe_free(relay_client);
+        ueum_safe_free(relay_client);
         ei_stacktrace_push_msg("Failed to create client connection parameters context");
         goto clean_up;
     }
@@ -161,7 +157,7 @@ static ue_relay_client *ue_relay_client_create(ue_communication_metadata *our_co
     }
 
 clean_up:
-    ue_safe_free(client_connection_parameters);
+    ueum_safe_free(client_connection_parameters);
     return relay_client;
 }
 
@@ -173,7 +169,7 @@ static ue_relay_client *ue_relay_client_create_from_connection(ue_communication_
     ei_check_parameter_or_return(target_communication_metadata);
 
     /* Alloc the client objet */
-    ue_safe_alloc(relay_client, ue_relay_client, 1);
+    ueum_safe_alloc(relay_client, ue_relay_client, 1);
     relay_client->communication_context = NULL;
     relay_client->read_connection = read_connection;
     relay_client->write_connection = write_connection;
@@ -250,7 +246,7 @@ ue_relay_client *ue_relay_client_create_from_route(ue_communication_metadata *ou
 }
 
 ue_relay_client *ue_relay_client_create_as_relay(ue_communication_metadata *our_communication_metadata,
-    ue_communication_metadata *target_communication_metadata, ue_crypto_metadata *our_crypto_metadata) {
+    ue_communication_metadata *target_communication_metadata, uecm_crypto_metadata *our_crypto_metadata) {
 
     ue_relay_client *relay_client;
 
@@ -264,7 +260,7 @@ ue_relay_client *ue_relay_client_create_as_relay(ue_communication_metadata *our_
 }
 
 ue_relay_client *ue_relay_client_create_as_relay_from_connection(ue_communication_metadata *our_communication_metadata,
-    ue_communication_metadata *target_communication_metadata, ue_crypto_metadata *our_crypto_metadata, void *read_connection,
+    ue_communication_metadata *target_communication_metadata, uecm_crypto_metadata *our_crypto_metadata, void *read_connection,
     void *write_connection) {
 
     ue_relay_client *relay_client;
@@ -285,8 +281,8 @@ void ue_relay_client_destroy(ue_relay_client *client) {
         ue_communication_client_connection_destroy(client->communication_context, client->read_connection);
         ue_communication_client_connection_destroy(client->communication_context, client->write_connection);
         ue_communication_destroy(client->communication_context);
-        ue_byte_stream_destroy(client->encoded_route);
-        ue_safe_free(client);
+        ueum_byte_stream_destroy(client->encoded_route);
+        ueum_safe_free(client);
     }
 }
 
@@ -328,9 +324,9 @@ void *ue_relay_client_get_write_connection(ue_relay_client *client) {
     return client->write_connection;
 }
 
-bool ue_relay_client_send_message(ue_relay_client *client, ue_byte_stream *message) {
+bool ue_relay_client_send_message(ue_relay_client *client, ueum_byte_stream *message) {
     bool result;
-    ue_byte_stream *encoded_message;
+    ueum_byte_stream *encoded_message;
     ue_relay_step *receiver_step;
 
     result = false;
@@ -361,7 +357,7 @@ bool ue_relay_client_send_message(ue_relay_client *client, ue_byte_stream *messa
         goto clean_up;
     }
 
-    if (!message || ue_byte_stream_is_empty(message)) {
+    if (!message || ueum_byte_stream_is_empty(message)) {
         ei_stacktrace_push_msg("Specified message ptr is null or the message is empty");
         goto clean_up;
     }
@@ -386,13 +382,13 @@ bool ue_relay_client_send_message(ue_relay_client *client, ue_byte_stream *messa
     result = true;
 
 clean_up:
-    ue_byte_stream_destroy(encoded_message);
+    ueum_byte_stream_destroy(encoded_message);
     return result;
 }
 
 bool ue_relay_client_relay_message(ue_relay_client *client, ue_relay_received_message *received_message) {
     bool result;
-    ue_byte_stream *encoded_message;
+    ueum_byte_stream *encoded_message;
 
     result = false;
     encoded_message = NULL;
@@ -415,14 +411,14 @@ bool ue_relay_client_relay_message(ue_relay_client *client, ue_relay_received_me
     result = true;
 
 clean_up:
-    ue_byte_stream_destroy(encoded_message);
+    ueum_byte_stream_destroy(encoded_message);
     return result;
 }
 
-bool ue_relay_client_receive_message(ue_relay_client *client, ue_byte_stream *message) {
+bool ue_relay_client_receive_message(ue_relay_client *client, ueum_byte_stream *message) {
     bool result;
     size_t received;
-    ue_byte_stream *received_message;
+    ueum_byte_stream *received_message;
     ue_relay_received_message *decoded_message;
 
     result = false;
@@ -436,7 +432,7 @@ bool ue_relay_client_receive_message(ue_relay_client *client, ue_byte_stream *me
 
     ei_check_parameter_or_return(message);
 
-    received_message = ue_byte_stream_create();
+    received_message = ueum_byte_stream_create();
 
     received = ue_communication_receive_sync(client->communication_context, client->read_connection, received_message);
     if (received == 0) {
@@ -457,14 +453,14 @@ bool ue_relay_client_receive_message(ue_relay_client *client, ue_byte_stream *me
         goto clean_up;
     }
 
-    ue_byte_stream_clean_up(message);
-    ue_byte_writer_append_bytes(message, ue_byte_stream_get_data(decoded_message->payload),
-        ue_byte_stream_get_size(decoded_message->payload));
+    ueum_byte_stream_clean_up(message);
+    ueum_byte_writer_append_bytes(message, ueum_byte_stream_get_data(decoded_message->payload),
+        ueum_byte_stream_get_size(decoded_message->payload));
 
     result = true;
 
 clean_up:
-    ue_byte_stream_destroy(received_message);
+    ueum_byte_stream_destroy(received_message);
     ue_relay_received_message_destroy(decoded_message);
     return result;
 }

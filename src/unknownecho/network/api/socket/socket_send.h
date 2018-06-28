@@ -24,6 +24,6 @@
 
 #include <stddef.h>
 
-size_t ue_socket_send_sync(ue_socket_client_connection *connection, ue_byte_stream *message_to_send);
+size_t ue_socket_send_sync(ue_socket_client_connection *connection, ueum_byte_stream *message_to_send);
 
 #endif

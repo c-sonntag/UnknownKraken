@@ -5,16 +5,15 @@
 #include <unknownecho/protocol/api/relay/relay_route_decoder.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/network/factory/communication_metadata_factory.h>
-#include <unknownecho/crypto/factory/crypto_metadata_factory.h>
-#include <unknownecho/byte/byte_stream.h>
-#include <unknownecho/byte/byte_writer.h>
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 #include <ei/ei.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
 static bool extract_and_send_step(const char *step_id, const char *target_id, ue_relay_step **extracted_step,
-    ue_byte_stream *encoded_route, ue_crypto_metadata *crypto_metadata) {
+    ueum_byte_stream *encoded_route, uecm_crypto_metadata *crypto_metadata) {
 
     ei_logger_info("Extracting step for %s...", step_id);
     if (!(*extracted_step = ue_relay_route_decode_pop_step(encoded_route, crypto_metadata))) {
@@ -32,8 +31,8 @@ static bool extract_and_send_step(const char *step_id, const char *target_id, ue
 int main() {
     int step_number;
     ue_relay_route *route, *back_route;
-    ue_byte_stream *encoded_route, *encoded_back_route;
-    ue_crypto_metadata *our_crypto_metadata, *b_crypto_metadata, *c_crypto_metadata, *d_crypto_metadata;
+    ueum_byte_stream *encoded_route, *encoded_back_route;
+    uecm_crypto_metadata *our_crypto_metadata, *b_crypto_metadata, *c_crypto_metadata, *d_crypto_metadata;
     ue_relay_step *b_extracted_step, *c_extracted_step;
 
     step_number = 3;
@@ -55,25 +54,25 @@ int main() {
     ei_logger_info("UnknownEchoLib is correctly initialized");
 
     ei_logger_info("Generating crypto metadata for point A...");
-    if (!(our_crypto_metadata = ue_crypto_metadata_create_default())) {
+    if (!(our_crypto_metadata = uecm_crypto_metadata_create_default())) {
         ei_stacktrace_push_msg("Failed to generate default crypto metadata for point A");
         goto clean_up;
     }
 
     ei_logger_info("Generating crypto metadata for point B...");
-    if (!(b_crypto_metadata = ue_crypto_metadata_create_default())) {
+    if (!(b_crypto_metadata = uecm_crypto_metadata_create_default())) {
         ei_stacktrace_push_msg("Failed to generate default crypto metadata for point B");
         goto clean_up;
     }
 
     ei_logger_info("Generating crypto metadata for point C...");
-    if (!(c_crypto_metadata = ue_crypto_metadata_create_default())) {
+    if (!(c_crypto_metadata = uecm_crypto_metadata_create_default())) {
         ei_stacktrace_push_msg("Failed to generate default crypto metadata for point C");
         goto clean_up;
     }
 
     ei_logger_info("Generating crypto metadata for point D...");
-    if (!(d_crypto_metadata = ue_crypto_metadata_create_default())) {
+    if (!(d_crypto_metadata = uecm_crypto_metadata_create_default())) {
         ei_stacktrace_push_msg("Failed to generate default crypto metadata for point D");
         goto clean_up;
     }
@@ -137,7 +136,7 @@ int main() {
     }
 
     ei_logger_info("Encoded route:");
-    ue_byte_stream_print_hex(encoded_route, stdout);
+    ueum_byte_stream_print_hex(encoded_route, stdout);
 
     ei_logger_info("Encoding back route...");
     if (!(encoded_back_route = ue_relay_route_encode(back_route))) {
@@ -146,7 +145,7 @@ int main() {
     }
 
     ei_logger_info("Encoded back route:");
-    ue_byte_stream_print_hex(encoded_back_route, stdout);
+    ueum_byte_stream_print_hex(encoded_back_route, stdout);
 
     extract_and_send_step("B", "C", &b_extracted_step, encoded_route, b_crypto_metadata);
 
@@ -166,14 +165,14 @@ int main() {
     ei_logger_info("No more step to extract, as A is the end point");
 
 clean_up:
-    ue_byte_stream_destroy(encoded_route);
-    ue_byte_stream_destroy(encoded_back_route);
+    ueum_byte_stream_destroy(encoded_route);
+    ueum_byte_stream_destroy(encoded_back_route);
     ue_relay_route_destroy(route);
     ue_relay_route_destroy(back_route);
-    ue_crypto_metadata_destroy_all(our_crypto_metadata);
-    ue_crypto_metadata_destroy_all(b_crypto_metadata);
-    ue_crypto_metadata_destroy_all(c_crypto_metadata);
-    ue_crypto_metadata_destroy_all(d_crypto_metadata);
+    uecm_crypto_metadata_destroy_all(our_crypto_metadata);
+    uecm_crypto_metadata_destroy_all(b_crypto_metadata);
+    uecm_crypto_metadata_destroy_all(c_crypto_metadata);
+    uecm_crypto_metadata_destroy_all(d_crypto_metadata);
     ue_relay_step_destroy(b_extracted_step);
     ue_relay_step_destroy(c_extracted_step);
     if (ei_stacktrace_is_filled()) {

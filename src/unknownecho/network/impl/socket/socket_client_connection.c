@@ -20,10 +20,8 @@
 #include <unknownecho/network/api/socket/socket_client_connection.h>
 #include <unknownecho/network/api/socket/socket.h>
 #include <unknownecho/network/api/communication/communication_connection_state.h>
+#include <ueum/ueum.h>
 #include <ei/ei.h>
-#include <unknownecho/string/string_utility.h>
-#include <unknownecho/defines.h>
-#include <unknownecho/alloc.h>
 
 #include <string.h>
 
@@ -32,70 +30,70 @@
 #endif
 
 static void *byte_stream_alloc_func(void *data) {
-	return ue_byte_stream_copy((ue_byte_stream *)data);
+	return ueum_byte_stream_copy((ueum_byte_stream *)data);
 }
 
 static void byte_stream_free_func(void *data) {
-	ue_byte_stream_destroy((ue_byte_stream *)data);
+	ueum_byte_stream_destroy((ueum_byte_stream *)data);
 }
 
 ue_socket_client_connection *ue_socket_client_connection_init() {
 	ue_socket_client_connection *connection;
 
-	ue_safe_alloc(connection, ue_socket_client_connection, 1);
+	ueum_safe_alloc(connection, ue_socket_client_connection, 1);
     connection->state = UNKNOWNECHO_COMMUNICATION_CONNECTION_FREE_STATE;
 	connection->fd = -1;
 	connection->nickname = NULL;
-	connection->split_message = ue_byte_vector_create_empty();
-	connection->all_messages = ue_byte_vector_create_empty();
-	connection->tmp_message = ue_byte_vector_create_empty();
-	connection->current_message = ue_byte_vector_create_empty();
-	if ((connection->received_message = ue_byte_stream_create()) == NULL) {
+	connection->split_message = ueum_byte_vector_create_empty();
+	connection->all_messages = ueum_byte_vector_create_empty();
+	connection->tmp_message = ueum_byte_vector_create_empty();
+	connection->current_message = ueum_byte_vector_create_empty();
+	if ((connection->received_message = ueum_byte_stream_create()) == NULL) {
 		ei_stacktrace_push_msg("Failed to init received message");
 		goto clean_up;
 	}
-	if ((connection->message_to_send = ue_byte_stream_create()) == NULL) {
+	if ((connection->message_to_send = ueum_byte_stream_create()) == NULL) {
 		ei_stacktrace_push_msg("Failed to init message to send");
 		goto clean_up;
 	}
-	connection->received_message_stream = ue_byte_stream_create();
-	connection->tmp_stream = ue_byte_stream_create();
+	connection->received_message_stream = ueum_byte_stream_create();
+	connection->tmp_stream = ueum_byte_stream_create();
 	connection->tls = NULL;
 	connection->peer_certificate = NULL;
 	connection->established = false;
 	connection->optional_data = NULL;
-	connection->received_messages = ue_queue_create_mem(byte_stream_alloc_func, byte_stream_free_func);
-	connection->messages_to_send = ue_queue_create(byte_stream_alloc_func, byte_stream_free_func);
+	connection->received_messages = ueum_queue_create_mem(byte_stream_alloc_func, byte_stream_free_func);
+	connection->messages_to_send = ueum_queue_create(byte_stream_alloc_func, byte_stream_free_func);
     connection->communication_metadata = ue_communication_metadata_create_empty();
     connection->connection_direction = UNKNOWNECHO_COMMUNICATION_CONNECTION_UNIDIRECTIONAL_BIDIRECTIONAL;
 
 	return connection;
 
 clean_up:
-	ue_safe_free(connection);
+	ueum_safe_free(connection);
 	return NULL;
 }
 
 void ue_socket_client_connection_destroy(ue_socket_client_connection *connection) {
 	if (connection) {
 		ue_socket_close(connection->fd);
-		ue_safe_free(connection->nickname);
-		ue_byte_vector_destroy(connection->all_messages);
-		ue_byte_vector_destroy(connection->current_message);
-		ue_byte_vector_destroy(connection->tmp_message);
-		ue_byte_vector_destroy(connection->split_message);
-		ue_byte_stream_destroy(connection->received_message);
-		ue_byte_stream_destroy(connection->message_to_send);
+		ueum_safe_free(connection->nickname);
+		ueum_byte_vector_destroy(connection->all_messages);
+		ueum_byte_vector_destroy(connection->current_message);
+		ueum_byte_vector_destroy(connection->tmp_message);
+		ueum_byte_vector_destroy(connection->split_message);
+		ueum_byte_stream_destroy(connection->received_message);
+		ueum_byte_stream_destroy(connection->message_to_send);
 		if (connection->peer_certificate) {
-			ue_x509_certificate_destroy(connection->peer_certificate);
+			uecm_x509_certificate_destroy(connection->peer_certificate);
 			connection->peer_certificate = NULL;
 		}
-		ue_byte_stream_destroy(connection->received_message_stream);
-		ue_byte_stream_destroy(connection->tmp_stream);
-		ue_queue_destroy(connection->received_messages);
-		ue_queue_destroy(connection->messages_to_send);
+		ueum_byte_stream_destroy(connection->received_message_stream);
+		ueum_byte_stream_destroy(connection->tmp_stream);
+		ueum_queue_destroy(connection->received_messages);
+		ueum_queue_destroy(connection->messages_to_send);
         ue_communication_metadata_destroy(connection->communication_metadata);
-		ue_safe_free(connection);
+		ueum_safe_free(connection);
 	}
 }
 
@@ -107,26 +105,26 @@ void ue_socket_client_connection_clean_up(ue_socket_client_connection *connectio
 
     ue_socket_close(connection->fd);
     connection->fd = -1;
-    ue_safe_free(connection->nickname);
-    ue_byte_vector_clean_up(connection->all_messages);
-    ue_byte_vector_clean_up(connection->current_message);
-    ue_byte_vector_clean_up(connection->tmp_message);
-    ue_byte_stream_clean_up(connection->received_message);
-    ue_byte_stream_clean_up(connection->message_to_send);
-    ue_byte_vector_clean_up(connection->split_message);
+    ueum_safe_free(connection->nickname);
+    ueum_byte_vector_clean_up(connection->all_messages);
+    ueum_byte_vector_clean_up(connection->current_message);
+    ueum_byte_vector_clean_up(connection->tmp_message);
+    ueum_byte_stream_clean_up(connection->received_message);
+    ueum_byte_stream_clean_up(connection->message_to_send);
+    ueum_byte_vector_clean_up(connection->split_message);
     connection->state = UNKNOWNECHO_COMMUNICATION_CONNECTION_FREE_STATE;
     if (connection->peer_certificate) {
-        ue_x509_certificate_destroy(connection->peer_certificate);
+        uecm_x509_certificate_destroy(connection->peer_certificate);
         connection->peer_certificate = NULL;
     }
-    ue_byte_stream_clean_up(connection->received_message_stream);
-    ue_byte_stream_clean_up(connection->tmp_stream);
+    ueum_byte_stream_clean_up(connection->received_message_stream);
+    ueum_byte_stream_clean_up(connection->tmp_stream);
     connection->tls = NULL;
     connection->peer_certificate = NULL;
     connection->established = false;
     connection->optional_data = NULL;
-    ue_queue_clean_up(connection->received_messages);
-    ue_queue_clean_up(connection->messages_to_send);
+    ueum_queue_clean_up(connection->received_messages);
+    ueum_queue_clean_up(connection->messages_to_send);
     //ue_communication_metadata_clean_up(connection->communication_metadata);
 }
 
@@ -177,25 +175,25 @@ bool ue_socket_client_connection_set_nickname(ue_socket_client_connection *conne
     return true;
 }
 
-ue_byte_stream *ue_socket_client_connection_get_received_message(ue_socket_client_connection *connection) {
+ueum_byte_stream *ue_socket_client_connection_get_received_message(ue_socket_client_connection *connection) {
     ei_check_parameter_or_return(connection);
 
     return connection->received_message;
 }
 
-ue_byte_stream *ue_socket_client_connection_get_message_to_send(ue_socket_client_connection *connection) {
+ueum_byte_stream *ue_socket_client_connection_get_message_to_send(ue_socket_client_connection *connection) {
     ei_check_parameter_or_return(connection);
 
     return connection->message_to_send;
 }
 
-ue_queue *ue_socket_client_connection_get_received_messages(ue_socket_client_connection *connection) {
+ueum_queue *ue_socket_client_connection_get_received_messages(ue_socket_client_connection *connection) {
     ei_check_parameter_or_return(connection);
 
     return connection->received_messages;
 }
 
-ue_queue *ue_socket_client_connection_get_messages_to_send(ue_socket_client_connection *connection) {
+ueum_queue *ue_socket_client_connection_get_messages_to_send(ue_socket_client_connection *connection) {
     ei_check_parameter_or_return(connection);
 
     return connection->messages_to_send;
@@ -238,18 +236,18 @@ bool ue_socket_client_connection_build_communication_metadata(ue_socket_client_c
         port = ((struct sockaddr_in6 *)sa)->sin6_port;
     }
 
-    ue_safe_alloc(host, char, inet_addr_len);
+    ueum_safe_alloc(host, char, inet_addr_len);
 
     if (!inet_ntop(family, sock_addr_in, host, inet_addr_len)) {
         ei_stacktrace_push_errno();
-        ue_safe_free(host);
+        ueum_safe_free(host);
         return false;
     }
 
     ue_communication_metadata_clean_up(connection->communication_metadata);
     ue_communication_metadata_set_type(connection->communication_metadata, UNKNOWNECHO_COMMUNICATION_TYPE_SOCKET);
     ue_communication_metadata_set_host(connection->communication_metadata, host);
-    ue_safe_free(host);
+    ueum_safe_free(host);
     ue_communication_metadata_set_port(connection->communication_metadata, port);
     ue_communication_metadata_set_destination_type(connection->communication_metadata, UNKNOWNECHO_RELAY_CLIENT);
 

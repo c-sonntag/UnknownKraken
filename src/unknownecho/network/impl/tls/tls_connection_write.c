@@ -23,14 +23,14 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-size_t ue_tls_connection_write_sync(ue_tls_connection *connection, const void *data, int size) {
+size_t uecm_tls_connection_write_sync(uecm_tls_connection *connection, const void *data, int size) {
 	size_t sent, bytes;
     int32_t ssl_error;
 	SSL *ssl;
 
 	sent = 0;
 	ssl_error = SSL_ERROR_NONE;
-	ssl = ue_tls_connection_get_impl(connection);
+	ssl = uecm_tls_connection_get_impl(connection);
 
 	do {
 		_Pragma("GCC diagnostic push");

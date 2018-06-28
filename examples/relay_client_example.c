@@ -1,22 +1,11 @@
 #include <unknownecho/init.h>
-#include <unknownecho/alloc.h>
 #include <unknownecho/protocol/api/relay/relay_client.h>
 #include <unknownecho/protocol/api/relay/relay_step.h>
 #include <unknownecho/protocol/api/relay/relay_route.h>
 #include <unknownecho/network/api/communication/communication_metadata.h>
 #include <unknownecho/network/factory/communication_metadata_factory.h>
-#include <unknownecho/byte/byte_stream.h>
-#include <unknownecho/byte/byte_writer.h>
-#include <unknownecho/crypto/api/crypto_metadata.h>
-#include <unknownecho/crypto/factory/crypto_metadata_factory.h>
-#include <unknownecho/string/string_utility.h>
-#include <unknownecho/bool.h>
-#include <unknownecho/console/input.h>
-#include <unknownecho/thread/thread_mutex.h>
-#include <unknownecho/thread/thread_cond.h>
-#include <unknownecho/thread/thread_id_struct.h>
-#include <unknownecho/thread/thread.h>
-
+#include <ueum/ueum.h>
+#include <uecm/uecm.h>
 #include <ei/ei.h>
 
 #include <stdio.h>
@@ -31,29 +20,29 @@ typedef enum {
 
 typedef struct {
     ue_relay_client *client;
-    ue_thread_mutex *mutex;
-    ue_thread_cond *cond;
+    ueum_thread_mutex *mutex;
+    ueum_thread_cond *cond;
     ue_data_transmission_state transmission_state;
     bool running;
-    ue_thread_id *read_consumer_thread, *write_consumer_thread;
+    ueum_thread_id *read_consumer_thread, *write_consumer_thread;
 } global_context;
 
-ue_crypto_metadata **remote_crypto_metadatas = NULL;
+uecm_crypto_metadata **remote_crypto_metadatas = NULL;
 int remote_crypto_metadatas_number = 0;
 global_context context;
 
-static ue_relay_step *create_step_from_uid(ue_crypto_metadata *our_crypto_metadata, char *target_uid, int target_port, int i) {
+static ue_relay_step *create_step_from_uid(uecm_crypto_metadata *our_crypto_metadata, char *target_uid, int target_port, int i) {
 
     ue_relay_step *step;
-    ue_crypto_metadata *target_crypto_metadata;
+    uecm_crypto_metadata *target_crypto_metadata;
 
-    if (!(target_crypto_metadata = ue_crypto_metadata_create_empty())) {
+    if (!(target_crypto_metadata = uecm_crypto_metadata_create_empty())) {
         ei_stacktrace_push_msg("Failed to create empty crypto metadata object for target");
         return NULL;
     }
 
-    if (!ue_crypto_metadata_read_certificates(target_crypto_metadata, "out/public", target_uid)) {
-        ue_crypto_metadata_destroy(target_crypto_metadata);
+    if (!uecm_crypto_metadata_read_certificates(target_crypto_metadata, "out/public", target_uid)) {
+        uecm_crypto_metadata_destroy(target_crypto_metadata);
         ei_stacktrace_push_msg("Failed to read certificates of target");
         return NULL;
     }
@@ -61,7 +50,7 @@ static ue_relay_step *create_step_from_uid(ue_crypto_metadata *our_crypto_metada
     if (!(step = ue_relay_step_create(ue_communication_metadata_create_socket_type(target_uid, "127.0.0.1", target_port),
         our_crypto_metadata, target_crypto_metadata))) {
 
-        ue_crypto_metadata_destroy(target_crypto_metadata);
+        uecm_crypto_metadata_destroy(target_crypto_metadata);
         ei_stacktrace_push_msg("Failed to create step with uid '%s'", target_uid);
         return NULL;
     }
@@ -71,7 +60,7 @@ static ue_relay_step *create_step_from_uid(ue_crypto_metadata *our_crypto_metada
     return step;
 }
 
-static ue_relay_route *create_route_from_args(ue_crypto_metadata *our_crypto_metadata, int argc, char **argv) {
+static ue_relay_route *create_route_from_args(uecm_crypto_metadata *our_crypto_metadata, int argc, char **argv) {
     ue_relay_route *route;
     ue_relay_step **steps;
     int step_number;
@@ -80,8 +69,8 @@ static ue_relay_route *create_route_from_args(ue_crypto_metadata *our_crypto_met
     route = NULL;
     steps = NULL;
     step_number = (argc - 3)/2;
-    ue_safe_alloc(steps, ue_relay_step *, step_number);
-    ue_safe_alloc(remote_crypto_metadatas, ue_crypto_metadata *, step_number);
+    ueum_safe_alloc(steps, ue_relay_step *, step_number);
+    ueum_safe_alloc(remote_crypto_metadatas, uecm_crypto_metadata *, step_number);
     remote_crypto_metadatas_number = step_number;
 
     for (i = 3, j = 0; i < argc; i+=2, j++) {
@@ -101,67 +90,67 @@ static ue_relay_route *create_route_from_args(ue_crypto_metadata *our_crypto_met
 clean_up_fail:
     if (steps) {
         for (i = 0; i < step_number; i++) {
-            ue_crypto_metadata_destroy_all(ue_relay_step_get_target_crypto_metadata(steps[i]));
+            uecm_crypto_metadata_destroy_all(ue_relay_step_get_target_crypto_metadata(steps[i]));
             ue_relay_step_destroy(steps[i]);
         }
-        ue_safe_free(steps);
+        ueum_safe_free(steps);
     }
     return NULL;
 }
 
-static bool send_message(ue_byte_stream *message_to_send) {
+static bool send_message(ueum_byte_stream *message_to_send) {
     bool result;
 
     ei_check_parameter_or_return(message_to_send);
-    ei_check_parameter_or_return(!ue_byte_stream_is_empty(message_to_send));
+    ei_check_parameter_or_return(!ueum_byte_stream_is_empty(message_to_send));
 
     result = false;
 
-    ue_thread_mutex_lock(context.mutex);
+    ueum_thread_mutex_lock(context.mutex);
     context.transmission_state = WRITING_STATE;
     result = ue_relay_client_send_message(context.client, message_to_send);
     context.transmission_state = READING_STATE;
-    ue_thread_cond_signal(context.cond);
-    ue_thread_mutex_unlock(context.mutex);
+    ueum_thread_cond_signal(context.cond);
+    ueum_thread_mutex_unlock(context.mutex);
 
     return result;
 }
 
-static bool receive_message(ue_byte_stream *received_message) {
-    ue_thread_mutex_lock(context.mutex);
+static bool receive_message(ueum_byte_stream *received_message) {
+    ueum_thread_mutex_lock(context.mutex);
     while (context.transmission_state == WRITING_STATE) {
-        ue_thread_cond_wait(context.cond, context.mutex);
+        ueum_thread_cond_wait(context.cond, context.mutex);
     }
-    ue_thread_mutex_unlock(context.mutex);
+    ueum_thread_mutex_unlock(context.mutex);
 
     return ue_relay_client_receive_message(context.client, received_message);
 }
 
-/*static bool send_cipher_message(ue_channel_client *channel_client, void *connection, ue_byte_stream *message_to_send) {
+/*static bool send_cipher_message(ue_channel_client *channel_client, void *connection, ueum_byte_stream *message_to_send) {
     bool result;
     unsigned char *cipher_data;
     size_t cipher_data_size;
-    ue_x509_certificate *server_certificate;
-    ue_public_key *server_public_key;
+    uecm_x509_certificate *server_certificate;
+    uecm_public_key *server_public_key;
     result = false;
     cipher_data = NULL;
     server_public_key = NULL;
-    if (!(server_certificate = ue_pkcs12_keystore_find_certificate_by_friendly_name(context.cipher_keystore, (const unsigned char *)"CIPHER_SERVER", strlen("CIPHER_SERVER")))) {
+    if (!(server_certificate = uecm_pkcs12_keystore_find_certificate_by_friendly_name(context.cipher_keystore, (const unsigned char *)"CIPHER_SERVER", strlen("CIPHER_SERVER")))) {
         ei_stacktrace_push_msg("Failed to get cipher client certificate");
         goto clean_up;
     }
-    if (!(server_public_key = ue_rsa_public_key_from_x509_certificate(server_certificate))) {
+    if (!(server_public_key = uecm_rsa_public_key_from_x509_certificate(server_certificate))) {
         ei_stacktrace_push_msg("Failed to get server public key from server certificate");
         goto clean_up;
     }
-    if (!ue_cipher_plain_data(ue_byte_stream_get_data(message_to_send), ue_byte_stream_get_size(message_to_send),
+    if (!uecm_cipher_plain_data(ueum_byte_stream_get_data(message_to_send), ueum_byte_stream_get_size(message_to_send),
         server_public_key, context.signer_keystore->private_key, &cipher_data, &cipher_data_size, context.cipher_name,
         context.digest_name)) {
         ei_stacktrace_push_msg("Failed to cipher plain data");
         goto clean_up;
     }
-    ue_byte_stream_clean_up(context.message_to_send);
-    if (!ue_byte_writer_append_bytes(context.message_to_send, cipher_data, cipher_data_size)) {
+    ueum_byte_stream_clean_up(context.message_to_send);
+    if (!ueum_byte_writer_append_bytes(context.message_to_send, cipher_data, cipher_data_size)) {
         ei_stacktrace_push_msg("Failed to write cipher data to message to send");
         goto clean_up;
     }
@@ -171,15 +160,15 @@ static bool receive_message(ue_byte_stream *received_message) {
     }
     result = true;
 clean_up:
-    ue_safe_free(cipher_data);
-    ue_public_key_destroy(server_public_key);
+    ueum_safe_free(cipher_data);
+    uecm_public_key_destroy(server_public_key);
     return result;
 }
 static size_t receive_cipher_message(ue_channel_client *channel_client, void *connection) {
     unsigned char *plain_data;
     size_t received, plain_data_size;
-    ue_x509_certificate *server_certificate;
-    ue_public_key *server_public_key;
+    uecm_x509_certificate *server_certificate;
+    uecm_public_key *server_public_key;
     plain_data = NULL;
     server_public_key = NULL;
     received = receive_message(channel_client, connection);
@@ -187,67 +176,67 @@ static size_t receive_cipher_message(ue_channel_client *channel_client, void *co
         ei_logger_warn("Connection with server is interrupted.");
         goto clean_up;
     }
-    if (!(server_certificate = ue_pkcs12_keystore_find_certificate_by_friendly_name(context.signer_keystore, (const unsigned char *)"SIGNER_SERVER", strlen("SIGNER_SERVER")))) {
+    if (!(server_certificate = uecm_pkcs12_keystore_find_certificate_by_friendly_name(context.signer_keystore, (const unsigned char *)"SIGNER_SERVER", strlen("SIGNER_SERVER")))) {
         ei_stacktrace_push_msg("Failed to find server signer certificate");
         received = -1;
         goto clean_up;
     }
-    if (!(server_public_key = ue_rsa_public_key_from_x509_certificate(server_certificate))) {
+    if (!(server_public_key = uecm_rsa_public_key_from_x509_certificate(server_certificate))) {
         ei_stacktrace_push_msg("Failed to get server public key from server certificate");
         received = -1;
         goto clean_up;
     }
-    if (!ue_decipher_cipher_data(ue_byte_stream_get_data(context.received_message),
-        ue_byte_stream_get_size(context.received_message), context.cipher_keystore->private_key,
+    if (!uecm_decipher_cipher_data(ueum_byte_stream_get_data(context.received_message),
+        ueum_byte_stream_get_size(context.received_message), context.cipher_keystore->private_key,
         server_public_key, &plain_data, &plain_data_size, context.cipher_name,
         context.digest_name)) {
         received = -1;
         ei_stacktrace_push_msg("Failed decipher message data");
         goto clean_up;
     }
-    ue_byte_stream_clean_up(context.received_message);
-    if (!ue_byte_writer_append_bytes(context.received_message, plain_data, plain_data_size)) {
+    ueum_byte_stream_clean_up(context.received_message);
+    if (!ueum_byte_writer_append_bytes(context.received_message, plain_data, plain_data_size)) {
         received = -1;
         ei_stacktrace_push_msg("Failed to write plain data to received message");
         goto clean_up;
     }
 clean_up:
-    ue_public_key_destroy(server_public_key);
-    ue_safe_free(plain_data);
+    uecm_public_key_destroy(server_public_key);
+    ueum_safe_free(plain_data);
     return received;
 }*/
 
 static void read_consumer(void *parameter) {
-    ue_byte_stream *received_message;
+    ueum_byte_stream *received_message;
 
-    received_message = ue_byte_stream_create();
+    received_message = ueum_byte_stream_create();
 
     while (context.running) {
         if (!receive_message(received_message)) {
             ei_logger_stacktrace("Failed to receive message");
             ei_stacktrace_clean_up();
         }
-        ue_byte_stream_print_string(received_message, stdout);
-        if (memcmp(ue_byte_stream_get_data(received_message), "-s", strlen("-s")) == 0) {
+        ueum_byte_stream_print_string(received_message, stdout);
+        if (memcmp(ueum_byte_stream_get_data(received_message), "-s", strlen("-s")) == 0) {
             context.running = false;
             break;
         }
     }
 
-    ue_byte_stream_destroy(received_message);
+    ueum_byte_stream_destroy(received_message);
 }
 
 static void write_consumer(void *parameter) {
     char *input;
-    ue_byte_stream *message;
+    ueum_byte_stream *message;
 
-    if (!(message = ue_byte_stream_create())) {
+    if (!(message = ueum_byte_stream_create())) {
         ei_stacktrace_push_msg("Failed to create empty byte stream");
         return;
     }
 
     while (context.running) {
-        input = ue_input_string(">");
+        input = ueum_input_string(">");
 
         if (!input) {
             continue;
@@ -258,8 +247,8 @@ static void write_consumer(void *parameter) {
             break;
         }
 
-        ue_byte_stream_clean_up(message);
-        ue_byte_writer_append_string(message, input);
+        ueum_byte_stream_clean_up(message);
+        ueum_byte_writer_append_string(message, input);
 
         if (!send_message(message)) {
             ei_logger_stacktrace("Failed to send message to server");
@@ -267,17 +256,17 @@ static void write_consumer(void *parameter) {
             ei_logger_info("Message sent.");
         }
 
-        ue_safe_free(input);
+        ueum_safe_free(input);
     }
 
-    ue_safe_free(input);
-    ue_byte_stream_destroy(message);
+    ueum_safe_free(input);
+    ueum_byte_stream_destroy(message);
 }
 
 int main(int argc, char **argv) {
     ue_relay_route *route;
     ue_communication_metadata *our_communication_metadata;
-    ue_crypto_metadata *our_crypto_metadata;
+    uecm_crypto_metadata *our_crypto_metadata;
     int i;
 
     route = NULL;
@@ -297,13 +286,13 @@ int main(int argc, char **argv) {
     }
     ei_logger_info("UnknownEchoLib is correctly initialized.");
 
-    context.mutex = ue_thread_mutex_create();
-    context.cond = ue_thread_cond_create();
+    context.mutex = ueum_thread_mutex_create();
+    context.cond = ueum_thread_cond_create();
     context.client = NULL;
     context.transmission_state = WRITING_STATE;
     context.running = true;
 
-    if (!(our_crypto_metadata = ue_crypto_metadata_write_if_not_exist("out/private", "out/public", argv[1], argv[2]))) {
+    if (!(our_crypto_metadata = uecm_crypto_metadata_write_if_not_exist("out/private", "out/public", argv[1], argv[2]))) {
         ei_stacktrace_push_msg("Failed to get crypto metadata");
         goto clean_up;
     }
@@ -333,24 +322,24 @@ int main(int argc, char **argv) {
 
     _Pragma("GCC diagnostic push")
     _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
-        context.read_consumer_thread = ue_thread_create(read_consumer, NULL);
-        context.write_consumer_thread = ue_thread_create(write_consumer, NULL);
+        context.read_consumer_thread = ueum_thread_create(read_consumer, NULL);
+        context.write_consumer_thread = ueum_thread_create(write_consumer, NULL);
     _Pragma("GCC diagnostic pop")
 
-    ue_thread_join(context.read_consumer_thread, NULL);
-    ue_thread_join(context.write_consumer_thread, NULL);
+    ueum_thread_join(context.read_consumer_thread, NULL);
+    ueum_thread_join(context.write_consumer_thread, NULL);
 
 clean_up:
     ue_relay_client_destroy(context.client);
-    ue_thread_mutex_destroy(context.mutex);
-    ue_thread_cond_destroy(context.cond);
-    ue_crypto_metadata_destroy_all(our_crypto_metadata);
+    ueum_thread_mutex_destroy(context.mutex);
+    ueum_thread_cond_destroy(context.cond);
+    uecm_crypto_metadata_destroy_all(our_crypto_metadata);
     ue_relay_route_destroy(route);
     if (remote_crypto_metadatas) {
         for (i = 0; i < remote_crypto_metadatas_number; i++) {
-            ue_crypto_metadata_destroy_all(remote_crypto_metadatas[i]);
+            uecm_crypto_metadata_destroy_all(remote_crypto_metadatas[i]);
         }
-        ue_safe_free(remote_crypto_metadatas);
+        ueum_safe_free(remote_crypto_metadatas);
     }
     ue_communication_metadata_destroy(our_communication_metadata);
     if (ei_stacktrace_is_filled()) {

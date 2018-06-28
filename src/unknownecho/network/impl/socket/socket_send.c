@@ -19,10 +19,9 @@
 
 #include <unknownecho/network/api/socket/socket_send.h>
 #include <unknownecho/network/api/tls/tls_connection_write.h>
-#include <ei/ei.h>
-#include <unknownecho/alloc.h>
 #include <unknownecho/network/api/tls/tls_connection.h>
-#include <unknownecho/byte/byte_stream.h>
+#include <ueum/ueum.h>
+#include <ei/ei.h>
 
 #include <limits.h>
 
@@ -38,7 +37,7 @@
     #error "OS not supported"
 #endif
 
-size_t ue_socket_send_sync(ue_socket_client_connection *connection, ue_byte_stream *message_to_send) {
+size_t ue_socket_send_sync(ue_socket_client_connection *connection, ueum_byte_stream *message_to_send) {
     size_t sent, size;
     unsigned char *data;
 
@@ -49,10 +48,10 @@ size_t ue_socket_send_sync(ue_socket_client_connection *connection, ue_byte_stre
     #endif
 
     ei_check_parameter_or_return(connection->fd > 0);
-    ei_check_parameter_or_return(ue_byte_stream_get_size(message_to_send) > 0);
+    ei_check_parameter_or_return(ueum_byte_stream_get_size(message_to_send) > 0);
 
-    data = ue_byte_stream_get_data(message_to_send);
-    size = ue_byte_stream_get_size(message_to_send);
+    data = ueum_byte_stream_get_data(message_to_send);
+    size = ueum_byte_stream_get_size(message_to_send);
     sent = 0;
 
     if (!connection->tls) {
@@ -73,14 +72,14 @@ size_t ue_socket_send_sync(ue_socket_client_connection *connection, ue_byte_stre
             if((sent = send((SOCKET)connection->fd, (char *)data, size, 0)) < 0) {
                 ue_get_last_wsa_error(error_buffer);
                 ei_stacktrace_push_msg(error_buffer);
-                ue_safe_free(error_buffer);
+                ueum_safe_free(error_buffer);
                 return -1;
             }
         #else
             #error "OS not supported"
         #endif
     } else {
-        sent = ue_tls_connection_write_sync(connection->tls, data, size);
+        sent = uecm_tls_connection_write_sync(connection->tls, data, size);
     }
 
     ei_logger_trace("%lu bytes sent", sent);
