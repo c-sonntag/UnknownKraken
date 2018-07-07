@@ -162,9 +162,9 @@ endif ()
 set(LIBUKNOWNECHO_DEPENDENCIES
 	zlib
 	ei
-	libueum
+	ueum
 	openssl
-	libuecm
+	uecm
 )
 
 set(LIBUNKNOWNECHO_LIBRARIES
@@ -176,7 +176,7 @@ set(LIBUNKNOWNECHO_LIBRARIES
 	${CMAKE_THREAD_LIBS_INIT}
 )
 
-set(LIBUNKNOWNECHOCRYPTO_MODULE_INCLUDE_DIR
+set(LIBUNKNOWNECHO_INCLUDE_DIR
 	${ZLIB_INCLUDE_DIR}
 	${LIBERRORINTERCEPTOR_INCLUDE_DIR}
 	${LIBUNKNOWNECHOUTILSMODULE_INCLUDE_DIR}
@@ -186,8 +186,8 @@ set(LIBUNKNOWNECHOCRYPTO_MODULE_INCLUDE_DIR
 
 # --- BUILD UNKNOWNECHO ---
 
-include_directories(${LIBUNKNOWNECHOCRYPTO_MODULE_INCLUDE_DIR})
-link_directories(${LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES})
+include_directories(${LIBUNKNOWNECHO_INCLUDE_DIR})
+link_directories(${LIBUNKNOWNECHO_LIBRARIES})
 
 set(PROJECT_NAME_STATIC "${PROJECT_NAME}_static")
 set(PROJECT_NAME_SHARED "${PROJECT_NAME}_shared")
@@ -249,7 +249,7 @@ foreach (filePath ${files} )
 	get_filename_component(executableName ${filePath} NAME_WE)
 	message(STATUS "Build Program : ${executableName}")
 	add_executable(${executableName} ${filePath})
-    add_dependencies(${executableName} ${LIBUKNOWNE_DEPENDENCIES})
+    add_dependencies(${executableName} ${LIBUKNOWNECHO_DEPENDENCIES})
 	target_link_libraries(${executableName} ${PROJECT_NAME_STATIC})
 	target_link_libraries(${executableName} ${LIBUNKNOWNECHO_LIBRARIES})
 	target_link_libraries(${executableName} ${OPENSSL_LIBRARIES})
