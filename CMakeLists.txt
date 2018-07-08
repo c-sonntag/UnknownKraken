@@ -11,6 +11,8 @@ cmake_minimum_required(VERSION 3.8)
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 
+set(LIBUNKNOWNECHOUTILSMODULE_SET false)
+
 # --- PATH ---
 
 set(${CMAKE_CURRENT_SOURCE_DIR} ..)
@@ -144,7 +146,7 @@ mark_as_advanced(DOWNLOAD_LOCATION)
 include(libei)
 
 # LibUnknownEchoUtilsModule
-include(ueum)
+include(libueum)
 
 include(openssl)
 
@@ -152,7 +154,7 @@ include(openssl)
 include(zlib)
 
 # LibUnknownEchoCryptoModule
-include(uecm)
+include(libuecm)
 
 # Search pthread
 if (UNIX)
@@ -161,11 +163,17 @@ endif ()
 
 set(LIBUKNOWNECHO_DEPENDENCIES
 	zlib
-	ei
-	ueum
 	openssl
-	uecm
+	libuecm
 )
+
+if (LIBERRORINTERCEPTOR_SET)
+	list(APPEND LIBUKNOWNECHOCRYPTOMODULE_DEPENDENCIES libei)
+endif ()
+
+if (LIBUNKNOWNECHOUTILSMODULE_SET)
+	list(APPEND LIBUKNOWNECHO_DEPENDENCIES libueum)
+endif ()
 
 set(LIBUNKNOWNECHO_LIBRARIES
 	${ZLIB_LIBRARIES}

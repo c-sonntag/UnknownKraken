@@ -17,7 +17,7 @@
  #   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.  			  #
  ##########################################################################################
 
-#add_custom_target(libuecm)
+ set(LIBUNKNOWNECHOUTILSMODULE_SET false)
 
 if (systemlib_LIBUECM)
     if (WIN32)
@@ -26,6 +26,7 @@ if (systemlib_LIBUECM)
     elseif (UNIX)
         set(LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES "-luecm")
     endif ()
+    set(LIBUNKNOWNECHOUTILSMODULE_SET true)
 else (systemlib_LIUECM)
     set(found FALSE)
 
@@ -54,27 +55,22 @@ else (systemlib_LIUECM)
         set(LIBUECM_INSTALL ${CMAKE_CURRENT_BINARY_DIR}/libuecm/install)
 
         if (WIN32)
-            set(libuecm_STATIC_LIBRARIES "${CMAKE_CURRENT_BINARY_DIR}\\uecm_static.lib")
+            set(LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES "${CMAKE_CURRENT_BINARY_DIR}\\uecm_static.lib")
         else()
-            set(libuecm_STATIC_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/libuecm/install/lib/libuecm.a)
+            set(LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/libuecm/install/lib/libuecm.a)
         endif()
 
         ExternalProject_Add(libuecm
             PREFIX libuecm
             GIT_REPOSITORY ${LIBUECM_URL}	
             BUILD_IN_SOURCE 1
-            BUILD_BYPRODUCTS ${libuecm_STATIC_LIBRARIES}
+            BUILD_BYPRODUCTS ${LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES}
             DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
             CMAKE_CACHE_ARGS
                 -DCMAKE_BUILD_TYPE:STRING=Release
                 -DCMAKE_INSTALL_PREFIX:STRING=${LIBUECM_INSTALL}
         )
 
-        if (WIN32)
-            set(LIBUNKNOWNECHOCRYPTOMODULE_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}\\libuecm\\install\\include")
-            set(LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES "${CMAKE_CURRENT_BINARY_DIR}\\libuecm\\install\\lib\\uecm_static.lib")
-        elseif (UNIX)
-            set(LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES "-luecm")
-        endif ()
+        set(LIBUNKNOWNECHOUTILSMODULE_SET true)
     endif ()
 endif (systemlib_LIBUECM)

@@ -17,8 +17,6 @@
  #   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.  			  #
  ##########################################################################################
 
-#add_custom_target(libueum)
-
 if (systemlib_LIBUEUM)
     if (WIN32)
         set(LIBUNKNOWNECHOUTILSMODULE_INCLUDE_DIR "C:\\LibUnknownEchoUtilsModule\\$ENV{name}\\include")
@@ -26,8 +24,10 @@ if (systemlib_LIBUEUM)
     elseif (UNIX)
         set(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES "-lueum")
 	endif ()
+	set(LIBUNKNOWNECHOUTILSMODULE_SET true)
 else (systemlib_LIUEUM)
 	set(found FALSE)
+	set(LIBUNKNOWNECHOUTILSMODULE_SET false)
 
 	if (UNIX)
 		find_library(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES ueum)
@@ -76,5 +76,7 @@ else (systemlib_LIUEUM)
 		elseif (UNIX)
 			set(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES "-lueum")
 		endif ()
+
+		set(LIBUNKNOWNECHOUTILSMODULE_SET true)
 	endif ()
 endif (systemlib_LIBUEUM)
