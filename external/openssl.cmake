@@ -23,9 +23,7 @@ if (UNIX)
     ExternalProject_Add(openssl
         PREFIX openssl
         URL http://www.openssl.org/source/openssl-1.1.0h.tar.gz
-        # URL ${CMAKE_SOURCE_DIR}/vendor/openssl-1.0.2-latest.tar.gz
-        # PATCH_COMMAND ${CMAKE_SOURCE_DIR}/patches/patch-manager.sh openssl
-        CONFIGURE_COMMAND ./config no-shared no-idea no-mdc2 no-rc5 --prefix=${CMAKE_BINARY_DIR}
+        CONFIGURE_COMMAND ./config no-tests no-shared no-idea no-mdc2 no-rc4 no-rc5 --prefix=${CMAKE_BINARY_DIR}
         BUILD_COMMAND make depend && make
         INSTALL_COMMAND make install_sw
         BUILD_IN_SOURCE 1
