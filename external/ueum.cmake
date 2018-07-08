@@ -17,7 +17,7 @@
  #   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.  			  #
  ##########################################################################################
 
-add_custom_target(libueum)
+#add_custom_target(libueum)
 
 if (systemlib_LIBUEUM)
     if (WIN32)
