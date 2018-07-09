@@ -40,11 +40,12 @@ else ()
         COMMAND nmake -f "ms\\ntdll.mak"
         BUILD_IN_SOURCE 1
         INSTALL_COMMAND nmake -f "ms\\ntdll.mak" install
+        DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
     )
 endif ()
 
-set(OPENSSL_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/openssl/src/openssl/)
+set(OPENSSL_INCLUDE_DIR ${ROOT_BUILD_DIR}/openssl/src/openssl/)
 set(OPENSSL_LIBRARIES
-    ${CMAKE_CURRENT_BINARY_DIR}/openssl/src/openssl/libcrypto.a
-    ${CMAKE_CURRENT_BINARY_DIR}/openssl/src/openssl/libssl.a
+    ${ROOT_BUILD_DIR}/openssl/src/openssl/libssl.a
+    ${ROOT_BUILD_DIR}/openssl/src/openssl/libcrypto.a
 )

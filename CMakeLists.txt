@@ -6,12 +6,10 @@
 PROJECT(unknownecho C)
 cmake_minimum_required(VERSION 3.8)
 
-
 # --- GLOBAL OPTIONS ---
 
 set(CMAKE_VERBOSE_MAKEFILE on)
-
-set(LIBUNKNOWNECHOUTILSMODULE_SET false)
+SET(ROOT_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE STRING "Default root path of the current build directory")
 
 # --- PATH ---
 
@@ -163,17 +161,20 @@ endif ()
 
 set(LIBUKNOWNECHO_DEPENDENCIES
 	zlib
-	openssl
 	libuecm
 )
 
-if (LIBERRORINTERCEPTOR_SET)
-	list(APPEND LIBUKNOWNECHOCRYPTOMODULE_DEPENDENCIES libei)
-endif ()
+#if (LIBERRORINTERCEPTOR_SET)
+list(APPEND LIBUKNOWNECHOCRYPTOMODULE_DEPENDENCIES libei)
+#endif ()
 
-if (LIBUNKNOWNECHOUTILSMODULE_SET)
-	list(APPEND LIBUKNOWNECHO_DEPENDENCIES libueum)
-endif ()
+#if (LIBUNKNOWNECHOUTILSMODULE_SET)
+list(APPEND LIBUKNOWNECHO_DEPENDENCIES libueum)
+#endif ()
+
+#if (OPENSSL_TARGET_SET)
+list(APPEND LIBUKNOWNECHO_DEPENDENCIES openssl)
+#endif ()
 
 set(LIBUNKNOWNECHO_LIBRARIES
 	${ZLIB_LIBRARIES}
@@ -257,7 +258,8 @@ foreach (filePath ${files} )
 	get_filename_component(executableName ${filePath} NAME_WE)
 	message(STATUS "Build Program : ${executableName}")
 	add_executable(${executableName} ${filePath})
-    add_dependencies(${executableName} ${LIBUKNOWNECHO_DEPENDENCIES})
+	#add_dependencies(${executableName} ${LIBUKNOWNECHO_DEPENDENCIES})
+	target_link_libraries(${executableName} ${ZLIB_LIBRARIES})
 	target_link_libraries(${executableName} ${PROJECT_NAME_STATIC})
 	target_link_libraries(${executableName} ${LIBUNKNOWNECHO_LIBRARIES})
 	target_link_libraries(${executableName} ${OPENSSL_LIBRARIES})
