@@ -31,9 +31,9 @@ else (systemlib_LIUECM)
     include (ExternalProject)
 
     set(LIBUECM_URL https://github.com/swasun/LibUnknownEchoCryptoModule.git)
-    set(LIBUNKNOWNECHOCRYPTOMODULE_INCLUDE_DIR ${ROOT_BUILD_DIR}/external/libuecm_archive)
-    set(LIBUECM_BUILD ${ROOT_BUILD_DIR}/libuecm/src/libuecm)
     set(LIBUECM_INSTALL ${ROOT_BUILD_DIR}/libuecm/install)
+    set(LIBUNKNOWNECHOCRYPTOMODULE_INCLUDE_DIR ${LIBUECM_INSTALL}/include)
+    set(LIBUECM_BUILD ${ROOT_BUILD_DIR}/libuecm/src/libuecm)
 
     if (WIN32)
         set(LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES "${ROOT_BUILD_DIR}\\uecm_static.lib")

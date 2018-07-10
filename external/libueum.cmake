@@ -28,14 +28,14 @@ else (systemlib_LIUEUM)
 	include (ExternalProject)
 
 	set(LIBUEUM_URL https://github.com/swasun/LibUnknownEchoUtilsModule.git)
-	set(LIBUNKNOWNECHOUTILSMODULE_INCLUDE_DIR ${ROOT_BUILD_DIR}/external/libueum_archive)
-	set(LIBUEUM_BUILD ${ROOT_BUILD_DIR}/libueum/src/libueum)
 	set(LIBUEUM_INSTALL ${ROOT_BUILD_DIR}/libueum/install)
+	set(LIBUNKNOWNECHOUTILSMODULE_INCLUDE_DIR ${LIBUEUM_INSTALL}/include)
+	set(LIBUEUM_BUILD ${ROOT_BUILD_DIR}/libueum/src/libueum)
 
 	if (WIN32)
 		set(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES "${ROOT_BUILD_DIR}\\ueum_static.lib")
 	else()
-		set(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES ${ROOT_BUILD_DIR}/libueum/install/lib/libueum.a)
+		set(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES ${ROOT_BUILD_DIR}/libueum/install/lib/libueum_static.a)
 	endif()
 
 	ExternalProject_Add(libueum
@@ -48,5 +48,6 @@ else (systemlib_LIUEUM)
 			-DCMAKE_BUILD_TYPE:STRING=Release
 			-DCMAKE_INSTALL_PREFIX:STRING=${LIBUEUM_INSTALL}
 			-DROOT_BUILD_DIR:STRING=${ROOT_BUILD_DIR}
+			-DCMAKE_C_FLAGS:STRING=-fPIC
 	)
 endif (systemlib_LIBUEUM)

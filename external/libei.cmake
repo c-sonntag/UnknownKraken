@@ -28,14 +28,14 @@ else (systemlib_LIBEI)
 	include (ExternalProject)
 
 	set(LIBEI_URL https://github.com/swasun/LibErrorInterceptor.git)
-	set(LIBERRORINTERCEPTOR_INCLUDE_DIR ${ROOT_BUILD_DIR}/external/libei_archive)
-	set(LIBEI_BUILD ${ROOT_BUILD_DIR}/libei/src/libei)
 	set(LIBEI_INSTALL ${ROOT_BUILD_DIR}/libei/install)
+	set(LIBERRORINTERCEPTOR_INCLUDE_DIR ${LIBEI_INSTALL}/include)
+	set(LIBEI_BUILD ${ROOT_BUILD_DIR}/libei/src/libei)
 
 	if (WIN32)
 		set(LIBERRORINTERCEPTOR_LIBRARIES "${ROOT_BUILD_DIR}\\ei_static.lib")
 	else()
-		set(LIBERRORINTERCEPTOR_LIBRARIES ${ROOT_BUILD_DIR}/libei/install/lib/libei.a)
+		set(LIBERRORINTERCEPTOR_LIBRARIES ${ROOT_BUILD_DIR}/libei/install/lib/libei_static.a)
 	endif()
 
 	ExternalProject_Add(libei

@@ -160,21 +160,18 @@ if (UNIX)
 endif ()
 
 set(LIBUKNOWNECHO_DEPENDENCIES
+	libei
 	zlib
+	libueum
 	libuecm
+	openssl
 )
 
-#if (LIBERRORINTERCEPTOR_SET)
-list(APPEND LIBUKNOWNECHOCRYPTOMODULE_DEPENDENCIES libei)
-#endif ()
+#list(APPEND LIBUKNOWNECHOCRYPTOMODULE_DEPENDENCIES libei)
 
-#if (LIBUNKNOWNECHOUTILSMODULE_SET)
-list(APPEND LIBUKNOWNECHO_DEPENDENCIES libueum)
-#endif ()
+#list(APPEND LIBUKNOWNECHO_DEPENDENCIES libueum)
 
-#if (OPENSSL_TARGET_SET)
-list(APPEND LIBUKNOWNECHO_DEPENDENCIES openssl)
-#endif ()
+#list(APPEND LIBUKNOWNECHO_DEPENDENCIES openssl)
 
 set(LIBUNKNOWNECHO_LIBRARIES
 	${ZLIB_LIBRARIES}
@@ -221,13 +218,23 @@ set_target_properties(${PROJECT_NAME_STATIC} PROPERTIES OUTPUT_NAME unknownecho_
 
 if (UNIX)
     # Copy includes
-    install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION /usr/include FILES_MATCHING PATTERN "*.h")
+    #install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION /usr/include FILES_MATCHING PATTERN "*.h")
 
     # Copy static library
-    install (TARGETS ${PROJECT_NAME_STATIC} ARCHIVE DESTINATION "/usr/lib")
+    #install (TARGETS ${PROJECT_NAME_STATIC} ARCHIVE DESTINATION "/usr/lib")
 
     # Copy shared library
-    install (TARGETS ${PROJECT_NAME_SHARED} LIBRARY DESTINATION "/usr/lib")
+	#install (TARGETS ${PROJECT_NAME_SHARED} LIBRARY DESTINATION "/usr/lib")
+	
+	# Copy includes
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include FILES_MATCHING PATTERN "*.h")
+
+	# Copy static library
+	install (
+		TARGETS ${PROJECT_NAME_STATIC}
+		ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+		LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+	)
 elseif (WIN32)
 	# Copy includes
     install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include FILES_MATCHING PATTERN "*.h")
@@ -258,11 +265,12 @@ foreach (filePath ${files} )
 	get_filename_component(executableName ${filePath} NAME_WE)
 	message(STATUS "Build Program : ${executableName}")
 	add_executable(${executableName} ${filePath})
-	#add_dependencies(${executableName} ${LIBUKNOWNECHO_DEPENDENCIES})
-	target_link_libraries(${executableName} ${ZLIB_LIBRARIES})
+	add_dependencies(${executableName} ${LIBUKNOWNECHO_DEPENDENCIES})
 	target_link_libraries(${executableName} ${PROJECT_NAME_STATIC})
 	target_link_libraries(${executableName} ${LIBUNKNOWNECHO_LIBRARIES})
 	target_link_libraries(${executableName} ${OPENSSL_LIBRARIES})
+	target_link_libraries(${executableName} ${LIBUNKNOWNECHOUTILSMODULE_LIBRARIES})
+	target_link_libraries(${executableName} ${ZLIB_LIBRARIES})
 	if (UNIX)
 		target_link_libraries(${executableName} "-ldl")
 	endif ()
