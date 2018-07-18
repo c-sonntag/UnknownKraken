@@ -98,13 +98,13 @@ Core dependencies, without encryption.
 * [LibErrorInterceptor](https://github.com/swasun/LibErrorInterceptor), a lightweight and cross-plateform library to handle stacktrace and logging in C99.
 * [LibMemorySlot](https://github.com/swasun/LibMemorySlot), a lightweight library to create, update and load slot (the Windows implementation is the Resource API).
 * [LibSharedMemoryObject](https://github.com/swasun/LibSharedMemoryObject), a light and cross-plateform library that provides a simple API to load from memory shared library on both Linux (.so) and Windows (.dll).
-* [LibUnknownEchoUtilsModule](https://github.com/swasun/LibUnknownEchoUtilsModule) Crypto module of [LibUnknownEcho](https://github.com/swasun/LibUnknownEcho). Last version
+* [LibUnknownEchoUtilsModule](https://github.com/swasun/LibUnknownEchoUtilsModule) Utils module of [LibUnknownEcho](https://github.com/swasun/LibUnknownEcho). Last version
 
 ### Optional
 
 Additional depdendencies to add an encryption layer.
 
-* [LibUnknownEchoCryptoModule](https://github.com/swasun/LibUnknownEchoCryptoModule) Utils module of [LibUnknownEcho](https://github.com/swasun/LibUnknownEcho). Last version.
+* [LibUnknownEchoCryptoModule](https://github.com/swasun/LibUnknownEchoCryptoModule) Crypto module of [LibUnknownEcho](https://github.com/swasun/LibUnknownEcho). Last version.
 * [Libssl](https://github.com/openssl/openssl) Provides the client and server-side implementations for SSLv3 and TLS. Version 1.1
 * [Libcrypto](https://github.com/openssl/openssl) Provides general cryptographic and X.509 support needed by SSL/TLS but
 	not logically part of it. Version 1.1.
