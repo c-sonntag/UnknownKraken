@@ -17,41 +17,36 @@
  #   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.  			  #
  ##########################################################################################
 
-set(LIBUNKNOWNECHOUTILSMODULE_SET false)
-
-if (systemlib_LIBUECM)
+if (LIBUECM_SYSTEM)
     if (WIN32)
-        set(LIBUNKNOWNECHOCRYPTOMODULE_INCLUDE_DIR "C:\\LibUnknownEchoCryptoModule\\$ENV{name}\\include")
-        set(LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES "C:\\LibUnknownEchoCryptoModule\\$ENV{name}\\lib\\uecm_static.lib")
+        set(LIBUNKNOWNECHOUTILSMODULE_INCLUDE_DIR "C:\\LibUnknownEchoUtilsModule\\$ENV{name}\\include")
+        set(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES "C:\\LibUnknownEchoUtilsModule\\$ENV{name}\\lib\\uecm_static.lib")
     elseif (UNIX)
-        set(LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES "-luecm")
+        set(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES "-luecm_static")
     endif ()
-    set(LIBUNKNOWNECHOUTILSMODULE_SET true)
-else (systemlib_LIUECM)
+else (LIBUECM_SYSTEM)
     include (ExternalProject)
 
-    set(LIBUECM_URL https://github.com/swasun/LibUnknownEchoCryptoModule.git)
-    set(LIBUECM_INSTALL ${ROOT_BUILD_DIR}/libuecm/install)
-    set(LIBUNKNOWNECHOCRYPTOMODULE_INCLUDE_DIR ${LIBUECM_INSTALL}/include)
+    set(LIBUECM_URL https://github.com/swasun/LibUnknownEchoUtilsModule.git)
+    set(LIBUNKNOWNECHOUTILSMODULE_INCLUDE_DIR ${LIBUECM_INSTALL}/external/libuecm_archive)
     set(LIBUECM_BUILD ${ROOT_BUILD_DIR}/libuecm/src/libuecm)
 
     if (WIN32)
-        set(LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES "${ROOT_BUILD_DIR}\\uecm_static.lib")
+        set(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES "${LIBUECM_INSTALL}\\lib\\uecm_static.lib")
     else()
-        set(LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES ${ROOT_BUILD_DIR}/libuecm/install/lib/libuecm_static.a)
+        set(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES ${LIBUECM_INSTALL}/lib/libuecm_static.a)
     endif()
-
-    message(STATUS "ROOT_BUILD_DIR: " ${ROOT_BUILD_DIR})
 
     ExternalProject_Add(libuecm
         PREFIX libuecm
-        GIT_REPOSITORY ${LIBUECM_URL}
-        BUILD_BYPRODUCTS ${LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES}
-        DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
+        GIT_REPOSITORY ${LIBUECM_URL}	
         BUILD_IN_SOURCE 1
+        BUILD_BYPRODUCTS ${LIBUNKNOWNECHOUTILSMODULE_LIBRARIES}
+        DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
         CMAKE_CACHE_ARGS
             -DCMAKE_BUILD_TYPE:STRING=Release
             -DCMAKE_INSTALL_PREFIX:STRING=${LIBUECM_INSTALL}
             -DROOT_BUILD_DIR:STRING=${ROOT_BUILD_DIR}
+            -DCMAKE_C_FLAGS:STRING=-fPIC
     )
-endif (systemlib_LIBUECM)
+endif (LIBUECM_SYSTEM)

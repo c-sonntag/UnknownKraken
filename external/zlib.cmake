@@ -32,58 +32,61 @@
  #   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.  			  #
  ##########################################################################################
 
-if (systemlib_ZLIB)
-find_package(PkgConfig)
-pkg_search_module(ZLIB REQUIRED zlib)
-set(ZLIB_INCLUDE_DIR ${ZLIB_INCLUDE_DIRS})
-set(ADD_LINK_DIRECTORY ${ADD_LINK_DIRECTORY} ${ZLIB_LIBRARY_DIRS})
-set(ADD_CFLAGS ${ADD_CFLAGS} ${ZLIB_CFLAGS_OTHER})
-
-# To meet DEPENDS zlib from other projects.
-# If we hit this line, zlib is already built and installed to the system.
-add_custom_target(zlib)
-
-else (systemlib_ZLIB)
-include (ExternalProject)
-
-set(ZLIB_INCLUDE_DIR ${ROOT_BUILD_DIR}/external/zlib_archive)
-set(ZLIB_URL https://github.com/madler/zlib)
-set(ZLIB_BUILD ${ROOT_BUILD_DIR}/zlib/src/zlib)
-set(ZLIB_INSTALL ${ROOT_BUILD_DIR}/zlib/install)
-# Match zlib version in tensorflow/workspace.bzl
-set(ZLIB_TAG v1.2.11)
-
-if (WIN32)
-if (${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
-    set(zlib_STATIC_LIBRARIES
-        debug ${ROOT_BUILD_DIR}/zlib/install/lib/zlibstaticd.lib
-        optimized ${ROOT_BUILD_DIR}/zlib/install/lib/zlibstatic.lib)
-else ()
-    if (CMAKE_BUILD_TYPE EQUAL Debug)
-    set(zlib_STATIC_LIBRARIES
-        ${ROOT_BUILD_DIR}/zlib/install/lib/zlibstaticd.lib)
+if (ZLIB_SYSTEM)
+    if (WIN32)
+        set(LIBUNKNOWNECHOUTILSMODULE_INCLUDE_DIR "C:\\zlib\\$ENV{name}\\include")
+        set(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES "C:\\zlib\\$ENV{name}\\lib\\zlibstatic.lib")
     else ()
-    set(zlib_STATIC_LIBRARIES
-        ${ROOT_BUILD_DIR}/zlib/install/lib/zlibstatic.lib)
+        find_package(PkgConfig)
+        pkg_search_module(ZLIB REQUIRED zlib)
+        set(ZLIB_INCLUDE_DIR ${ZLIB_INCLUDE_DIRS})
+        set(ADD_LINK_DIRECTORY ${ADD_LINK_DIRECTORY} ${ZLIB_LIBRARY_DIRS})
+        set(ADD_CFLAGS ${ADD_CFLAGS} ${ZLIB_CFLAGS_OTHER})
+        # To meet DEPENDS zlib from other projects.
+        # If we hit this line, zlib is already built and installed to the system.
+        add_custom_target(zlib)
     endif ()
-endif ()
-else ()
-set(ZLIB_LIBRARIES
-    ${ROOT_BUILD_DIR}/zlib/install/lib/libz.a)
-endif ()
+else (ZLIB_SYSTEM)
+    include (ExternalProject)
 
-ExternalProject_Add(zlib
-    PREFIX zlib
-    GIT_REPOSITORY ${ZLIB_URL}
-    GIT_TAG ${ZLIB_TAG}
-    INSTALL_DIR ${ZLIB_INSTALL}
-    BUILD_IN_SOURCE 1
-    BUILD_BYPRODUCTS ${ZLIB_LIBRARIES}
-    DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
-    CMAKE_CACHE_ARGS
-        -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=${tensorflow_ENABLE_POSITION_INDEPENDENT_CODE}
-        -DCMAKE_BUILD_TYPE:STRING=Release
-        -DCMAKE_INSTALL_PREFIX:STRING=${ZLIB_INSTALL}
-        -DCMAKE_C_FLAGS:STRING=-fPIC
-)
-endif (systemlib_ZLIB)
+    set(ZLIB_INCLUDE_DIR ${ROOT_BUILD_DIR}/zlib/install/include)
+    set(ZLIB_URL https://github.com/madler/zlib)
+    set(ZLIB_BUILD ${ROOT_BUILD_DIR}/zlib/src/zlib)
+    set(ZLIB_INSTALL ${ROOT_BUILD_DIR}/zlib/install)
+    # Match zlib version in tensorflow/workspace.bzl
+    set(ZLIB_TAG v1.2.11)
+
+    if (WIN32)
+        if (${CMAKE_GENERATOR} MATCHES "Visual Studio.*")
+            set(ZLIB_LIBRARIES
+                debug ${ROOT_BUILD_DIR}/zlib/install/lib/zlibstaticd.a
+                optimized ${ROOT_BUILD_DIR}/zlib/install/lib/libzlibstatic.a)
+        else ()
+            if (CMAKE_BUILD_TYPE EQUAL Debug)
+                set(ZLIB_LIBRARIES
+                    ${ROOT_BUILD_DIR}/zlib/install/lib/zlibstaticd.a)
+            else ()
+                set(ZLIB_LIBRARIES
+                    ${ROOT_BUILD_DIR}/zlib/install/lib/libzlibstatic.a)
+            endif ()
+        endif ()
+    else ()
+        set(ZLIB_LIBRARIES
+        ${ROOT_BUILD_DIR}/zlib/install/lib/libz.a)
+    endif ()
+
+    ExternalProject_Add(zlib
+        PREFIX zlib
+        GIT_REPOSITORY ${ZLIB_URL}
+        GIT_TAG ${ZLIB_TAG}
+        INSTALL_DIR ${ZLIB_INSTALL}
+        BUILD_IN_SOURCE 1
+        BUILD_BYPRODUCTS ${ZLIB_LIBRARIES}
+        DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
+        CMAKE_CACHE_ARGS
+            -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=${tensorflow_ENABLE_POSITION_INDEPENDENT_CODE}
+            -DCMAKE_BUILD_TYPE:STRING=Release
+            -DCMAKE_INSTALL_PREFIX:STRING=${ZLIB_INSTALL}
+            -DCMAKE_C_FLAGS:STRING=-fPIC
+    )
+endif (ZLIB_SYSTEM)

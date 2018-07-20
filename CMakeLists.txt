@@ -11,6 +11,21 @@ cmake_minimum_required(VERSION 3.8)
 set(CMAKE_VERBOSE_MAKEFILE on)
 SET(ROOT_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE STRING "Default root path of the current build directory")
 
+# --- DEPENDENCIES OPTIONS ---
+
+SET(LIBEI_SYSTEM TRUE CACHE BOOL "Default LIBEI installation type")
+set(LIBEI_INSTALL ${ROOT_BUILD_DIR}/libei/install CACHE STRING "Default LIBEI install path")
+
+SET(LIBUEUM_SYSTEM TRUE CACHE BOOL "Default LIBUEUM installation type")
+set(LIBUEUM_INSTALL ${ROOT_BUILD_DIR}/libueum/install CACHE STRING "Default LIBUEUM install path")
+
+SET(LIBUECM_SYSTEM TRUE CACHE BOOL "Default LIBUECM installation type")
+set(LIBUECM_INSTALL ${ROOT_BUILD_DIR}/libuecm/install CACHE STRING "Default LIBUECM install path")
+
+SET(OPENSSL_SYSTEM TRUE CACHE BOOL "Default  OPENSSL installation type")
+
+SET(ZLIB_SYSTEM TRUE CACHE BOOL "Default ZLIB installation type")
+
 # --- PATH ---
 
 set(${CMAKE_CURRENT_SOURCE_DIR} ..)
@@ -159,26 +174,32 @@ if (UNIX)
 	find_package (Threads)
 endif ()
 
-set(LIBUKNOWNECHO_DEPENDENCIES
-	libei
-	zlib
-	libueum
-	libuecm
-	openssl
-)
+if (NOT ZLIB_SYSTEM)
+	list(APPEND LIBUKNOWNECHO_DEPENDENCIES zlib)
+endif ()
 
-#list(APPEND LIBUKNOWNECHOCRYPTOMODULE_DEPENDENCIES libei)
+if (NOT LIBEI_SYSTEM)
+	list(APPEND LIBUKNOWNECHO_DEPENDENCIES libei)
+endif ()
 
-#list(APPEND LIBUKNOWNECHO_DEPENDENCIES libueum)
+if (NOT LIBUEUM_SYSTEM)
+	list(APPEND LIBUKNOWNECHO_DEPENDENCIES libueum)
+endif ()
 
-#list(APPEND LIBUKNOWNECHO_DEPENDENCIES openssl)
+if (NOT LIBUECM_SYSTEM)
+	list(APPEND LIBUKNOWNECHO_DEPENDENCIES libuecm)
+endif ()
+
+if (NOT OPENSSL_SYSTEM)
+	list(APPEND LIBUKNOWNECHO_DEPENDENCIES openssl)
+endif ()
 
 set(LIBUNKNOWNECHO_LIBRARIES
 	${ZLIB_LIBRARIES}
 	${LIBERRORINTERCEPTOR_LIBRARIES}
-	${LIBUNKNOWNECHOUTILSMODULE_LIBRARIES}
 	${OPENSSL_LIBRARIES}
 	${LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES}
+	${LIBUNKNOWNECHOUTILSMODULE_LIBRARIES}
 	${CMAKE_THREAD_LIBS_INIT}
 )
 
@@ -203,53 +224,38 @@ file(GLOB_RECURSE PROGRAM_TARGET_SRC_FILES "${SRC_PATH}/*.*")
 
 # Build shared library
 add_library(${PROJECT_NAME_SHARED} SHARED ${PROGRAM_TARGET_SRC_FILES})
-add_dependencies(${PROJECT_NAME_SHARED} ${LIBUKNOWNECHO_DEPENDENCIES})
+if (LIBUKNOWNECHO_DEPENDENCIES)
+	add_dependencies(${PROJECT_NAME_SHARED} ${LIBUKNOWNECHO_DEPENDENCIES})
+endif ()
 target_include_directories(${PROJECT_NAME_SHARED} PUBLIC "${SRC_PATH}")
 set_target_properties(${PROJECT_NAME_SHARED} PROPERTIES OUTPUT_NAME unknownecho)
 
 # Build static library
 add_library(${PROJECT_NAME_STATIC} STATIC ${PROGRAM_TARGET_SRC_FILES})
-add_dependencies(${PROJECT_NAME_STATIC} ${LIBUKNOWNECHO_DEPENDENCIES})
+if (LIBUKNOWNECHO_DEPENDENCIES)
+	add_dependencies(${PROJECT_NAME_STATIC} ${LIBUKNOWNECHO_DEPENDENCIES})
+endif ()
 target_include_directories(${PROJECT_NAME_STATIC} PUBLIC "${SRC_PATH}")
 set_target_properties(${PROJECT_NAME_STATIC} PROPERTIES OUTPUT_NAME unknownecho_static)
 
 
 # --- INSTALL ---
 
-if (UNIX)
-    # Copy includes
-    #install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION /usr/include FILES_MATCHING PATTERN "*.h")
+# Copy includes
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include FILES_MATCHING PATTERN "*.h")
 
-    # Copy static library
-    #install (TARGETS ${PROJECT_NAME_STATIC} ARCHIVE DESTINATION "/usr/lib")
+# Copy static library
+install (
+	TARGETS ${PROJECT_NAME_STATIC}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+	LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)
 
-    # Copy shared library
-	#install (TARGETS ${PROJECT_NAME_SHARED} LIBRARY DESTINATION "/usr/lib")
-	
-	# Copy includes
-    install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include FILES_MATCHING PATTERN "*.h")
-
-	# Copy static library
+if (WIN32)
 	install (
-		TARGETS ${PROJECT_NAME_STATIC}
-		ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-		LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+		TARGETS ${PROJECT_NAME_SHARED}
+		RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 	)
-elseif (WIN32)
-	# Copy includes
-    install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include FILES_MATCHING PATTERN "*.h")
-
-	# Copy static library
-	install (
-		TARGETS ${PROJECT_NAME_STATIC}
-		ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-		LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-	)
-
-	#install (
-	#	TARGETS ${PROJECT_NAME_SHARED}
-	#	RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-	#)
 endif ()
 
 # Build tests
@@ -265,14 +271,17 @@ foreach (filePath ${files} )
 	get_filename_component(executableName ${filePath} NAME_WE)
 	message(STATUS "Build Program : ${executableName}")
 	add_executable(${executableName} ${filePath})
-	add_dependencies(${executableName} ${LIBUKNOWNECHO_DEPENDENCIES})
-	target_link_libraries(${executableName} ${PROJECT_NAME_STATIC})
-	target_link_libraries(${executableName} ${LIBUNKNOWNECHO_LIBRARIES})
-	target_link_libraries(${executableName} ${OPENSSL_LIBRARIES})
+	if (LIBUKNOWNECHO_DEPENDENCIES)
+		add_dependencies(${executableName} ${LIBUKNOWNECHO_DEPENDENCIES})
+	endif ()
+	target_link_libraries(${executableName} ${LIBERRORINTERCEPTOR_LIBRARIES})
+	target_link_libraries(${executableName} ${LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES})
 	target_link_libraries(${executableName} ${LIBUNKNOWNECHOUTILSMODULE_LIBRARIES})
+	target_link_libraries(${executableName} ${PROJECT_NAME_STATIC})
 	target_link_libraries(${executableName} ${ZLIB_LIBRARIES})
+	target_link_libraries(${executableName} ${OPENSSL_LIBRARIES})
 	if (UNIX)
-		target_link_libraries(${executableName} "-ldl")
+		target_link_libraries(${executableName} "-ldl -pthread")
 	endif ()
     set_target_properties(${executableName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${EXAMPLES_OUTPUT_PATH})
 endforeach ()
