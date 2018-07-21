@@ -22,7 +22,10 @@ if (LIBUEUM_SYSTEM)
         set(LIBUNKNOWNECHOUTILSMODULE_INCLUDE_DIR "C:\\LibUnknownEchoUtilsModule\\$ENV{name}\\include")
         set(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES "C:\\LibUnknownEchoUtilsModule\\$ENV{name}\\lib\\ueum_static.lib")
     elseif (UNIX)
-        set(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES "-lueum_static")
+        find_library(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES
+            NAMES ueum_static libueum_static ueum libueum
+            HINTS ${CMAKE_INSTALL_PREFIX}/lib)
+        find_path(LIBUNKNOWNECHOUTILSMODULE_INCLUDE_DIR ueum)
     endif ()
 else (LIBUEUM_SYSTEM)
     include (ExternalProject)

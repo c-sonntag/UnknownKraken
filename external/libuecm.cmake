@@ -19,29 +19,32 @@
 
 if (LIBUECM_SYSTEM)
     if (WIN32)
-        set(LIBUNKNOWNECHOUTILSMODULE_INCLUDE_DIR "C:\\LibUnknownEchoUtilsModule\\$ENV{name}\\include")
-        set(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES "C:\\LibUnknownEchoUtilsModule\\$ENV{name}\\lib\\uecm_static.lib")
+        set(LIBUNKNOWNECHOCRYPTOMODULE_INCLUDE_DIR "C:\\LibUnknownEchoUtilsModule\\$ENV{name}\\include")
+        set(LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES "C:\\LibUnknownEchoUtilsModule\\$ENV{name}\\lib\\uecm_static.lib")
     elseif (UNIX)
-        set(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES "-luecm_static")
+        find_library(LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES
+            NAMES uecm_static libuecm_static uecm libuecm
+            HINTS ${CMAKE_INSTALL_PREFIX}/lib)
+        find_path(LIBUNKNOWNECHOCRYPTOMODULE_INCLUDE_DIR uecm)
     endif ()
 else (LIBUECM_SYSTEM)
     include (ExternalProject)
 
     set(LIBUECM_URL https://github.com/swasun/LibUnknownEchoUtilsModule.git)
-    set(LIBUNKNOWNECHOUTILSMODULE_INCLUDE_DIR ${LIBUECM_INSTALL}/external/libuecm_archive)
+    set(LIBUNKNOWNECHOCRYPTOMODULE_INCLUDE_DIR ${LIBUECM_INSTALL}/external/libuecm_archive)
     set(LIBUECM_BUILD ${ROOT_BUILD_DIR}/libuecm/src/libuecm)
 
     if (WIN32)
-        set(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES "${LIBUECM_INSTALL}\\lib\\uecm_static.lib")
+        set(LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES "${LIBUECM_INSTALL}\\lib\\uecm_static.lib")
     else()
-        set(LIBUNKNOWNECHOUTILSMODULE_LIBRARIES ${LIBUECM_INSTALL}/lib/libuecm_static.a)
+        set(LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES ${LIBUECM_INSTALL}/lib/libuecm_static.a)
     endif()
 
     ExternalProject_Add(libuecm
         PREFIX libuecm
         GIT_REPOSITORY ${LIBUECM_URL}	
         BUILD_IN_SOURCE 1
-        BUILD_BYPRODUCTS ${LIBUNKNOWNECHOUTILSMODULE_LIBRARIES}
+        BUILD_BYPRODUCTS ${LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES}
         DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
         CMAKE_CACHE_ARGS
             -DCMAKE_BUILD_TYPE:STRING=Release
