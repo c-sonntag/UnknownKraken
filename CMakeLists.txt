@@ -244,9 +244,6 @@ set_target_properties(${PROJECT_NAME_STATIC} PROPERTIES OUTPUT_NAME unknownecho_
 
 # --- INSTALL ---
 
-# Copy includes
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include FILES_MATCHING PATTERN "*.h")
-
 # Copy static library
 install (
 	TARGETS ${PROJECT_NAME_STATIC}
@@ -254,19 +251,18 @@ install (
 	LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
 
-if (WIN32)
+if (UNIX)
+	install (
+		TARGETS ${PROJECT_NAME_SHARED}
+		LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+		RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+	)
+elseif (WIN32)
 	install (
 		TARGETS ${PROJECT_NAME_SHARED}
 		RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 	)
 endif ()
-
-# Build tests
-#file(GLOB_RECURSE PROGRAM_TARGET_TESTS_FILES "${TESTS_PATH}/*.c")
-#add_executable(ue_test ${PROGRAM_TARGET_TESTS_FILES})
-#target_include_directories(ue_test PUBLIC "${TESTS_PATH}")
-#target_link_libraries(ue_test ${PROJECT_NAME_STATIC})
-#set_target_properties(ue_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${TESTS_OUTPUT_PATH})
 
 # Build examples
 file(GLOB files "${EXAMPLES_PATH}/*.c")
