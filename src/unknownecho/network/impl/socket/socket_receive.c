@@ -131,13 +131,13 @@ size_t ue_socket_receive_all_sync(int fd, unsigned char **bytes, size_t size, ue
 
     received = -1;
     *bytes = NULL;
-    *temp_bytes = NULL;
 
     if (!tls) {
 #if defined(__unix__)
         ueum_safe_alloc(*bytes, unsigned char, size);
 #elif defined(_WIN32) || defined(_WIN64)
-        ueum_safe_alloc(*temp_bytes, char, size);
+    *temp_bytes = NULL;
+    ueum_safe_alloc(*temp_bytes, char, size);
 #endif
         for (total = 0; total < size;) {
 #if defined(__unix__)
