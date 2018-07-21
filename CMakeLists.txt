@@ -1,6 +1,21 @@
-﻿## @brief LibMemorySlot
-## @author Charly Lamothe
-
+﻿ ##########################################################################################
+ # Copyright (C) 2018 by Charly Lamothe                                                   #
+ #                                                                                        #
+ # This file is part of LibMemorySlot.                                                    #
+ #                                                                                        #
+ #   LibMemorySlot is free software: you can redistribute it and/or modify                #
+ #   it under the terms of the GNU General Public License as published by                 #
+ #   the Free Software Foundation, either version 3 of the License, or                    #
+ #   (at your option) any later version.                                                  #
+ #                                                                                        #
+ #   LibMemorySlot is distributed in the hope that it will be useful,                     #
+ #   but WITHOUT ANY WARRANTY; without even the implied warranty of                       #
+ #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                        #
+ #   GNU General Public License for more details.                                         #
+ #                                                                                        #
+ #   You should have received a copy of the GNU General Public License                    #
+ #   along with LibMemorySlot.  If not, see <http://www.gnu.org/licenses/>.               #
+ ##########################################################################################
 
 # --- PROJECT ---
 
@@ -37,22 +52,22 @@ if (MSVC)
 endif ()
 
 if (LINUX)
-	if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")     ## (not debug)
-		if(CMAKE_COMPILER_IS_GNUCXX)              ## (GNU COMMAND)
-			add_compile_options("-O3")            ### No Optimization
-			set(CMAKE_EXE_LINKER_FLAGS "-s")      ### Strip binary (only in release mode)
-		endif ()
-	else ()
-		add_compile_options("-g")
-	endif ()
+    if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")     ## (not debug)
+        if(CMAKE_COMPILER_IS_GNUCXX)              ## (GNU COMMAND)
+            add_compile_options("-O3")            ### No Optimization
+            set(CMAKE_EXE_LINKER_FLAGS "-s")      ### Strip binary (only in release mode)
+        endif ()
+    else ()
+        add_compile_options("-g")
+    endif ()
 endif ()
 
 if (UNIX)
     add_compile_options("-std=gnu99" "-pthread" "-ldl")
-	add_compile_options("-Wall" "-pedantic" "-fno-builtin")
+    add_compile_options("-Wall" "-pedantic" "-fno-builtin")
 elseif (WIN32)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-	set(CMAKE_C_FLAGS "${CMAKE_ENABLE_C99}")
+    set(CMAKE_C_FLAGS "${CMAKE_ENABLE_C99}")
 endif ()
 
 if (WIN32)
@@ -81,14 +96,14 @@ endif()
 # Search pthread
 
 if (UNIX)
-	find_package (Threads)
+    find_package (Threads)
 endif ()
 
 # Search LibErrorInterceptor
 
 if (WIN32)
-	set(LIBERRORINTERCEPTOR_INCLUDE "C:\\LibErrorInterceptor\\$ENV{name}\\include")
-	set(LIBERRORINTERCEPTOR_LIB "C:\\LibErrorInterceptor\\$ENV{name}\\lib\\ei_static.lib")
+    set(LIBERRORINTERCEPTOR_INCLUDE "C:\\LibErrorInterceptor\\$ENV{name}\\include")
+    set(LIBERRORINTERCEPTOR_LIB "C:\\LibErrorInterceptor\\$ENV{name}\\lib\\ei_static.lib")
 endif ()
 
 # --- BUILD LIBERRORINTERCEPTOR ---
@@ -106,8 +121,8 @@ target_include_directories(${PROJECT_NAME_SHARED} PUBLIC "${SRC_PATH}")
 set_target_properties(${PROJECT_NAME_SHARED} PROPERTIES OUTPUT_NAME ms)
 target_link_libraries(${PROJECT_NAME_SHARED} ${CMAKE_THREAD_LIBS_INIT})
 if (WIN32)
-	target_include_directories(${PROJECT_NAME_SHARED} PUBLIC "${LIBERRORINTERCEPTOR_INCLUDE}")
-	target_link_libraries(${PROJECT_NAME_SHARED} "${LIBERRORINTERCEPTOR_LIB}")
+    target_include_directories(${PROJECT_NAME_SHARED} PUBLIC "${LIBERRORINTERCEPTOR_INCLUDE}")
+    target_link_libraries(${PROJECT_NAME_SHARED} "${LIBERRORINTERCEPTOR_LIB}")
 endif ()
 
 # Build static library
@@ -116,8 +131,8 @@ target_include_directories(${PROJECT_NAME_STATIC} PUBLIC "${SRC_PATH}")
 set_target_properties(${PROJECT_NAME_STATIC} PROPERTIES OUTPUT_NAME ms_static)
 target_link_libraries(${PROJECT_NAME_STATIC} ${CMAKE_THREAD_LIBS_INIT})
 if (WIN32)
-	target_include_directories(${PROJECT_NAME_STATIC} PUBLIC "${LIBERRORINTERCEPTOR_INCLUDE}")
-	target_link_libraries(${PROJECT_NAME_STATIC} "${LIBERRORINTERCEPTOR_LIB}")
+    target_include_directories(${PROJECT_NAME_STATIC} PUBLIC "${LIBERRORINTERCEPTOR_INCLUDE}")
+    target_link_libraries(${PROJECT_NAME_STATIC} "${LIBERRORINTERCEPTOR_LIB}")
 endif ()
 
 # --- INSTALL ---
@@ -132,32 +147,32 @@ if (UNIX)
     # Copy shared library
     install (TARGETS ${PROJECT_NAME_SHARED} LIBRARY DESTINATION "/usr/lib")
 elseif (WIN32)
-	# Copy includes
+    # Copy includes
     install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include FILES_MATCHING PATTERN "*.h")
 
-	# Copy static library
-	install (
-		TARGETS ${PROJECT_NAME_STATIC}
-		ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-		LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-	)
+    # Copy static library
+    install (
+        TARGETS ${PROJECT_NAME_STATIC}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+    )
 
-	install (
-		TARGETS ${PROJECT_NAME_SHARED}
-		RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-	)
+    install (
+        TARGETS ${PROJECT_NAME_SHARED}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+    )
 endif ()
 
 # Build examples
 file(GLOB files "${EXAMPLES_PATH}/*.c")
 foreach (filePath ${files} )
-	get_filename_component(executableName ${filePath} NAME_WE)
-	message(STATUS "Build Program : ${executableName}")
-	add_executable(${executableName} ${filePath})
+    get_filename_component(executableName ${filePath} NAME_WE)
+    message(STATUS "Build Program : ${executableName}")
+    add_executable(${executableName} ${filePath})
     target_link_libraries(${executableName} ${PROJECT_NAME_STATIC})
-	if (WIN32)
-		target_include_directories(${executableName} PUBLIC "${LIBERRORINTERCEPTOR_INCLUDE}")
-		target_link_libraries(${executableName} "${LIBERRORINTERCEPTOR_LIB}")
-	endif ()
-	set_target_properties(${executableName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${EXAMPLES_OUTPUT_PATH})
+    if (WIN32)
+        target_include_directories(${executableName} PUBLIC "${LIBERRORINTERCEPTOR_INCLUDE}")
+        target_link_libraries(${executableName} "${LIBERRORINTERCEPTOR_LIB}")
+    endif ()
+    set_target_properties(${executableName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${EXAMPLES_OUTPUT_PATH})
 endforeach ()
