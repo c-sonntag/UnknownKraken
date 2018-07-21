@@ -27,7 +27,9 @@
 #ifndef UNKNOWNECHO_INIT_H
 #define UNKNOWNECHO_INIT_H
 
-int ue_init();
+#include <ueum/ueum.h>
+
+bool ue_init();
 
 void ue_uninit();
 

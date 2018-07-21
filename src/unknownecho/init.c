@@ -18,14 +18,13 @@
  *******************************************************************************/
 
 #include <unknownecho/init.h>
-#include <ueum/ueum.h>
 #include <uecm/uecm.h>
 #include <ei/ei.h>
 
 static bool errorInterceptor_initialized = false;
 static bool crypto_initialized = false;
 
-int ue_init() {
+bool ue_init() {
     if (!errorInterceptor_initialized) {
         errorInterceptor_initialized = ei_init();
     }
