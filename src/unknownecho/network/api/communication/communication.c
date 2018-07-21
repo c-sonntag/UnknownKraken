@@ -79,6 +79,8 @@ ue_communication_context *ue_communication_create(const char *communication_type
     ei_check_parameter_or_return(communication_server_process_impl);
     ei_check_parameter_or_return(communication_server_disconnect_impl);
 
+    context = NULL;
+
     ueum_safe_alloc(context, ue_communication_context, 1);
 
     context->communication_type = (const char *)ueum_string_create_from(communication_type);

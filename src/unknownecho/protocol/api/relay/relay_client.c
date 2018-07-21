@@ -119,6 +119,8 @@ static ue_relay_client *ue_relay_client_create(ue_communication_metadata *our_co
 
     ei_check_parameter_or_return(target_communication_metadata);
 
+    relay_client = NULL;
+
     /* Alloc the client objet */
     ueum_safe_alloc(relay_client, ue_relay_client, 1);
     relay_client->communication_context = NULL;
@@ -186,6 +188,8 @@ static ue_relay_client *ue_relay_client_create_from_connection(ue_communication_
     ue_relay_client *relay_client;
 
     ei_check_parameter_or_return(target_communication_metadata);
+
+    relay_client = NULL;
 
     /* Alloc the client objet */
     ueum_safe_alloc(relay_client, ue_relay_client, 1);

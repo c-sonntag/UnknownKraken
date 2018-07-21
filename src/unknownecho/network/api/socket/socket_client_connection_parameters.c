@@ -25,6 +25,8 @@ ue_socket_client_connection_parameters *ue_socket_client_connection_parameters_b
 
     ue_socket_client_connection_parameters *parameters;
 
+    parameters = NULL;
+
     ueum_safe_alloc(parameters, ue_socket_client_connection_parameters, 1);
     parameters->fd = fd;
     parameters->domain = domain;
@@ -41,6 +43,8 @@ ue_socket_client_connection_parameters *ue_socket_client_connection_parameters_b
     const char *host, const char *port, uecm_tls_session *tls_session) {
 
     ue_socket_client_connection_parameters *parameters;
+
+    parameters = NULL;
 
     ueum_safe_alloc(parameters, ue_socket_client_connection_parameters, 1);
     parameters->fd = fd;

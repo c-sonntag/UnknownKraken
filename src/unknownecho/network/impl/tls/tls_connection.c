@@ -35,6 +35,8 @@ uecm_tls_connection *uecm_tls_connection_create(uecm_tls_context *context) {
     uecm_tls_connection *connection;
     char *error_buffer;
 
+	connection = NULL;
+
     ueum_safe_alloc(connection, uecm_tls_connection, 1);
 
     connection->impl = SSL_new((SSL_CTX *)uecm_tls_context_get_impl(context));

@@ -27,6 +27,8 @@ ue_socket_server_parameters *ue_socket_server_parameters_build(unsigned short in
 
     ue_socket_server_parameters *parameters;
 
+    parameters = NULL;
+
     ueum_safe_alloc(parameters, ue_socket_server_parameters, 1);
     parameters->port = port;
     parameters->read_consumer = read_consumer;

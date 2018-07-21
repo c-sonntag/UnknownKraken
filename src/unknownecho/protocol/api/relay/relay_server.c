@@ -75,6 +75,8 @@ ue_relay_server *ue_relay_server_create(ue_communication_metadata *communication
 
     ei_check_parameter_or_return(our_crypto_metadata);
 
+    relay_server = NULL;
+
     ueum_safe_alloc(relay_server, ue_relay_server, 1);
     relay_server->our_communication_metadata = communication_metadata;
     relay_server->communication_context = ue_communication_build_from_type(ue_communication_metadata_get_type(communication_metadata));

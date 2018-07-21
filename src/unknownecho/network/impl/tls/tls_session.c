@@ -24,6 +24,8 @@
 uecm_tls_session *uecm_tls_session_create(char *keystore_path, char *passphrase, uecm_tls_method *method, uecm_x509_certificate **ca_certificates, int ca_certificate_count) {
     uecm_tls_session *tls_session;
 
+    tls_session = NULL;
+
     ueum_safe_alloc(tls_session, uecm_tls_session, 1);
 
     if (!(tls_session->keystore = uecm_pkcs12_keystore_load(keystore_path, passphrase))) {

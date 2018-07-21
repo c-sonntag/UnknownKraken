@@ -29,6 +29,8 @@ ue_relay_step *ue_relay_step_create(ue_communication_metadata *target_communicat
 
     ei_check_parameter_or_return(target_communication_metadata);
 
+    step = NULL;
+
     ueum_safe_alloc(step, ue_relay_step, 1);
     step->target_communication_metadata = target_communication_metadata;
     step->our_crypto_metadata = our_crypto_metadata;
@@ -39,6 +41,8 @@ ue_relay_step *ue_relay_step_create(ue_communication_metadata *target_communicat
 
 ue_relay_step *ue_relay_step_create_from_step(ue_relay_step *step) {
     ue_relay_step *copy;
+
+    copy = NULL;
 
     ueum_safe_alloc(copy, ue_relay_step, 1);
     copy->target_communication_metadata = ue_communication_metadata_copy(step->target_communication_metadata);
@@ -54,6 +58,8 @@ ue_relay_step **ue_relay_steps_create(int step_number, ...) {
     int i;
 
     ei_check_parameter_or_return(step_number > 0);
+
+    steps = NULL;
 
     ueum_safe_alloc(steps, ue_relay_step *, step_number);
 

@@ -29,6 +29,8 @@ ue_channel_server_parameters *ue_channel_server_parameters_create(char *keystore
 
     ei_check_parameter_or_return(keystore_password);
 
+    parameters = NULL;
+
     ueum_safe_alloc(parameters, ue_channel_server_parameters, 1);
     parameters->persistent_path = NULL;
     parameters->csr_server_port = -1;

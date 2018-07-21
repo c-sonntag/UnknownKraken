@@ -88,6 +88,8 @@ static ue_relay_route *create_route_from_args(uecm_crypto_metadata *our_crypto_m
     route = NULL;
     steps = NULL;
     step_number = (argc - 3)/2;
+    remote_crypto_metadatas = NULL;
+    
     ueum_safe_alloc(steps, ue_relay_step *, step_number);
     ueum_safe_alloc(remote_crypto_metadatas, uecm_crypto_metadata *, step_number);
     remote_crypto_metadatas_number = step_number;

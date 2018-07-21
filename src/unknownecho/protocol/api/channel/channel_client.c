@@ -52,10 +52,10 @@ static int max_channel_clients_number = 0;
 #define CSL_SERVER_CERTIFICATE_FILE_NAME    "csl_server.pem"
 #define CIPHER_SERVER_CERTIFICATE_FILE_NAME "cipher_server.pem"
 #define SIGNER_SERVER_CERTIFICATE_FILE_NAME "signer_server.pem"
-#define CSL_KEYSTORE_PATH                      "/keystore/csl_client_keystore.p12"
+#define CSL_KEYSTORE_PATH                   "/keystore/csl_client_keystore.p12"
 #define CIPHER_KEYSTORE_PATH                "/keystore/cipher_client_keystore.p12"
-#define SIGNER_KEYSTORE_PATH                   "/keystore/signer_client_keystore.p12"
-#define LOGGER_FILE_NAME                       "logs.txt"
+#define SIGNER_KEYSTORE_PATH                "/keystore/signer_client_keystore.p12"
+#define LOGGER_FILE_NAME                    "logs.txt"
 
 
 static bool send_message(ue_channel_client *channel_client, void *connection, ueum_byte_stream *message_to_send);
@@ -111,6 +111,7 @@ bool ue_channel_client_init(int channel_clients_number) {
 
     ei_check_parameter_or_return(channel_clients_number > 0);
 
+	channel_clients = NULL;
     max_channel_clients_number = channel_clients_number;
 
     ueum_safe_alloc(channel_clients, ue_channel_client *, max_channel_clients_number);
@@ -172,6 +173,8 @@ ue_channel_client *ue_channel_client_create(char *persistent_path, char *nicknam
         ei_stacktrace_push_msg("No such channel client slot available")
         return NULL;
     }
+
+    channel_clients[available_channel_client_index] = NULL;
 
     ueum_safe_alloc(channel_clients[available_channel_client_index], ue_channel_client, 1);
     channel_client = channel_clients[available_channel_client_index];

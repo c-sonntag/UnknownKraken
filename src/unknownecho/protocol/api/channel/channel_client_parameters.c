@@ -30,6 +30,8 @@ ue_channel_client_parameters *ue_channel_client_parameters_create(char *nickname
     ei_check_parameter_or_return(nickname);
     ei_check_parameter_or_return(keystore_password);
 
+    parameters = NULL;
+
     ueum_safe_alloc(parameters, ue_channel_client_parameters, 1);
     parameters->persistent_path = NULL;
     parameters->nickname = ueum_string_create_from(nickname);

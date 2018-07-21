@@ -1438,6 +1438,7 @@ static bool process_message_request(void *connection, ueum_byte_stream *request,
 
     result = false;
     nickname = NULL;
+    user_data = NULL;
     current_channel_id = channel_id;
     stream = ueum_byte_stream_create();
 

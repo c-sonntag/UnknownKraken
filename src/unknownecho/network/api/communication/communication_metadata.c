@@ -9,6 +9,8 @@
 ue_communication_metadata *ue_communication_metadata_create_empty() {
     ue_communication_metadata *metadata;
 
+    metadata = NULL;
+
     ueum_safe_alloc(metadata, ue_communication_metadata, 1);
     metadata->uid = NULL;
     metadata->host = NULL;

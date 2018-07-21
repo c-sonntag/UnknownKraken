@@ -24,6 +24,8 @@
 ue_relay_received_message *ue_relay_received_message_create_empty() {
     ue_relay_received_message *received_message;
 
+    received_message = NULL;
+
     ueum_safe_alloc(received_message, ue_relay_received_message, 1);
     received_message->next_step = NULL;
     received_message->payload = NULL;

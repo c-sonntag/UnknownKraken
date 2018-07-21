@@ -50,6 +50,8 @@ uecm_tls_context *uecm_tls_context_create(uecm_tls_method *method) {
     uecm_tls_context *context;
     char *error_buffer;
 
+    context = NULL;
+
     ueum_safe_alloc(context, uecm_tls_context, 1);
     if (!(context->impl = SSL_CTX_new(uecm_tls_method_get_impl(method)))) {
         uecm_openssl_error_handling(error_buffer, "SSL_CTX_new");

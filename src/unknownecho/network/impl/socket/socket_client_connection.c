@@ -40,6 +40,8 @@ static void byte_stream_free_func(void *data) {
 ue_socket_client_connection *ue_socket_client_connection_init() {
     ue_socket_client_connection *connection;
 
+    connection = NULL;
+
     ueum_safe_alloc(connection, ue_socket_client_connection, 1);
     connection->state = UNKNOWNECHO_COMMUNICATION_CONNECTION_FREE_STATE;
     connection->fd = -1;
@@ -223,6 +225,8 @@ bool ue_socket_client_connection_build_communication_metadata(ue_socket_client_c
 
     ei_check_parameter_or_return(connection);
     ei_check_parameter_or_return(sa);
+
+    host = NULL;
 
     if (sa->sa_family == AF_INET) {
         sock_addr_in = &(((struct sockaddr_in *)sa)->sin_addr);

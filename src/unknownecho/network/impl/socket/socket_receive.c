@@ -124,12 +124,14 @@ size_t ue_socket_receive_all_sync(int fd, unsigned char **bytes, size_t size, ue
         char **temp_bytes = NULL;
 #endif
 
-    received = -1;
-
     if (fd <= 0) {
         ei_stacktrace_push_code(ERRORINTERCEPTOR_INVALID_PARAMETER);
         return -1;
     }
+
+    received = -1;
+    *bytes = NULL;
+    *temp_bytes = NULL;
 
     if (!tls) {
 #if defined(__unix__)

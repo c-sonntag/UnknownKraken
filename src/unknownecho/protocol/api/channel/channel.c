@@ -25,6 +25,8 @@ ue_channel *ue_channel_create() {
     ue_channel *channel;
     int i;
 
+    channel = NULL;
+
     ueum_safe_alloc(channel, ue_channel, 1);
     channel->max_connections_number = 10;
     ueum_safe_alloc(channel->connections, ue_socket_client_connection *, channel->max_connections_number);

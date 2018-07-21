@@ -25,6 +25,8 @@
 ue_relay_route *ue_relay_route_create(ue_relay_step **steps, int steps_number) {
     ue_relay_route *route;
 
+    route = NULL;
+
     ueum_safe_alloc(route, ue_relay_route, 1);
     route->steps = steps;
     route->steps_number = steps_number;
@@ -35,6 +37,8 @@ ue_relay_route *ue_relay_route_create(ue_relay_step **steps, int steps_number) {
 ue_relay_route *ue_relay_route_create_back_route(ue_relay_route *route) {
     ue_relay_route *back_route;
     int i, j;
+
+    back_route = NULL;
 
     ueum_safe_alloc(back_route, ue_relay_route, 1);
     back_route->steps_number = route->steps_number;

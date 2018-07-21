@@ -31,6 +31,8 @@ uecm_tls_method *uecm_tls_method_create_client() {
     uecm_tls_method *method;
     char *error_buffer;
 
+    method = NULL;
+
     ueum_safe_alloc(method, uecm_tls_method, 1);
     method->impl = NULL;
 
@@ -46,6 +48,8 @@ uecm_tls_method *uecm_tls_method_create_client() {
 uecm_tls_method *uecm_tls_method_create_server() {
     uecm_tls_method *method;
     char *error_buffer;
+
+    method = NULL;
 
     ueum_safe_alloc(method, uecm_tls_method, 1);
     method->impl = NULL;
