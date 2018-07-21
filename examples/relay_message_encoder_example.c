@@ -1,3 +1,22 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of LibUnknownEcho.                                        *
+ *                                                                             *
+ *   LibUnknownEcho is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   LibUnknownEcho is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
 #include <unknownecho/init.h>
 #include <unknownecho/protocol/api/relay/relay_step.h>
 #include <unknownecho/protocol/api/relay/relay_route.h>
@@ -297,7 +316,7 @@ int main() {
         fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
         exit(EXIT_FAILURE);
     }
-    ei_logger_info("UnknownEchoLib is correctly initialized");
+    ei_logger_info("LibUnknownEcho is correctly initialized");
 
     try_or_clean_up(generate_crypto_metadatas(&a_crypto_metadata, &b_crypto_metadata,
         &c_crypto_metadata, &d_crypto_metadata), "Failed to generate crypto metadatas", clean_up);

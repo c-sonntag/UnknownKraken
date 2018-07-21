@@ -1,20 +1,20 @@
 /*******************************************************************************
  * Copyright (C) 2018 by Charly Lamothe                                        *
  *                                                                             *
- * This file is part of UnknownEchoLib.                                        *
+ * This file is part of LibUnknownEcho.                                        *
  *                                                                             *
- *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   LibUnknownEcho is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by      *
  *   the Free Software Foundation, either version 3 of the License, or         *
  *   (at your option) any later version.                                       *
  *                                                                             *
- *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   LibUnknownEcho is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
  *   GNU General Public License for more details.                              *
  *                                                                             *
  *   You should have received a copy of the GNU General Public License         *
- *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
 #include <unknownecho/protocol/api/channel/channel_server.h>
@@ -138,7 +138,7 @@ bool ue_channel_server_create(char *persistent_path, int csr_server_port, int cs
     channel_server->uninitialization_begin_callback = uninitialization_begin_callback;
     channel_server->uninitialization_end_callback = uninitialization_end_callback;
     channel_server->cipher_name = ueum_string_create_from(cipher_name);
-	channel_server->digest_name = ueum_string_create_from(digest_name);
+    channel_server->digest_name = ueum_string_create_from(digest_name);
     channel_server->communication_context = ue_communication_build_from_type(communication_type);
 
     if (channel_server->initialization_begin_callback) {
@@ -147,10 +147,10 @@ bool ue_channel_server_create(char *persistent_path, int csr_server_port, int cs
 
     if (!ueum_is_dir_exists(channel_server->persistent_path)) {
         ei_logger_info("Creating '%s'...", channel_server->persistent_path);
-		if (!ueum_create_folder(channel_server->persistent_path)) {
-			ei_stacktrace_push_msg("Failed to create '%s'", channel_server->persistent_path);
-			goto clean_up;
-		}
+        if (!ueum_create_folder(channel_server->persistent_path)) {
+            ei_stacktrace_push_msg("Failed to create '%s'", channel_server->persistent_path);
+            goto clean_up;
+        }
     }
 
     if (ueum_is_file_exists(channel_server->logger_file_path)) {
@@ -178,26 +178,26 @@ bool ue_channel_server_create(char *persistent_path, int csr_server_port, int cs
 
     keystore_folder_path = ueum_strcat_variadic("ss", channel_server->persistent_path, "/keystore");
 
-	if (!ueum_is_dir_exists(keystore_folder_path)) {
-		ei_logger_info("Creating '%s'...", keystore_folder_path);
-		if (!ueum_create_folder(keystore_folder_path)) {
-			ei_stacktrace_push_msg("Failed to create '%s'", keystore_folder_path);
+    if (!ueum_is_dir_exists(keystore_folder_path)) {
+        ei_logger_info("Creating '%s'...", keystore_folder_path);
+        if (!ueum_create_folder(keystore_folder_path)) {
+            ei_stacktrace_push_msg("Failed to create '%s'", keystore_folder_path);
             ueum_safe_free(keystore_folder_path);
-			goto clean_up;
-		}
-	}
+            goto clean_up;
+        }
+    }
     ueum_safe_free(keystore_folder_path);
 
     certificate_folder_path = ueum_strcat_variadic("ss", channel_server->persistent_path, "/certificate");
 
-	if (!ueum_is_dir_exists(certificate_folder_path)) {
-		ei_logger_info("Creating '%s'...", certificate_folder_path);
-		if (!ueum_create_folder(certificate_folder_path)) {
-			ei_stacktrace_push_msg("Failed to create '%s'", certificate_folder_path);
+    if (!ueum_is_dir_exists(certificate_folder_path)) {
+        ei_logger_info("Creating '%s'...", certificate_folder_path);
+        if (!ueum_create_folder(certificate_folder_path)) {
+            ei_stacktrace_push_msg("Failed to create '%s'", certificate_folder_path);
             ueum_safe_free(certificate_folder_path);
-			goto clean_up;
-		}
-	}
+            goto clean_up;
+        }
+    }
     ueum_safe_free(certificate_folder_path);
 
     channel_server->keystore_password = ueum_string_create_from(keystore_password);
@@ -300,7 +300,7 @@ clean_up:
 void ue_channel_server_destroy() {
     int i;
 
-	if (channel_server) {
+    if (channel_server) {
         if (channel_server->uninitialization_begin_callback) {
             channel_server->uninitialization_begin_callback(channel_server->user_context);
         }
@@ -322,7 +322,7 @@ void ue_channel_server_destroy() {
         uecm_pkcs12_keystore_destroy(channel_server->csr_keystore);
         uecm_pkcs12_keystore_destroy(channel_server->csl_keystore);
         uecm_pkcs12_keystore_destroy(channel_server->cipher_keystore);
-    	uecm_pkcs12_keystore_destroy(channel_server->signer_keystore);
+        uecm_pkcs12_keystore_destroy(channel_server->signer_keystore);
         ueum_safe_free(channel_server->persistent_path);
         ueum_safe_free(channel_server->csr_server_certificate_path);
         ueum_safe_free(channel_server->csr_server_key_path);
@@ -347,8 +347,8 @@ void ue_channel_server_destroy() {
             channel_server->uninitialization_end_callback(channel_server->user_context);
         }
         ueum_safe_fclose(channel_server->logs_file);
-	    ueum_safe_free(channel_server)
-	}
+        ueum_safe_free(channel_server)
+    }
 }
 
 bool ue_channel_server_process() {
@@ -387,14 +387,14 @@ void ue_channel_server_shutdown_signal_callback(int sig) {
 }
 
 static size_t send_cipher_message(void *connection, ueum_byte_stream *message_to_send) {
-	unsigned char *cipher_data, *friendly_name;
-	size_t cipher_data_size, sent, friendly_name_size;
+    unsigned char *cipher_data, *friendly_name;
+    size_t cipher_data_size, sent, friendly_name_size;
     uecm_x509_certificate *client_certificate;
     uecm_public_key *client_public_key;
     ueum_byte_stream *message_stream, *connection_message_to_send;
     char *nickname;
 
-	cipher_data = NULL;
+    cipher_data = NULL;
     client_public_key = NULL;
     sent = -1;
     friendly_name = NULL;
@@ -424,14 +424,14 @@ static size_t send_cipher_message(void *connection, ueum_byte_stream *message_to
     }
 
     if (!uecm_cipher_plain_data(ueum_byte_stream_get_data(message_to_send), ueum_byte_stream_get_size(message_to_send),
-	       client_public_key, channel_server->signer_keystore->private_key, &cipher_data, &cipher_data_size, channel_server->cipher_name,
+           client_public_key, channel_server->signer_keystore->private_key, &cipher_data, &cipher_data_size, channel_server->cipher_name,
            channel_server->digest_name)) {
 
         ei_stacktrace_push_msg("Failed to cipher plain data");
         goto clean_up;
     }
 
-	if (!ueum_byte_writer_append_bytes(message_stream, cipher_data, cipher_data_size)) {
+    if (!ueum_byte_writer_append_bytes(message_stream, cipher_data, cipher_data_size)) {
         ei_stacktrace_push_msg("Failed to write cipher data to message stream");
         goto clean_up;
     }
@@ -444,20 +444,20 @@ static size_t send_cipher_message(void *connection, ueum_byte_stream *message_to
 clean_up:
     ueum_safe_free(friendly_name);
     uecm_public_key_destroy(client_public_key);
-	ueum_safe_free(cipher_data);
+    ueum_safe_free(cipher_data);
     ueum_byte_stream_destroy(message_stream);
-	return sent;
+    return sent;
 }
 
 static size_t receive_cipher_message(void *connection) {
-	unsigned char *plain_data, *friendly_name;
+    unsigned char *plain_data, *friendly_name;
     size_t received, plain_data_size, friendly_name_size;
     uecm_x509_certificate *client_certificate;
-	uecm_public_key *client_public_key;
+    uecm_public_key *client_public_key;
     char *nickname;
     ueum_byte_stream *connection_received_message;
 
-	plain_data = NULL;
+    plain_data = NULL;
     client_public_key = NULL;
     friendly_name = NULL;
     received = 0;
@@ -476,17 +476,17 @@ static size_t receive_cipher_message(void *connection) {
         channel_server->communication_context, connection);
     ueum_byte_stream_clean_up(connection_received_message);
     received = ue_communication_receive_sync(channel_server->communication_context, connection, connection_received_message);
-	if (received <= 0 || received == ULLONG_MAX) {
-		ei_logger_warn("Connection with client is interrupted.");
+    if (received <= 0 || received == ULLONG_MAX) {
+        ei_logger_warn("Connection with client is interrupted.");
         disconnect_client_from_server(connection);
         goto clean_up;
-	}
+    }
 
     if (!(client_certificate = uecm_pkcs12_keystore_find_certificate_by_friendly_name(channel_server->signer_keystore, (const unsigned char *)friendly_name, friendly_name_size))) {
-		ei_stacktrace_push_msg("Failed to find client signer certificate");
-		received = -1;
-		goto clean_up;
-	}
+        ei_stacktrace_push_msg("Failed to find client signer certificate");
+        received = -1;
+        goto clean_up;
+    }
 
     if (!(client_public_key = uecm_rsa_public_key_from_x509_certificate(client_certificate))) {
         ei_stacktrace_push_msg("Failed to get client public key from client certificate");
@@ -494,12 +494,12 @@ static size_t receive_cipher_message(void *connection) {
     }
 
     if (!uecm_decipher_cipher_data(ueum_byte_stream_get_data(connection_received_message), ueum_byte_stream_get_size(connection_received_message),
-		channel_server->cipher_keystore->private_key, client_public_key, &plain_data, &plain_data_size, channel_server->cipher_name, channel_server->digest_name)) {
+        channel_server->cipher_keystore->private_key, client_public_key, &plain_data, &plain_data_size, channel_server->cipher_name, channel_server->digest_name)) {
 
-		received = -1;
-		ei_stacktrace_push_msg("Failed decipher message data");
+        received = -1;
+        ei_stacktrace_push_msg("Failed decipher message data");
         goto clean_up;
-	}
+    }
 
     ueum_byte_stream_clean_up(connection_received_message);
 
@@ -511,8 +511,8 @@ static size_t receive_cipher_message(void *connection) {
 clean_up:
     ueum_safe_free(friendly_name);
     uecm_public_key_destroy(client_public_key);
-	ueum_safe_free(plain_data);
-	return received;
+    ueum_safe_free(plain_data);
+    return received;
 }
 
 static bool create_keystores() {

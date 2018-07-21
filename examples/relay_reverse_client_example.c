@@ -1,3 +1,22 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of LibUnknownEcho.                                        *
+ *                                                                             *
+ *   LibUnknownEcho is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   LibUnknownEcho is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
 #include <unknownecho/init.h>
 #include <unknownecho/protocol/api/relay/relay_client.h>
 #include <unknownecho/protocol/api/relay/relay_step.h>
@@ -289,7 +308,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
         exit(EXIT_FAILURE);
     }
-    ei_logger_info("UnknownEchoLib is correctly initialized.");
+    ei_logger_info("LibUnknownEcho is correctly initialized.");
 
     route = NULL;
     client1_crypto_metadata = NULL;
@@ -306,7 +325,7 @@ int main(int argc, char **argv) {
      * Only working on UNIX system.
      */
     if (pipe(fds) == -1) {
-		ei_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         goto clean_up;
     }
 
@@ -319,7 +338,7 @@ int main(int argc, char **argv) {
 
     /* Check if fork() failed. */
     if (child_pid == -1) {
-		ei_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         goto clean_up;
     }
 
@@ -336,7 +355,7 @@ int main(int argc, char **argv) {
         sprintf(f, "/dev/fd/%d", fds[0]);
         execlp("xterm", "xterm", "-e", "cat", f, NULL);
         client2_crypto_metadata = NULL;
-		ei_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         goto clean_up;
     }
 

@@ -1,20 +1,20 @@
 /*******************************************************************************
  * Copyright (C) 2018 by Charly Lamothe                                        *
  *                                                                             *
- * This file is part of UnknownEchoLib.                                        *
+ * This file is part of LibUnknownEcho.                                        *
  *                                                                             *
- *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   LibUnknownEcho is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by      *
  *   the Free Software Foundation, either version 3 of the License, or         *
  *   (at your option) any later version.                                       *
  *                                                                             *
- *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   LibUnknownEcho is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
  *   GNU General Public License for more details.                              *
  *                                                                             *
  *   You should have received a copy of the GNU General Public License         *
- *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
 /**
@@ -33,13 +33,13 @@
 #include <ueum/ueum.h>
 
 typedef struct {
-	int ue_socket_fd;
-	ue_socket_client_connection **connections;
-	int connections_number, simultaneous_connections_number;
-	bool (*read_consumer)(ue_socket_client_connection *connection);
-	bool (*write_consumer)(ue_socket_client_connection *connection);
-	bool running;
-	uecm_tls_session *tls_session;
+    int ue_socket_fd;
+    ue_socket_client_connection **connections;
+    int connections_number, simultaneous_connections_number;
+    bool (*read_consumer)(ue_socket_client_connection *connection);
+    bool (*write_consumer)(ue_socket_client_connection *connection);
+    bool running;
+    uecm_tls_session *tls_session;
 } ue_socket_server;
 
 ue_socket_server *ue_socket_server_create(ue_socket_server_parameters *parameters);

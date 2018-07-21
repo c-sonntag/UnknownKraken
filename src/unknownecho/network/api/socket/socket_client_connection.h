@@ -1,20 +1,20 @@
 /*******************************************************************************
  * Copyright (C) 2018 by Charly Lamothe                                        *
  *                                                                             *
- * This file is part of UnknownEchoLib.                                        *
+ * This file is part of LibUnknownEcho.                                        *
  *                                                                             *
- *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   LibUnknownEcho is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by      *
  *   the Free Software Foundation, either version 3 of the License, or         *
  *   (at your option) any later version.                                       *
  *                                                                             *
- *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   LibUnknownEcho is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
  *   GNU General Public License for more details.                              *
  *                                                                             *
  *   You should have received a copy of the GNU General Public License         *
- *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
 /**
@@ -41,20 +41,20 @@
 #endif
 
 typedef struct {
-	int fd;
-	ueum_byte_stream *received_message, *message_to_send, *tmp_stream;
-	ueum_queue *received_messages, *messages_to_send;
+    int fd;
+    ueum_byte_stream *received_message, *message_to_send, *tmp_stream;
+    ueum_queue *received_messages, *messages_to_send;
     ueum_thread_id *read_messages_consumer_thread, *write_messages_consumer_thread;
     ue_communication_connection_state state;
-	char *nickname;
-	ueum_byte_vector *split_message, *all_messages, *tmp_message, *current_message;
-	uecm_tls_connection *tls;
-	uecm_x509_certificate *peer_certificate;
-	ueum_byte_stream *received_message_stream;
-	bool established;
-	void *optional_data;
+    char *nickname;
+    ueum_byte_vector *split_message, *all_messages, *tmp_message, *current_message;
+    uecm_tls_connection *tls;
+    uecm_x509_certificate *peer_certificate;
+    ueum_byte_stream *received_message_stream;
+    bool established;
+    void *optional_data;
     ue_communication_metadata *communication_metadata;
-	ue_communication_connection_direction connection_direction;
+    ue_communication_connection_direction connection_direction;
 } ue_socket_client_connection;
 
 ue_socket_client_connection *ue_socket_client_connection_init();
@@ -96,6 +96,6 @@ ue_communication_metadata *ue_socket_client_connection_get_communication_metadat
 ue_communication_connection_direction ue_socket_client_connection_get_direction(ue_socket_client_connection *connection);
 
 bool ue_socket_client_connection_set_direction(ue_socket_client_connection *connection, ue_communication_connection_direction
-	connection_direction);
+    connection_direction);
 
 #endif

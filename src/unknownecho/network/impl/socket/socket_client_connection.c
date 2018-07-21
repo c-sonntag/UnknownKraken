@@ -1,20 +1,20 @@
 /*******************************************************************************
  * Copyright (C) 2018 by Charly Lamothe                                        *
  *                                                                             *
- * This file is part of UnknownEchoLib.                                        *
+ * This file is part of LibUnknownEcho.                                        *
  *                                                                             *
- *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   LibUnknownEcho is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by      *
  *   the Free Software Foundation, either version 3 of the License, or         *
  *   (at your option) any later version.                                       *
  *                                                                             *
- *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   LibUnknownEcho is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
  *   GNU General Public License for more details.                              *
  *                                                                             *
  *   You should have received a copy of the GNU General Public License         *
- *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
 #include <unknownecho/network/api/socket/socket_client_connection.h>
@@ -30,71 +30,71 @@
 #endif
 
 static void *byte_stream_alloc_func(void *data) {
-	return ueum_byte_stream_copy((ueum_byte_stream *)data);
+    return ueum_byte_stream_copy((ueum_byte_stream *)data);
 }
 
 static void byte_stream_free_func(void *data) {
-	ueum_byte_stream_destroy((ueum_byte_stream *)data);
+    ueum_byte_stream_destroy((ueum_byte_stream *)data);
 }
 
 ue_socket_client_connection *ue_socket_client_connection_init() {
-	ue_socket_client_connection *connection;
+    ue_socket_client_connection *connection;
 
-	ueum_safe_alloc(connection, ue_socket_client_connection, 1);
+    ueum_safe_alloc(connection, ue_socket_client_connection, 1);
     connection->state = UNKNOWNECHO_COMMUNICATION_CONNECTION_FREE_STATE;
-	connection->fd = -1;
-	connection->nickname = NULL;
-	connection->split_message = ueum_byte_vector_create_empty();
-	connection->all_messages = ueum_byte_vector_create_empty();
-	connection->tmp_message = ueum_byte_vector_create_empty();
-	connection->current_message = ueum_byte_vector_create_empty();
-	if ((connection->received_message = ueum_byte_stream_create()) == NULL) {
-		ei_stacktrace_push_msg("Failed to init received message");
-		goto clean_up;
-	}
-	if ((connection->message_to_send = ueum_byte_stream_create()) == NULL) {
-		ei_stacktrace_push_msg("Failed to init message to send");
-		goto clean_up;
-	}
-	connection->received_message_stream = ueum_byte_stream_create();
-	connection->tmp_stream = ueum_byte_stream_create();
-	connection->tls = NULL;
-	connection->peer_certificate = NULL;
-	connection->established = false;
-	connection->optional_data = NULL;
-	connection->received_messages = ueum_queue_create_mem(byte_stream_alloc_func, byte_stream_free_func);
-	connection->messages_to_send = ueum_queue_create(byte_stream_alloc_func, byte_stream_free_func);
+    connection->fd = -1;
+    connection->nickname = NULL;
+    connection->split_message = ueum_byte_vector_create_empty();
+    connection->all_messages = ueum_byte_vector_create_empty();
+    connection->tmp_message = ueum_byte_vector_create_empty();
+    connection->current_message = ueum_byte_vector_create_empty();
+    if ((connection->received_message = ueum_byte_stream_create()) == NULL) {
+        ei_stacktrace_push_msg("Failed to init received message");
+        goto clean_up;
+    }
+    if ((connection->message_to_send = ueum_byte_stream_create()) == NULL) {
+        ei_stacktrace_push_msg("Failed to init message to send");
+        goto clean_up;
+    }
+    connection->received_message_stream = ueum_byte_stream_create();
+    connection->tmp_stream = ueum_byte_stream_create();
+    connection->tls = NULL;
+    connection->peer_certificate = NULL;
+    connection->established = false;
+    connection->optional_data = NULL;
+    connection->received_messages = ueum_queue_create_mem(byte_stream_alloc_func, byte_stream_free_func);
+    connection->messages_to_send = ueum_queue_create(byte_stream_alloc_func, byte_stream_free_func);
     connection->communication_metadata = ue_communication_metadata_create_empty();
     connection->connection_direction = UNKNOWNECHO_COMMUNICATION_CONNECTION_UNIDIRECTIONAL_BIDIRECTIONAL;
 
-	return connection;
+    return connection;
 
 clean_up:
-	ueum_safe_free(connection);
-	return NULL;
+    ueum_safe_free(connection);
+    return NULL;
 }
 
 void ue_socket_client_connection_destroy(ue_socket_client_connection *connection) {
-	if (connection) {
-		ue_socket_close(connection->fd);
-		ueum_safe_free(connection->nickname);
-		ueum_byte_vector_destroy(connection->all_messages);
-		ueum_byte_vector_destroy(connection->current_message);
-		ueum_byte_vector_destroy(connection->tmp_message);
-		ueum_byte_vector_destroy(connection->split_message);
-		ueum_byte_stream_destroy(connection->received_message);
-		ueum_byte_stream_destroy(connection->message_to_send);
-		if (connection->peer_certificate) {
-			uecm_x509_certificate_destroy(connection->peer_certificate);
-			connection->peer_certificate = NULL;
-		}
-		ueum_byte_stream_destroy(connection->received_message_stream);
-		ueum_byte_stream_destroy(connection->tmp_stream);
-		ueum_queue_destroy(connection->received_messages);
-		ueum_queue_destroy(connection->messages_to_send);
+    if (connection) {
+        ue_socket_close(connection->fd);
+        ueum_safe_free(connection->nickname);
+        ueum_byte_vector_destroy(connection->all_messages);
+        ueum_byte_vector_destroy(connection->current_message);
+        ueum_byte_vector_destroy(connection->tmp_message);
+        ueum_byte_vector_destroy(connection->split_message);
+        ueum_byte_stream_destroy(connection->received_message);
+        ueum_byte_stream_destroy(connection->message_to_send);
+        if (connection->peer_certificate) {
+            uecm_x509_certificate_destroy(connection->peer_certificate);
+            connection->peer_certificate = NULL;
+        }
+        ueum_byte_stream_destroy(connection->received_message_stream);
+        ueum_byte_stream_destroy(connection->tmp_stream);
+        ueum_queue_destroy(connection->received_messages);
+        ueum_queue_destroy(connection->messages_to_send);
         ue_communication_metadata_destroy(connection->communication_metadata);
-		ueum_safe_free(connection);
-	}
+        ueum_safe_free(connection);
+    }
 }
 
 void ue_socket_client_connection_clean_up(ue_socket_client_connection *connection) {
@@ -133,19 +133,19 @@ bool ue_socket_client_connection_is_available(ue_socket_client_connection *conne
 }
 
 bool ue_socket_client_connection_establish(ue_socket_client_connection *connection, int ue_socket_fd) {
-	ei_check_parameter_or_return(connection);
+    ei_check_parameter_or_return(connection);
 
-	connection->fd = ue_socket_fd;
+    connection->fd = ue_socket_fd;
     connection->state = UNKNOWNECHO_COMMUNICATION_CONNECTION_READ_STATE;
-	connection->established = true;
+    connection->established = true;
 
-	return true;
+    return true;
 }
 
 bool ue_socket_client_connection_is_established(ue_socket_client_connection *connection) {
     ei_check_parameter_or_return(connection);
 
-	return connection->established;
+    return connection->established;
 }
 
 void *ue_socket_client_connection_get_user_data(ue_socket_client_connection *connection) {
@@ -265,7 +265,7 @@ ue_communication_connection_direction ue_socket_client_connection_get_direction(
 }
 
 bool ue_socket_client_connection_set_direction(ue_socket_client_connection *connection, ue_communication_connection_direction
-	connection_direction) {
+    connection_direction) {
 
     connection->connection_direction = connection_direction;
     return true;

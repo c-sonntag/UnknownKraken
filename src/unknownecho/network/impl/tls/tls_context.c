@@ -1,20 +1,20 @@
 /*******************************************************************************
  * Copyright (C) 2018 by Charly Lamothe                                        *
  *                                                                             *
- * This file is part of UnknownEchoLib.                                        *
+ * This file is part of LibUnknownEcho.                                        *
  *                                                                             *
- *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   LibUnknownEcho is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by      *
  *   the Free Software Foundation, either version 3 of the License, or         *
  *   (at your option) any later version.                                       *
  *                                                                             *
- *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   LibUnknownEcho is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
  *   GNU General Public License for more details.                              *
  *                                                                             *
  *   You should have received a copy of the GNU General Public License         *
- *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
 #include <unknownecho/network/api/tls/tls_context.h>
@@ -27,16 +27,16 @@
 #include <string.h>
 
 struct uecm_tls_context {
-	SSL_CTX *impl;
+    SSL_CTX *impl;
 };
 
 static char *local_passphrase = NULL;
 
 static int password_callback(char *buf, int num, int rwflag, void *userdata) {
-	if (!local_passphrase) {
-		ei_logger_warn("Passphrase callback is called to decipher certificate, but no passphrase is provide");
-		return -1;
-	}
+    if (!local_passphrase) {
+        ei_logger_warn("Passphrase callback is called to decipher certificate, but no passphrase is provide");
+        return -1;
+    }
 
     if (num < strlen(local_passphrase) + 1) {
         return 0;
@@ -47,27 +47,27 @@ static int password_callback(char *buf, int num, int rwflag, void *userdata) {
 }
 
 uecm_tls_context *uecm_tls_context_create(uecm_tls_method *method) {
-	uecm_tls_context *context;
-	char *error_buffer;
+    uecm_tls_context *context;
+    char *error_buffer;
 
-	ueum_safe_alloc(context, uecm_tls_context, 1);
-	if (!(context->impl = SSL_CTX_new(uecm_tls_method_get_impl(method)))) {
-		uecm_openssl_error_handling(error_buffer, "SSL_CTX_new");
-		ueum_safe_free(context);
-		return NULL;
-	}
+    ueum_safe_alloc(context, uecm_tls_context, 1);
+    if (!(context->impl = SSL_CTX_new(uecm_tls_method_get_impl(method)))) {
+        uecm_openssl_error_handling(error_buffer, "SSL_CTX_new");
+        ueum_safe_free(context);
+        return NULL;
+    }
 
-	const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
-	SSL_CTX_set_options(context->impl, flags);
+    const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
+    SSL_CTX_set_options(context->impl, flags);
 
-	return context;
+    return context;
 }
 
 void uecm_tls_context_destroy(uecm_tls_context *context) {
-	if (context) {
-		SSL_CTX_free(context->impl);
-		ueum_safe_free(context);
-	}
+    if (context) {
+        SSL_CTX_free(context->impl);
+        ueum_safe_free(context);
+    }
 }
 
 /*typedef struct verify_options_st {
@@ -191,67 +191,67 @@ return ok;
 }*/
 
 bool uecm_tls_context_load_certificates(uecm_tls_context *context, uecm_pkcs12_keystore *keystore, uecm_x509_certificate **ca_certificates, int ca_certificate_count) {
-	char *error_buffer;
-	X509_STORE *store;
-	int i;
+    char *error_buffer;
+    X509_STORE *store;
+    int i;
 
     error_buffer = NULL;
-	store = NULL;
+    store = NULL;
 
-	//bio = BIO_new_fp(stdout, BIO_NOCLOSE);
+    //bio = BIO_new_fp(stdout, BIO_NOCLOSE);
 
-	if (SSL_CTX_use_certificate(context->impl, uecm_x509_certificate_get_impl(keystore->certificate)) <= 0) {
+    if (SSL_CTX_use_certificate(context->impl, uecm_x509_certificate_get_impl(keystore->certificate)) <= 0) {
         uecm_openssl_error_handling(error_buffer, "Load keystore certificate into to context");
         return false;
     }
 
-	if (SSL_CTX_use_PrivateKey(context->impl, uecm_private_key_get_impl(keystore->private_key)) <= 0) {
-		uecm_openssl_error_handling(error_buffer, "Load keystore private key into context");
+    if (SSL_CTX_use_PrivateKey(context->impl, uecm_private_key_get_impl(keystore->private_key)) <= 0) {
+        uecm_openssl_error_handling(error_buffer, "Load keystore private key into context");
         return false;
-	}
+    }
 
-	if (SSL_CTX_check_private_key(context->impl) != 1) {
+    if (SSL_CTX_check_private_key(context->impl) != 1) {
         uecm_openssl_error_handling(error_buffer, "Private key and certificate are not matching");
         return false;
     }
 
-	/*if (ca_certificate) {
-		if (!(store = SSL_CTX_get_cert_store(context->impl))) {
-			uecm_openssl_error_handling(error_buffer, "Failed to get store of TLS context");
-			return false;
-		}
+    /*if (ca_certificate) {
+        if (!(store = SSL_CTX_get_cert_store(context->impl))) {
+            uecm_openssl_error_handling(error_buffer, "Failed to get store of TLS context");
+            return false;
+        }
 
-		if (!X509_STORE_add_cert(store, uecm_x509_certificate_get_impl(ca_certificate))) {
-			uecm_openssl_error_handling(error_buffer, "Failed to add ca certificate to TLS context store");
-			return false;
-		}
+        if (!X509_STORE_add_cert(store, uecm_x509_certificate_get_impl(ca_certificate))) {
+            uecm_openssl_error_handling(error_buffer, "Failed to add ca certificate to TLS context store");
+            return false;
+        }
 
         SSL_CTX_set_verify(context->impl, SSL_VERIFY_PEER, NULL);
         //SSL_CTX_set_verify_depth(context->impl, 1);
     }*/
 
-	if (ca_certificates && ca_certificate_count > 0) {
-		if (!(store = SSL_CTX_get_cert_store(context->impl))) {
-			uecm_openssl_error_handling(error_buffer, "Failed to get store of TLS context");
-			return false;
-		}
+    if (ca_certificates && ca_certificate_count > 0) {
+        if (!(store = SSL_CTX_get_cert_store(context->impl))) {
+            uecm_openssl_error_handling(error_buffer, "Failed to get store of TLS context");
+            return false;
+        }
 
-		for (i = 0; i < ca_certificate_count; i++) {
-			if (!X509_STORE_add_cert(store, uecm_x509_certificate_get_impl(ca_certificates[i]))) {
-				uecm_openssl_error_handling(error_buffer, "Failed to add ca certificate to TLS context store");
-				return false;
-			}
-		}
+        for (i = 0; i < ca_certificate_count; i++) {
+            if (!X509_STORE_add_cert(store, uecm_x509_certificate_get_impl(ca_certificates[i]))) {
+                uecm_openssl_error_handling(error_buffer, "Failed to add ca certificate to TLS context store");
+                return false;
+            }
+        }
 
-		SSL_CTX_set_verify(context->impl, SSL_VERIFY_PEER, NULL);
-		SSL_CTX_set_verify_depth(context->impl, 1);
-	}
+        SSL_CTX_set_verify(context->impl, SSL_VERIFY_PEER, NULL);
+        SSL_CTX_set_verify_depth(context->impl, 1);
+    }
 
-	return true;
+    return true;
 }
 
 bool uecm_tls_context_load_certificates_from_path(uecm_tls_context *context, char *passphrase, char *ca_pk_path, char *pk_path, char *sk_path) {
-	char *error_buffer;
+    char *error_buffer;
 
     error_buffer = NULL;
     local_passphrase = passphrase;
@@ -286,5 +286,5 @@ bool uecm_tls_context_load_certificates_from_path(uecm_tls_context *context, cha
 }
 
 const void *uecm_tls_context_get_impl(uecm_tls_context *context) {
-	return context->impl;
+    return context->impl;
 }

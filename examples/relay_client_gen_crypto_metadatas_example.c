@@ -1,3 +1,22 @@
+/*******************************************************************************
+ * Copyright (C) 2018 by Charly Lamothe                                        *
+ *                                                                             *
+ * This file is part of LibUnknownEcho.                                        *
+ *                                                                             *
+ *   LibUnknownEcho is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by      *
+ *   the Free Software Foundation, either version 3 of the License, or         *
+ *   (at your option) any later version.                                       *
+ *                                                                             *
+ *   LibUnknownEcho is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *   GNU General Public License for more details.                              *
+ *                                                                             *
+ *   You should have received a copy of the GNU General Public License         *
+ *   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.   *
+ *******************************************************************************/
+
 #include <unknownecho/init.h>
 #include <ueum/ueum.h>
 #include <uecm/uecm.h>
@@ -18,7 +37,7 @@ int main() {
         fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
         exit(EXIT_FAILURE);
     }
-    ei_logger_info("UnknownEchoLib is correctly initialized.");
+    ei_logger_info("LibUnknownEcho is correctly initialized.");
 
     try_or_clean_up(crypto_metadata = uecm_crypto_metadata_write_if_not_exist("out/private", "out/public",
         "client1", "password"), "Failed to write crypto metadata for client1", end);

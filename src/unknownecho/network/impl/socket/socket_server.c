@@ -1,20 +1,20 @@
 /*******************************************************************************
  * Copyright (C) 2018 by Charly Lamothe                                        *
  *                                                                             *
- * This file is part of UnknownEchoLib.                                        *
+ * This file is part of LibUnknownEcho.                                        *
  *                                                                             *
- *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   LibUnknownEcho is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by      *
  *   the Free Software Foundation, either version 3 of the License, or         *
  *   (at your option) any later version.                                       *
  *                                                                             *
- *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   LibUnknownEcho is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
  *   GNU General Public License for more details.                              *
  *                                                                             *
  *   You should have received a copy of the GNU General Public License         *
- *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
 #include <unknownecho/network/api/socket/socket_server.h>
@@ -211,10 +211,10 @@ bool ue_socket_server_accept(ue_socket_server *server) {
         ei_logger_info("Server have a TLS session");
 
         peer_tls = uecm_tls_connection_create(server->tls_session->ctx);
-		if (!peer_tls) {
-			ei_stacktrace_push_msg("Failed to create TLS peer connection");
-			return false;
-		}
+        if (!peer_tls) {
+            ei_stacktrace_push_msg("Failed to create TLS peer connection");
+            return false;
+        }
         ei_logger_trace("Peer have a TLS connection");
 
         if (!uecm_tls_connection_set_fd(peer_tls, new_socket)) {
@@ -231,14 +231,14 @@ bool ue_socket_server_accept(ue_socket_server *server) {
         }
         ei_logger_trace("Peer accepted");
 
-		if (server->tls_session->verify_peer) {
+        if (server->tls_session->verify_peer) {
             ei_logger_trace("Verify peer...");
 
             if (!uecm_tls_connection_verify_peer_certificate(peer_tls)) {
-				ei_stacktrace_push_msg("Client certificate verification failed");
+                ei_stacktrace_push_msg("Client certificate verification failed");
                 uecm_tls_connection_destroy(peer_tls);
                 return false;
-			}
+            }
             ei_logger_trace("Peer TLS connection verified successfully");
 
             ei_logger_trace("Check if client is already connected");
@@ -257,7 +257,7 @@ bool ue_socket_server_accept(ue_socket_server *server) {
                 }
             }
             ei_logger_trace("TLS client isn't already connected");
-		}
+        }
     }
 
     ei_logger_trace("Searching for an available slot for incoming connection");
@@ -267,13 +267,13 @@ bool ue_socket_server_accept(ue_socket_server *server) {
                 ei_stacktrace_push_msg("Failed to established connection");
                 return false;
             }
-			if (server->tls_session) {
-				if (server->connections[i]->tls) {
+            if (server->tls_session) {
+                if (server->connections[i]->tls) {
                     uecm_tls_connection_destroy(server->connections[i]->tls);
-				}
-				server->connections[i]->tls = peer_tls;
+                }
+                server->connections[i]->tls = peer_tls;
                 server->connections[i]->peer_certificate = uecm_tls_connection_get_peer_certificate(peer_tls);
-			}
+            }
             if (ue_socket_client_connection_build_communication_metadata(server->connections[i], &sa)) {
 
                 if ((communication_metadata_string = ue_communication_metadata_to_string(

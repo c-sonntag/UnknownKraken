@@ -1,20 +1,20 @@
 /*******************************************************************************
  * Copyright (C) 2018 by Charly Lamothe                                        *
  *                                                                             *
- * This file is part of UnknownEchoLib.                                        *
+ * This file is part of LibUnknownEcho.                                        *
  *                                                                             *
- *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   LibUnknownEcho is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by      *
  *   the Free Software Foundation, either version 3 of the License, or         *
  *   (at your option) any later version.                                       *
  *                                                                             *
- *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   LibUnknownEcho is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
  *   GNU General Public License for more details.                              *
  *                                                                             *
  *   You should have received a copy of the GNU General Public License         *
- *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
 #include <unknownecho/network/api/communication/communication.h>
@@ -40,7 +40,7 @@ ue_communication_context *ue_communication_create(const char *communication_type
     ue_communication_metadata *(*communication_client_connection_get_communication_metadata_impl)(void *connection),
     ue_communication_connection_direction (*communication_client_connection_get_direction_impl)(void *connection),
     bool (*communication_client_connection_set_direction_impl)(void *connection, ue_communication_connection_direction
-	    connection_direction),
+        connection_direction),
 
     size_t (*communication_receive_sync_impl)(void *connection, void *received_message),
     size_t (*communication_send_sync_impl)(void *connection, void *message_to_send),

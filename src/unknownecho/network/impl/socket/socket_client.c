@@ -1,20 +1,20 @@
 /*******************************************************************************
  * Copyright (C) 2018 by Charly Lamothe                                        *
  *                                                                             *
- * This file is part of UnknownEchoLib.                                        *
+ * This file is part of LibUnknownEcho.                                        *
  *                                                                             *
- *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   LibUnknownEcho is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by      *
  *   the Free Software Foundation, either version 3 of the License, or         *
  *   (at your option) any later version.                                       *
  *                                                                             *
- *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   LibUnknownEcho is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
  *   GNU General Public License for more details.                              *
  *                                                                             *
  *   You should have received a copy of the GNU General Public License         *
- *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
 #include <unknownecho/network/api/socket/socket_client.h>
@@ -77,7 +77,7 @@ ue_socket_client_connection *ue_socket_connect(ue_socket_client_connection_param
 
         ei_logger_info("Creating TLS connection...");
         tls = uecm_tls_connection_create(parameter->tls_session->ctx);
-    	if (!tls) {
+        if (!tls) {
             ei_logger_error("Failed to create TLS connection");
             ei_stacktrace_push_msg("Failed to create tls connection");
             uecm_tls_connection_destroy(tls);
@@ -140,7 +140,7 @@ ue_socket_client_connection *ue_socket_connect(ue_socket_client_connection_param
 }
 
 ue_socket_client_connection *ue_socket_connect_s(ue_socket_client_connection_parameters *parameter) {
-	ue_socket_client_connection *connection;
+    ue_socket_client_connection *connection;
 
     parameter->domain = atoi(parameter->domain_s);
     parameter->port = atoi(parameter->port_s);

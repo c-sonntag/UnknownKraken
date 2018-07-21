@@ -1,20 +1,20 @@
 /*******************************************************************************
  * Copyright (C) 2018 by Charly Lamothe                                        *
  *                                                                             *
- * This file is part of UnknownEchoLib.                                        *
+ * This file is part of LibUnknownEcho.                                        *
  *                                                                             *
- *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   LibUnknownEcho is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by      *
  *   the Free Software Foundation, either version 3 of the License, or         *
  *   (at your option) any later version.                                       *
  *                                                                             *
- *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   LibUnknownEcho is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
  *   GNU General Public License for more details.                              *
  *                                                                             *
  *   You should have received a copy of the GNU General Public License         *
- *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
  /**
@@ -67,9 +67,9 @@ static void handle_signal(int sig, void (*h)(int), int options) {
 bool write_callback(void *user_context, ueum_byte_stream *printer) {
     /* Append \n and \0 to correctly print the message on the consola */
     if (!ueum_byte_writer_append_bytes(printer, (unsigned char *)"\n\0", 2)) {
-		ei_stacktrace_push_msg("Failed to write \n\0 to printer");
-		return false;
-	}
+        ei_stacktrace_push_msg("Failed to write \n\0 to printer");
+        return false;
+    }
 
     /* Print the result */
     return write(fds[1], ueum_byte_stream_get_data(printer), ueum_byte_stream_get_size(printer));
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
     if (!ue_init()) {
         fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
         exit(EXIT_FAILURE);
-	}
+    }
 
     nickname = NULL;
     password = NULL;
@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
      * Only working on UNIX system.
      */
     if (pipe(fds) == -1) {
-		ei_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         goto end;
     }
 
@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
     child_pid = fork();
     /* Check if fork() failed. */
     if (child_pid == -1) {
-		ei_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         goto end;
     }
 
@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
         char f[PATH_MAX + 1];
         sprintf(f, "/dev/fd/%d", fds[0]);
         execlp("xterm", "xterm", "-e", "cat", f, NULL);
-		ei_stacktrace_push_errno();
+        ei_stacktrace_push_errno();
         goto end;
     }
 
@@ -222,8 +222,8 @@ end:
     ueum_safe_free(password);
     /* Log the stacktrace if it exists */
     if (ei_stacktrace_is_filled()) {
-		ei_logger_stacktrace("An error occurred with the following stacktrace :");
-	}
+        ei_logger_stacktrace("An error occurred with the following stacktrace :");
+    }
     /* If it's the parent process */
     if (child_pid != 0) {
         /* Clean-up the channel client */
@@ -231,7 +231,7 @@ end:
         /* Uninit channel client protocol */
         ue_channel_client_uninit();
     }
-    /* Clean-up UnknownEchoLib */
+    /* Clean-up LibUnknownEcho */
     ue_uninit();
     return 0;
 }

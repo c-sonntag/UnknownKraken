@@ -1,20 +1,20 @@
 /*******************************************************************************
  * Copyright (C) 2018 by Charly Lamothe                                        *
  *                                                                             *
- * This file is part of UnknownEchoLib.                                        *
+ * This file is part of LibUnknownEcho.                                        *
  *                                                                             *
- *   UnknownEchoLib is free software: you can redistribute it and/or modify    *
+ *   LibUnknownEcho is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by      *
  *   the Free Software Foundation, either version 3 of the License, or         *
  *   (at your option) any later version.                                       *
  *                                                                             *
- *   UnknownEchoLib is distributed in the hope that it will be useful,         *
+ *   LibUnknownEcho is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of            *
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
  *   GNU General Public License for more details.                              *
  *                                                                             *
  *   You should have received a copy of the GNU General Public License         *
- *   along with UnknownEchoLib.  If not, see <http://www.gnu.org/licenses/>.   *
+ *   along with LibUnknownEcho.  If not, see <http://www.gnu.org/licenses/>.   *
  *******************************************************************************/
 
  /**
@@ -55,7 +55,7 @@ int main() {
     if (!ue_init()) {
         fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
         exit(EXIT_FAILURE);
-	}
+    }
 
     keystore_password = NULL;
     key_password = NULL;
@@ -107,12 +107,12 @@ end:
     ueum_safe_free(keystore_password);
     ueum_safe_free(key_password);
     /* Log the stacktrace if it exists */
-	if (ei_stacktrace_is_filled()) {
-		ei_logger_stacktrace("An error occurred with the following stacktrace :");
-	}
+    if (ei_stacktrace_is_filled()) {
+        ei_logger_stacktrace("An error occurred with the following stacktrace :");
+    }
     /* Clean-up the channel server. */
     ue_channel_server_destroy();
-    /* Clean-up UnknownEchoLib */
+    /* Clean-up LibUnknownEcho */
     ue_uninit();
     return 0;
 }
