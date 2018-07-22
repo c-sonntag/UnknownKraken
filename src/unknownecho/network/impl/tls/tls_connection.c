@@ -35,7 +35,7 @@ uecm_tls_connection *uecm_tls_connection_create(uecm_tls_context *context) {
     uecm_tls_connection *connection;
     char *error_buffer;
 
-	connection = NULL;
+    connection = NULL;
 
     ueum_safe_alloc(connection, uecm_tls_connection, 1);
 

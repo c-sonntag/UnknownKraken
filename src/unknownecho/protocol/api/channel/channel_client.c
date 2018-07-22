@@ -111,7 +111,7 @@ bool ue_channel_client_init(int channel_clients_number) {
 
     ei_check_parameter_or_return(channel_clients_number > 0);
 
-	channel_clients = NULL;
+    channel_clients = NULL;
     max_channel_clients_number = channel_clients_number;
 
     ueum_safe_alloc(channel_clients, ue_channel_client *, max_channel_clients_number);
