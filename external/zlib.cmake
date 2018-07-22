@@ -53,7 +53,6 @@ else (ZLIB_SYSTEM)
     set(ZLIB_URL https://github.com/madler/zlib)
     set(ZLIB_BUILD ${ROOT_BUILD_DIR}/zlib/src/zlib)
     set(ZLIB_INSTALL ${ROOT_BUILD_DIR}/zlib/install)
-    # Match zlib version in tensorflow/workspace.bzl
     set(ZLIB_TAG v1.2.11)
 
     if (WIN32)
@@ -84,7 +83,6 @@ else (ZLIB_SYSTEM)
         BUILD_BYPRODUCTS ${ZLIB_LIBRARIES}
         DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
         CMAKE_CACHE_ARGS
-            -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=${tensorflow_ENABLE_POSITION_INDEPENDENT_CODE}
             -DCMAKE_BUILD_TYPE:STRING=Release
             -DCMAKE_INSTALL_PREFIX:STRING=${ZLIB_INSTALL}
             -DCMAKE_C_FLAGS:STRING=-fPIC
