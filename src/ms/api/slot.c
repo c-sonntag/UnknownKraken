@@ -18,9 +18,6 @@
  *******************************************************************************/
 
 #include <ms/api/slot.h>
-#include <ms/utils/alloc.h>
-#include <ms/utils/file_utils.h>
-#include <ms/utils/process_utils.h>
 
 #if defined(_WIN32) || defined(_WIN64)
     #include <ms/impl/win/resource.h>
@@ -35,16 +32,18 @@ ms_slot *ms_slot_create_from_file(const char *file_name) {
 
     ei_check_parameter_or_return(file_name);
 
-    if (!ms_is_file_exists(file_name)) {
+    if (!ueum_is_file_exists(file_name)) {
         ei_stacktrace_push_msg("Specified file doesn't exist");
         return NULL;
     }
 
-    ms_safe_alloc(slot, ms_slot, 1);
+    slot = NULL;
+
+    ueum_safe_alloc(slot, ms_slot, 1);
     
-    if (!(slot->data = ms_read_binary_file(file_name, &slot->size))) {
+    if (!(slot->data = ueum_read_binary_file(file_name, &slot->size))) {
         ei_stacktrace_push_msg("Failed to read specified file '%s'", file_name);
-        ms_safe_free(slot);
+        ueum_safe_free(slot);
         return NULL;
     }
 
@@ -60,8 +59,10 @@ ms_slot *ms_slot_create_from_memory(unsigned char *buffer, size_t size) {
     ei_check_parameter_or_return(buffer);
     ei_check_parameter_or_return(size > 0);
 
-    ms_safe_alloc(slot, ms_slot, 1);
-    ms_safe_alloc(slot->data, unsigned char, size);
+    slot = NULL;
+
+    ueum_safe_alloc(slot, ms_slot, 1);
+    ueum_safe_alloc(slot->data, unsigned char, size);
     memcpy(slot->data, buffer, size * sizeof(unsigned char));
     slot->size = size;
     slot->id = -1;
@@ -72,8 +73,8 @@ ms_slot *ms_slot_create_from_memory(unsigned char *buffer, size_t size) {
 
 void ms_slot_destroy(ms_slot *slot) {
     if (slot) {
-        ms_safe_free(slot->data);
-        ms_safe_free(slot);
+        ueum_safe_free(slot->data);
+        ueum_safe_free(slot);
     }
 }
 
@@ -155,7 +156,7 @@ bool ms_slot_save_to_memory(ms_slot *slot, int id) {
         return false;
     }
 
-    if (!(our_process_name = ms_get_current_process_name())) {
+    if (!(our_process_name = ueum_get_current_process_name())) {
         ei_stacktrace_push_msg("Failed to get current process name");
         return false;
     }
@@ -163,12 +164,12 @@ bool ms_slot_save_to_memory(ms_slot *slot, int id) {
     if (!ms_resource_save(our_process_name, slot->data, slot->size, id)) {
         ei_stacktrace_push_msg("Failed to save slot as resource");
         slot->state = MS_SLOT_CORRUPTED;
-        ms_safe_free(our_process_name);
+        ueum_safe_free(our_process_name);
         return false;
     }
 
     slot->state = MS_SLOT_USED;
-    ms_safe_free(our_process_name);
+    ueum_safe_free(our_process_name);
 
     return true;
 }
@@ -176,12 +177,14 @@ bool ms_slot_save_to_memory(ms_slot *slot, int id) {
 ms_slot *ms_slot_load_from_memory(int id) {
     ms_slot *slot;
 
+    slot = NULL;
+
     ei_check_parameter_or_return(id > 0);
 
-    ms_safe_alloc(slot, ms_slot, 1);
+    ueum_safe_alloc(slot, ms_slot, 1);
     
     if (!(slot->data = ms_resource_load_from_memory(id, &slot->size))) {
-        ms_safe_free(slot);
+        ueum_safe_free(slot);
         ei_stacktrace_push_msg("Failed to resource from id %d", id);
         return NULL;
     }
@@ -207,7 +210,7 @@ bool ms_slot_exist_from_file(int id, const char *file_name) {
 bool ms_slot_exist_from_memory(int id) {
     char *our_process_name;
 
-    if (!(our_process_name = ms_get_current_process_name())) {
+    if (!(our_process_name = ueum_get_current_process_name())) {
         ei_stacktrace_push_msg("Failed to get current process name");
         return false;
     }

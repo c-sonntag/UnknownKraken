@@ -18,8 +18,6 @@
  *******************************************************************************/
 
 #include <ms/impl/win/resource.h>
-#include <ms/utils/alloc.h>
-#include <ms/utils/file_utils.h>
 
 #include <ei/ei.h>
 
@@ -78,7 +76,7 @@ static unsigned char *resource_load_internal(HMODULE hLibrary, int id, size_t *s
 
     *size = SizeofResource(hLibrary, hResource);
 
-    ms_safe_alloc(data, unsigned char, *size);
+    ueum_safe_alloc(data, unsigned char, *size);
     memcpy(data, loaded_data, *size * sizeof(unsigned char));
     
     return data;
@@ -89,16 +87,17 @@ BOOL CALLBACK ResNameProc(HANDLE hModule, LPCTSTR lpszType, LPTSTR lpszName, LON
     char *resource_name;
 
     ctx = (resource_name_search_ctx *)lParam;
+    resource_name = NULL;
 
     if (!IS_INTRESOURCE(lpszName)) {
         ei_stacktrace_push_msg("Resource id isn't an integer");
         return FALSE;
     }
 
-    ms_safe_alloc(resource_name, char, 3);
+    ueum_safe_alloc(resource_name, char, 3);
     wsprintf(resource_name, "%d", (USHORT)lpszName);
     ctx->found = atoi(resource_name) == ctx->id;
-    ms_safe_free(resource_name);
+    ueum_safe_free(resource_name);
 
     return TRUE;
 }
@@ -111,6 +110,7 @@ BOOL CALLBACK ResDataProc(HANDLE hModule, LPCTSTR lpszType, LPTSTR lpszName, LON
     size_t current_data_size;
 
     ctx = (resource_data_search_ctx *)lParam;
+    resource_name = NULL;
 
     if (!ctx->searching) {
         return TRUE;
@@ -121,32 +121,32 @@ BOOL CALLBACK ResDataProc(HANDLE hModule, LPCTSTR lpszType, LPTSTR lpszName, LON
         return FALSE;
     }
 
-    ms_safe_alloc(resource_name, char, 3);
+    ueum_safe_alloc(resource_name, char, 3);
     wsprintf(resource_name, "%d", (USHORT)lpszName);
     current_id = atoi(resource_name);
 
     if (!(current_data = resource_load_internal(hModule, current_id, &current_data_size))) {
         ei_stacktrace_push_msg("Failed to load current resource with id %d", current_id);
-        ms_safe_free(resource_name);
+        ueum_safe_free(resource_name);
         return FALSE;
     }
 
     if (ctx->searched_data_size != current_data_size) {
         ei_logger_debug("Size doesn't matched ; skipping");
-        ms_safe_free(resource_name);
+        ueum_safe_free(resource_name);
         return TRUE;
     }
 
     if (memcmp(ctx->searched_data, current_data, ctx->searched_data_size) != 0) {
         ei_logger_debug("Size are equals but data doesn't matched ; skipping");
-        ms_safe_free(resource_name);
+        ueum_safe_free(resource_name);
         return TRUE;
     }
 
     ctx->searching = false;
     ctx->found_id = current_id;
 
-    ms_safe_free(resource_name);
+    ueum_safe_free(resource_name);
 
     return TRUE;
 }
@@ -156,23 +156,24 @@ BOOL CALLBACK ResIdProc(HANDLE hModule, LPCTSTR lpszType, LPTSTR lpszName, LONG 
     char *resource_name;
 
     ctx = (resource_id_search_ctx *)lParam;
+    resource_name = NULL;
 
     if (!IS_INTRESOURCE(lpszName)) {
         ei_stacktrace_push_msg("Resource id isn't an integer");
         return FALSE;
     }
 
-    ms_safe_alloc(resource_name, char, 3);
+    ueum_safe_alloc(resource_name, char, 3);
     wsprintf(resource_name, "%d", (USHORT)lpszName);
     if (!ctx->ids) {
-        ms_safe_alloc(ctx->ids, int, 1);
+        ueum_safe_alloc(ctx->ids, int, 1);
     }
     else {
-        ms_safe_realloc(ctx->ids, int, ctx->number, 1);
+        ueum_safe_realloc(ctx->ids, int, ctx->number, 1);
     }
     ctx->ids[ctx->number] = atoi(resource_name);
     ctx->number++;
-    ms_safe_free(resource_name);
+    ueum_safe_free(resource_name);
     
     return TRUE;
 }
@@ -188,7 +189,7 @@ unsigned char *ms_resource_load_from_path(const char *target_path, int id, size_
     data = NULL;
     error_buffer = NULL;
 
-    if (!ms_is_file_exists(target_path)) {
+    if (!ueum_is_file_exists(target_path)) {
         ei_stacktrace_push_msg("Specified target path doesn't exist");
         return NULL;
     }
@@ -333,7 +334,7 @@ int ms_resource_find_id_from_path(const char *target_path, unsigned char *data, 
         return -1;
     }
 
-    if (!ms_is_file_exists(target_path)) {
+    if (!ueum_is_file_exists(target_path)) {
         ei_stacktrace_push_msg("Specified target path doesn't exist");
         return -1;
     }
@@ -410,7 +411,7 @@ int *ms_resource_find_ids_from_path(const char *target_path, int *number) {
         return NULL;
     }
 
-    if (!ms_is_file_exists(target_path)) {
+    if (!ueum_is_file_exists(target_path)) {
         ei_stacktrace_push_msg("Specified target path doesn't exist");
         return NULL;
     }

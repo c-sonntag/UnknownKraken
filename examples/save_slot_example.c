@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
     slot = NULL;
     fd = NULL;
 
-    if (!ms_is_file_exists(SOURCE_FILE)) {
+    if (!ueum_is_file_exists(SOURCE_FILE)) {
         ei_logger_info("File %s doesn't exist. Creating it...", SOURCE_FILE);
 
         if (!(fd = fopen(SOURCE_FILE, "w"))) {

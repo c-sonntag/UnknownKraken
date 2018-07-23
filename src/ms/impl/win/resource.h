@@ -20,7 +20,7 @@
 #ifndef MEMORYSLOT_RESOURCE_H
 #define MEMORYSLOT_RESOURCE_H
 
-#include <ms/utils/bool.h>
+#include <ueum/ueum.h>
 
 #include <stddef.h>
 

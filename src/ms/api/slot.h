@@ -22,7 +22,7 @@
 
 #include <ms/api/slot_struct.h>
 #include <ms/api/slot_state.h>
-#include <ms/utils/bool.h>
+#include <ueum/ueum.h>
 
 #include <stddef.h>
 
