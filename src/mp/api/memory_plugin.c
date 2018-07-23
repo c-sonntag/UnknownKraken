@@ -18,7 +18,6 @@
 ******************************************************************************/
 
 #include <mp/api/memory_plugin.h>
-#include <mp/utils/process_utils.h>
 #include <ueum/ueum.h>
 #include <ei/ei.h>
 
@@ -373,7 +372,7 @@ bool mp_memory_plugin_update(mp_memory_plugin *plugin, mp_entry *entry, void *cr
         goto clean_up;
     }
 
-    if ((our_process_name = mp_get_current_process_name()) == NULL) {
+    if ((our_process_name = ueum_get_current_process_name()) == NULL) {
         ei_stacktrace_push_msg("Failed to get our process name");
         goto clean_up;
     }
