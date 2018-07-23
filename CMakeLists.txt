@@ -258,6 +258,8 @@ target_include_directories(${PROJECT_NAME_STATIC} PUBLIC ${LIBUNKNOWNECHO_INCLUD
 target_link_libraries(${PROJECT_NAME_STATIC} ${LIBUNKNOWNECHO_LIBRARIES})
 set_target_properties(${PROJECT_NAME_STATIC} PROPERTIES OUTPUT_NAME unknownecho_static)
 
+# Copy includes
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include FILES_MATCHING PATTERN "*.h")
 
 # --- INSTALL ---
 
