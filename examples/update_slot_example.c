@@ -18,7 +18,7 @@
  *******************************************************************************/
 
 #include <ms/ms.h>
-#include <ms/utils/alloc.h>
+#include <ueum/ueum.h>
 
 #include <ei/ei.h>
 

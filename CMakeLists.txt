@@ -212,6 +212,9 @@ set_target_properties(${PROJECT_NAME_STATIC} PROPERTIES OUTPUT_NAME ms_static)
 
 # --- INSTALL ---
 
+# Copy includes
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include FILES_MATCHING PATTERN "*.h")
+
 # Copy static library
 install (
     TARGETS ${PROJECT_NAME_STATIC}

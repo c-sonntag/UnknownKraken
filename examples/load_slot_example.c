@@ -19,6 +19,8 @@
 
 #include <ms/ms.h>
 
+#include <ueum/ueum.h>
+
 #include <ei/ei.h>
 
 #include <stdio.h>
@@ -57,10 +59,10 @@ int main() {
     }
     ei_logger_info("Slot of size %ld loaded", slot->size);
     
-    ei_safe_alloc(string, char, slot->size + 1);
+    ueum_safe_alloc(string, char, slot->size + 1);
     memcpy(string, slot->data, slot->size * sizeof(char));
     ei_logger_info("Content of the slot: %s", string);
-    ei_safe_free(string);
+    ueum_safe_free(string);
 
     ei_logger_info("Searching slot id with retrieved data...");
     if (ms_slot_find_id_from_memory(slot) != SLOT_ID) {

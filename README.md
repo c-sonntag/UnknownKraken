@@ -43,6 +43,7 @@ Loading the saved slot.
 ## Dependencies
 
 * [LibErrorInterceptor](https://github.com/swasun/LibErrorInterceptor) a lightweight and cross-plateform library to handle stacktrace and logging in C99.
+* [LibUnknownEchoUtilsModule](https://github.com/swasun/LibUnknownEchoUtilsModule) Crypto module of [LibUnknownEcho](https://github.com/swasun/LibUnknownEcho). Last version.
 
 ## Implementation
 
