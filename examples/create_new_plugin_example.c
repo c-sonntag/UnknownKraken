@@ -41,9 +41,7 @@ int main(int argc, char **argv) {
     mp_memory_plugin *plugin;
     mp_entry *entry;
     int plugin_id;
-#if defined(WITH_CRYPTO)
     void *crypto_metadata;
-#endif
 
     if (argc != 3) {
         fprintf(stderr, "Usage: %s <plugin_source_path> <target_path>\n", argv[0]);
@@ -54,12 +52,11 @@ int main(int argc, char **argv) {
 
 #if defined(WITH_CRYPTO)
     uecm_init();
-
-    crypto_metadata = NULL;
 #endif
 
     plugin = NULL;
     entry = NULL;
+    crypto_metadata = NULL;
 
     if (!ueum_is_file_exists(argv[1])) {
         ei_stacktrace_push_msg("Specified plugin source file '%s' doesn't exist", argv[1]);

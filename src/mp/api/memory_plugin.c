@@ -20,6 +20,7 @@
 #include <mp/api/memory_plugin.h>
 #include <ueum/ueum.h>
 #include <ei/ei.h>
+#include <smo/smo.h>
 
 #if defined(WITH_CRYPTO)
 

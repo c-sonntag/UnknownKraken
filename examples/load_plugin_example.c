@@ -83,9 +83,9 @@ int main(int argc, char **argv) {
 
     /* Get a function from the plugin */
     ei_logger_info("Getting function hello_world() from loaded memory plugin...");
-DISABLE_WIN32_PRAGMA_WARN(4152)
+UEUM_DISABLE_WIN32_PRAGMA_WARN(4152)
     if ((hello_world = mp_memory_plugin_get_function(plugin, "hello_world")) == NULL) {
-DISABLE_WIN32_PRAGMA_WARN_END
+UEUM_DISABLE_WIN32_PRAGMA_WARN_END()
         ei_stacktrace_push_msg("Failed to get hello_world function from loaded plugin of id", plugin_id);
         goto clean_up;
     }
