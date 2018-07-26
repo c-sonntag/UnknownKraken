@@ -63,7 +63,8 @@ int main(int argc, char **argv) {
 clean_up:
     mp_memory_plugin_destroy(plugin);
     if (ei_stacktrace_is_filled()) {
-        ei_logger_stacktrace("Error occurs with the following stacktrace:");
+        ei_logger_error("Error(s) occurred with the following stacktrace(s):");
+        ei_stacktrace_print_all();
     }
     ei_uninit();
     return EXIT_SUCCESS;
