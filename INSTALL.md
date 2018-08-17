@@ -1,13 +1,21 @@
 # Dependencies list
-* libssl >= 1.1.0 for TLS connection.
-* libcrypto >= 1.1.0 for encryption.
-* zlib >= 1.2.11 for compression.
-* libei for stacktrace and logging.
+* [LibErrorInterceptor](https://github.com/swasun/LibErrorInterceptor), a lightweight and cross-plateform library to handle stacktrace and logging in C99.
+* [LibUnknownEchoUtilsModule](https://github.com/swasun/LibUnknownEchoUtilsModule) Utils module of [LibUnknownEcho](https://github.com/swasun/LibUnknownEcho). Last version
+* [LibUnknownEchoCryptoModule](https://github.com/swasun/LibUnknownEchoCryptoModule) Crypto module of [LibUnknownEcho](https://github.com/swasun/LibUnknownEcho). Last version.
+* [Libssl](https://github.com/openssl/openssl) Provides the client and server-side implementations for SSLv3 and TLS. Version 1.1
+* [Libcrypto](https://github.com/openssl/openssl) Provides general cryptographic and X.509 support needed by SSL/TLS but not logically part of it. Version 1.1.
+* [Zlib](https://github.com/madler/zlib) A massively spiffy yet delicately unobtrusive compression library. Version 1.2.11.
 * A recent version of CMake.
 * Optional: ccache is supported to reduce build time of LibUnknownEcho.
 * Optional: valgrind for memory debugging/memory leak detection
 
 # Dependencies installation
+
+## Installation from sources
+* Download last version of LibUnknownEcho
+```bash
+git clone https://github.com/swasun/LibUnknownEcho.git
+```
 
 ## With Docker (outdated)
 
@@ -21,12 +29,6 @@ docker run -it -P swasun/libunknownecho bash
 wget https://github.com/swasun/LibUnknownEcho/Dockerfile && \
 docker build -t libunknownecho . && \
 docker run -it -P libunknownecho bash
-```
-
-## Installation from sources
-* Download last version of LibUnknownEcho
-```bash
-git clone https://github.com/swasun/LibUnknownEcho.git
 ```
 
 # Build LibUnknownEcho
