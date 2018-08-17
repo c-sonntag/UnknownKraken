@@ -41,7 +41,8 @@ See [INSTALL](INSTALL.md).
 ```
 * Connect to a channel with: `@channel_connection 0`
   which connect to channel n°0.
-* After that, you can connect other clients in this same channel start communicate.
+* After that, you can connect other clients in this same channel.
+* Start communicate !
 
 ## Architecture
 
