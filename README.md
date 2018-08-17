@@ -22,7 +22,7 @@ The server is now listening on two ports:
 
 ## Relay protocol
 
-TBD. Experimental version on wip branch https://github.com/swasun/LibUnknownEcho/tree/wip_relay_protocol_backup.
+TBD. Experimental version on wip branch https://github.com/swasun/LibUnknownEcho/tree/wip_relay_protocol.
 
 ## Installation from sources
 See [INSTALL](INSTALL.md).
