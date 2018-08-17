@@ -20,6 +20,10 @@ The server is now listening on two ports:
 * If it's the first time, the client build 3 certificate/key pairs, for TLS, ciphering and signing, and build for each of them a CSR. This CSR is send to the server on the CSR port in order to sign each certificate. The server will record this signed certificates, and the client will save them in 3 distinct keystores.
 * The client can now establish a connection with a channel. If he's the only connected, he will be responsible of the session key of the channel. If not, he ask through the server the session key. Note that the server doesn't have the knowledge of the key. After that, each message will be encrypted with the key.
 
+## Relay protocol
+
+TBD. Experimental version on wip branch https://github.com/swasun/LibUnknownEcho/tree/wip_relay_protocol_backup.
+
 ## Installation from sources
 See [INSTALL](INSTALL.md).
 
