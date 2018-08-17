@@ -33,7 +33,7 @@ See [INSTALL](INSTALL.md).
 ```bash
  ./bin/release/examples/channel_server_protocol_example
  ```
-* When the server has finished to generate certificates, copy the certificate folder from `out/server/certificate` to out,
+* When the server has finished to generate certificates, copy the `certificate` directory from `out/server/certificate` to `out` directory,
   in order to allow the client to use them (image that's the server certificates provided after application installation).
 * Start the client with:
 ```bash
@@ -47,7 +47,7 @@ See [INSTALL](INSTALL.md).
 
 ### Facade design pattern
 The facade design pattern is use to simplify the complexity of a module.
-In the module, we have 2 to 4 sub folders which are:
+In the module, we have 2 to 4 sub directories which are:
 * api: that contains the highest level of functions/structs of the module.
 * impl: that contains implementation(s) a api files.
 * factory (optional): that contains factories to create complex objects from the api files.
