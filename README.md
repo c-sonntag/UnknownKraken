@@ -178,8 +178,7 @@ Run:
 
 # Dependencies
 * [LibErrorInterceptor](https://github.com/swasun/LibErrorInterceptor), a lightweight and cross-plateform library to handle stacktrace and logging in C99.
-* [LibUnknownEchoUtilsModule](https://github.com/swasun/LibUnknownEchoUtilsModule) Crypto module of [LibUnknownEcho](https://github.com/swasun/LibUnknownEcho). Last version
-* [LibUnknownEchoCryptoModule](https://github.com/swasun/LibUnknownEchoCryptoModule) Utils module of [LibUnknownEcho](https://github.com/swasun/LibUnknownEcho). Last version.
+* [LibUnknownEchoUtilsModule](https://github.com/swasun/LibUnknownEchoUtilsModule) Utils module of [LibUnknownEcho](https://github.com/swasun/LibUnknownEcho). Last version
 * [Openssl](https://github.com/openssl/openssl) provides general cryptographic and X.509 support needed by SSL/TLS but
 	not logically part of it. Version 1.1.0.
 * [Zlib](https://github.com/madler/zlib) A massively spiffy yet delicately unobtrusive compression library. Version 1.2.11.
