@@ -20,7 +20,7 @@
  *  @file      stacktrace.h
  *  @brief     Stacktrace module to record error into ei_stacktrace struct.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef ERRORINTERCEPTOR_STRACKTRACE_H

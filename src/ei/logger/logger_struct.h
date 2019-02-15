@@ -20,7 +20,7 @@
  *  @file      logger_struct.h
  *  @brief     Logger structure that contains the context of the log trace.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  *  @see       logger.h
  */
 

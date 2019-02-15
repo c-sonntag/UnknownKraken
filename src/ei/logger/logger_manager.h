@@ -20,7 +20,7 @@
  *  @file      logger_manager.h
  *  @brief     Logger manager return the current (thread-local) logger.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  *  @see       logger.h
  *  @see       logger_struct.h
  */

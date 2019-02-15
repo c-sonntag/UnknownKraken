@@ -20,7 +20,7 @@
  * @file      alloc.h
  * @brief     Macro functions to safely alloc/realloc/free variables.
  * @author    Charly Lamothe
- * @copyright GNU Public License.
+ * @copyright Apache License 2.0.
  */
 
 #ifndef LIBERRORINTERCEPTOR_ALLOC_H

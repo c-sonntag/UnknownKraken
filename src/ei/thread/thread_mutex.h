@@ -20,7 +20,7 @@
  *  @file      thread_mutex.h
  *  @brief     Portable structure of thread mutex.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef ERRORINTERCEPTOR_THREAD_MUTEX_H

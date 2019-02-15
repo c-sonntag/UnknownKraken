@@ -20,7 +20,7 @@
  *  @file      init.h
  *  @brief     Init and uninit functions for the global context of ErrorInterceptorLib.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef ERRORINTERCEPTOR_INIT_H

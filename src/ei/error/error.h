@@ -20,7 +20,7 @@
  *  @file      error.h
  *  @brief     Error module to create generic error.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef ERRORINTERCEPTOR_ERROR_H

@@ -20,7 +20,7 @@
  *  @file      thread_storage.h
  *  @brief     Singleton module to retreive an object per thread.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef ERRORINTERCEPTOR_THREAD_STORAGE_H

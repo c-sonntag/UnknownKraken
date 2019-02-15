@@ -20,7 +20,7 @@
  *  @file      internal_error.h
  *  @brief     Internal error provides a set of common errors.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef ERRORINTERCEPTOR_INTERNAL_ERROR_H

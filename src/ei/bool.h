@@ -20,7 +20,7 @@
  *  @file      bool.h
  *  @brief     Portable way to represent bool type.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef ERRORINTERCEPTOR_BOOL_H

@@ -21,7 +21,7 @@
  *  @brief     Provides macro to record ERRORINTERCEPTOR_INVALID_PARAMETER error code
  *             and return if specified parameter is null.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef ERRORINTERCEPTOR_CHECK_PARAMETER_H

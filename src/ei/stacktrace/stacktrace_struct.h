@@ -20,7 +20,7 @@
  *  @file      stacktrace_struct.h
  *  @brief     Stacktrace structure that contains a list of errors.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef ERRORINTERCEPTOR_STACKTRACE_STRUCT_H

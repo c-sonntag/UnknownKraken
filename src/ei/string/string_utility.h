@@ -20,7 +20,7 @@
  *  @file      string_utility.h
  *  @brief     Utility functions for string manipulations.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef ERRORINTERCEPTOR_STRING_UTILITY_H

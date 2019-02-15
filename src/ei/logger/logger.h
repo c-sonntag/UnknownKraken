@@ -20,7 +20,7 @@
  *  @file      logger.h
  *  @brief     Logger module handle different types of log message.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  *  @see       logger_struct.h
  */
 
