@@ -20,7 +20,7 @@
  *  @file      private_key.h
  *  @brief     Private key structure.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef UNKNOWNECHOCRYPTOMODULE_PRIVATE_KEY_H

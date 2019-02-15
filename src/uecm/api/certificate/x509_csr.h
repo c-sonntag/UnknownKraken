@@ -21,7 +21,7 @@
  *  @brief     Structure to represent an X509 CSR (Certificate Signing Request), in order
  *             to sign issuer certificate (like a client) by CA certificate (like a server).
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  *  @see       https://en.wikipedia.org/wiki/Certificate_signing_request
  */
 

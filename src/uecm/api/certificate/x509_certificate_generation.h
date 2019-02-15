@@ -20,7 +20,7 @@
  *  @file      x509_certificate_generation.h
  *  @brief     Generate X509 certificates.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  *  @see       x509_certificate.h
  *  @see       x509_certificate_parameters.h
  *  @todo      add callback for RSA generation

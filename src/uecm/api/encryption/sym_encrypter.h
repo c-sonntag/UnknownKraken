@@ -20,7 +20,7 @@
  *  @file      sym_encrypter.h
  *  @brief     Symmetric Encrypter structure to encrypt/decrypt with unique key.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef UNKNOWNECHOCRYPTOMODULE_SYM_ENCRYPTER_H

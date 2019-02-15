@@ -20,7 +20,7 @@
  *  @file      sym_key_factory.h
  *  @brief     Factory to create Symmetric Key (random or from file).
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef UNKNOWNECHOCRYPTOMODULE_SYM_KEY_FACTORY_H

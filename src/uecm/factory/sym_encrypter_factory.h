@@ -20,7 +20,7 @@
  *  @file      sym_encrypter_factory.h
  *  @brief     Factory to create Symmetric Encrypter from Symmetric Key (default is AES-CBC-256).
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef UNKNOWNECHOCRYPTOMODULE_SYM_ENCRYPTER_FACTORY_H

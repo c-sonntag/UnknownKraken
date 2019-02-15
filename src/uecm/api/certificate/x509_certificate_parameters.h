@@ -20,7 +20,7 @@
  *  @file      x509_certificate_parameters.h
  *  @brief     Structure to store parameters of an X509 certificate, to generate a parameterized certificate.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  *  @see       x509_certificate_generation.h
  */
 

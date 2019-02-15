@@ -20,7 +20,7 @@
  *  @file      compress.h
  *  @brief     Compress/decompress byte or file.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef UNKNOWNECHOCRYPTOMODULE_COMPRESS_H

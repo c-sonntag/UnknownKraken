@@ -20,7 +20,7 @@
  *  @file      crypto_init.h
  *  @brief     Init/uninit crypto module.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef UNKNOWNECHOCRYPTOMODULE_CRYPTO_INIT_H

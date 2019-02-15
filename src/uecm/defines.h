@@ -20,7 +20,7 @@
  *  @file      defines.h
  *  @brief     Global defines of LibUnknownEcho.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef UNKNOWNECHOCRYPTOMODULE_DEFINES_H

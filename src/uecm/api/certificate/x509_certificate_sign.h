@@ -20,7 +20,7 @@
  *  @file      x509_certificate_sign.h
  *  @brief     Sign, verify X509 certificates.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  *  @see       x509_certificate.h
  */
 

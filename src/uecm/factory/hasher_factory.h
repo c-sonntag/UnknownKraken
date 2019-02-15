@@ -20,7 +20,7 @@
  *  @file      hasher_factory.h
  *  @brief     Factory that create an Hasher (default is SHA-256).
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef UNKNOWNECHOCRYPTOMODULE_HASHER_FACTORY_H

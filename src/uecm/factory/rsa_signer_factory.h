@@ -20,7 +20,7 @@
  *  @file      rsa_signer_factory.h
  *  @brief     Factory to create RSA signer from key pair.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef UNKNOWNECHOCRYPTOMODULE_RSA_SIGNER_FACTORY_H

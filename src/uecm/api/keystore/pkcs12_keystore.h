@@ -20,7 +20,7 @@
  *  @file      pkcs12_keystore.h
  *  @brief     PKCS12 keystore structure.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  *  @details   - Little description : https://en.wikipedia.org/wiki/PKCS_12
  *             - RFC : https://tools.ietf.org/html/rfc7292
  */

@@ -20,7 +20,7 @@
  *  @file      x509_certificate.h
  *  @brief     Structure to represent an X509 certificate.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  *  @see       https://en.wikipedia.org/wiki/X.509
  *  @todo      parsing : https://zakird.com/2013/10/13/certificate-parsing-with-openssl
  *  @todo      chain verification :

@@ -20,7 +20,7 @@
  *  @file      x509_certificate_factory.h
  *  @brief     Factory to create signed or self-signed X509 certificate.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  *  @todo      Add callback for RSA keypair gen
  */
 

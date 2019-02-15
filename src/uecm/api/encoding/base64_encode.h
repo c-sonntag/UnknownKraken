@@ -20,7 +20,7 @@
  *  @file      base64_encode.h
  *  @brief     Encode byte data with Base64 algorithm.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef UNKNOWNECHOCRYPTOMODULE_BASE64_ENCODE_H

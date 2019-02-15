@@ -20,7 +20,7 @@
  *  @file      init.h
  *  @brief     Init and uninit functions for the global context of LibUnknownEchoCryptoModule.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef UNKNOWNECHOCRYPTOMODULE_INIT_H

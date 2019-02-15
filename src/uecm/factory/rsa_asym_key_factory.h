@@ -21,7 +21,7 @@
  *  @brief     Factory to create RSA Asymmetric Key. Random, from files, from
  *             already existing certificate.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  *  @todo      Add callback for RSA key generation
  */
 

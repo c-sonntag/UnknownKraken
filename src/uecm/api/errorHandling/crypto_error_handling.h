@@ -20,7 +20,7 @@
  *  @file      crypto_error_handling.h
  *  @brief     Handle error of crypto module.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef UNKNOWNECHOCRYPTOMODULE_CRYPTO_ERROR_HANDLING_H

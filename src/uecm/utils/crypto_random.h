@@ -20,7 +20,7 @@
  *  @file      crypto_random.h
  *  @brief     Generate crypto random bytes or specific size.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef UNKNOWNECHOCRYPTOMODULE_CRYPTO_RANDOM_H

@@ -20,7 +20,7 @@
  *  @file      pkcs12_keystore_factory.h
  *  @brief     Factory to create PKCS12 keystore from scratch or from file.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef UNKNOWNECHOCRYPTOMODULE_PKCS12_KEYSTORE_FACTORY_H

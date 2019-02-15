@@ -20,7 +20,7 @@
  *  @file      asym_key.h
  *  @brief     Asymmetric Key structure.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef UNKNOWNECHOCRYPTOMODULE_ASYM_KEY_H

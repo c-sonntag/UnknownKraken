@@ -20,7 +20,7 @@
  *  @file      sym_key.h
  *  @brief     Symmetric Key structure.
  *  @author    Charly Lamothe
- *  @copyright GNU Public License.
+ *  @copyright Apache License 2.0.
  */
 
 #ifndef UNKNOWNECHOCRYPTOMODULE_SYM_KEY_H
