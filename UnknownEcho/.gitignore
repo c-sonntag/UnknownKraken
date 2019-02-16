@@ -1,0 +1,19 @@
+/old/*
+/build/*
+/bin/*
+/doc/src
+/doc/test
+/out
+
+# Qt Creator config files
+*.user
+LibUnknownEcho.config
+LibUnknownEcho.creator
+LibUnknownEcho.files
+LibUnknownEcho.includes
+
+# Visual Studio Code config file
+.vscode
+
+# Commentend until fixed
+.travis.yml
