@@ -257,13 +257,28 @@ if(${UnknownKrakenSharedMemoryObject_BUILD_EXAMPLES})
     # --- NEW EXAMPLE ---
     get_filename_component(executableName ${filePath} NAME_WE)
     #message(STATUS "Build example : ${executableName}")
-    add_executable(${executableName} ${filePath})
+    if(executableName MATCHES "([a-zA-Z_\-]+)_library")
+      add_library(${executableName} ${filePath})
+
+      # --- INSTALL EXAMPLE LIB ---
+      install(TARGETS ${executableName}
+              RUNTIME DESTINATION "bin"
+              LIBRARY DESTINATION "lib"
+              ARCHIVE DESTINATION "lib")
+
+    else()
+      add_executable(${executableName} ${filePath})
+
+      # --- INSTALL EXAMPLE ---
+      install(TARGETS ${executableName} RUNTIME DESTINATION "bin")
+
+    endif()
+
     if (UNIX)
         target_link_libraries(${executableName} "-ldl")
     endif ()
 
-    # --- INSTALL EXAMPLE ---
-    install(TARGETS ${executableName} RUNTIME DESTINATION "bin")
+
 
   endforeach ()
 
