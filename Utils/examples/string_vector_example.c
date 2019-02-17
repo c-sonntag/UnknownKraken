@@ -16,46 +16,46 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <ueum/ueum.h>
-#include <ei/ei.h>
+#include <uk/utils/ueum.h>
+#include <uk/utils/ei.h>
 
 int main() {
-    ueum_string_vector *data;
+    uk_utils_string_vector *data;
 
     data = NULL;
 
-    ei_init_or_die();
-    ei_logger_use_symbol_levels();
+    uk_utils_init_or_die();
+    uk_utils_logger_use_symbol_levels();
 
-    ei_logger_info("Creating an empty string vector");
-    if ((data = ueum_string_vector_create_empty()) == NULL) {
-        ei_stacktrace_push_msg("Failed to create empty string vector data");
+    uk_utils_logger_info("Creating an empty string vector");
+    if ((data = uk_utils_string_vector_create_empty()) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to create empty string vector data");
         goto clean_up;
     }
 
-    ei_logger_info("string hello world string");
-    if (!ueum_string_vector_append(data, "Hello world !")) {
-        ei_stacktrace_push_msg("Failed to string string to string vector data");
+    uk_utils_logger_info("string hello world string");
+    if (!uk_utils_string_vector_append(data, "Hello world !")) {
+        uk_utils_stacktrace_push_msg("Failed to string string to string vector data");
         goto clean_up;
     }
 
-    ei_logger_info("Checking is string vector is empty");
-    if (ueum_string_vector_is_empty(data)) {
-        ei_stacktrace_push_msg("string vector data is empty but it shouldn't")
+    uk_utils_logger_info("Checking is string vector is empty");
+    if (uk_utils_string_vector_is_empty(data)) {
+        uk_utils_stacktrace_push_msg("string vector data is empty but it shouldn't")
         goto clean_up;
     }
 
-    ei_logger_info("The string vector isn't empty and contains %d element", ueum_string_vector_size(data));
+    uk_utils_logger_info("The string vector isn't empty and contains %d element", uk_utils_string_vector_size(data));
 
-    ei_logger_info("The string vector 'data' contains:");
-    ueum_string_vector_print(data, stdout);
+    uk_utils_logger_info("The string vector 'data' contains:");
+    uk_utils_string_vector_print(data, stdout);
 
 clean_up:
-    ueum_string_vector_destroy(data);
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_error("Error(s) occurred with the following stacktrace(s):");
-        ei_stacktrace_print_all();
+    uk_utils_string_vector_destroy(data);
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_error("Error(s) occurred with the following stacktrace(s):");
+        uk_utils_stacktrace_print_all();
     }
-    ei_uninit();
+    uk_utils_uninit();
     return 0;
 }

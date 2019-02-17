@@ -16,8 +16,8 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <ueum/ueum.h>
-#include <ei/ei.h>
+#include <uk/utils/ueum.h>
+#include <uk/utils/ei.h>
 
 bool test_add_sizet_overflow() {
     size_t one, two, out;
@@ -29,13 +29,13 @@ bool test_add_sizet_overflow() {
     out = 0;
     detected = false;
     
-    ei_logger_debug("one=%ld", one);
-    ei_logger_debug("two=%ld", two);
-    ei_logger_debug("out=%ld", out);
+    uk_utils_logger_debug("one=%ld", one);
+    uk_utils_logger_debug("two=%ld", two);
+    uk_utils_logger_debug("out=%ld", out);
 
     for (i = 0; i < 100; i++) {
-        if (ueum__add_overflow(one, two, &out)) {
-            ei_logger_info("Buffer overflow detected: %ld + %ld cannot be performed.", one, two);
+        if (uk_utils__add_overflow(one, two, &out)) {
+            uk_utils_logger_info("Buffer overflow detected: %ld + %ld cannot be performed.", one, two);
             detected = true;
             break;
         }
@@ -44,7 +44,7 @@ bool test_add_sizet_overflow() {
     }
 
     if (!detected) {
-        ei_stacktrace_push_msg("Failed to detect buffer overflow when performing: %ld + %ld."
+        uk_utils_stacktrace_push_msg("Failed to detect buffer overflow when performing: %ld + %ld."
         " The result appears to be: %ld", one, two, out);
         return false;
     }
@@ -57,7 +57,7 @@ bool test_safe_add() {
 
     res = 0;
 
-    ueum_safe_add(10, 20, &res);
+    uk_utils_safe_add(10, 20, &res);
 
     printf("%d\n", res);
 
@@ -65,23 +65,23 @@ bool test_safe_add() {
 }
 
 int main() {
-    ei_init_or_die();
-    ei_logger_use_symbol_levels();
+    uk_utils_init_or_die();
+    uk_utils_logger_use_symbol_levels();
 
     /*if (!test_add_sizet_overflow()) {
-        ei_stacktrace_push_msg("Test of ueum__add_sizet_overflow() failed");
+        uk_utils_stacktrace_push_msg("Test of uk_utils__add_sizet_overflow() failed");
         goto clean_up;
     }*/
 
     test_safe_add();
     
-    ei_logger_info("Succeed !");    
+    uk_utils_logger_info("Succeed !");    
 
 //clean_up:
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_error("Error(s) occurred with the following stacktrace(s):");
-        ei_stacktrace_print_all();
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_error("Error(s) occurred with the following stacktrace(s):");
+        uk_utils_stacktrace_print_all();
     }
-    ei_uninit();
+    uk_utils_uninit();
     return 0;
 }

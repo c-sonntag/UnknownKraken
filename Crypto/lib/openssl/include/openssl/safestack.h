@@ -113,9 +113,9 @@ extern "C" {
                                             (OPENSSL_sk_copyfunc)copyfunc, \
                                             (OPENSSL_sk_freefunc)freefunc); \
     } \
-    static ossl_inline sk_##t1##_compfunc sk_##t1##_set_cmp_func(STACK_OF(t1) *sk, sk_##t1##_compfunc compare) \
+    static ossl_inline sk_##t1##_compfunc sk_##t1##_set_cuk_mp_func(STACK_OF(t1) *sk, sk_##t1##_compfunc compare) \
     { \
-        return (sk_##t1##_compfunc)OPENSSL_sk_set_cmp_func((OPENSSL_STACK *)sk, (OPENSSL_sk_compfunc)compare); \
+        return (sk_##t1##_compfunc)OPENSSL_sk_set_cuk_mp_func((OPENSSL_STACK *)sk, (OPENSSL_sk_compfunc)compare); \
     }
 
 # define DEFINE_SPECIAL_STACK_OF(t1, t2) SKM_DEFINE_STACK_OF(t1, t2, t2)

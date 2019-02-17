@@ -16,9 +16,9 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <uecm/uecm.h>
-#include <ueum/ueum.h>
-#include <ei/ei.h>
+#include <uk/crypto/uecm.h>
+#include <uk/utils/ueum.h>
+#include <uk/utils/ei.h>
 
 #include <stddef.h>
 
@@ -26,48 +26,48 @@ int main() {
     unsigned char *buffer;
     size_t buffer_size;
 
-    ei_init_or_die();
-    ei_logger_use_symbol_levels();
+    uk_utils_init_or_die();
+    uk_utils_logger_use_symbol_levels();
 
     buffer = NULL;
     buffer_size = 16;
     
-    ei_logger_info("Initializing LibUnknownEchoCryptoModule...");
-    if (!uecm_init()) {
-        ei_stacktrace_push_msg("Failed to initialize LibUnknownEchoCryptoModule");
+    uk_utils_logger_info("Initializing LibUnknownEchoCryptoModule...");
+    if (!uk_crypto_init()) {
+        uk_utils_stacktrace_push_msg("Failed to initialize LibUnknownEchoCryptoModule");
         goto clean_up;
     }
-    ei_logger_info("LibUnknownEchoCryptoModule is correctly initialized.");
+    uk_utils_logger_info("LibUnknownEchoCryptoModule is correctly initialized.");
 
-    ei_logger_info("Allocating 16 bytes...");
-    ueum_safe_alloc_or_goto(buffer, unsigned char, buffer_size, clean_up);
+    uk_utils_logger_info("Allocating 16 bytes...");
+    uk_utils_safe_alloc_or_goto(buffer, unsigned char, buffer_size, clean_up);
 
-    ei_logger_info("Buffer content:");
-    if (!ueum_hex_print(buffer, buffer_size, stdout)) {
-        ei_stacktrace_push_msg("Failed to print buffer content (empty)");
-        goto clean_up;
-    }
-
-    ei_logger_info("Generating crypto random bytes...");
-    if (!uecm_crypto_random_bytes(buffer, buffer_size)) {
-        ei_stacktrace_push_msg("Failed to generate crypto random bytes");
+    uk_utils_logger_info("Buffer content:");
+    if (!uk_utils_hex_print(buffer, buffer_size, stdout)) {
+        uk_utils_stacktrace_push_msg("Failed to print buffer content (empty)");
         goto clean_up;
     }
 
-    ei_logger_info("Buffer content:");
-    if (!ueum_hex_print(buffer, buffer_size, stdout)) {
-        ei_stacktrace_push_msg("Failed to print buffer content (filled)");
+    uk_utils_logger_info("Generating crypto random bytes...");
+    if (!uk_crypto_crypto_random_bytes(buffer, buffer_size)) {
+        uk_utils_stacktrace_push_msg("Failed to generate crypto random bytes");
         goto clean_up;
     }
 
-    ei_logger_info("Succeed !");
+    uk_utils_logger_info("Buffer content:");
+    if (!uk_utils_hex_print(buffer, buffer_size, stdout)) {
+        uk_utils_stacktrace_push_msg("Failed to print buffer content (filled)");
+        goto clean_up;
+    }
+
+    uk_utils_logger_info("Succeed !");
 
 clean_up:
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_error("Error(s) occurred with the following stacktrace(s):");
-        ei_stacktrace_print_all();
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_error("Error(s) occurred with the following stacktrace(s):");
+        uk_utils_stacktrace_print_all();
     }
-    uecm_uninit();
-    ei_uninit();
+    uk_crypto_uninit();
+    uk_utils_uninit();
     return 0;
 }

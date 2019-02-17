@@ -16,32 +16,32 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <ueum/ueum.h>
-#include <ei/ei.h>
+#include <uk/utils/ueum.h>
+#include <uk/utils/ei.h>
 
 int main() {
     char *password;
 
     password = NULL;
 
-    ei_init_or_die();
-    ei_logger_use_symbol_levels();
+    uk_utils_init_or_die();
+    uk_utils_logger_use_symbol_levels();
 
-    ei_logger_info("LibUnknownEchoUtilsModule is correctly initialized");
+    uk_utils_logger_info("LibUnknownEchoUtilsModule is correctly initialized");
     
-    if ((password = ueum_input_password("Enter a password: ", 32)) == NULL) {
-        ei_stacktrace_push_msg("Failed to get input password");
+    if ((password = uk_utils_input_password("Enter a password: ", 32)) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to get input password");
         goto clean_up;
     }
 
-    ei_logger_info("The password is: %s", password);
+    uk_utils_logger_info("The password is: %s", password);
 
 clean_up:
-    ueum_safe_free(password);
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_error("Error(s) occurred with the following stacktrace(s):");
-        ei_stacktrace_print_all();
+    uk_utils_safe_free(password);
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_error("Error(s) occurred with the following stacktrace(s):");
+        uk_utils_stacktrace_print_all();
     }
-    ei_uninit();
+    uk_utils_uninit();
     return EXIT_SUCCESS;
 }

@@ -200,7 +200,7 @@ int CMS_RecipientInfo_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
 
 int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
                    unsigned int flags);
-CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags);
+CMS_ContentInfo *CMS_compress(BIO *in, int couk_mp_nid, unsigned int flags);
 
 int CMS_set1_eContentType(CMS_ContentInfo *cms, const ASN1_OBJECT *oid);
 const ASN1_OBJECT *CMS_get0_eContentType(CMS_ContentInfo *cms);

@@ -16,9 +16,9 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <uecm/uecm.h>
-#include <ueum/ueum.h>
-#include <ei/ei.h>
+#include <uk/crypto/uecm.h>
+#include <uk/utils/ueum.h>
+#include <uk/utils/ei.h>
 
 #include <stdio.h>
 #include <stddef.h>
@@ -45,59 +45,59 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    ei_init_or_die();
-    ei_logger_use_symbol_levels();
+    uk_utils_init_or_die();
+    uk_utils_logger_use_symbol_levels();
 
-    ei_logger_info("Initializing LibUnknownEchoCryptoModule...");
-    if (!uecm_init()) {
-        ei_stacktrace_push_msg("Failed to initialize LibUnknownEchoCryptoModule");
+    uk_utils_logger_info("Initializing LibUnknownEchoCryptoModule...");
+    if (!uk_crypto_init()) {
+        uk_utils_stacktrace_push_msg("Failed to initialize LibUnknownEchoCryptoModule");
         goto clean_up;
     }
-    ei_logger_info("LibUnknownEchoCryptoModule is correctly initialized.");
+    uk_utils_logger_info("LibUnknownEchoCryptoModule is correctly initialized.");
 
-    ei_logger_info("Converting parameter '%s' to bytes...", argv[1]);
-    if ((message = ueum_bytes_create_from_string(argv[1])) == NULL) {
-        ei_stacktrace_push_msg("Failed to convert arg to bytes")
+    uk_utils_logger_info("Converting parameter '%s' to bytes...", argv[1]);
+    if ((message = uk_utils_bytes_create_from_string(argv[1])) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to convert arg to bytes")
         goto clean_up;
     }
     message_length = strlen(argv[1]);
-    ei_logger_info("Succefully converted parameter to bytes");
+    uk_utils_logger_info("Succefully converted parameter to bytes");
 
-    ei_logger_info("Compressing message...");
-    if ((compressed = uecm_compress_buf(message, message_length, &compressed_length)) == NULL) {
-        ei_stacktrace_push_msg("Failed to compress message")
+    uk_utils_logger_info("Compressing message...");
+    if ((compressed = uk_crypto_compress_buf(message, message_length, &compressed_length)) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to compress message")
         goto clean_up;
     }
-    ei_logger_info("Message has been successfully compressed");
+    uk_utils_logger_info("Message has been successfully compressed");
 
-    ei_logger_info("Decompressing message...");
-    if ((decompressed = uecm_decompress_buf(compressed, compressed_length, message_length)) == NULL) {
-        ei_stacktrace_push_msg("Failed to decompress message")
+    uk_utils_logger_info("Decompressing message...");
+    if ((decompressed = uk_crypto_decompress_buf(compressed, compressed_length, message_length)) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to decompress message")
         goto clean_up;
     }
 
-    ei_logger_info("Messages comparaison...");
+    uk_utils_logger_info("Messages comparaison...");
     if (memcmp(decompressed, message, message_length) == 0) {
-        ei_logger_info("Message has been successfully decompressed");
+        uk_utils_logger_info("Message has been successfully decompressed");
     } else {
-        ei_logger_error("The message was decompressed but isn't the same as the original");
-        ei_stacktrace_push_msg("Failed to decompress message")
+        uk_utils_logger_error("The message was decompressed but isn't the same as the original");
+        uk_utils_stacktrace_push_msg("Failed to decompress message")
         goto clean_up;
     }
 
     exit_code = EXIT_SUCCESS;
 
-    ei_logger_info("Succeed !");
+    uk_utils_logger_info("Succeed !");
 
 clean_up:
-    ueum_safe_free(message)
-    ueum_safe_free(compressed)
-    ueum_safe_free(decompressed)
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_error("Error(s) occurred with the following stacktrace(s):");
-        ei_stacktrace_print_all();
+    uk_utils_safe_free(message)
+    uk_utils_safe_free(compressed)
+    uk_utils_safe_free(decompressed)
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_error("Error(s) occurred with the following stacktrace(s):");
+        uk_utils_stacktrace_print_all();
     }
-    uecm_uninit();
-    ei_uninit();
+    uk_crypto_uninit();
+    uk_utils_uninit();
     return exit_code;
 }

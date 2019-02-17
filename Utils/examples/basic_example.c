@@ -16,21 +16,21 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <ueum/ueum.h> /* include LibUnknownEchoUtilsModule */
-#include <ei/ei.h> /* include LibErrorInterceptor */
+#include <uk/utils/ueum.h> /* include LibUnknownEchoUtilsModule */
+#include <uk/utils/ei.h> /* include LibErrorInterceptor */
 
 int main() {
     char *data;
 
-    ei_init(); /* initialize LibErrorInterceptor */
+    uk_utils_init(); /* initialize LibErrorInterceptor */
 
     /* use LibUnknownEchoUtilsModule */
 
     /* return the content of the file */
-    data = ueum_read_file("test.txt");
+    data = uk_utils_read_file("test.txt");
 
     /* free data only if it's allocated */
-    ueum_safe_free(data);
+    uk_utils_safe_free(data);
 
     /**
      * If the file test.txt doesn't exist or cannot be
@@ -38,11 +38,11 @@ int main() {
      * in the stacktrace of the current thread.
      * If so, we can print the stacktrace.
      */
-    if (ei_stacktrace_is_filled()) {
-        ei_stacktrace_print_all();
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_stacktrace_print_all();
     }
 
-    ei_uninit(); /* uninitialize LibErrorInterceptor */
+    uk_utils_uninit(); /* uninitialize LibErrorInterceptor */
 
     return 0;
 }

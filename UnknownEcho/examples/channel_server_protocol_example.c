@@ -23,11 +23,11 @@
   *  @copyright GNU Public License.
   */
 
-#include <unknownecho/init.h>
-#include <unknownecho/protocol/api/channel/channel_server.h>
-#include <unknownecho/protocol/factory/channel_server_factory.h>
-#include <ueum/ueum.h>
-#include <ei/ei.h>
+#include <uk/unknownecho/init.h>
+#include <uk/unknownecho/protocol/api/channel/channel_server.h>
+#include <uk/unknownecho/protocol/factory/channel_server_factory.h>
+#include <uk/utils/ueum.h>
+#include <uk/utils/ei.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +43,7 @@ static void handle_signal(int sig, void (*h)(int), int options) {
     sigemptyset(&s.sa_mask);
     s.sa_flags = options;
     if (sigaction(sig, &s, NULL) < 0) {
-        ei_stacktrace_push_errno()
+        uk_utils_stacktrace_push_errno()
     }
 }
 
@@ -51,7 +51,7 @@ int main() {
     char *keystore_password, *key_password;
 
     /* Initialize LibUnknownEcho */
-    if (!ue_init()) {
+    if (!uk_ue_init()) {
         fprintf(stderr, "[FATAL] Failed to initialize LibUnknownEcho\n");
         exit(EXIT_FAILURE);
     }
@@ -60,18 +60,18 @@ int main() {
     key_password = NULL;
 
     /* Set log levels for the screen and the log file */
-    ei_logger_set_file_level(ei_logger_manager_get_logger(), ERRORINTERCEPTOR_LOG_TRACE);
-    ei_logger_set_print_level(ei_logger_manager_get_logger(), ERRORINTERCEPTOR_LOG_TRACE);
+    uk_utils_logger_set_file_level(uk_utils_logger_manager_get_logger(), UnknownKrakenUtils_LOG_TRACE);
+    uk_utils_logger_set_print_level(uk_utils_logger_manager_get_logger(), UnknownKrakenUtils_LOG_TRACE);
 
     /* Get the user keystore password. If it's fail, it will add an error message to the stacktrace. */
-    if (!(keystore_password = ueum_input_string("Keystore password : "))) {
-        ei_stacktrace_push_msg("Specified keystore password isn't valid");
+    if (!(keystore_password = uk_utils_input_string("Keystore password : "))) {
+        uk_utils_stacktrace_push_msg("Specified keystore password isn't valid");
         goto end;
     }
 
     /* Get the user private keys password. If it's fail, it will add an error message to the stacktrace. */
-    if (!(key_password = ueum_input_string("Key password : "))) {
-        ei_stacktrace_push_msg("Specified key password isn't valid");
+    if (!(key_password = uk_utils_input_string("Key password : "))) {
+        uk_utils_stacktrace_push_msg("Specified key password isn't valid");
         goto end;
     }
 
@@ -82,36 +82,36 @@ int main() {
      * (5001 for the TLS server and 5002 for the CSR server).
      * If it's fail, it will add an error message to the stacktrace.
      */
-    if (!ue_channel_server_create_default(keystore_password, key_password)) {
-        ei_stacktrace_push_msg("Failed to create server channel");
+    if (!uk_ue_channel_server_create_default(keystore_password, key_password)) {
+        uk_utils_stacktrace_push_msg("Failed to create server channel");
         goto end;
     }
 
     /* Shutdown the server if ctrl+c if pressed. */
-    handle_signal(SIGINT, ue_channel_server_shutdown_signal_callback, 0);
+    handle_signal(SIGINT, uk_ue_channel_server_shutdown_signal_callback, 0);
     handle_signal(SIGPIPE, SIG_IGN, SA_RESTART);
 
     /**
      * Process the channel server.
      * See README.md for more informations.
      */
-    if (!ue_channel_server_process()) {
-        ei_stacktrace_push_msg("Failed to start server channel");
+    if (!uk_ue_channel_server_process()) {
+        uk_utils_stacktrace_push_msg("Failed to start server channel");
         goto end;
     }
 
 end:
-    ei_logger_info("Cleaning...");
+    uk_utils_logger_info("Cleaning...");
     /* Remove keystore and key passwords */
-    ueum_safe_free(keystore_password);
-    ueum_safe_free(key_password);
+    uk_utils_safe_free(keystore_password);
+    uk_utils_safe_free(key_password);
     /* Log the stacktrace if it exists */
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_stacktrace("An error occurred with the following stacktrace :");
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_stacktrace("An error occurred with the following stacktrace :");
     }
     /* Clean-up the channel server. */
-    ue_channel_server_destroy();
+    uk_ue_channel_server_destroy();
     /* Clean-up LibUnknownEcho */
-    ue_uninit();
+    uk_ue_uninit();
     return 0;
 }

@@ -16,11 +16,11 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <smo/smo.h>
-#include <smo/api/smo_handle.h>
-#include <ueum/ueum.h>
+#include <uk/smo/smo.h>
+#include <uk/smo/api/smo_handle.h>
+#include <uk/utils/ueum.h>
 
-#include <ei/ei.h>
+#include <uk/utils/ei.h>
 
 #include <stdio.h>
 #include <stddef.h>
@@ -59,26 +59,26 @@ static unsigned char *read_shared_library(const char *path, ssize_t *size) {
 
     /* Open the shared library from the disk */
     if (!(fd = fopen(path, "rb"))) {
-        ei_stacktrace_push_errno();
+        uk_utils_stacktrace_push_errno();
         return NULL;
     }
 
     /* Get the size of the file */
     if ((temp_size = get_file_size(fd)) == -1) {
-        ei_stacktrace_push_errno();
+        uk_utils_stacktrace_push_errno();
         if (fclose(fd) != 0) {
-            ei_logger_warn("Failed to close file descriptor with error message: '%s'", strerror(errno));
+            uk_utils_logger_warn("Failed to close file descriptor with error message: '%s'", strerror(errno));
         }
         return NULL;
     }
 
     /* Alloc the correct size for the buffer */
-    ueum_safe_alloc(buf, unsigned char, temp_size);
+    uk_utils_safe_alloc(buf, unsigned char, temp_size);
 
     if (!fread(buf, temp_size, 1, fd)) {
-        ei_stacktrace_push_errno();
+        uk_utils_stacktrace_push_errno();
         if (fclose(fd) != 0) {
-            ei_logger_warn("Failed to close file descriptor with error message: '%s'", strerror(errno));
+            uk_utils_logger_warn("Failed to close file descriptor with error message: '%s'", strerror(errno));
         }
         return NULL;
     }
@@ -86,7 +86,7 @@ static unsigned char *read_shared_library(const char *path, ssize_t *size) {
     *size = temp_size;
 
     if (fclose(fd) != 0) {
-        ei_logger_warn("Failed to close file descriptor with error message: '%s'", strerror(errno));
+        uk_utils_logger_warn("Failed to close file descriptor with error message: '%s'", strerror(errno));
     }
 
     return buf;
@@ -95,7 +95,7 @@ static unsigned char *read_shared_library(const char *path, ssize_t *size) {
 int main(int argc, char **argv) {
     unsigned char *buf;
     ssize_t size;
-    smo_handle *handle;
+    uk_smo_handle *handle;
     typedef void(*hello_world_func)(void);
     hello_world_func hello_world;
 
@@ -109,18 +109,18 @@ int main(int argc, char **argv) {
     handle = NULL;
 
     /* Initialize LibErrorInterceptor for error handling */
-    if (!ei_init()) {
+    if (!uk_utils_init()) {
         fprintf(stderr, "[FATAL] Failed to initialize LibErrorInterceptor\n");
         exit(EXIT_FAILURE);
     }
 
     if (!(buf = read_shared_library(argv[1], &size))) {
-        ei_stacktrace_push_msg("Failed to read shared library from disk");
+        uk_utils_stacktrace_push_msg("Failed to read shared library from disk");
         goto clean_up;
     }
 
-    if (!(handle = smo_open("id", buf, size))) {
-        ei_stacktrace_push_msg("Failed to open sharfed memory object from specified buffer");
+    if (!(handle = uk_smo_open("id", buf, size))) {
+        uk_utils_stacktrace_push_msg("Failed to open sharfed memory object from specified buffer");
         goto clean_up;
     }
 
@@ -128,25 +128,25 @@ int main(int argc, char **argv) {
     _Pragma("GCC diagnostic push");
     _Pragma("GCC diagnostic ignored \"-Wpedantic\"");
 #endif
-    if (!(hello_world = smo_get_function(handle, "hello_world"))) {
+    if (!(hello_world = uk_smo_get_function(handle, "hello_world"))) {
 #if defined(__GNUC__)
     _Pragma("GCC diagnostic pop");
 #endif
-        ei_stacktrace_push_msg("Failed to get symbol of function hello");
+        uk_utils_stacktrace_push_msg("Failed to get symbol of function hello");
         goto clean_up;
     }
 
     hello_world();
 
 clean_up:
-    smo_close(handle);
-    ueum_safe_free(buf);
+    uk_smo_close(handle);
+    uk_utils_safe_free(buf);
     /* Check if an error was recorded */
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_stacktrace("An error occurred with the following stacktrace :");
-        ei_stacktrace_print();
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_stacktrace("An error occurred with the following stacktrace :");
+        uk_utils_stacktrace_print();
     }
     /* Uninit the error handling library */
-    ei_uninit();
+    uk_utils_uninit();
     return EXIT_SUCCESS;
 }

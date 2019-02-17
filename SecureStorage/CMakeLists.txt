@@ -1,67 +1,80 @@
- ###############################################################################
- # Copyright (C) 2018 Charly Lamothe                                           #
- #                                                                             #
- # This file is part of LibSecureStorage.                                      #
- #                                                                             #
- #   Licensed under the Apache License, Version 2.0 (the "License");           #
- #   you may not use this file except in compliance with the License.          #
- #   You may obtain a copy of the License at                                   #
- #                                                                             #
- #   http://www.apache.org/licenses/LICENSE-2.0                                #
- #                                                                             #
- #   Unless required by applicable law or agreed to in writing, software       #
- #   distributed under the License is distributed on an "AS IS" BASIS,         #
- #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  #
- #   See the License for the specific language governing permissions and       #
- #   limitations under the License.                                            #
- ###############################################################################
+#
+## UnknownKrakenSecureStorage project
+#
+## Author Charly Lamothe (http://u4a.at)
+## Author Christophe-Alexandre Sonntag (http://u4a.at)
+## Under the Apache License 2.0.
+#
 
- 
 # --- PROJECT ---
+project(UnknownKrakenSecureStorage)
+cmake_minimum_required(VERSION 3.4)
+#
+set(UnknownKrakenSecureStorage_VERSION_MAJOR 1)
+set(UnknownKrakenSecureStorage_VERSION_MINOR 0)
+set(PROJECT_UnknownKrakenSecureStorage_STATIC "${PROJECT_NAME}_static")
+set(PROJECT_UnknownKrakenSecureStorage_SHARED "${PROJECT_NAME}_shared")
 
-PROJECT(securestorage C)
-cmake_minimum_required(VERSION 3.8)
+#
+##
+#
 
-# --- GLOBAL OPTIONS ---
+# --- LIB : UnknownKrakenUtils ---
+if(TARGET UnknownKrakenUtils)
+  link_libraries(UnknownKrakenUtils)
+else()
+  find_package(UnknownKrakenUtils REQUIRED)
+  link_libraries(${UnknownKrakenUtils_LIBRARIES})
+endif()
+include_directories(${UnknownKrakenUtils_INCLUDE_DIRS} ${UnknownKrakenUtils_INCLUDE_DIR})
+add_definitions(${UnknownKrakenUtils_DEFINITIONS})
+link_directories(${UnknownKrakenUtils_DIRECTORIES})
 
-set(CMAKE_VERBOSE_MAKEFILE on)
-SET(ROOT_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE STRING "Default root path of the current build directory")
+# --- LIB : UnknownKrakenCrypto ---
+if(TARGET UnknownKrakenCrypto)
+  link_libraries(UnknownKrakenCrypto)
+else()
+  find_package(UnknownKrakenCrypto REQUIRED)
+  link_libraries(${UnknownKrakenCrypto_LIBRARIES})
+endif()
+include_directories(${UnknownKrakenCrypto_INCLUDE_DIRS} ${UnknownKrakenCrypto_INCLUDE_DIR})
+add_definitions(${UnknownKrakenCrypto_DEFINITIONS})
+link_directories(${UnknownKrakenCrypto_DIRECTORIES})
 
-# --- DEPENDENCIES OPTIONS ---
+# --- LIB : ZLIB ---
+find_package(ZLIB REQUIRED)
+include_directories(${ZLIB_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIR})
+link_directories(${ZLIB_DIRECTORIES})
+link_libraries(${ZLIB_LIBRARIES})
+add_definitions(${ZLIB_DEFINITIONS})
 
-SET(LIBEI_SYSTEM TRUE CACHE BOOL "Default LIBEI installation type")
-set(LIBEI_INSTALL ${ROOT_BUILD_DIR}/libei/install CACHE STRING "Default LIBEI install path")
+# --- LIB : OPENSSL ---
+find_package(OPENSSL REQUIRED)
+include_directories(${OPENSSL_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
+link_directories(${OPENSSL_DIRECTORIES})
+#link_libraries(OpenSSL::SSL OpenSSL::Crypto)
+link_libraries(${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
+add_definitions(${OPENSSL_DEFINITIONS})
 
-SET(LIBUEUM_SYSTEM TRUE CACHE BOOL "Default LIBUEUM installation type")
-set(LIBUEUM_INSTALL ${ROOT_BUILD_DIR}/libueum/install CACHE STRING "Default LIBUEUM install path")
+# --- LIB : Threads ---
+if (UNIX)
+  find_package(Threads REQUIRED)
+  link_libraries(${Threads_LIBRARIES})
+endif()
 
-SET(LIBUECM_SYSTEM TRUE CACHE BOOL "Default LIBUECM installation type")
-set(LIBUECM_INSTALL ${ROOT_BUILD_DIR}/libuecm/install CACHE STRING "Default LIBUECM install path")
 
-SET(OPENSSL_SYSTEM TRUE CACHE BOOL "Default  OPENSSL installation type")
 
-SET(ZLIB_SYSTEM TRUE CACHE BOOL "Default ZLIB installation type")
+#
+##
+#
 
-# --- PATH ---
-
-set(${CMAKE_CURRENT_SOURCE_DIR} ..)
-set(SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
-set(TESTS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/tests")
-set(EXAMPLES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/examples")
-
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/release")
-    set(EXAMPLES_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/release/examples")
-    set(TESTS_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/release/tests")
-elseif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/debug")
-    set(EXAMPLES_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/debug/examples")
-    set(TESTS_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/debug/tests")
-endif ()
-
+# --- TARGETS PATH ---
+set(SRC_PATH "src")
+set(HEADER_PATH "src")
+set(EXAMPLES_PATH "examples")
 
 # --- COMPILE OPTIONS ---
-
+include_directories(${HEADER_PATH})
 set(CMAKE_C_FLAGS "-fPIC")
 
 # Compile options for Microsoft Visual Studio
@@ -74,7 +87,7 @@ if (MSVC)
     if (MSVC_VERSION GREATER_EQUAL 1900)
         add_compile_options("/permissive-") # Add /permissive- (kind of -pedantic) available since Visual Studio 2017
     endif ()
-    add_compile_options("/W4") 
+    add_compile_options("/W4")
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON) # This variable is used to initialize the property on each target as it is created
     set(CMAKE_C_FLAGS "${CMAKE_ENABLE_C11}") # Compile with C11 rules
 
@@ -155,148 +168,134 @@ if (WIN32)
     add_definitions(-D_WIN32_WINNT=${ver})
 endif ()
 
-# CCache
 
-find_program(CCACHE_PROGRAM ccache)
-if (CCACHE_PROGRAM)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${CCACHE_PROGRAM}")
+#
+##
+#
+
+# --- BUILD OPTIONS : STATIC/SHARED ---
+SET(UnknownKrakenSecureStorage_SHARED ON CACHE BOOL "Build shared UnknownKrakenSecureStorage library")
+SET(UnknownKrakenSecureStorage_STATIC ON CACHE BOOL "Build static UnknownKrakenSecureStorage library")
+
+# --- CHECK BUILD OPTIONS ---
+if( (NOT ${UnknownKrakenSecureStorage_SHARED}) AND (NOT ${UnknownKrakenSecureStorage_STATIC}) )
+  message(FATAL_ERROR, "\n\n   !! Require one of SHARED or STATIC for UnknownKrakenSecureStorage !! \n\n")
+  set(UnknownKrakenSecureStorage_FOUND OFF)
+  return()
 endif()
 
-# --- SEARCH DEPENDENCIES ---
+#
+##
+#
 
-# External dependencies
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/external)
+# --- BUILD OPTIONS  ---
+set(UnknownKrakenSecureStorage_BUILD_TOOLS ON CACHE BOOL "Build tools for UnknownKrakenSecureStorage library")
+set(UnknownKrakenSecureStorage_BUILD_EXAMPLES ON CACHE BOOL "Build examples for UnknownKrakenSecureStorage library")
+set(UnknownKrakenSecureStorage_BUILD_TESTS ON CACHE BOOL "Build tests for UnknownKrakenSecureStorage library")
 
-# Location where external projects will be downloaded
-set (DOWNLOAD_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/downloads"
-    CACHE PATH "Location where external projects will be downloaded.")
-mark_as_advanced(DOWNLOAD_LOCATION)
+#
+##
+#
 
-# LibErrorInterceptor
-include(libei)
+# CCache
+find_program(CCACHE_PROGRAM ccache)
+if (CCACHE_PROGRAM)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${CCACHE_PROGRAM}")
+endif()
 
-# LibUnknownEchoUtilsModule
-include(libueum)
-
-include(openssl)
-
-# ZLib
-include(zlib)
-
-# LibUnknownEchoCryptoModule
-include(libuecm)
-
-# Search pthread
-if (UNIX)
-    find_package (Threads)
-endif ()
-
-if (NOT ZLIB_SYSTEM)
-    list(APPEND LIBSECURESTORAGE_DEPENDENCIES zlib)
-endif ()
-
-if (NOT LIBEI_SYSTEM)
-    list(APPEND LIBSECURESTORAGE_DEPENDENCIES libei)
-endif ()
-
-if (NOT LIBUEUM_SYSTEM)
-    list(APPEND LIBSECURESTORAGE_DEPENDENCIES libueum)
-endif ()
-
-if (NOT LIBUECM_SYSTEM)
-    list(APPEND LIBSECURESTORAGE_DEPENDENCIES libuecm)
-endif ()
-
-if (NOT OPENSSL_SYSTEM)
-    list(APPEND LIBSECURESTORAGE_DEPENDENCIES openssl)
-endif ()
-
-set(LIBSECURESTORAGE_LIBRARIES
-    ${LIBERRORINTERCEPTOR_LIBRARIES}
-    ${LIBUNKNOWNECHOCRYPTOMODULE_LIBRARIES}
-    ${LIBUNKNOWNECHOUTILSMODULE_LIBRARIES}
-    ${OPENSSL_LIBRARIES}
-    ${ZLIB_LIBRARIES}
-    ${CMAKE_THREAD_LIBS_INIT}
-)
-
-set(LIBSECURESTORAGE_INCLUDE_DIR
-    ${ZLIB_INCLUDE_DIR}
-    ${LIBERRORINTERCEPTOR_INCLUDE_DIR}
-    ${LIBUNKNOWNECHOUTILSMODULE_INCLUDE_DIR}
-    ${OPENSSL_INCLUDE_DIR}
-    ${LIBUNKNOWNECHOCRYPTOMODULE_INCLUDE_DIR}
-)
-
-# --- BUILD SSTORAGE ---
-
-set(PROJECT_NAME_STATIC "${PROJECT_NAME}_static")
-set(PROJECT_NAME_SHARED "${PROJECT_NAME}_shared")
-
-# Load source files
-file(GLOB_RECURSE PROGRAM_TARGET_SRC_FILES "${SRC_PATH}/*.*")
-
-# Build shared library
-add_library(${PROJECT_NAME_SHARED} SHARED ${PROGRAM_TARGET_SRC_FILES})
-if (LIBSECURESTORAGE_DEPENDENCIES)
-    add_dependencies(${PROJECT_NAME_SHARED} ${LIBSECURESTORAGE_DEPENDENCIES})
-endif ()
-target_include_directories(${PROJECT_NAME_SHARED} PUBLIC "${SRC_PATH}")
-target_include_directories(${PROJECT_NAME_SHARED} PUBLIC ${LIBSECURESTORAGE_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME_SHARED} ${LIBSECURESTORAGE_LIBRARIES})
-set_target_properties(${PROJECT_NAME_SHARED} PROPERTIES OUTPUT_NAME sstorage)
-
-# Build static library
-add_library(${PROJECT_NAME_STATIC} STATIC ${PROGRAM_TARGET_SRC_FILES})
-if (LIBSECURESTORAGE_DEPENDENCIES)
-    add_dependencies(${PROJECT_NAME_STATIC} ${LIBSECURESTORAGE_DEPENDENCIES})
-endif ()
-target_include_directories(${PROJECT_NAME_STATIC} PUBLIC "${SRC_PATH}")
-target_include_directories(${PROJECT_NAME_STATIC} PUBLIC ${LIBSECURESTORAGE_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME_STATIC} ${LIBSECURESTORAGE_LIBRARIES})
-set_target_properties(${PROJECT_NAME_STATIC} PROPERTIES OUTPUT_NAME sstorage_static)
+#
+##
+#
 
 
-# --- INSTALL ---
+# --- TARGETS FILES ---
+file(GLOB_RECURSE TARGET_SRC_FILES "${SRC_PATH}/*.cpp" "${SRC_PATH}/*.c")
+file(GLOB_RECURSE TARGET_HEADER_FILES "${HEADER_PATH}/*.h" "${HEADER_PATH}/*.hpp")
 
-# Copy includes
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include FILES_MATCHING PATTERN "*.h")
+# --- BUILDS LIB TARGET STATIC ---
+if(${UnknownKrakenSecureStorage_STATIC})
+  add_library(${PROJECT_UnknownKrakenSecureStorage_STATIC} STATIC ${TARGET_SRC_FILES} ${TARGET_HEADER_FILES})
+  set_target_properties(${PROJECT_UnknownKrakenSecureStorage_STATIC} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
 
-# Copy static library
-install (
-    TARGETS ${PROJECT_NAME_STATIC}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-)
+  # --- INSTALL LIB ---
+  install(TARGETS ${PROJECT_UnknownKrakenSecureStorage_STATIC}
+          LIBRARY DESTINATION "lib"
+          ARCHIVE DESTINATION "lib")
 
-if (UNIX)
-    install (
-        TARGETS ${PROJECT_NAME_SHARED}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    )
-elseif (WIN32)
-    install (
-        TARGETS ${PROJECT_NAME_SHARED}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    )
-endif ()
+endif()
 
-# Build examples
-file(GLOB files "${EXAMPLES_PATH}/*.c")
-foreach (filePath ${files} )
+# --- BUILDS LIB TARGET SHARED ---
+if(${UnknownKrakenSecureStorage_SHARED})
+  add_library(${PROJECT_UnknownKrakenSecureStorage_SHARED} SHARED ${TARGET_SRC_FILES} ${TARGET_HEADER_FILES})
+  set_target_properties(${PROJECT_UnknownKrakenSecureStorage_SHARED} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+
+  # --- INSTALL LIB ---
+  install(TARGETS ${PROJECT_UnknownKrakenSecureStorage_SHARED}
+          RUNTIME DESTINATION "bin"
+          LIBRARY DESTINATION "lib"
+          ARCHIVE DESTINATION "lib")
+
+
+endif()
+
+# --- INSTALL INCLUDE ---
+install(DIRECTORY "${HEADER_PATH}/" DESTINATION "include" FILES_MATCHING PATTERN "*.h")
+
+#
+##
+#
+
+# --- SUB BUILD LINKING ---
+set(UnknownKrakenSecureStorage_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/${HEADER_PATH}")
+set(UnknownKrakenSecureStorage_DEFINITIONS)
+set(UnknownKrakenSecureStorage_DIRECTORIES)
+if(UnknownKrakenSecureStorage_SHARED)
+  set(UnknownKrakenSecureStorage ${PROJECT_UnknownKrakenSecureStorage_SHARED})
+elseif(UnknownKrakenSecureStorage_STATIC)
+  set(UnknownKrakenSecureStorage ${PROJECT_UnknownKrakenSecureStorage_STATIC})
+endif()
+set(UnknownKrakenSecureStorage_INCLUDE_DIRS ${UnknownKrakenSecureStorage_INCLUDE_DIRS} PARENT_SCOPE)
+set(UnknownKrakenSecureStorage_DEFINITIONS ${UnknownKrakenSecureStorage_DEFINITIONS} PARENT_SCOPE)
+set(UnknownKrakenSecureStorage ${UnknownKrakenSecureStorage} PARENT_SCOPE)
+add_library(UnknownKrakenSecureStorage ALIAS ${UnknownKrakenSecureStorage})
+
+
+#
+##
+#
+
+# --- ADD SUB BUILD  ---
+link_libraries(UnknownKrakenSecureStorage)
+
+# --- BUILDS TOOLS ---
+if(${UnknownKrakenSecureStorage_BUILD_TOOLS})
+  ## TODO
+endif()
+
+# --- BUILDS EXAMPLES ---
+if(${UnknownKrakenSecureStorage_BUILD_EXAMPLES})
+
+  file(GLOB files "${EXAMPLES_PATH}/*.c")
+  foreach (filePath ${files} )
+
+    # --- NEW EXAMPLE ---
     get_filename_component(executableName ${filePath} NAME_WE)
-    message(STATUS "Build Program : ${executableName}")
+    #message(STATUS "Build example : ${executableName}")
     add_executable(${executableName} ${filePath})
-    if (LIBSECURESTORAGE_DEPENDENCIES)
-        add_dependencies(${executableName} ${LIBSECURESTORAGE_DEPENDENCIES})
-    endif ()
-    target_link_libraries(${executableName} ${PROJECT_NAME_STATIC})
-    target_include_directories(${executableName} PUBLIC ${LIBSECURESTORAGE_INCLUDE_DIR})
-    target_link_libraries(${executableName} ${LIBSECURESTORAGE_LIBRARIES})
     if (UNIX)
         target_link_libraries(${executableName} "-ldl")
     endif ()
-    set_target_properties(${executableName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${EXAMPLES_OUTPUT_PATH})
-endforeach ()
+
+    # --- INSTALL EXAMPLE ---
+    install(TARGETS ${executableName} RUNTIME DESTINATION "bin")
+
+  endforeach ()
+
+endif()
+
+# --- BUILDS TESTS ---
+if(${UnknownKrakenSecureStorage_BUILD_TESTS})
+  ## TODO
+endif()
+

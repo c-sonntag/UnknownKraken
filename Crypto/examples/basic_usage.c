@@ -16,9 +16,9 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <uecm/uecm.h> /* Include LibUnknownEchoCryptoModule */
-#include <ueum/ueum.h> /* Include LibUnknownEchoUtilsModule */
-#include <ei/ei.h> /* Include LibErrorInterceptor */
+#include <uk/crypto/uecm.h> /* Include LibUnknownEchoCryptoModule */
+#include <uk/utils/ueum.h> /* Include LibUnknownEchoUtilsModule */
+#include <uk/utils/ei.h> /* Include LibErrorInterceptor */
 
 #include <stddef.h>
 #include <string.h>
@@ -26,19 +26,19 @@
 int main(int argc, char **argv) {
     unsigned char *plain_data, *cipher_data, *decipher_data;
     size_t plain_data_size, cipher_data_size, decipher_data_size;
-    uecm_asym_key *key;
+    uk_crypto_asym_key *key;
     int key_size;
 
     /* Initialize LibErrorInterceptor */
-    ei_init_or_die();
-    ei_logger_use_symbol_levels();
+    uk_utils_init_or_die();
+    uk_utils_logger_use_symbol_levels();
 
     /* Initialize LibUnknownEchoCryptoModule */
-    if (!uecm_init()) {
-        ei_stacktrace_push_msg("Failed to initialize LibUnknownEchoCryptoModule");
+    if (!uk_crypto_init()) {
+        uk_utils_stacktrace_push_msg("Failed to initialize LibUnknownEchoCryptoModule");
         goto clean_up;
     }
-    ei_logger_info("LibUnknownEchoCryptoModule is correctly initialized.");
+    uk_utils_logger_info("LibUnknownEchoCryptoModule is correctly initialized.");
 
     /* Use LibUnknownEchoCryptoModule */
 
@@ -48,17 +48,17 @@ int main(int argc, char **argv) {
     key_size = 4096;
 
     /* Convert the string input in bytes */
-    ei_logger_info("Converting string input in bytes...");
-    if ((plain_data = ueum_bytes_create_from_string(argv[1])) == NULL) {
-        ei_stacktrace_push_msg("Failed to convert arg to bytes")
+    uk_utils_logger_info("Converting string input in bytes...");
+    if ((plain_data = uk_utils_bytes_create_from_string(argv[1])) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to convert arg to bytes")
         goto clean_up;
     }
     plain_data_size = strlen(argv[1]);
 
     /* Generate a random RSA key pair */
-    ei_logger_info("Generating random RSA key pair of size %d...", key_size);
-    if ((key = uecm_rsa_asym_key_create(key_size)) == NULL) {
-        ei_stacktrace_push_msg("Failed to generate random rsa key pair of size %d", key_size);
+    uk_utils_logger_info("Generating random RSA key pair of size %d...", key_size);
+    if ((key = uk_crypto_rsa_asym_key_create(key_size)) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to generate random rsa key pair of size %d", key_size);
         goto clean_up;
     }
     
@@ -69,9 +69,9 @@ int main(int argc, char **argv) {
      * The private key parameter (key->sk) is optional,
      * and used to sign the cipher data.
      */ 
-    ei_logger_info("Ciphering plain data...");
-    if (!uecm_cipher_plain_data(plain_data, plain_data_size, key->pk, key->sk, &cipher_data, &cipher_data_size, "aes-256-cbc", "sha256")) {
-        ei_stacktrace_push_msg("Failed to cipher plain data");
+    uk_utils_logger_info("Ciphering plain data...");
+    if (!uk_crypto_cipher_plain_data(plain_data, plain_data_size, key->pk, key->sk, &cipher_data, &cipher_data_size, "aes-256-cbc", "sha256")) {
+        uk_utils_stacktrace_push_msg("Failed to cipher plain data");
         goto clean_up;
     }
 
@@ -82,43 +82,43 @@ int main(int argc, char **argv) {
      * The public key parameter (key->pk) is optional,
      * and used to verify the signature of the cipher data.
      */
-    ei_logger_info("Deciphering cipher data...");
-    if (!uecm_decipher_cipher_data(cipher_data, cipher_data_size, key->sk, key->pk, &decipher_data, &decipher_data_size,
+    uk_utils_logger_info("Deciphering cipher data...");
+    if (!uk_crypto_decipher_cipher_data(cipher_data, cipher_data_size, key->sk, key->pk, &decipher_data, &decipher_data_size,
         "aes-256-cbc", "sha256")) {
 
-        ei_stacktrace_push_msg("Failed to decipher cipher data");
+        uk_utils_stacktrace_push_msg("Failed to decipher cipher data");
         goto clean_up;
     }
 
     /* Check if decipher data and plain data are equals */
-    ei_logger_info("Comparing decipher data with plain data...");
+    uk_utils_logger_info("Comparing decipher data with plain data...");
     if (plain_data_size == decipher_data_size && memcmp(decipher_data, plain_data, plain_data_size) == 0) {
-        ei_logger_info("Plain data and decipher data match");
+        uk_utils_logger_info("Plain data and decipher data match");
     } else {
-        ei_logger_error("Plain data and decipher data doesn't match");
+        uk_utils_logger_error("Plain data and decipher data doesn't match");
     }
 
-    ei_logger_info("Succeed !");
+    uk_utils_logger_info("Succeed !");
 
 clean_up:
     /* Clean_up variables */
-    ueum_safe_free(plain_data);
-    ueum_safe_free(cipher_data);
-    ueum_safe_free(decipher_data);
-    uecm_asym_key_destroy_all(key);
+    uk_utils_safe_free(plain_data);
+    uk_utils_safe_free(cipher_data);
+    uk_utils_safe_free(decipher_data);
+    uk_crypto_asym_key_destroy_all(key);
 
     /**
-     * Each time ei_stacktrace API is used in libueum or libuecm,
+     * Each time uk_utils_stacktrace API is used in libueum or libuecm,
      * an error is record to the stacktrace of the current thread.
      */
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_error("Error(s) occurred with the following stacktrace(s):");
-        ei_stacktrace_print_all();
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_error("Error(s) occurred with the following stacktrace(s):");
+        uk_utils_stacktrace_print_all();
     }
 
-    uecm_uninit(); /* uninitialize LibUnknownEchoCryptoModule */
+    uk_crypto_uninit(); /* uninitialize LibUnknownEchoCryptoModule */
 
-    ei_uninit(); /* uninitialize LibErrorInterceptor */
+    uk_utils_uninit(); /* uninitialize LibErrorInterceptor */
 
     return 0;
 }

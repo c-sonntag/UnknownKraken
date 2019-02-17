@@ -16,9 +16,9 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <uecm/uecm.h>
-#include <ueum/ueum.h>
-#include <ei/ei.h>
+#include <uk/crypto/uecm.h>
+#include <uk/utils/ueum.h>
+#include <uk/utils/ei.h>
 
 #include <stddef.h>
 #include <string.h>
@@ -31,7 +31,7 @@ void print_usage(char *name) {
 
 int main(int argc, char **argv) {
     int exit_code;
-    uecm_hasher *hasher;
+    uk_crypto_hasher *hasher;
     unsigned char *message, *digest;
     size_t message_length, digest_length;
     char *hex_digest;
@@ -50,62 +50,62 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    ei_init_or_die();
-    ei_logger_use_symbol_levels();
+    uk_utils_init_or_die();
+    uk_utils_logger_use_symbol_levels();
 
-    ei_logger_info("Initializing LibUnknownEchoCryptoModule...");
-    if (!uecm_init()) {
-        ei_stacktrace_push_msg("Failed to initialize LibUnknownEchoCryptoModule");
+    uk_utils_logger_info("Initializing LibUnknownEchoCryptoModule...");
+    if (!uk_crypto_init()) {
+        uk_utils_stacktrace_push_msg("Failed to initialize LibUnknownEchoCryptoModule");
         goto clean_up;
     }
-    ei_logger_info("LibUnknownEchoCryptoModule is correctly initialized.");
+    uk_utils_logger_info("LibUnknownEchoCryptoModule is correctly initialized.");
 
-    ei_logger_info("Converting parameter '%s' to bytes...", argv[1]);
-    if ((message = ueum_bytes_create_from_string(argv[1])) == NULL) {
-        ei_stacktrace_push_msg("Failed to convert arg to bytes")
+    uk_utils_logger_info("Converting parameter '%s' to bytes...", argv[1]);
+    if ((message = uk_utils_bytes_create_from_string(argv[1])) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to convert arg to bytes")
         goto clean_up;
     }
-    ei_logger_info("Succefully converted parameter to bytes");
+    uk_utils_logger_info("Succefully converted parameter to bytes");
 
     message_length = strlen(argv[1]);
 
-    ei_logger_info("Creating new uecm_hasher");
-    if ((hasher = uecm_hasher_create()) == NULL) {
-        ei_stacktrace_push_msg("Failed to create uecm_hasher")
+    uk_utils_logger_info("Creating new uk_crypto_hasher");
+    if ((hasher = uk_crypto_hasher_create()) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to create uk_crypto_hasher")
         goto clean_up;
     }
-    ei_logger_info("Has successfully created a new uecm_hasher");
+    uk_utils_logger_info("Has successfully created a new uk_crypto_hasher");
 
-    ei_logger_info("Initializing uecm_hasher with SHA-256 digest algorithm");
-    if (!(uecm_hasher_init(hasher, "sha256"))) {
-        ei_stacktrace_push_msg("Failed to initialize uecm_hasher with SHA-256 algorithm")
+    uk_utils_logger_info("Initializing uk_crypto_hasher with SHA-256 digest algorithm");
+    if (!(uk_crypto_hasher_init(hasher, "sha256"))) {
+        uk_utils_stacktrace_push_msg("Failed to initialize uk_crypto_hasher with SHA-256 algorithm")
         goto clean_up;
     }
-    ei_logger_info("Has successfully initialized uecm_hasher");
+    uk_utils_logger_info("Has successfully initialized uk_crypto_hasher");
 
-    ei_logger_info("Hash processing...");
-    if ((digest = uecm_hasher_digest(hasher, message, message_length, &digest_length)) == NULL) {
-        ei_stacktrace_push_msg("Failed to hash message with SHA-256 digest algorithm")
+    uk_utils_logger_info("Hash processing...");
+    if ((digest = uk_crypto_hasher_digest(hasher, message, message_length, &digest_length)) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to hash message with SHA-256 digest algorithm")
         goto clean_up;
     }
 
-    hex_digest = ueum_bytes_to_hex(digest, digest_length);
-    ei_logger_info("Message digest of input '%s' is following : %s", argv[1], hex_digest);
+    hex_digest = uk_utils_bytes_to_hex(digest, digest_length);
+    uk_utils_logger_info("Message digest of input '%s' is following : %s", argv[1], hex_digest);
 
     exit_code = EXIT_SUCCESS;
 
-    ei_logger_info("Succeed !");
+    uk_utils_logger_info("Succeed !");
 
 clean_up:
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_error("Error(s) occurred with the following stacktrace(s):");
-        ei_stacktrace_print_all();
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_error("Error(s) occurred with the following stacktrace(s):");
+        uk_utils_stacktrace_print_all();
     }
-    ueum_safe_free(message)
-    ueum_safe_free(digest)
-    uecm_hasher_destroy(hasher);
-    ueum_safe_free(hex_digest)
-    uecm_uninit();
-    ei_uninit();
+    uk_utils_safe_free(message)
+    uk_utils_safe_free(digest)
+    uk_crypto_hasher_destroy(hasher);
+    uk_utils_safe_free(hex_digest)
+    uk_crypto_uninit();
+    uk_utils_uninit();
     return exit_code;
 }

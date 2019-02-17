@@ -1008,10 +1008,10 @@
 #define NID_localKeyID          157
 #define OBJ_localKeyID          OBJ_pkcs9,21L
 
-#define SN_ms_csp_name          "CSPName"
-#define LN_ms_csp_name          "Microsoft CSP Name"
-#define NID_ms_csp_name         417
-#define OBJ_ms_csp_name         1L,3L,6L,1L,4L,1L,311L,17L,1L
+#define SN_uk_ms_csp_name          "CSPName"
+#define LN_uk_ms_csp_name          "Microsoft CSP Name"
+#define NID_uk_ms_csp_name         417
+#define OBJ_uk_ms_csp_name         1L,3L,6L,1L,4L,1L,311L,17L,1L
 
 #define SN_LocalKeySet          "LocalKeySet"
 #define LN_LocalKeySet          "Microsoft Local Key set"
@@ -1195,45 +1195,45 @@
 #define LN_rc5_ofb64            "rc5-ofb"
 #define NID_rc5_ofb64           123
 
-#define SN_ms_ext_req           "msExtReq"
-#define LN_ms_ext_req           "Microsoft Extension Request"
-#define NID_ms_ext_req          171
-#define OBJ_ms_ext_req          1L,3L,6L,1L,4L,1L,311L,2L,1L,14L
+#define SN_uk_ms_ext_req           "msExtReq"
+#define LN_uk_ms_ext_req           "Microsoft Extension Request"
+#define NID_uk_ms_ext_req          171
+#define OBJ_uk_ms_ext_req          1L,3L,6L,1L,4L,1L,311L,2L,1L,14L
 
-#define SN_ms_code_ind          "msCodeInd"
-#define LN_ms_code_ind          "Microsoft Individual Code Signing"
-#define NID_ms_code_ind         134
-#define OBJ_ms_code_ind         1L,3L,6L,1L,4L,1L,311L,2L,1L,21L
+#define SN_uk_ms_code_ind          "msCodeInd"
+#define LN_uk_ms_code_ind          "Microsoft Individual Code Signing"
+#define NID_uk_ms_code_ind         134
+#define OBJ_uk_ms_code_ind         1L,3L,6L,1L,4L,1L,311L,2L,1L,21L
 
-#define SN_ms_code_com          "msCodeCom"
-#define LN_ms_code_com          "Microsoft Commercial Code Signing"
-#define NID_ms_code_com         135
-#define OBJ_ms_code_com         1L,3L,6L,1L,4L,1L,311L,2L,1L,22L
+#define SN_uk_ms_code_com          "msCodeCom"
+#define LN_uk_ms_code_com          "Microsoft Commercial Code Signing"
+#define NID_uk_ms_code_com         135
+#define OBJ_uk_ms_code_com         1L,3L,6L,1L,4L,1L,311L,2L,1L,22L
 
-#define SN_ms_ctl_sign          "msCTLSign"
-#define LN_ms_ctl_sign          "Microsoft Trust List Signing"
-#define NID_ms_ctl_sign         136
-#define OBJ_ms_ctl_sign         1L,3L,6L,1L,4L,1L,311L,10L,3L,1L
+#define SN_uk_ms_ctl_sign          "msCTLSign"
+#define LN_uk_ms_ctl_sign          "Microsoft Trust List Signing"
+#define NID_uk_ms_ctl_sign         136
+#define OBJ_uk_ms_ctl_sign         1L,3L,6L,1L,4L,1L,311L,10L,3L,1L
 
-#define SN_ms_sgc               "msSGC"
-#define LN_ms_sgc               "Microsoft Server Gated Crypto"
-#define NID_ms_sgc              137
-#define OBJ_ms_sgc              1L,3L,6L,1L,4L,1L,311L,10L,3L,3L
+#define SN_uk_ms_sgc               "msSGC"
+#define LN_uk_ms_sgc               "Microsoft Server Gated Crypto"
+#define NID_uk_ms_sgc              137
+#define OBJ_uk_ms_sgc              1L,3L,6L,1L,4L,1L,311L,10L,3L,3L
 
-#define SN_ms_efs               "msEFS"
-#define LN_ms_efs               "Microsoft Encrypted File System"
-#define NID_ms_efs              138
-#define OBJ_ms_efs              1L,3L,6L,1L,4L,1L,311L,10L,3L,4L
+#define SN_uk_ms_efs               "msEFS"
+#define LN_uk_ms_efs               "Microsoft Encrypted File System"
+#define NID_uk_ms_efs              138
+#define OBJ_uk_ms_efs              1L,3L,6L,1L,4L,1L,311L,10L,3L,4L
 
-#define SN_ms_smartcard_login           "msSmartcardLogin"
-#define LN_ms_smartcard_login           "Microsoft Smartcardlogin"
-#define NID_ms_smartcard_login          648
-#define OBJ_ms_smartcard_login          1L,3L,6L,1L,4L,1L,311L,20L,2L,2L
+#define SN_uk_ms_smartcard_login           "msSmartcardLogin"
+#define LN_uk_ms_smartcard_login           "Microsoft Smartcardlogin"
+#define NID_uk_ms_smartcard_login          648
+#define OBJ_uk_ms_smartcard_login          1L,3L,6L,1L,4L,1L,311L,20L,2L,2L
 
-#define SN_ms_upn               "msUPN"
-#define LN_ms_upn               "Microsoft Universal Principal Name"
-#define NID_ms_upn              649
-#define OBJ_ms_upn              1L,3L,6L,1L,4L,1L,311L,20L,2L,3L
+#define SN_uk_ms_upn               "msUPN"
+#define LN_uk_ms_upn               "Microsoft Universal Principal Name"
+#define NID_uk_ms_upn              649
+#define OBJ_uk_ms_upn              1L,3L,6L,1L,4L,1L,311L,20L,2L,3L
 
 #define SN_idea_cbc             "IDEA-CBC"
 #define LN_idea_cbc             "idea-cbc"
@@ -1381,9 +1381,9 @@
 #define NID_id_mod_attribute_cert               280
 #define OBJ_id_mod_attribute_cert               OBJ_id_pkix_mod,12L
 
-#define SN_id_mod_timestamp_protocol            "id-mod-timestamp-protocol"
-#define NID_id_mod_timestamp_protocol           281
-#define OBJ_id_mod_timestamp_protocol           OBJ_id_pkix_mod,13L
+#define SN_id_mod_timestauk_mp_protocol            "id-mod-timestamp-protocol"
+#define NID_id_mod_timestauk_mp_protocol           281
+#define OBJ_id_mod_timestauk_mp_protocol           OBJ_id_pkix_mod,13L
 
 #define SN_id_mod_ocsp          "id-mod-ocsp"
 #define NID_id_mod_ocsp         282

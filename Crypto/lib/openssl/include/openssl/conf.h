@@ -85,9 +85,9 @@ long CONF_get_number(LHASH_OF(CONF_VALUE) *conf, const char *group,
                      const char *name);
 void CONF_free(LHASH_OF(CONF_VALUE) *conf);
 #ifndef OPENSSL_NO_STDIO
-int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out);
+int CONF_duuk_mp_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out);
 #endif
-int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out);
+int CONF_duuk_mp_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out);
 
 DEPRECATEDIN_1_1_0(void OPENSSL_config(const char *config_name))
 
@@ -124,9 +124,9 @@ char *NCONF_get_string(const CONF *conf, const char *group, const char *name);
 int NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
                        long *result);
 #ifndef OPENSSL_NO_STDIO
-int NCONF_dump_fp(const CONF *conf, FILE *out);
+int NCONF_duuk_mp_fp(const CONF *conf, FILE *out);
 #endif
-int NCONF_dump_bio(const CONF *conf, BIO *out);
+int NCONF_duuk_mp_bio(const CONF *conf, BIO *out);
 
 #define NCONF_get_number(c,g,n,r) NCONF_get_number_e(c,g,n,r)
 

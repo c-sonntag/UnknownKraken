@@ -157,7 +157,7 @@ void BN_zero_ex(BIGNUM *a);
 #  define BN_zero(a)      (BN_set_word((a),0))
 # endif
 
-const BIGNUM *BN_value_one(void);
+const BIGNUM *BN_valuk_ue_one(void);
 char *BN_options(void);
 BN_CTX *BN_CTX_new(void);
 BN_CTX *BN_CTX_secure_new(void);

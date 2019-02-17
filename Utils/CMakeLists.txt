@@ -1,50 +1,42 @@
- ###############################################################################
- # Copyright (C) 2018 Charly Lamothe                                           #
- #                                                                             #
- # This file is part of LibUnknownEchoUtilsModule.                             #
- #                                                                             #
- #   Licensed under the Apache License, Version 2.0 (the "License");           #
- #   you may not use this file except in compliance with the License.          #
- #   You may obtain a copy of the License at                                   #
- #                                                                             #
- #   http://www.apache.org/licenses/LICENSE-2.0                                #
- #                                                                             #
- #   Unless required by applicable law or agreed to in writing, software       #
- #   distributed under the License is distributed on an "AS IS" BASIS,         #
- #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  #
- #   See the License for the specific language governing permissions and       #
- #   limitations under the License.                                            #
- ###############################################################################
+#
+## UnknownKrakenUtils project
+#
+## Author Charly Lamothe (http://u4a.at)
+## Author Christophe-Alexandre Sonntag (http://u4a.at)
+## Under the Apache License 2.0.
+#
 
 # --- PROJECT ---
+project(UnknownKrakenUtils)
+cmake_minimum_required(VERSION 3.4)
 
-PROJECT(ueumutilsmodule C)
-cmake_minimum_required(VERSION 3.8)
+#
+set(UnknownKrakenUtils_VERSION_MAJOR 1)
+set(UnknownKrakenUtils_VERSION_MINOR 0)
+set(PROJECT_UnknownKrakenUtils_STATIC "${PROJECT_NAME}_static")
+set(PROJECT_UnknownKrakenUtils_SHARED "${PROJECT_NAME}_shared")
 
-# --- GLOBAL OPTIONS ---
+#
+##
+#
 
-set(CMAKE_VERBOSE_MAKEFILE on)
-SET(ROOT_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE STRING "Default root path of the current build directory")
-SET(LIBEI_SYSTEM TRUE CACHE BOOL "Default LIBEI installation type")
-set(LIBEI_INSTALL ${ROOT_BUILD_DIR}/libei/install CACHE STRING "Default LIBEI install path")
+# --- LIB : Threads ---
+if (UNIX)
+  find_package(Threads REQUIRED)
+  link_libraries(${Threads_LIBRARIES})
+endif()
 
-# --- PATH ---
+#
+##
+#
 
-set(${CMAKE_CURRENT_SOURCE_DIR} ..)
-set(SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
-set(EXAMPLES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/examples")
-
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/release")
-    set(EXAMPLES_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/release/examples")
-elseif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/debug")
-    set(EXAMPLES_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/debug/examples")
-endif ()
-
+# --- TARGETS PATH ---
+set(SRC_PATH "src")
+set(HEADER_PATH "src")
+set(EXAMPLES_PATH "examples")
 
 # --- COMPILE OPTIONS ---
-
+include_directories(${HEADER_PATH})
 set(CMAKE_C_FLAGS "-fPIC")
 
 # Compile options for Microsoft Visual Studio
@@ -57,7 +49,7 @@ if (MSVC)
     if (MSVC_VERSION GREATER_EQUAL 1900)
         add_compile_options("/permissive-") # Add /permissive- (kind of -pedantic) available since Visual Studio 2017
     endif ()
-    add_compile_options("/W4") 
+    add_compile_options("/W4")
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON) # This variable is used to initialize the property on each target as it is created
     set(CMAKE_C_FLAGS "${CMAKE_ENABLE_C11}") # Compile with C11 rules
 
@@ -138,101 +130,135 @@ if (WIN32)
     add_definitions(-D_WIN32_WINNT=${ver})
 endif ()
 
-# CCache
 
-find_program(CCACHE_PROGRAM ccache)
-if (CCACHE_PROGRAM)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${CCACHE_PROGRAM}")
+#
+##
+#
+
+# --- BUILD OPTIONS : STATIC/SHARED ---
+SET(UnknownKrakenUtils_SHARED ON CACHE BOOL "Build shared UnknownKrakenUtils library")
+SET(UnknownKrakenUtils_STATIC ON CACHE BOOL "Build static UnknownKrakenUtils library")
+
+# --- CHECK BUILD OPTIONS ---
+if( (NOT ${UnknownKrakenUtils_SHARED}) AND (NOT ${UnknownKrakenUtils_STATIC}) )
+  message(FATAL_ERROR, "\n\n   !! Require one of SHARED or STATIC for UnknownKrakenUtils !! \n\n")
+  set(UnknownKrakenUtils_FOUND OFF)
+  return()
 endif()
 
-# --- SEARCH DEPENDENCIES ---
+#
+##
+#
 
-# External dependencies
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/external)
+# --- BUILD OPTIONS  ---
+set(UnknownKrakenUtils_BUILD_TOOLS ON CACHE BOOL "Build tools for UnknownKrakenUtils library")
+set(UnknownKrakenUtils_BUILD_EXAMPLES ON CACHE BOOL "Build examples for UnknownKrakenUtils library")
+set(UnknownKrakenUtils_BUILD_TESTS ON CACHE BOOL "Build tests for UnknownKrakenUtils library")
 
-# Location where external projects will be downloaded
-set (DOWNLOAD_LOCATION "${ROOT_BUILD_DIR}/downloads"
-    CACHE PATH "Location where external projects will be downloaded.")
-mark_as_advanced(DOWNLOAD_LOCATION)
+#
+##
+#
 
-# LibErrorInterceptor
-include(libei)
+# CCache
+find_program(CCACHE_PROGRAM ccache)
+if (CCACHE_PROGRAM)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${CCACHE_PROGRAM}")
+endif()
 
-# Search pthread
-if (UNIX)
-    find_package (Threads)
-endif ()
+#
+##
+#
 
+# --- TARGETS FILES ---
+file(GLOB_RECURSE TARGET_SRC_FILES "${SRC_PATH}/*.cpp" "${SRC_PATH}/*.c")
+file(GLOB_RECURSE TARGET_HEADER_FILES "${HEADER_PATH}/*.h" "${HEADER_PATH}/*.hpp")
 
-# --- BUILD UNKNOWNECHOCRYPTOMODULE ---
+# --- BUILDS LIB TARGET STATIC ---
+if(${UnknownKrakenUtils_STATIC})
+  add_library(${PROJECT_UnknownKrakenUtils_STATIC} STATIC ${TARGET_SRC_FILES} ${TARGET_HEADER_FILES})
+  set_target_properties(${PROJECT_UnknownKrakenUtils_STATIC} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
 
-# Options
-set(PROJECT_NAME_STATIC "${PROJECT_NAME}_static")
-set(PROJECT_NAME_SHARED "${PROJECT_NAME}_shared")
+  # --- INSTALL LIB ---
+  install(TARGETS ${PROJECT_UnknownKrakenUtils_STATIC}
+          LIBRARY DESTINATION "lib"
+          ARCHIVE DESTINATION "lib")
 
-# Load source files
-file(GLOB_RECURSE PROGRAM_TARGET_SRC_FILES "${SRC_PATH}/*.*")
+endif()
 
-# Build shared library
-add_library(${PROJECT_NAME_SHARED} SHARED ${PROGRAM_TARGET_SRC_FILES})
-if (NOT LIBEI_SYSTEM)
-    add_dependencies(${PROJECT_NAME_SHARED} libei)
-endif ()
-target_include_directories(${PROJECT_NAME_SHARED} PUBLIC "${SRC_PATH}")
-set_target_properties(${PROJECT_NAME_SHARED} PROPERTIES OUTPUT_NAME ueum)
-target_link_libraries(${PROJECT_NAME_SHARED} ${CMAKE_THREAD_LIBS_INIT})
-target_include_directories(${PROJECT_NAME_SHARED} PUBLIC ${LIBERRORINTERCEPTOR_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME_SHARED} ${LIBERRORINTERCEPTOR_LIBRARIES})
+# --- BUILDS LIB TARGET SHARED ---
+if(${UnknownKrakenUtils_SHARED})
+  add_library(${PROJECT_UnknownKrakenUtils_SHARED} SHARED ${TARGET_SRC_FILES} ${TARGET_HEADER_FILES})
+  set_target_properties(${PROJECT_UnknownKrakenUtils_SHARED} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
 
-# Build static library
-add_library(${PROJECT_NAME_STATIC} STATIC ${PROGRAM_TARGET_SRC_FILES})
-if (NOT LIBEI_SYSTEM)
-    add_dependencies(${PROJECT_NAME_STATIC} libei)
-endif ()
-target_include_directories(${PROJECT_NAME_STATIC} PUBLIC "${SRC_PATH}")
-set_target_properties(${PROJECT_NAME_STATIC} PROPERTIES OUTPUT_NAME ueum_static)
-target_link_libraries(${PROJECT_NAME_STATIC} ${CMAKE_THREAD_LIBS_INIT})
-target_include_directories(${PROJECT_NAME_STATIC} PUBLIC ${LIBERRORINTERCEPTOR_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME_STATIC} ${LIBERRORINTERCEPTOR_LIBRARIES})
+  # --- INSTALL LIB ---
+  install(TARGETS ${PROJECT_UnknownKrakenUtils_SHARED}
+          RUNTIME DESTINATION "bin"
+          LIBRARY DESTINATION "lib"
+          ARCHIVE DESTINATION "lib")
 
 
-# --- INSTALL ---
+endif()
 
-# Copy includes
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include FILES_MATCHING PATTERN "*.h")
+# --- INSTALL INCLUDE ---
+install(DIRECTORY "${HEADER_PATH}/" DESTINATION "include" FILES_MATCHING PATTERN "*.h")
 
-# Copy static library
-install (
-    TARGETS ${PROJECT_NAME_STATIC}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-)
 
-if (UNIX)
-    install (
-        TARGETS ${PROJECT_NAME_SHARED}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    )
-elseif (WIN32)
-    install (
-        TARGETS ${PROJECT_NAME_SHARED}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    )
-endif ()
 
-# Build examples
-file(GLOB files "${EXAMPLES_PATH}/*.c")
-foreach (filePath ${files} )
+#
+##
+#
+
+
+# --- SUB BUILD LINKING ---
+set(UnknownKrakenUtils_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/${HEADER_PATH}")
+set(UnknownKrakenUtils_DEFINITIONS)
+set(UnknownKrakenUtils_DIRECTORIES)
+if(UnknownKrakenUtils_SHARED)
+  set(UnknownKrakenUtils ${PROJECT_UnknownKrakenUtils_SHARED})
+elseif(UnknownKrakenUtils_STATIC)
+  set(UnknownKrakenUtils ${PROJECT_UnknownKrakenUtils_STATIC})
+endif()
+set(UnknownKrakenUtils_INCLUDE_DIRS ${UnknownKrakenUtils_INCLUDE_DIRS} PARENT_SCOPE)
+set(UnknownKrakenUtils_DEFINITIONS ${UnknownKrakenUtils_DEFINITIONS} PARENT_SCOPE)
+set(UnknownKrakenUtils ${UnknownKrakenUtils} PARENT_SCOPE)
+add_library(UnknownKrakenUtils ALIAS ${UnknownKrakenUtils})
+
+#
+##
+#
+
+# --- ADD SUB BUILD  ---
+link_libraries(UnknownKrakenUtils)
+
+# --- BUILDS TOOLS ---
+if(${UnknownKrakenUtils_BUILD_TOOLS})
+  ## TODO
+endif()
+
+# --- BUILDS EXAMPLES ---
+if(${UnknownKrakenUtils_BUILD_EXAMPLES})
+
+  file(GLOB files "${EXAMPLES_PATH}/*.c")
+  foreach (filePath ${files} )
+
+    # --- NEW EXAMPLE ---
     get_filename_component(executableName ${filePath} NAME_WE)
-    message(STATUS "Build Program : ${executableName}")
+    #message(STATUS "Build example : ${executableName}")
     add_executable(${executableName} ${filePath})
-    if (NOT LIBEI_SYSTEM)
-        add_dependencies(${executableName} libei)
+    if (UNIX)
+        target_link_libraries(${executableName} "-ldl")
     endif ()
-    target_link_libraries(${executableName} ${PROJECT_NAME_STATIC})
-    target_include_directories(${executableName} PUBLIC ${LIBERRORINTERCEPTOR_INCLUDE_DIR})
-    target_link_libraries(${executableName} ${LIBERRORINTERCEPTOR_LIBRARIES})
-    set_target_properties(${executableName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${EXAMPLES_OUTPUT_PATH})
-endforeach ()
+
+    # --- INSTALL EXAMPLE ---
+    install(TARGETS ${executableName} RUNTIME DESTINATION "bin")
+
+  endforeach ()
+
+endif()
+
+# --- BUILDS TESTS ---
+if(${UnknownKrakenUtils_BUILD_TESTS})
+  ## TODO
+endif()
+

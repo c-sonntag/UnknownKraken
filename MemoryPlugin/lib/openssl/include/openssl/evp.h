@@ -839,11 +839,11 @@ const EVP_CIPHER *EVP_seed_ofb(void);
 # endif
 
 # if OPENSSL_API_COMPAT < 0x10100000L
-#  define OPENSSL_add_all_algorithms_conf() \
+#  define OPENSSL_add_all_algorithuk_ms_conf() \
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
                         | OPENSSL_INIT_ADD_ALL_DIGESTS \
                         | OPENSSL_INIT_LOAD_CONFIG, NULL)
-#  define OPENSSL_add_all_algorithms_noconf() \
+#  define OPENSSL_add_all_algorithuk_ms_noconf() \
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
                         | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)
 
@@ -949,7 +949,7 @@ int i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp);
 int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from);
 int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey);
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode);
-int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b);
+int EVP_PKEY_cuk_mp_parameters(const EVP_PKEY *a, const EVP_PKEY *b);
 
 int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b);
 

@@ -16,9 +16,9 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <uecm/uecm.h>
-#include <ueum/ueum.h>
-#include <ei/ei.h>
+#include <uk/crypto/uecm.h>
+#include <uk/utils/ueum.h>
+#include <uk/utils/ei.h>
 
 #include <stdio.h>
 #include <stddef.h>
@@ -45,62 +45,62 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    ei_init_or_die();
-    ei_logger_use_symbol_levels();
+    uk_utils_init_or_die();
+    uk_utils_logger_use_symbol_levels();
 
-    ei_logger_info("Initializing LibUnknownEchoCryptoModule...");
-    if (!uecm_init()) {
-        ei_stacktrace_push_msg("Failed to initialize LibUnknownEchoCryptoModule");
+    uk_utils_logger_info("Initializing LibUnknownEchoCryptoModule...");
+    if (!uk_crypto_init()) {
+        uk_utils_stacktrace_push_msg("Failed to initialize LibUnknownEchoCryptoModule");
         goto clean_up;
     }
-    ei_logger_info("LibUnknownEchoCryptoModule is correctly initialized.");
+    uk_utils_logger_info("LibUnknownEchoCryptoModule is correctly initialized.");
 
-    ei_logger_info("Converting parameter '%s' to bytes...", argv[1]);
-    if ((message = ueum_bytes_create_from_string(argv[1])) == NULL) {
-        ei_stacktrace_push_msg("Failed to convert arg to bytes")
+    uk_utils_logger_info("Converting parameter '%s' to bytes...", argv[1]);
+    if ((message = uk_utils_bytes_create_from_string(argv[1])) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to convert arg to bytes")
         goto clean_up;
     }
     message_length = strlen(argv[1]);
-    ei_logger_info("Succefully converted parameter to bytes:");
-    ueum_hex_print(message, message_length, stdout);
+    uk_utils_logger_info("Succefully converted parameter to bytes:");
+    uk_utils_hex_print(message, message_length, stdout);
 
-    ei_logger_info("Encoding message with base64...");
-    if ((encoded = uecm_base64_encode(message, message_length, &encoded_length)) == NULL) {
-        ei_stacktrace_push_msg("Failed to encod message")
+    uk_utils_logger_info("Encoding message with base64...");
+    if ((encoded = uk_crypto_base64_encode(message, message_length, &encoded_length)) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to encod message")
         goto clean_up;
     }
-    ei_logger_info("Message has been successfully encoded:");
-    ueum_hex_print(encoded, encoded_length, stdout);
+    uk_utils_logger_info("Message has been successfully encoded:");
+    uk_utils_hex_print(encoded, encoded_length, stdout);
 
-    ei_logger_info("Decoding message with base64...");
-    if ((decoded = uecm_base64_decode(encoded, encoded_length, &decoded_length)) == NULL) {
-        ei_stacktrace_push_msg("Failed to decode message")
+    uk_utils_logger_info("Decoding message with base64...");
+    if ((decoded = uk_crypto_base64_decode(encoded, encoded_length, &decoded_length)) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to decode message")
         goto clean_up;
     }
 
-    ei_logger_info("Messages comparaison...");
+    uk_utils_logger_info("Messages comparaison...");
     if (memcmp(decoded, message, message_length) != 0) {
-        ei_logger_error("The message was decoded but isn't the same as the original");
-        ei_stacktrace_push_msg("Failed to decode message")
+        uk_utils_logger_error("The message was decoded but isn't the same as the original");
+        uk_utils_stacktrace_push_msg("Failed to decode message")
         goto clean_up;
     }
 
-    ei_logger_info("Message has been successfully decoded:");
-    ueum_hex_print(decoded, decoded_length, stdout);
+    uk_utils_logger_info("Message has been successfully decoded:");
+    uk_utils_hex_print(decoded, decoded_length, stdout);
 
     exit_code = EXIT_SUCCESS;
 
-    ei_logger_info("Succeed !");
+    uk_utils_logger_info("Succeed !");
 
 clean_up:
-    ueum_safe_free(message)
-    ueum_safe_free(encoded)
-    ueum_safe_free(decoded)
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_error("Error(s) occurred with the following stacktrace(s):");
-        ei_stacktrace_print_all();
+    uk_utils_safe_free(message)
+    uk_utils_safe_free(encoded)
+    uk_utils_safe_free(decoded)
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_error("Error(s) occurred with the following stacktrace(s):");
+        uk_utils_stacktrace_print_all();
     }
-    uecm_uninit();
-    ei_uninit();
+    uk_crypto_uninit();
+    uk_utils_uninit();
     return exit_code;
 }

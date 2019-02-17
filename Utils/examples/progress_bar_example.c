@@ -16,99 +16,99 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <ueum/ueum.h>
-#include <ei/ei.h>
+#include <uk/utils/ueum.h>
+#include <uk/utils/ei.h>
 
 #include <stdio.h>
 
 void test_1() {
-    ueum_progress_bar *progress_bar;
+    uk_utils_progress_bar *progress_bar;
     int n, i;
 
     n = 100;
-    progress_bar = ueum_progress_bar_create(n, "Loading", stdout);
-    ueum_progress_bar_set_style(progress_bar, "#", "-");
-    ueum_progress_bar_set_left_delimiter(progress_bar, "|");
-    ueum_progress_bar_set_right_delimiter(progress_bar, "|");
+    progress_bar = uk_utils_progress_bar_create(n, "Loading", stdout);
+    uk_utils_progress_bar_set_style(progress_bar, "#", "-");
+    uk_utils_progress_bar_set_left_delimiter(progress_bar, "|");
+    uk_utils_progress_bar_set_right_delimiter(progress_bar, "|");
 
     for (i = 0; i <= n; i++) {
-        ueum_progress_bar_update_and_print(progress_bar, i);
-        ueum_millisleep(10);
+        uk_utils_progress_bar_update_and_print(progress_bar, i);
+        uk_utils_millisleep(10);
     }
     printf("\n");
 
-    ueum_progress_bar_destroy(progress_bar);
+    uk_utils_progress_bar_destroy(progress_bar);
 }
 
 void test_2() {
-    ueum_progress_bar *progress_bar;
+    uk_utils_progress_bar *progress_bar;
     int n, i;
 
     n = 1000;
-    progress_bar = ueum_progress_bar_create(n, "Loading", stdout);
-    ueum_progress_bar_set_frequency_update(progress_bar, 15);
+    progress_bar = uk_utils_progress_bar_create(n, "Loading", stdout);
+    uk_utils_progress_bar_set_frequency_update(progress_bar, 15);
 
 #ifdef _WIN32
-    ueum_progress_bar_set_style(progress_bar, "|", "-");
+    uk_utils_progress_bar_set_style(progress_bar, "|", "-");
 #else
-    ueum_progress_bar_set_style(progress_bar, "\u2588", "-");
-    ueum_progress_bar_set_colors(progress_bar, UNKNOWNECHOUTILSMODULE_COLOR_ID_ATTRIBUTE_DIM, -1,
-    UNKNOWNECHOUTILSMODULE_COLOR_ID_BACKGROUND_BLACK);
+    uk_utils_progress_bar_set_style(progress_bar, "\u2588", "-");
+    uk_utils_progress_bar_set_colors(progress_bar, UnknownKrakenUtils_COLOR_ID_ATTRIBUTE_DIM, -1,
+    UnknownKrakenUtils_COLOR_ID_BACKGROUND_BLACK);
 #endif
 
     for (i = 0; i <= n; i++) {
-        ueum_progress_bar_update_and_print(progress_bar, i);
-        ueum_millisleep(1);
+        uk_utils_progress_bar_update_and_print(progress_bar, i);
+        uk_utils_millisleep(1);
     }
     printf("\n");
 
-    ueum_progress_bar_destroy(progress_bar);
+    uk_utils_progress_bar_destroy(progress_bar);
 }
 
 void test_3() {
-    ueum_progress_bar *progress_bar;
+    uk_utils_progress_bar *progress_bar;
     int n;
 
     n = 5;
-    progress_bar = ueum_progress_bar_create(n, "Loading", stdout);
+    progress_bar = uk_utils_progress_bar_create(n, "Loading", stdout);
 
-    ueum_progress_bar_update_and_print(progress_bar, 0);
-    ueum_millisleep(200);
-    ueum_progress_bar_update_and_print(progress_bar, 1);
-    ueum_millisleep(200);
-    ueum_progress_bar_update_and_print(progress_bar, 2);
-    ueum_millisleep(200);
-    ueum_progress_bar_update_and_print(progress_bar, 3);
-    ueum_millisleep(200);
-    ueum_progress_bar_update_and_print(progress_bar, 4);
-    ueum_millisleep(200);
-    ueum_progress_bar_update_and_print(progress_bar, 5);
-    ueum_millisleep(200);
+    uk_utils_progress_bar_update_and_print(progress_bar, 0);
+    uk_utils_millisleep(200);
+    uk_utils_progress_bar_update_and_print(progress_bar, 1);
+    uk_utils_millisleep(200);
+    uk_utils_progress_bar_update_and_print(progress_bar, 2);
+    uk_utils_millisleep(200);
+    uk_utils_progress_bar_update_and_print(progress_bar, 3);
+    uk_utils_millisleep(200);
+    uk_utils_progress_bar_update_and_print(progress_bar, 4);
+    uk_utils_millisleep(200);
+    uk_utils_progress_bar_update_and_print(progress_bar, 5);
+    uk_utils_millisleep(200);
     printf("\n");
 
-    ueum_progress_bar_destroy(progress_bar);
+    uk_utils_progress_bar_destroy(progress_bar);
 }
 
 void test_4() {
-    ueum_progress_bar *progress_bar;
+    uk_utils_progress_bar *progress_bar;
     int n, i;
 
     n = 100;
-    progress_bar = ueum_progress_bar_create(n, "Progress:", stdout);
-    ueum_progress_bar_set_style(progress_bar, "#", ".");
+    progress_bar = uk_utils_progress_bar_create(n, "Progress:", stdout);
+    uk_utils_progress_bar_set_style(progress_bar, "#", ".");
 
     for (i = 0; i <= n; i++) {
-        ueum_progress_bar_update_and_print(progress_bar, i);
-        ueum_millisleep(10);
+        uk_utils_progress_bar_update_and_print(progress_bar, i);
+        uk_utils_millisleep(10);
     }
     printf("\n");
 
-    ueum_progress_bar_destroy(progress_bar);
+    uk_utils_progress_bar_destroy(progress_bar);
 }
 
 int main() {
-    ei_init_or_die();
-    ei_logger_use_symbol_levels();
+    uk_utils_init_or_die();
+    uk_utils_logger_use_symbol_levels();
 
     test_1();
 
@@ -118,12 +118,12 @@ int main() {
 
     test_4();
 
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_error("Error(s) occurred with the following stacktrace(s):");
-        ei_stacktrace_print_all();
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_error("Error(s) occurred with the following stacktrace(s):");
+        uk_utils_stacktrace_print_all();
     }
 
-    ei_uninit();
+    uk_utils_uninit();
 
     return 0;
 }

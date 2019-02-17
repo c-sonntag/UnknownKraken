@@ -16,9 +16,9 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <uecm/uecm.h>
-#include <ueum/ueum.h>
-#include <ei/ei.h>
+#include <uk/crypto/uecm.h>
+#include <uk/utils/ueum.h>
+#include <uk/utils/ei.h>
 
 #include <stddef.h>
 #include <string.h>
@@ -31,10 +31,10 @@ static void print_usage(char *name) {
 int main(int argc, char **argv) {
     unsigned char *plain_data, *cipher_data, *decipher_data;
     size_t plain_data_size, cipher_data_size, decipher_data_size;
-    uecm_x509_certificate *certificate;
-    uecm_public_key *public_key;
-    uecm_private_key *private_key;
-    uecm_asym_key *asym_key;
+    uk_crypto_x509_certificate *certificate;
+    uk_crypto_public_key *public_key;
+    uk_crypto_private_key *private_key;
+    uk_crypto_asym_key *asym_key;
 
     cipher_data = NULL;
     plain_data = NULL;
@@ -50,59 +50,59 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    ei_init_or_die();
-    ei_logger_use_symbol_levels();
+    uk_utils_init_or_die();
+    uk_utils_logger_use_symbol_levels();
 
-    ei_logger_info("Initializing LibUnknownEchoCryptoModule...");
-    if (!uecm_init()) {
-        ei_stacktrace_push_msg("Failed to initialize LibUnknownEchoCryptoModule");
+    uk_utils_logger_info("Initializing LibUnknownEchoCryptoModule...");
+    if (!uk_crypto_init()) {
+        uk_utils_stacktrace_push_msg("Failed to initialize LibUnknownEchoCryptoModule");
         goto clean_up;
     }
-    ei_logger_info("LibUnknownEchoCryptoModule is correctly initialized.");
+    uk_utils_logger_info("LibUnknownEchoCryptoModule is correctly initialized.");
 
-    if ((plain_data = ueum_bytes_create_from_string(argv[1])) == NULL) {
-        ei_stacktrace_push_msg("Failed to convert arg to bytes")
+    if ((plain_data = uk_utils_bytes_create_from_string(argv[1])) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to convert arg to bytes")
         goto clean_up;
     }
     plain_data_size = strlen(argv[1]);
 
-    uecm_x509_certificate_load_from_file(argv[2], &certificate);
+    uk_crypto_x509_certificate_load_from_file(argv[2], &certificate);
 
-    public_key = uecm_rsa_public_key_from_x509_certificate(certificate);
+    public_key = uk_crypto_rsa_public_key_from_x509_certificate(certificate);
 
-    private_key = uecm_rsa_private_key_from_key_certificate(argv[3]);
+    private_key = uk_crypto_rsa_private_key_from_key_certificate(argv[3]);
 
-    if (!uecm_cipher_plain_data(plain_data, plain_data_size, public_key, private_key, &cipher_data, &cipher_data_size, "aes-256-cbc", "sha256")) {
-        ei_stacktrace_push_msg("Failed to cipher plain data");
+    if (!uk_crypto_cipher_plain_data(plain_data, plain_data_size, public_key, private_key, &cipher_data, &cipher_data_size, "aes-256-cbc", "sha256")) {
+        uk_utils_stacktrace_push_msg("Failed to cipher plain data");
         goto clean_up;
     }
 
-    if (!uecm_decipher_cipher_data(cipher_data, cipher_data_size, private_key, public_key, &decipher_data, &decipher_data_size,
+    if (!uk_crypto_decipher_cipher_data(cipher_data, cipher_data_size, private_key, public_key, &decipher_data, &decipher_data_size,
         "aes-256-cbc", "sha256")) {
 
-        ei_stacktrace_push_msg("Failed to decipher cipher data");
+        uk_utils_stacktrace_push_msg("Failed to decipher cipher data");
         goto clean_up;
     }
 
     if (plain_data_size == decipher_data_size && memcmp(decipher_data, plain_data, plain_data_size) == 0) {
-        ei_logger_info("Plain data and decipher data match");
+        uk_utils_logger_info("Plain data and decipher data match");
     } else {
-        ei_logger_error("Plain data and decipher data doesn't match");
+        uk_utils_logger_error("Plain data and decipher data doesn't match");
     }
 
 clean_up:
-    uecm_public_key_destroy(public_key);
-    uecm_private_key_destroy(private_key);
-    uecm_asym_key_destroy_all(asym_key);
-    ueum_safe_free(plain_data);
-    ueum_safe_free(cipher_data);
-    ueum_safe_free(decipher_data);
-    uecm_x509_certificate_destroy(certificate);
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_error("Error(s) occurred with the following stacktrace(s):");
-        ei_stacktrace_print_all();
+    uk_crypto_public_key_destroy(public_key);
+    uk_crypto_private_key_destroy(private_key);
+    uk_crypto_asym_key_destroy_all(asym_key);
+    uk_utils_safe_free(plain_data);
+    uk_utils_safe_free(cipher_data);
+    uk_utils_safe_free(decipher_data);
+    uk_crypto_x509_certificate_destroy(certificate);
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_error("Error(s) occurred with the following stacktrace(s):");
+        uk_utils_stacktrace_print_all();
     }
-    uecm_uninit();
-    ei_uninit();
+    uk_crypto_uninit();
+    uk_utils_uninit();
     return 0;
 }

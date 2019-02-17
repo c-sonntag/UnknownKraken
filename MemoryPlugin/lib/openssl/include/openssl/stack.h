@@ -40,7 +40,7 @@ int OPENSSL_sk_unshift(OPENSSL_STACK *st, const void *data);
 void *OPENSSL_sk_shift(OPENSSL_STACK *st);
 void *OPENSSL_sk_pop(OPENSSL_STACK *st);
 void OPENSSL_sk_zero(OPENSSL_STACK *st);
-OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk, OPENSSL_sk_compfunc cmp);
+OPENSSL_sk_compfunc OPENSSL_sk_set_cuk_mp_func(OPENSSL_STACK *sk, OPENSSL_sk_compfunc cmp);
 OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *st);
 void OPENSSL_sk_sort(OPENSSL_STACK *st);
 int OPENSSL_sk_is_sorted(const OPENSSL_STACK *st);
@@ -65,7 +65,7 @@ int OPENSSL_sk_is_sorted(const OPENSSL_STACK *st);
 #  define sk_shift OPENSSL_sk_shift
 #  define sk_pop OPENSSL_sk_pop
 #  define sk_zero OPENSSL_sk_zero
-#  define sk_set_cmp_func OPENSSL_sk_set_cmp_func
+#  define sk_set_cuk_mp_func OPENSSL_sk_set_cuk_mp_func
 #  define sk_dup OPENSSL_sk_dup
 #  define sk_sort OPENSSL_sk_sort
 #  define sk_is_sorted OPENSSL_sk_is_sorted

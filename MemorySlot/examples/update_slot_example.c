@@ -16,10 +16,10 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <ms/ms.h>
-#include <ueum/ueum.h>
+#include <uk/ms/ms.h>
+#include <uk/utils/ueum.h>
 
-#include <ei/ei.h>
+#include <uk/utils/ei.h>
 
 #include <stdio.h>
 #include <stddef.h>
@@ -30,45 +30,45 @@
 #define SLOT_NEW_SIZE 13
 
 int main() {
-    ms_slot *slot;
+    uk_ms_slot *slot;
 
-    ei_init();
+    uk_utils_init();
 
     slot = NULL;
 
-    ei_logger_info("Check if slot exist...");
-    if (!ms_slot_exist_from_memory(SLOT_ID)) {
-        if (ei_stacktrace_is_filled()) {
-            ei_stacktrace_push_msg("Failed to check if slot exist");
+    uk_utils_logger_info("Check if slot exist...");
+    if (!uk_ms_slot_exist_from_memory(SLOT_ID)) {
+        if (uk_utils_stacktrace_is_filled()) {
+            uk_utils_stacktrace_push_msg("Failed to check if slot exist");
             goto clean_up;
         }
         else {
-            ei_logger_error("Specified slot doesn't exist");
+            uk_utils_logger_error("Specified slot doesn't exist");
             goto clean_up;
         }
     }
-    ei_logger_info("Slot exist");
+    uk_utils_logger_info("Slot exist");
 
-    ei_logger_info("Loading slot id %d...", SLOT_ID);
-    if (!(slot = ms_slot_load_from_memory(SLOT_ID))) {
-        ei_stacktrace_push_msg("Failed to load slot %d", SLOT_ID);
+    uk_utils_logger_info("Loading slot id %d...", SLOT_ID);
+    if (!(slot = uk_ms_slot_load_from_memory(SLOT_ID))) {
+        uk_utils_stacktrace_push_msg("Failed to load slot %d", SLOT_ID);
         goto clean_up;
     }
-    ei_logger_info("Slot of size %ld loaded", slot->size);
+    uk_utils_logger_info("Slot of size %ld loaded", slot->size);
 
-    ms_slot_destroy(slot);
-    slot = ms_slot_create_from_memory(SLOT_NEW_CONTENT, SLOT_NEW_SIZE);
+    uk_ms_slot_destroy(slot);
+    slot = uk_ms_slot_create_from_memory(SLOT_NEW_CONTENT, SLOT_NEW_SIZE);
 
-    if (!ms_slot_save_to_memory(slot, SLOT_ID)) {
-        ei_stacktrace_push_msg("Failed to save new slot content");
+    if (!uk_ms_slot_save_to_memory(slot, SLOT_ID)) {
+        uk_utils_stacktrace_push_msg("Failed to save new slot content");
         goto clean_up;
     }
 
 clean_up:
-    ms_slot_destroy(slot);
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_stacktrace("Stacktrace is filled with following error(s):");
+    uk_ms_slot_destroy(slot);
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_stacktrace("Stacktrace is filled with following error(s):");
     }
-    ei_uninit();
+    uk_utils_uninit();
     return 0;
 }

@@ -16,28 +16,28 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <ueum/ueum.h>
-#include <ei/ei.h>
+#include <uk/utils/ueum.h>
+#include <uk/utils/ei.h>
 
 #include <stdio.h>
 
 int main() {
     char *colored;
 
-    ei_init_or_die();
-    ei_logger_use_symbol_levels();
+    uk_utils_init_or_die();
+    uk_utils_logger_use_symbol_levels();
 
-    colored = ueum_colorize_string("Hello world !", UNKNOWNECHOUTILSMODULE_COLOR_ID_ATTRIBUTE_BOLD,
-        UNKNOWNECHOUTILSMODULE_COLOR_ID_FOREGROUND_RED, UNKNOWNECHOUTILSMODULE_COLOR_ID_BACKGROUND_CYNAN);
+    colored = uk_utils_colorize_string("Hello world !", UnknownKrakenUtils_COLOR_ID_ATTRIBUTE_BOLD,
+        UnknownKrakenUtils_COLOR_ID_FOREGROUND_RED, UnknownKrakenUtils_COLOR_ID_BACKGROUND_CYNAN);
     printf("%s\n", colored);
-    ueum_safe_free(colored);
+    uk_utils_safe_free(colored);
 
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_error("Error(s) occurred with the following stacktrace(s):");
-        ei_stacktrace_print_all();
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_error("Error(s) occurred with the following stacktrace(s):");
+        uk_utils_stacktrace_print_all();
     }
 
-    ei_uninit();
+    uk_utils_uninit();
 
     return 0;
 }

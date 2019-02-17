@@ -582,10 +582,10 @@ int X509V3_EXT_REQ_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
 int X509V3_EXT_CRL_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
                             const char *section, X509_CRL *crl);
 
-int X509V3_add_value_bool_nf(const char *name, int asn1_bool,
+int X509V3_add_valuk_ue_bool_nf(const char *name, int asn1_bool,
                              STACK_OF(CONF_VALUE) **extlist);
-int X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool);
-int X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint);
+int X509V3_get_valuk_ue_bool(const CONF_VALUE *value, int *asn1_bool);
+int X509V3_get_valuk_ue_int(const CONF_VALUE *value, ASN1_INTEGER **aint);
 void X509V3_set_nconf(X509V3_CTX *ctx, CONF *conf);
 void X509V3_set_conf_lhash(X509V3_CTX *ctx, LHASH_OF(CONF_VALUE) *lhash);
 # endif
@@ -599,11 +599,11 @@ void X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject,
 
 int X509V3_add_value(const char *name, const char *value,
                      STACK_OF(CONF_VALUE) **extlist);
-int X509V3_add_value_uchar(const char *name, const unsigned char *value,
+int X509V3_add_valuk_ue_uchar(const char *name, const unsigned char *value,
                            STACK_OF(CONF_VALUE) **extlist);
-int X509V3_add_value_bool(const char *name, int asn1_bool,
+int X509V3_add_valuk_ue_bool(const char *name, int asn1_bool,
                           STACK_OF(CONF_VALUE) **extlist);
-int X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
+int X509V3_add_valuk_ue_int(const char *name, const ASN1_INTEGER *aint,
                          STACK_OF(CONF_VALUE) **extlist);
 char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *meth, const ASN1_INTEGER *aint);
 ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *meth, const char *value);

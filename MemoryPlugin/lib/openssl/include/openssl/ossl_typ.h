@@ -144,8 +144,8 @@ typedef struct engine_st ENGINE;
 typedef struct ssl_st SSL;
 typedef struct ssl_ctx_st SSL_CTX;
 
-typedef struct comp_ctx_st COMP_CTX;
-typedef struct comp_method_st COMP_METHOD;
+typedef struct couk_mp_ctx_st COMP_CTX;
+typedef struct couk_mp_method_st COMP_METHOD;
 
 typedef struct X509_POLICY_NODE_st X509_POLICY_NODE;
 typedef struct X509_POLICY_LEVEL_st X509_POLICY_LEVEL;

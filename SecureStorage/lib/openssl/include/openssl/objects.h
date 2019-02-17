@@ -672,30 +672,30 @@
 
 /* Additional extended key usage OIDs: Microsoft */
 
-#  define SN_ms_code_ind                  "msCodeInd"
-#  define LN_ms_code_ind                  "Microsoft Individual Code Signing"
-#  define NID_ms_code_ind                 134
-#  define OBJ_ms_code_ind                 1L,3L,6L,1L,4L,1L,311L,2L,1L,21L
+#  define SN_uk_ms_code_ind                  "msCodeInd"
+#  define LN_uk_ms_code_ind                  "Microsoft Individual Code Signing"
+#  define NID_uk_ms_code_ind                 134
+#  define OBJ_uk_ms_code_ind                 1L,3L,6L,1L,4L,1L,311L,2L,1L,21L
 
-#  define SN_ms_code_com                  "msCodeCom"
-#  define LN_ms_code_com                  "Microsoft Commercial Code Signing"
-#  define NID_ms_code_com                 135
-#  define OBJ_ms_code_com                 1L,3L,6L,1L,4L,1L,311L,2L,1L,22L
+#  define SN_uk_ms_code_com                  "msCodeCom"
+#  define LN_uk_ms_code_com                  "Microsoft Commercial Code Signing"
+#  define NID_uk_ms_code_com                 135
+#  define OBJ_uk_ms_code_com                 1L,3L,6L,1L,4L,1L,311L,2L,1L,22L
 
-#  define SN_ms_ctl_sign                  "msCTLSign"
-#  define LN_ms_ctl_sign                  "Microsoft Trust List Signing"
-#  define NID_ms_ctl_sign                 136
-#  define OBJ_ms_ctl_sign                 1L,3L,6L,1L,4L,1L,311L,10L,3L,1L
+#  define SN_uk_ms_ctl_sign                  "msCTLSign"
+#  define LN_uk_ms_ctl_sign                  "Microsoft Trust List Signing"
+#  define NID_uk_ms_ctl_sign                 136
+#  define OBJ_uk_ms_ctl_sign                 1L,3L,6L,1L,4L,1L,311L,10L,3L,1L
 
-#  define SN_ms_sgc                       "msSGC"
-#  define LN_ms_sgc                       "Microsoft Server Gated Crypto"
-#  define NID_ms_sgc                      137
-#  define OBJ_ms_sgc                      1L,3L,6L,1L,4L,1L,311L,10L,3L,3L
+#  define SN_uk_ms_sgc                       "msSGC"
+#  define LN_uk_ms_sgc                       "Microsoft Server Gated Crypto"
+#  define NID_uk_ms_sgc                      137
+#  define OBJ_uk_ms_sgc                      1L,3L,6L,1L,4L,1L,311L,10L,3L,3L
 
-#  define SN_ms_efs                       "msEFS"
-#  define LN_ms_efs                       "Microsoft Encrypted File System"
-#  define NID_ms_efs                      138
-#  define OBJ_ms_efs                      1L,3L,6L,1L,4L,1L,311L,10L,3L,4L
+#  define SN_uk_ms_efs                       "msEFS"
+#  define LN_uk_ms_efs                       "Microsoft Encrypted File System"
+#  define NID_uk_ms_efs                      138
+#  define OBJ_uk_ms_efs                      1L,3L,6L,1L,4L,1L,311L,10L,3L,4L
 
 /* Additional usage: Netscape */
 
@@ -863,10 +863,10 @@
 
 /* Extension request OIDs */
 
-#  define LN_ms_ext_req                   "Microsoft Extension Request"
-#  define SN_ms_ext_req                   "msExtReq"
-#  define NID_ms_ext_req                  171
-#  define OBJ_ms_ext_req                  1L,3L,6L,1L,4L,1L,311L,2L,1L,14L
+#  define LN_uk_ms_ext_req                   "Microsoft Extension Request"
+#  define SN_uk_ms_ext_req                   "msExtReq"
+#  define NID_uk_ms_ext_req                  171
+#  define OBJ_uk_ms_ext_req                  1L,3L,6L,1L,4L,1L,311L,2L,1L,14L
 
 #  define LN_ext_req                      "Extension Request"
 #  define SN_ext_req                      "extReq"
@@ -943,7 +943,7 @@ typedef struct obj_name_st {
 
 int OBJ_NAME_init(void);
 int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
-                       int (*cmp_func) (const char *, const char *),
+                       int (*cuk_mp_func) (const char *, const char *),
                        void (*free_func) (const char *, int, const char *));
 const char *OBJ_NAME_get(const char *name, int type);
 int OBJ_NAME_add(const char *name, int type, const char *data);
@@ -974,7 +974,7 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
                             int flags);
 
 # define _DECLARE_OBJ_BSEARCH_CMP_FN(scope, type1, type2, nm)    \
-  static int nm##_cmp_BSEARCH_CMP_FN(const void *, const void *); \
+  static int nm##_cuk_mp_BSEARCH_CMP_FN(const void *, const void *); \
   static int nm##_cmp(type1 const *, type2 const *); \
   scope type2 * OBJ_bsearch_##nm(type1 *key, type2 const *base, int num)
 
@@ -1011,7 +1011,7 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
  */
 
 # define IMPLEMENT_OBJ_BSEARCH_CMP_FN(type1, type2, nm)  \
-  static int nm##_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)    \
+  static int nm##_cuk_mp_BSEARCH_CMP_FN(const void *a_, const void *b_)    \
       { \
       type1 const *a = a_; \
       type2 const *b = b_; \
@@ -1020,12 +1020,12 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
   static type2 *OBJ_bsearch_##nm(type1 *key, type2 const *base, int num) \
       { \
       return (type2 *)OBJ_bsearch_(key, base, num, sizeof(type2), \
-                                        nm##_cmp_BSEARCH_CMP_FN); \
+                                        nm##_cuk_mp_BSEARCH_CMP_FN); \
       } \
       extern void dummy_prototype(void)
 
 # define IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(type1, type2, nm)   \
-  static int nm##_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)    \
+  static int nm##_cuk_mp_BSEARCH_CMP_FN(const void *a_, const void *b_)    \
       { \
       type1 const *a = a_; \
       type2 const *b = b_; \
@@ -1034,7 +1034,7 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
   type2 *OBJ_bsearch_##nm(type1 *key, type2 const *base, int num) \
       { \
       return (type2 *)OBJ_bsearch_(key, base, num, sizeof(type2), \
-                                        nm##_cmp_BSEARCH_CMP_FN); \
+                                        nm##_cuk_mp_BSEARCH_CMP_FN); \
       } \
       extern void dummy_prototype(void)
 

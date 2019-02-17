@@ -16,60 +16,60 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <uecm/uecm.h>
-#include <ueum/ueum.h>
-#include <ei/ei.h>
+#include <uk/crypto/uecm.h>
+#include <uk/utils/ueum.h>
+#include <uk/utils/ei.h>
 
 int main() {
-    uecm_crypto_metadata *our_crypto_metadata, *read_crypto_metadata;
+    uk_crypto_crypto_metadata *our_crypto_metadata, *read_crypto_metadata;
 
-    ei_init_or_die();
-    ei_logger_use_symbol_levels();
+    uk_utils_init_or_die();
+    uk_utils_logger_use_symbol_levels();
 
     our_crypto_metadata = NULL;
     read_crypto_metadata = NULL;
 
-    ei_logger_info("Initializing LibUnknownEchoCryptoModule...");
-    if (!uecm_init()) {
-        ei_stacktrace_push_msg("Failed to initialize LibUnknownEchoCryptoModule");
+    uk_utils_logger_info("Initializing LibUnknownEchoCryptoModule...");
+    if (!uk_crypto_init()) {
+        uk_utils_stacktrace_push_msg("Failed to initialize LibUnknownEchoCryptoModule");
         goto clean_up;
     }
-    ei_logger_info("LibUnknownEchoCryptoModule is correctly initialized.");
+    uk_utils_logger_info("LibUnknownEchoCryptoModule is correctly initialized.");
 
-    if ((read_crypto_metadata = uecm_crypto_metadata_create_empty()) == NULL) {
-        ei_stacktrace_push_msg("Failed to create new read crypto metadata");
-        goto clean_up;
-    }
-
-    ei_logger_info("Generating crypto metadata for point A...");
-    if ((our_crypto_metadata = uecm_crypto_metadata_create_default()) == NULL) {
-        ei_stacktrace_push_msg("Failed to generate default crypto metadata for point A");
+    if ((read_crypto_metadata = uk_crypto_crypto_metadata_create_empty()) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to create new read crypto metadata");
         goto clean_up;
     }
 
-    ei_logger_info("Writing our crypto metadata...");
-    if (!uecm_crypto_metadata_write(our_crypto_metadata, "out", "uid", "password")) {
-        ei_stacktrace_push_msg("Failed to write our crypto metadata");
+    uk_utils_logger_info("Generating crypto metadata for point A...");
+    if ((our_crypto_metadata = uk_crypto_crypto_metadata_create_default()) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to generate default crypto metadata for point A");
         goto clean_up;
     }
-    ei_logger_info("Successfully wrote our crypto metadata");
 
-    if (!uecm_crypto_metadata_read(read_crypto_metadata, "out", "uid", "password")) {
-        ei_stacktrace_push_msg("Failed to read our crypto metadata");
+    uk_utils_logger_info("Writing our crypto metadata...");
+    if (!uk_crypto_crypto_metadata_write(our_crypto_metadata, "out", "uid", "password")) {
+        uk_utils_stacktrace_push_msg("Failed to write our crypto metadata");
         goto clean_up;
     }
-    ei_logger_info("Successfully read our crypto metadata");
+    uk_utils_logger_info("Successfully wrote our crypto metadata");
 
-    ei_logger_info("Succeed !");
+    if (!uk_crypto_crypto_metadata_read(read_crypto_metadata, "out", "uid", "password")) {
+        uk_utils_stacktrace_push_msg("Failed to read our crypto metadata");
+        goto clean_up;
+    }
+    uk_utils_logger_info("Successfully read our crypto metadata");
+
+    uk_utils_logger_info("Succeed !");
 
 clean_up:
-    uecm_crypto_metadata_destroy_all(our_crypto_metadata);
-    uecm_crypto_metadata_destroy_all(read_crypto_metadata);
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_error("Error(s) occurred with the following stacktrace(s):");
-        ei_stacktrace_print_all();
+    uk_crypto_crypto_metadata_destroy_all(our_crypto_metadata);
+    uk_crypto_crypto_metadata_destroy_all(read_crypto_metadata);
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_error("Error(s) occurred with the following stacktrace(s):");
+        uk_utils_stacktrace_print_all();
     }
-    uecm_uninit();
-    ei_uninit();
+    uk_crypto_uninit();
+    uk_utils_uninit();
     return 0;
 }

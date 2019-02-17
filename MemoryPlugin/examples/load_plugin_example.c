@@ -16,12 +16,12 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <mp/mp.h>
-#include <ei/ei.h>
+#include <uk/mp/mp.h>
+#include <uk/utils/ei.h>
 
 #if defined(WITH_CRYPTO)
 
-#include <uecm/uecm.h>
+#include <uk/crypto/uecm.h>
 
 #endif
 
@@ -37,7 +37,7 @@
  * After the plugin is saved, we can load it and its functions by name.
  */
 int main(int argc, char **argv) {
-    mp_memory_plugin *plugin;
+    uk_mp_memory_plugin *plugin;
     typedef void(*hello_world_func)(void);
     hello_world_func hello_world;
     int plugin_id;
@@ -48,24 +48,24 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    ei_init();
+    uk_utils_init();
 
     srand((unsigned int)time(0));
     plugin = NULL;
     plugin_id = atoi(argv[1]);
 
 #if defined(WITH_CRYPTO)
-    uecm_init();
+    uk_crypto_init();
 
-    if ((crypto_metadata = (void *)uecm_crypto_metadata_create_empty()) == NULL) {
-        ei_stacktrace_push_msg("Failed to create empty crypto metadata object");
+    if ((crypto_metadata = (void *)uk_crypto_crypto_metadata_create_empty()) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to create empty crypto metadata object");
         goto clean_up;
     }
 
-    if (!uecm_crypto_metadata_read((uecm_crypto_metadata *)crypto_metadata,
+    if (!uk_crypto_crypto_metadata_read((uk_crypto_crypto_metadata *)crypto_metadata,
         "metadata", "uid", "password")) {
 
-        ei_stacktrace_push_msg("Failed to read crypto metadata");
+        uk_utils_stacktrace_push_msg("Failed to read crypto metadata");
         goto clean_up;
     }
 #else
@@ -73,38 +73,38 @@ int main(int argc, char **argv) {
 #endif
 
     /* Load plugin from id */
-    ei_logger_info("Loading memory plugin from id %d...", plugin_id);
-    if ((plugin = mp_memory_plugin_load(plugin_id, crypto_metadata)) == NULL) {
-        ei_stacktrace_push_msg("Failed to load plugin with id %d", plugin_id);
+    uk_utils_logger_info("Loading memory plugin from id %d...", plugin_id);
+    if ((plugin = uk_mp_memory_plugin_load(plugin_id, crypto_metadata)) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to load plugin with id %d", plugin_id);
         goto clean_up;
     }
-    ei_logger_info("Memory plugin loaded");
+    uk_utils_logger_info("Memory plugin loaded");
 
     /* Get a function from the plugin */
-    ei_logger_info("Getting function hello_world() from loaded memory plugin...");
-UEUM_DISABLE_WIN32_PRAGMA_WARN(4152)
-    if ((hello_world = mp_memory_plugin_get_function(plugin, "hello_world")) == NULL) {
-UEUM_DISABLE_WIN32_PRAGMA_WARN_END()
-        ei_stacktrace_push_msg("Failed to get hello_world function from loaded plugin of id", plugin_id);
+    uk_utils_logger_info("Getting function hello_world() from loaded memory plugin...");
+//UK_UTILS_DISABLE_WIN32_PRAGMA_WARN(4152)
+    if ((hello_world = uk_mp_memory_plugin_get_function(plugin, "hello_world")) == NULL) {
+//UK_UTILS_DISABLE_WIN32_PRAGMA_WARN_END()
+        uk_utils_stacktrace_push_msg("Failed to get hello_world function from loaded plugin of id", plugin_id);
         goto clean_up;
     }
-    ei_logger_info("hello_world function retrieved");
+    uk_utils_logger_info("hello_world function retrieved");
 
     hello_world();
 
 clean_up:
     if (plugin) {
         /* Unload the plugin */
-        mp_memory_plugin_unload(plugin);
+        uk_mp_memory_plugin_unload(plugin);
     }
 #if defined(WITH_CRYPTO)
-    uecm_crypto_metadata_destroy((uecm_crypto_metadata *)crypto_metadata);
-    uecm_uninit();
+    uk_crypto_crypto_metadata_destroy((uk_crypto_crypto_metadata *)crypto_metadata);
+    uk_crypto_uninit();
 #endif
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_error("Error(s) occurred with the following stacktrace(s):");
-        ei_stacktrace_print_all();
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_error("Error(s) occurred with the following stacktrace(s):");
+        uk_utils_stacktrace_print_all();
     }
-    ei_uninit();
+    uk_utils_uninit();
     return EXIT_SUCCESS;
 }

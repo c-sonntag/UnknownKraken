@@ -1,61 +1,56 @@
- ###############################################################################
- # Copyright (C) 2018 Charly Lamothe                                           #
- #                                                                             #
- # This file is part of LibSharedMemoryObject.                                 #
- #                                                                             #
- #   Licensed under the Apache License, Version 2.0 (the "License");           #
- #   you may not use this file except in compliance with the License.          #
- #   You may obtain a copy of the License at                                   #
- #                                                                             #
- #   http://www.apache.org/licenses/LICENSE-2.0                                #
- #                                                                             #
- #   Unless required by applicable law or agreed to in writing, software       #
- #   distributed under the License is distributed on an "AS IS" BASIS,         #
- #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  #
- #   See the License for the specific language governing permissions and       #
- #   limitations under the License.                                            #
- ###############################################################################
+#
+## UnknownKrakenSharedMemoryObject project
+#
+## Author Charly Lamothe (http://u4a.at)
+## Author Christophe-Alexandre Sonntag (http://u4a.at)
+## Under the Apache License 2.0.
+#
 
 # --- PROJECT ---
+project(UnknownKrakenSharedMemoryObject)
+cmake_minimum_required(VERSION 3.4)
 
-PROJECT(smo C)
-cmake_minimum_required(VERSION 3.8)
+#
+set(UnknownKrakenSharedMemoryObject_VERSION_MAJOR 1)
+set(UnknownKrakenSharedMemoryObject_VERSION_MINOR 0)
+set(PROJECT_UnknownKrakenSharedMemoryObject_STATIC "${PROJECT_NAME}_static")
+set(PROJECT_UnknownKrakenSharedMemoryObject_SHARED "${PROJECT_NAME}_shared")
 
-
-# --- GLOBAL OPTIONS ---
-
-set(CMAKE_VERBOSE_MAKEFILE on)
-SET(ROOT_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE STRING "Default root path of the current build directory")
-
-
-# --- DEPENDENCIES OPTIONS ---
-
-SET(LIBEI_SYSTEM TRUE CACHE BOOL "Default LIBEI installation type")
-set(LIBEI_INSTALL ${ROOT_BUILD_DIR}/libei/install CACHE STRING "Default LIBEI install path")
-
-SET(LIBUEUM_SYSTEM TRUE CACHE BOOL "Default LIBUEUM installation type")
-set(LIBUEUM_INSTALL ${ROOT_BUILD_DIR}/libueum/install CACHE STRING "Default LIBUEUM install path")
+#
+##
+#
 
 
-# --- PATH ---
+# --- LIB : UnknownKrakenUtils ---
+if(TARGET UnknownKrakenUtils)
+  link_libraries(UnknownKrakenUtils)
+else()
+  find_package(UnknownKrakenUtils REQUIRED)
+  link_libraries(${UnknownKrakenUtils_LIBRARIES})
+endif()
+include_directories(${UnknownKrakenUtils_INCLUDE_DIRS} ${UnknownKrakenUtils_INCLUDE_DIR})
+add_definitions(${UnknownKrakenUtils_DEFINITIONS})
+link_directories(${UnknownKrakenUtils_DIRECTORIES})
 
-set(${CMAKE_CURRENT_SOURCE_DIR} ..)
+# --- LIB : Threads ---
+if (UNIX)
+  find_package(Threads REQUIRED)
+  link_libraries(${Threads_LIBRARIES})
+endif()
 
-set(SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-set(EXAMPLES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/examples")
 
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/release")
-    set(EXAMPLES_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/release")
-elseif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/debug")
-    set(EXAMPLES_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/debug")
-endif ()
+#
+##
+#
 
+# --- TARGETS PATH ---
+set(SRC_PATH "src")
+set(HEADER_PATH "src")
+set(EXAMPLES_PATH "examples")
 
 # --- COMPILE OPTIONS ---
-
+include_directories(${HEADER_PATH})
 set(CMAKE_C_FLAGS "-fPIC")
 
 # Compile options for Microsoft Visual Studio
@@ -68,7 +63,7 @@ if (MSVC)
     if (MSVC_VERSION GREATER_EQUAL 1900)
         add_compile_options("/permissive-") # Add /permissive- (kind of -pedantic) available since Visual Studio 2017
     endif ()
-    add_compile_options("/W4") 
+    add_compile_options("/W4")
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON) # This variable is used to initialize the property on each target as it is created
     set(CMAKE_C_FLAGS "${CMAKE_ENABLE_C11}") # Compile with C11 rules
 
@@ -136,130 +131,146 @@ else ()
     add_compile_options("-Wall" "-Wextra" "-pedantic" "-Werror=format-security" "-Werror=implicit-function-declaration")
 endif ()
 
-# CCache
 
-find_program(CCACHE_PROGRAM ccache)
-if (CCACHE_PROGRAM)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${CCACHE_PROGRAM}")
+#
+##
+#
+
+# --- BUILD OPTIONS : STATIC/SHARED ---
+SET(UnknownKrakenSharedMemoryObject_SHARED ON CACHE BOOL "Build shared UnknownKrakenSharedMemoryObject library")
+SET(UnknownKrakenSharedMemoryObject_STATIC ON CACHE BOOL "Build static UnknownKrakenSharedMemoryObject library")
+
+# --- CHECK BUILD OPTIONS ---
+if( (NOT ${UnknownKrakenSharedMemoryObject_SHARED}) AND (NOT ${UnknownKrakenSharedMemoryObject_STATIC}) )
+  message(FATAL_ERROR, "\n\n   !! Require one of SHARED or STATIC for UnknownKrakenSharedMemoryObject !! \n\n")
+  set(UnknownKrakenSharedMemoryObject_FOUND OFF)
+  return()
 endif()
 
+#
+##
+#
 
-# --- SEARCH DEPENDENCIES ---
+# --- BUILD OPTIONS  ---
+set(UnknownKrakenSharedMemoryObject_BUILD_TOOLS ON CACHE BOOL "Build tools for UnknownKrakenSharedMemoryObject library")
+set(UnknownKrakenSharedMemoryObject_BUILD_EXAMPLES ON CACHE BOOL "Build examples for UnknownKrakenSharedMemoryObject library")
+set(UnknownKrakenSharedMemoryObject_BUILD_TESTS ON CACHE BOOL "Build tests for UnknownKrakenSharedMemoryObject library")
 
-# External dependencies
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/external)
+#
+##
+#
 
-# Location where external projects will be downloaded
-set (DOWNLOAD_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/downloads"
-    CACHE PATH "Location where external projects will be downloaded.")
-mark_as_advanced(DOWNLOAD_LOCATION)
+# CCache
+find_program(CCACHE_PROGRAM ccache)
+if (CCACHE_PROGRAM)
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "${CCACHE_PROGRAM}")
+endif()
 
-# LibErrorInterceptor
-include(libei)
-
-# LibUnknownEchoUtilsModule
-include(libueum)
-
-# Search pthread
-if (UNIX)
-    find_package (Threads)
-endif ()
-
-if (NOT LIBEI_SYSTEM)
-    list(APPEND LIBUKNOWNECHO_DEPENDENCIES libei)
-endif ()
-
-if (NOT LIBUEUM_SYSTEM)
-    list(APPEND LIBUKNOWNECHO_DEPENDENCIES libueum)
-endif ()
-
-set(LIBSHAREDMEMORYOBJECT_LIBRARIES
-    ${LIBERRORINTERCEPTOR_LIBRARIES}
-    ${LIBUNKNOWNECHOUTILSMODULE_LIBRARIES}
-    ${CMAKE_THREAD_LIBS_INIT}
-)
-
-set(LIBSHAREDMEMORYOBJECT_INCLUDE_DIR
-    ${LIBERRORINTERCEPTOR_INCLUDE_DIR}
-    ${LIBUNKNOWNECHOUTILSMODULE_INCLUDE_DIR}
-)
+#
+##
+#
 
 
-# --- BUILD LIBSHAREDMEMORYOBJECT ---
+# --- TARGETS FILES ---
+file(GLOB_RECURSE TARGET_API_SRC_FILES "${SRC_PATH}/uk/smo/api/*.c"  "${SRC_PATH}/uk/smo/api/*.cpp")
+file(GLOB_RECURSE TARGET_API_HEADER_FILES "${HEADER_PATH}/uk/smo/api/*.h" "${HEADER_PATH}/uk/smo/api/*.hpp")
 
-set(PROJECT_NAME_STATIC "${PROJECT_NAME}_static")
-set(PROJECT_NAME_SHARED "${PROJECT_NAME}_shared")
-
-# Load source files
-
+# --- TARGETS SPECIFIC PLATFORM FILES ---
+set(TARGET_PLATFORM)
 if (WIN32)
-    file(GLOB_RECURSE PROGRAM_TARGET_SRC_FILES "${SRC_PATH}/smo/impl/windows/*.*"
-        "${SRC_PATH}/smo/api/*.*" "${SRC_PATH}/smo/utils/*.*")
+  set(TARGET_PLATFORM "windows")
 else ()
-    file(GLOB_RECURSE PROGRAM_TARGET_SRC_FILES "${SRC_PATH}/smo/impl/linux/*.*"
-        "${SRC_PATH}/smo/api/*.*" "${SRC_PATH}/smo/utils/*.*")
+  set(TARGET_PLATFORM "linux")
 endif ()
-
-# Build shared library
-add_library(${PROJECT_NAME_SHARED} SHARED ${PROGRAM_TARGET_SRC_FILES})
-target_include_directories(${PROJECT_NAME_SHARED} PUBLIC "${SRC_PATH}")
-target_include_directories(${PROJECT_NAME_SHARED} PUBLIC ${LIBSHAREDMEMORYOBJECT_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME_SHARED} ${LIBSHAREDMEMORYOBJECT_LIBRARIES})
-set_target_properties(${PROJECT_NAME_SHARED} PROPERTIES OUTPUT_NAME smo)
+file(GLOB_RECURSE TARGET_PLATFORM_SRC_FILES "${SRC_PATH}/uk/smo/impl/${TARGET_PLATFORM}/*.c"  "${SRC_PATH}/uk/smo/impl/${TARGET_PLATFORM}/*.cpp")
+file(GLOB_RECURSE TARGET_PLATFORM_HEADER_FILES "${HEADER_PATH}/uk/smo/impl/${TARGET_PLATFORM}/*.h" "${HEADER_PATH}/uk/smo/impl/${TARGET_PLATFORM}/*.hpp")
 
 
-# Build static library
-add_library(${PROJECT_NAME_STATIC} STATIC ${PROGRAM_TARGET_SRC_FILES})
-target_include_directories(${PROJECT_NAME_STATIC} PUBLIC "${SRC_PATH}")
-set_target_properties(${PROJECT_NAME_STATIC} PROPERTIES OUTPUT_NAME smo_static)
-target_include_directories(${PROJECT_NAME_STATIC} PUBLIC ${LIBSHAREDMEMORYOBJECT_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME_STATIC} ${LIBSHAREDMEMORYOBJECT_LIBRARIES})
-target_link_libraries(${PROJECT_NAME_STATIC} ${CMAKE_THREAD_LIBS_INIT})
+# --- BUILDS LIB TARGET STATIC ---
+if(${UnknownKrakenSharedMemoryObject_STATIC})
+  add_library(${PROJECT_UnknownKrakenSharedMemoryObject_STATIC} STATIC ${TARGET_API_SRC_FILES} ${TARGET_API_HEADER_FILES} ${TARGET_PLATFORM_SRC_FILES} ${TARGET_PLATFORM_HEADER_FILES})
+  set_target_properties(${PROJECT_UnknownKrakenSharedMemoryObject_STATIC} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+
+  # --- INSTALL LIB ---
+  install(TARGETS ${PROJECT_UnknownKrakenSharedMemoryObject_STATIC}
+          LIBRARY DESTINATION "lib"
+          ARCHIVE DESTINATION "lib")
+
+endif()
+
+# --- BUILDS LIB TARGET SHARED ---
+if(${UnknownKrakenSharedMemoryObject_SHARED})
+  add_library(${PROJECT_UnknownKrakenSharedMemoryObject_SHARED} SHARED ${TARGET_API_SRC_FILES} ${TARGET_API_HEADER_FILES} ${TARGET_PLATFORM_SRC_FILES} ${TARGET_PLATFORM_HEADER_FILES})
+  set_target_properties(${PROJECT_UnknownKrakenSharedMemoryObject_SHARED} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
+
+  # --- INSTALL LIB ---
+  install(TARGETS ${PROJECT_UnknownKrakenSharedMemoryObject_SHARED}
+          RUNTIME DESTINATION "bin"
+          LIBRARY DESTINATION "lib"
+          ARCHIVE DESTINATION "lib")
 
 
-# --- INSTALL ---
+endif()
 
-# Copy includes
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include FILES_MATCHING PATTERN "*.h")
+# --- INSTALL INCLUDE ---
+install(DIRECTORY "${HEADER_PATH}/" DESTINATION "include" FILES_MATCHING PATTERN "*.h")
 
-# Copy static library
-install (
-    TARGETS ${PROJECT_NAME_STATIC}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-)
 
-if (UNIX)
-    install (
-        TARGETS ${PROJECT_NAME_SHARED}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    )
-elseif (WIN32)
-    install (
-        TARGETS ${PROJECT_NAME_SHARED}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    )
-endif ()
+#
+##
+#
 
-# Build hello world example
-file(GLOB hello_world_example_path "${EXAMPLES_PATH}/hello_world_example.c")
-get_filename_component(hello_world_example ${hello_world_example_path} NAME_WE)
-add_executable(${hello_world_example} ${hello_world_example_path})
-target_link_libraries(${hello_world_example} ${PROJECT_NAME_STATIC})
-target_include_directories(${hello_world_example} PUBLIC ${LIBSHAREDMEMORYOBJECT_INCLUDE_DIR})
-target_link_libraries(${hello_world_example} ${LIBSHAREDMEMORYOBJECT_LIBRARIES})
-if (UNIX)
-    target_link_libraries(${hello_world_example} "-ldl" "-lrt")
-endif ()
-set_target_properties(${hello_world_example} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${EXAMPLES_OUTPUT_PATH})
+# --- SUB BUILD LINKING ---
+set(UnknownKrakenSharedMemoryObject_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/${HEADER_PATH}")
+set(UnknownKrakenSharedMemoryObject_DEFINITIONS)
+set(UnknownKrakenSharedMemoryObject_DIRECTORIES)
+if(UnknownKrakenSharedMemoryObject_SHARED)
+  set(UnknownKrakenSharedMemoryObject ${PROJECT_UnknownKrakenSharedMemoryObject_SHARED})
+elseif(UnknownKrakenSharedMemoryObject_STATIC)
+  set(UnknownKrakenSharedMemoryObject ${PROJECT_UnknownKrakenSharedMemoryObject_STATIC})
+endif()
+set(UnknownKrakenSharedMemoryObject_INCLUDE_DIRS ${UnknownKrakenSharedMemoryObject_INCLUDE_DIRS} PARENT_SCOPE)
+set(UnknownKrakenSharedMemoryObject_DEFINITIONS ${UnknownKrakenSharedMemoryObject_DEFINITIONS} PARENT_SCOPE)
+set(UnknownKrakenSharedMemoryObject ${UnknownKrakenSharedMemoryObject} PARENT_SCOPE)
+add_library(UnknownKrakenSharedMemoryObject ALIAS ${UnknownKrakenSharedMemoryObject})
 
-# Build hello world library
-if (UNIX)
-    file(GLOB hello_world_library "${EXAMPLES_PATH}/linux_hello_world_library.c")
-elseif (WIN32)
-    file(GLOB hello_world_library "${EXAMPLES_PATH}/windows_hello_world_library.c")
-endif ()
-add_library(hello_world_library SHARED ${hello_world_library})
-set_target_properties(hello_world_library PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${EXAMPLES_OUTPUT_PATH})
+
+#
+##
+#
+
+# --- ADD SUB BUILD  ---
+link_libraries(UnknownKrakenSharedMemoryObject)
+
+# --- BUILDS TOOLS ---
+if(${UnknownKrakenSharedMemoryObject_BUILD_TOOLS})
+  ## TODO
+endif()
+
+# --- BUILDS EXAMPLES ---
+if(${UnknownKrakenSharedMemoryObject_BUILD_EXAMPLES})
+
+  file(GLOB files "${EXAMPLES_PATH}/*.c")
+  foreach (filePath ${files} )
+
+    # --- NEW EXAMPLE ---
+    get_filename_component(executableName ${filePath} NAME_WE)
+    #message(STATUS "Build example : ${executableName}")
+    add_executable(${executableName} ${filePath})
+    if (UNIX)
+        target_link_libraries(${executableName} "-ldl")
+    endif ()
+
+    # --- INSTALL EXAMPLE ---
+    install(TARGETS ${executableName} RUNTIME DESTINATION "bin")
+
+  endforeach ()
+
+endif()
+
+# --- BUILDS TESTS ---
+if(${UnknownKrakenSharedMemoryObject_BUILD_TESTS})
+  ## TODO
+endif()
+

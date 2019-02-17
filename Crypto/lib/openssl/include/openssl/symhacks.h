@@ -44,8 +44,8 @@
 #  define X509v3_add_standard_extensions          oX509v3_add_standard_extensions
 
 /* This one clashes with CMS_data_create */
-#  undef cms_Data_create
-#  define cms_Data_create                         priv_cms_Data_create
+#  undef cuk_ms_Data_create
+#  define cuk_ms_Data_create                         priv_cuk_ms_Data_create
 
 # endif
 

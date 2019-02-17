@@ -234,7 +234,7 @@ const RSA_METHOD *RSA_null_method(void);
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(RSA, RSAPublicKey)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(RSA, RSAPrivateKey)
 
-typedef struct rsa_pss_params_st {
+typedef struct rsa_pss_parauk_ms_st {
     X509_ALGOR *hashAlgorithm;
     X509_ALGOR *maskGenAlgorithm;
     ASN1_INTEGER *saltLength;
@@ -243,7 +243,7 @@ typedef struct rsa_pss_params_st {
 
 DECLARE_ASN1_FUNCTIONS(RSA_PSS_PARAMS)
 
-typedef struct rsa_oaep_params_st {
+typedef struct rsa_oaep_parauk_ms_st {
     X509_ALGOR *hashFunc;
     X509_ALGOR *maskGenFunc;
     X509_ALGOR *pSourceFunc;

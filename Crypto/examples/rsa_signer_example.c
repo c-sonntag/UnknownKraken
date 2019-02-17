@@ -16,9 +16,9 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <uecm/uecm.h>
-#include <ueum/ueum.h>
-#include <ei/ei.h>
+#include <uk/crypto/uecm.h>
+#include <uk/utils/ueum.h>
+#include <uk/utils/ei.h>
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -30,10 +30,10 @@ static void print_usage(char *name) {
 
 int main(int argc, char **argv) {
     int exit_code;
-    uecm_signer *signer;
+    uk_crypto_signer *signer;
     unsigned char *signature, *message;
     size_t signature_length, message_length;
-    uecm_asym_key *akey;
+    uk_crypto_asym_key *akey;
 
     exit_code = EXIT_FAILURE;
     signature = NULL;
@@ -47,66 +47,66 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    ei_init_or_die();
-    ei_logger_use_symbol_levels();
+    uk_utils_init_or_die();
+    uk_utils_logger_use_symbol_levels();
 
-    ei_logger_info("Initializing LibUnknownEchoCryptoModule...");
-    if (!uecm_init()) {
-        ei_stacktrace_push_msg("Failed to initialize LibUnknownEchoCryptoModule");
+    uk_utils_logger_info("Initializing LibUnknownEchoCryptoModule...");
+    if (!uk_crypto_init()) {
+        uk_utils_stacktrace_push_msg("Failed to initialize LibUnknownEchoCryptoModule");
         goto clean_up;
     }
-    ei_logger_info("LibUnknownEchoCryptoModule is correctly initialized.");
+    uk_utils_logger_info("LibUnknownEchoCryptoModule is correctly initialized.");
 
-    ei_logger_info("Converting parameter '%s' to bytes...", argv[1]);
-    if ((message = ueum_bytes_create_from_string(argv[1])) == NULL) {
-        ei_stacktrace_push_msg("Failed to convert arg to bytes");
+    uk_utils_logger_info("Converting parameter '%s' to bytes...", argv[1]);
+    if ((message = uk_utils_bytes_create_from_string(argv[1])) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to convert arg to bytes");
         goto clean_up;
     }
-    ei_logger_info("Succefully converted parameter to bytes");
+    uk_utils_logger_info("Succefully converted parameter to bytes");
 
     message_length = strlen(argv[1]);
 
-    if ((akey = uecm_rsa_asym_key_create(2048)) == NULL) {
-        ei_stacktrace_push_msg("Failed to create RSA key pair of 2048 bits");
+    if ((akey = uk_crypto_rsa_asym_key_create(2048)) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to create RSA key pair of 2048 bits");
         goto clean_up;
     }
 
-    ei_logger_info("Creating RSA signer using the previous generated key pair...");
-    if ((signer = uecm_rsa_signer_create_default_from_pair(akey)) == NULL) {
-        ei_stacktrace_push_msg("Failed to create new RSA signer");
+    uk_utils_logger_info("Creating RSA signer using the previous generated key pair...");
+    if ((signer = uk_crypto_rsa_signer_create_default_from_pair(akey)) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to create new RSA signer");
         goto clean_up;
     }
 
-    ei_logger_info("Signing input message with RSA signer instance...");
-    if (!uecm_signer_sign_buffer(signer, message, message_length, &signature, &signature_length)) {
-        ei_stacktrace_push_msg("Failed to sign message");
+    uk_utils_logger_info("Signing input message with RSA signer instance...");
+    if (!uk_crypto_signer_sign_buffer(signer, message, message_length, &signature, &signature_length)) {
+        uk_utils_stacktrace_push_msg("Failed to sign message");
         goto clean_up;
     }
-    ei_logger_info("Message has been successfully signed");
+    uk_utils_logger_info("Message has been successfully signed");
 
-    ei_logger_info("Verifying signature...");
-    if ((uecm_signer_verify_buffer(signer, message, message_length, signature, signature_length))) {
-        ei_logger_info("Signature matched with previous message");
+    uk_utils_logger_info("Verifying signature...");
+    if ((uk_crypto_signer_verify_buffer(signer, message, message_length, signature, signature_length))) {
+        uk_utils_logger_info("Signature matched with previous message");
     } else {
-        ei_logger_error("Signature doesn't matched with previous message");
-        ei_stacktrace_push_msg("Signature and buffer doesn't matched");
+        uk_utils_logger_error("Signature doesn't matched with previous message");
+        uk_utils_stacktrace_push_msg("Signature and buffer doesn't matched");
         goto clean_up;
     }
 
-    ei_logger_info("Succeed !");
+    uk_utils_logger_info("Succeed !");
 
     exit_code = EXIT_SUCCESS;
 
 clean_up:
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_error("Error(s) occurred with the following stacktrace(s):");
-        ei_stacktrace_print_all();
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_error("Error(s) occurred with the following stacktrace(s):");
+        uk_utils_stacktrace_print_all();
     }
-    ueum_safe_free(message);
-    ueum_safe_free(signature);
-    uecm_signer_destroy(signer);
-    uecm_asym_key_destroy_all(akey);
-    uecm_uninit();
-    ei_uninit();
+    uk_utils_safe_free(message);
+    uk_utils_safe_free(signature);
+    uk_crypto_signer_destroy(signer);
+    uk_crypto_asym_key_destroy_all(akey);
+    uk_crypto_uninit();
+    uk_utils_uninit();
     return exit_code;
 }

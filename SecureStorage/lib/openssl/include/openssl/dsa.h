@@ -69,14 +69,14 @@ extern "C" {
 
 typedef struct DSA_SIG_st DSA_SIG;
 
-# define d2i_DSAparams_fp(fp,x) (DSA *)ASN1_d2i_fp((char *(*)())DSA_new, \
+# define d2i_DSAparauk_ms_fp(fp,x) (DSA *)ASN1_d2i_fp((char *(*)())DSA_new, \
                 (char *(*)())d2i_DSAparams,(fp),(unsigned char **)(x))
-# define i2d_DSAparams_fp(fp,x) ASN1_i2d_fp(i2d_DSAparams,(fp), \
+# define i2d_DSAparauk_ms_fp(fp,x) ASN1_i2d_fp(i2d_DSAparams,(fp), \
                 (unsigned char *)(x))
-# define d2i_DSAparams_bio(bp,x) ASN1_d2i_bio_of(DSA,DSA_new,d2i_DSAparams,bp,x)
-# define i2d_DSAparams_bio(bp,x) ASN1_i2d_bio_of_const(DSA,i2d_DSAparams,bp,x)
+# define d2i_DSAparauk_ms_bio(bp,x) ASN1_d2i_bio_of(DSA,DSA_new,d2i_DSAparams,bp,x)
+# define i2d_DSAparauk_ms_bio(bp,x) ASN1_i2d_bio_of_const(DSA,i2d_DSAparams,bp,x)
 
-DSA *DSAparams_dup(DSA *x);
+DSA *DSAparauk_ms_dup(DSA *x);
 DSA_SIG *DSA_SIG_new(void);
 void DSA_SIG_free(DSA_SIG *a);
 int i2d_DSA_SIG(const DSA_SIG *a, unsigned char **pp);
@@ -139,10 +139,10 @@ int i2d_DSAPublicKey(const DSA *a, unsigned char **pp);
 int i2d_DSAPrivateKey(const DSA *a, unsigned char **pp);
 int i2d_DSAparams(const DSA *a, unsigned char **pp);
 
-int DSAparams_print(BIO *bp, const DSA *x);
+int DSAparauk_ms_print(BIO *bp, const DSA *x);
 int DSA_print(BIO *bp, const DSA *x, int off);
 # ifndef OPENSSL_NO_STDIO
-int DSAparams_print_fp(FILE *fp, const DSA *x);
+int DSAparauk_ms_print_fp(FILE *fp, const DSA *x);
 int DSA_print_fp(FILE *bp, const DSA *x, int off);
 # endif
 

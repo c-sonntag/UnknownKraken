@@ -16,13 +16,14 @@
  *   limitations under the License.                                            *
  *******************************************************************************/
 
-#include <mp/mp.h>
-#include <ueum/ueum.h>
-#include <ei/ei.h>
+#include <uk/mp/mp.h>
+#include <uk/utils/ueum.h>
+#include <uk/utils/ei.h>
+#include <uk/utils/compiler/pragma.h>
 
 #if defined(WITH_CRYPTO)
 
-#include <uecm/uecm.h>
+#include <uk/crypto/uecm.h>
 
 #endif
 
@@ -37,8 +38,8 @@
  * or by create_new_plugin_example.
  */
 int main(int argc, char **argv) {
-    mp_memory_plugin *plugin;
-    mp_entry *entry;
+    uk_mp_memory_plugin *plugin;
+    uk_mp_entry *entry;
     int plugin_id;
     typedef void(*hello_world_func)(void);
     hello_world_func hello_world;
@@ -49,29 +50,29 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    ei_init();
+    uk_utils_init();
     plugin = NULL;
     entry = NULL;
     crypto_metadata = NULL;
 
 #if defined(WITH_CRYPTO)
-    uecm_init();
+    uk_crypto_init();
 
-    if ((crypto_metadata = (void *)uecm_crypto_metadata_create_empty()) == NULL) {
-        ei_stacktrace_push_msg("Failed to create empty crypto metadata object");
+    if ((crypto_metadata = (void *)uk_crypto_crypto_metadata_create_empty()) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to create empty crypto metadata object");
         goto clean_up;
     }
 
-    if (!uecm_crypto_metadata_read((uecm_crypto_metadata *)crypto_metadata,
+    if (!uk_crypto_crypto_metadata_read((uk_crypto_crypto_metadata *)crypto_metadata,
         "metadata", "uid", "password")) {
 
-        ei_stacktrace_push_msg("Failed to read crypto metadata");
+        uk_utils_stacktrace_push_msg("Failed to read crypto metadata");
         goto clean_up;
     }
 #endif
 
-    if (!ueum_is_file_exists(argv[2])) {
-        ei_stacktrace_push_msg("Specified new plugin file '%s' doesn't exist", argv[2]);
+    if (!uk_utils_is_file_exists(argv[2])) {
+        uk_utils_stacktrace_push_msg("Specified new plugin file '%s' doesn't exist", argv[2]);
         goto clean_up;
     }
 
@@ -79,49 +80,49 @@ int main(int argc, char **argv) {
     plugin_id = atoi(argv[1]);
 
     /* Load plugin from id */
-    ei_logger_info("Loading memory plugin from id %d", plugin_id);
-    if ((plugin = mp_memory_plugin_load(plugin_id, crypto_metadata)) == NULL) {
-        ei_stacktrace_push_msg("Failed to load plugin with id %d", plugin_id);
+    uk_utils_logger_info("Loading memory plugin from id %d", plugin_id);
+    if ((plugin = uk_mp_memory_plugin_load(plugin_id, crypto_metadata)) == NULL) {
+        uk_utils_stacktrace_push_msg("Failed to load plugin with id %d", plugin_id);
         goto clean_up;
     }
-    ei_logger_info("Memory plugin loaded");
+    uk_utils_logger_info("Memory plugin loaded");
 
-    entry = mp_entry_create();
-    mp_entry_add_file(entry, argv[2]);
+    entry = uk_mp_entry_create();
+    uk_mp_entry_add_file(entry, argv[2]);
 
-    ei_logger_info("Updating memory plugin from another library stored in disk");
-    if (!mp_memory_plugin_update(plugin, entry, crypto_metadata)) {
-        ei_stacktrace_push_msg("Failed to update content plugin from new plugin");
+    uk_utils_logger_info("Updating memory plugin from another library stored in disk");
+    if (!uk_mp_memory_plugin_update(plugin, entry, crypto_metadata)) {
+        uk_utils_stacktrace_push_msg("Failed to update content plugin from new plugin");
         goto clean_up;
     }
-    ei_logger_info("Memory plugin updated");
+    uk_utils_logger_info("Memory plugin updated");
 
     /* Get a function from the new plugin to check the difference */
-    ei_logger_info("Getting function hello_world() from new memory plugin...");
-UEUM_DISABLE_WIN32_PRAGMA_WARN(4152)
-    if ((hello_world = mp_memory_plugin_get_function(plugin, "hello_world")) == NULL) {
-UEUM_DISABLE_WIN32_PRAGMA_WARN_END()
-        ei_stacktrace_push_msg("Failed to get hello_world function from plugin of id", plugin_id);
+    uk_utils_logger_info("Getting function hello_world() from new memory plugin...");
+//UK_UTILS_DISABLE_WIN32_PRAGMA_WARN(4152)
+    if ((hello_world = uk_mp_memory_plugin_get_function(plugin, "hello_world")) == NULL) {
+//UK_UTILS_DISABLE_WIN32_PRAGMA_WARN_END()
+        uk_utils_stacktrace_push_msg("Failed to get hello_world function from plugin of id", plugin_id);
         goto clean_up;
     }
-    ei_logger_info("hello_world function retrieved");
+    uk_utils_logger_info("hello_world function retrieved");
 
     hello_world();
 
 clean_up:
-    mp_entry_destroy(entry);
+    uk_mp_entry_destroy(entry);
     if (plugin) {
         /* Unload the plugin */
-        mp_memory_plugin_unload(plugin);
+        uk_mp_memory_plugin_unload(plugin);
     }
 #if defined(WITH_CRYPTO)
-    uecm_crypto_metadata_destroy((uecm_crypto_metadata *)crypto_metadata);
-    uecm_uninit();
+    uk_crypto_crypto_metadata_destroy((uk_crypto_crypto_metadata *)crypto_metadata);
+    uk_crypto_uninit();
 #endif
-    if (ei_stacktrace_is_filled()) {
-        ei_logger_error("Error(s) occurred with the following stacktrace(s):");
-        ei_stacktrace_print_all();
+    if (uk_utils_stacktrace_is_filled()) {
+        uk_utils_logger_error("Error(s) occurred with the following stacktrace(s):");
+        uk_utils_stacktrace_print_all();
     }
-    ei_uninit();
+    uk_utils_uninit();
     return EXIT_SUCCESS;
 }
