@@ -1178,17 +1178,17 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl((ssl),SSL_CTRL_CLEAR_NUM_RENEGOTIATIONS,0,NULL)
 # define SSL_total_renegotiations(ssl) \
         SSL_ctrl((ssl),SSL_CTRL_GET_TOTAL_RENEGOTIATIONS,0,NULL)
-# define SSL_CTX_set_tuk_mp_dh(ctx,dh) \
+# define SSL_CTX_set_tmp_dh(ctx,dh) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH,0,(char *)dh)
-# define SSL_CTX_set_tuk_mp_ecdh(ctx,ecdh) \
+# define SSL_CTX_set_tmp_ecdh(ctx,ecdh) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_ECDH,0,(char *)ecdh)
 # define SSL_CTX_set_dh_auto(ctx, onoff) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_DH_AUTO,onoff,NULL)
 # define SSL_set_dh_auto(s, onoff) \
         SSL_ctrl(s,SSL_CTRL_SET_DH_AUTO,onoff,NULL)
-# define SSL_set_tuk_mp_dh(ssl,dh) \
+# define SSL_set_tmp_dh(ssl,dh) \
         SSL_ctrl(ssl,SSL_CTRL_SET_TMP_DH,0,(char *)dh)
-# define SSL_set_tuk_mp_ecdh(ssl,ecdh) \
+# define SSL_set_tmp_ecdh(ssl,ecdh) \
         SSL_ctrl(ssl,SSL_CTRL_SET_TMP_ECDH,0,(char *)ecdh)
 # define SSL_CTX_add_extra_chain_cert(ctx,x509) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_EXTRA_CHAIN_CERT,0,(char *)x509)
@@ -1286,7 +1286,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl(s,SSL_CTRL_SET_CLIENT_CERT_TYPES,clistlen,(char *)clist)
 # define SSL_get_peer_signature_nid(s, pn) \
         SSL_ctrl(s,SSL_CTRL_GET_PEER_SIGNATURE_NID,0,pn)
-# define SSL_get_server_tuk_mp_key(s, pk) \
+# define SSL_get_server_tmp_key(s, pk) \
         SSL_ctrl(s,SSL_CTRL_GET_SERVER_TMP_KEY,0,pk)
 # define SSL_get0_raw_cipherlist(s, plst) \
         SSL_ctrl(s,SSL_CTRL_GET_RAW_CIPHERLIST,0,plst)
@@ -1311,18 +1311,18 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 
 #if OPENSSL_API_COMPAT < 0x10100000L
 /* Provide some compatibility macros for removed functionality. */
-# define SSL_CTX_need_tuk_mp_RSA(ctx)                0
-# define SSL_CTX_set_tuk_mp_rsa(ctx,rsa)             1
-# define SSL_need_tuk_mp_RSA(ssl)                    0
-# define SSL_set_tuk_mp_rsa(ssl,rsa)                 1
+# define SSL_CTX_need_tmp_RSA(ctx)                0
+# define SSL_CTX_set_tmp_rsa(ctx,rsa)             1
+# define SSL_need_tmp_RSA(ssl)                    0
+# define SSL_set_tmp_rsa(ssl,rsa)                 1
 # define SSL_CTX_set_ecdh_auto(dummy, onoff)      ((onoff) != 0)
 # define SSL_set_ecdh_auto(dummy, onoff)          ((onoff) != 0)
 /*
  * We "pretend" to call the callback to avoid warnings about unused static
  * functions.
  */
-# define SSL_CTX_set_tuk_mp_rsa_callback(ctx, cb)    while(0) (cb)(NULL, 0, 0)
-# define SSL_set_tuk_mp_rsa_callback(ssl, cb)        while(0) (cb)(NULL, 0, 0)
+# define SSL_CTX_set_tmp_rsa_callback(ctx, cb)    while(0) (cb)(NULL, 0, 0)
+# define SSL_set_tmp_rsa_callback(ssl, cb)        while(0) (cb)(NULL, 0, 0)
 #endif
 
 __owur const BIO_METHOD *BIO_f_ssl(void);
@@ -1797,10 +1797,10 @@ void SSL_set_default_read_buffer_len(SSL *s, size_t len);
 
 # ifndef OPENSSL_NO_DH
 /* NB: the |keylength| is only applicable when is_export is true */
-void SSL_CTX_set_tuk_mp_dh_callback(SSL_CTX *ctx,
+void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
                                  DH *(*dh) (SSL *ssl, int is_export,
                                             int keylength));
-void SSL_set_tuk_mp_dh_callback(SSL *ssl,
+void SSL_set_tmp_dh_callback(SSL *ssl,
                              DH *(*dh) (SSL *ssl, int is_export,
                                         int keylength));
 # endif

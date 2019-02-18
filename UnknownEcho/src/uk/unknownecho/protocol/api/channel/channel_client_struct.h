@@ -59,7 +59,7 @@ typedef struct {
     uk_utils_queue *push_mode_queue;
     uk_ue_data_transmission_state transmission_state;
     bool running;
-    uk_utils_byte_stream *new_message, *received_message, *message_to_send, *tuk_mp_stream;
+    uk_utils_byte_stream *new_message, *received_message, *message_to_send, *tmp_stream;
     int channel_id;
     uk_crypto_x509_certificate *csr_server_certificate, *csl_server_certificate, *cipher_server_certificate, *signer_server_certificate;
     bool csl_keystore_ok, cipher_keystore_ok, signer_keystore_ok;

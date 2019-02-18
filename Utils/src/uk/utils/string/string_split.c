@@ -106,32 +106,32 @@ bool uk_utils_string_split_append(uk_utils_string_vector *v, char *string, char 
 
 bool uk_utils_string_split_append_one_delim(uk_utils_string_vector *v, const char *string, const char *delimiter) {
     const char *token;
-    char *tuk_mp_string;
+    char *tmp_string;
 
     uk_utils_check_parameter_or_return(v);
     uk_utils_check_parameter_or_return(string);
     uk_utils_check_parameter_or_return(delimiter);
 
-    tuk_mp_string = uk_utils_string_create_from(string);
+    tmp_string = uk_utils_string_create_from(string);
 
-    if (!strstr(tuk_mp_string, delimiter)) {
-        uk_utils_string_vector_append(v, tuk_mp_string);
-        uk_utils_safe_str_free(tuk_mp_string);
+    if (!strstr(tmp_string, delimiter)) {
+        uk_utils_string_vector_append(v, tmp_string);
+        uk_utils_safe_str_free(tmp_string);
         return true;
     }
 
-    token = strtok((char *)tuk_mp_string, delimiter);
+    token = strtok((char *)tmp_string, delimiter);
     while (token) {
         uk_utils_string_vector_append(v, token);
         token = strtok(NULL, delimiter);
     }
 
     if (uk_utils_string_vector_is_empty(v)) {
-        uk_utils_safe_str_free(tuk_mp_string);
+        uk_utils_safe_str_free(tmp_string);
         return false;
     }
 
-    uk_utils_safe_str_free(tuk_mp_string);
+    uk_utils_safe_str_free(tmp_string);
 
     return true;
 }

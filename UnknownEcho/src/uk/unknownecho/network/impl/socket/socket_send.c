@@ -69,7 +69,7 @@ size_t uk_ue_socket_send_sync(uk_ue_socket_client_connection *connection, uk_uti
             } while (sent < size);
         #elif defined(_WIN32) || defined(_WIN64)
             if((sent = send((SOCKET)connection->fd, (char *)data, size, 0)) < 0) {
-                uk_ue_get_last_wsa_error(error_buffer);
+                uk_utils_get_last_wsa_error(error_buffer);
                 uk_utils_stacktrace_push_msg(error_buffer);
                 uk_utils_safe_free(error_buffer);
                 return -1;

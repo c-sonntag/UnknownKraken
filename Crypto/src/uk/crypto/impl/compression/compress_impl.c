@@ -31,7 +31,7 @@
 #define CHUNK 16384
 
 bool uk_crypto_deflate_compress(unsigned char *plaintext, size_t plaintext_len, unsigned char **compressed_text, size_t *compressed_len) {
-    uLong len, tuk_mp_compr_len;
+    uLong len, tmp_compr_len;
     Byte *compr;
     int error_code;
 
@@ -43,24 +43,24 @@ bool uk_crypto_deflate_compress(unsigned char *plaintext, size_t plaintext_len, 
     /* Safe to cast plaintext_len to uLong because plaintext_len is <= ULONG_MAX */
     len = compressBound((uLong)plaintext_len);
     compr = NULL;
-    tuk_mp_compr_len = len;
+    tmp_compr_len = len;
 
     uk_utils_safe_alloc(compr, Byte, len);
 
     /* Safe to cast plaintext_len to uLong because plaintext_len is <= ULONG_MAX */
-    if ((error_code = compress(compr, &tuk_mp_compr_len, (const Bytef *)plaintext, (uLong)plaintext_len)) != Z_OK) {
+    if ((error_code = compress(compr, &tmp_compr_len, (const Bytef *)plaintext, (uLong)plaintext_len)) != Z_OK) {
         uk_crypto_zlib_error_handling(error_code);
         return false;
     }
 
     *compressed_text = (unsigned char *)compr;
-    *compressed_len = tuk_mp_compr_len;
+    *compressed_len = tmp_compr_len;
 
     return true;
 }
 
 bool uk_crypto_inflate_decompress(unsigned char *compressed_text, size_t compressed_len, unsigned char **decompressed_text, size_t decompressed_len) {
-    uLong tuk_mp_decompr_len;
+    uLong tmp_decompr_len;
     Byte *decompr;
     int error_code;
 
@@ -70,12 +70,12 @@ bool uk_crypto_inflate_decompress(unsigned char *compressed_text, size_t compres
     }
 
     /* Safe to cast plaintext_len to uLong because plaintext_len is <= ULONG_MAX */
-    tuk_mp_decompr_len = (uLong)decompressed_len;
+    tmp_decompr_len = (uLong)decompressed_len;
     decompr = NULL;
-    uk_utils_safe_alloc(decompr, Byte, tuk_mp_decompr_len);
+    uk_utils_safe_alloc(decompr, Byte, tmp_decompr_len);
 
     /* Safe to cast plaintext_len to uLong because plaintext_len is <= ULONG_MAX */
-    if ((error_code = uncompress(decompr, &tuk_mp_decompr_len, (Byte *)compressed_text, (uLong)compressed_len)) != Z_OK) {
+    if ((error_code = uncompress(decompr, &tmp_decompr_len, (Byte *)compressed_text, (uLong)compressed_len)) != Z_OK) {
         uk_crypto_zlib_error_handling(error_code);
         return false;
     }

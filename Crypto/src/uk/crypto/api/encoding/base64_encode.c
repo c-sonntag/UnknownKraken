@@ -20,12 +20,12 @@
 #include <uk/crypto/impl/encoding/base64_encode_impl.h>
 
 unsigned char *uk_crypto_base64_encode(const unsigned char *src, size_t len, size_t *out_len) {
-    size_t tuk_mp_out_len;
+    size_t tmp_out_len;
     unsigned char *result;
 
-    result = uk_crypto_base64_encode_impl(src, len, &tuk_mp_out_len);
+    result = uk_crypto_base64_encode_impl(src, len, &tmp_out_len);
 
-    *out_len = tuk_mp_out_len;
+    *out_len = tmp_out_len;
 
     return result;
 }

@@ -43,12 +43,12 @@
 
 typedef struct {
     int fd;
-    uk_utils_byte_stream *received_message, *message_to_send, *tuk_mp_stream;
+    uk_utils_byte_stream *received_message, *message_to_send, *tmp_stream;
     uk_utils_queue *received_messages, *messages_to_send;
     uk_utils_thread_id *read_messages_consumer_thread, *write_messages_consumer_thread;
     uk_ue_communication_connection_state state;
     char *nickname;
-    uk_utils_byte_vector *split_message, *all_messages, *tuk_mp_message, *current_message;
+    uk_utils_byte_vector *split_message, *all_messages, *tmp_message, *current_message;
     uk_crypto_tls_connection *tls;
     uk_crypto_x509_certificate *peer_certificate;
     uk_utils_byte_stream *received_message_stream;

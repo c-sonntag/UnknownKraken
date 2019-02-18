@@ -28,6 +28,7 @@
     #include <arpa/inet.h>
 #endif
 
+
 static void *byte_stream_alloc_func(void *data) {
     return uk_utils_byte_stream_copy((uk_utils_byte_stream *)data);
 }

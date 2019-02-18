@@ -193,7 +193,7 @@ int uk_utils_find_str_in_data(char *data, const char *query) {
 }
 
 char *uk_utils_get_file_name_from_path(char *path) {
-    char *file_name, *tuk_mp_file_name;
+    char *file_name, *tmp_file_name;
 
     file_name = NULL;
 
@@ -203,15 +203,15 @@ char *uk_utils_get_file_name_from_path(char *path) {
         return file_name;
     }
 
-    tuk_mp_file_name = strrchr(path, '/');
-    uk_utils_safe_alloc(file_name, char, strlen(tuk_mp_file_name + 1) + 1);
-    strcpy(file_name, tuk_mp_file_name + 1);
+    tmp_file_name = strrchr(path, '/');
+    uk_utils_safe_alloc(file_name, char, strlen(tmp_file_name + 1) + 1);
+    strcpy(file_name, tmp_file_name + 1);
 
     return file_name;
 }
 
 char *uk_utils_get_file_extension(char *path) {
-    char *file_name, *tuk_mp_file_name;
+    char *file_name, *tmp_file_name;
 
     file_name = NULL;
 
@@ -221,9 +221,9 @@ char *uk_utils_get_file_extension(char *path) {
         return file_name;
     }
 
-    tuk_mp_file_name = strrchr(path, '.');
-    uk_utils_safe_alloc(file_name, char, strlen(tuk_mp_file_name + 1) + 1);
-    strcpy(file_name, tuk_mp_file_name + 1);
+    tmp_file_name = strrchr(path, '.');
+    uk_utils_safe_alloc(file_name, char, strlen(tmp_file_name + 1) + 1);
+    strcpy(file_name, tmp_file_name + 1);
 
     return file_name;
 }

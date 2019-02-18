@@ -283,6 +283,8 @@ elseif(UnknownKrakenMemoryPlugin_STATIC)
 endif()
 set(UnknownKrakenMemoryPlugin_INCLUDE_DIRS ${UnknownKrakenMemoryPlugin_INCLUDE_DIRS} PARENT_SCOPE)
 set(UnknownKrakenMemoryPlugin_DEFINITIONS ${UnknownKrakenMemoryPlugin_DEFINITIONS} PARENT_SCOPE)
+set(UnknownKrakenMemoryPlugin_SHARED ${PROJECT_UnknownKrakenMemoryPlugin_SHARED} PARENT_SCOPE)
+set(UnknownKrakenMemoryPlugin_STATIC ${PROJECT_UnknownKrakenMemoryPlugin_STATIC} PARENT_SCOPE)
 set(UnknownKrakenMemoryPlugin ${UnknownKrakenMemoryPlugin} PARENT_SCOPE)
 add_library(UnknownKrakenMemoryPlugin ALIAS ${UnknownKrakenMemoryPlugin})
 

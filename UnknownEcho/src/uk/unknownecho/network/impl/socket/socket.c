@@ -237,7 +237,7 @@ int uk_ue_socket_open(int domain, int type) {
 
 #if defined(_WIN32) || defined(_WIN64)
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        uk_ue_get_last_wsa_error(error_buffer);
+        uk_utils_get_last_wsa_error(error_buffer);
         uk_utils_stacktrace_push_msg(error_buffer);
         uk_utils_safe_free(error_buffer);
         return -1;
@@ -301,13 +301,13 @@ if (fd == -1) {
     }
 #elif defined(_WIN32) || defined(_WIN64)
     if (closesocket((SOCKET)fd) == SOCKET_ERROR) {
-        uk_ue_get_last_wsa_error(error_buffer);
+        uk_utils_get_last_wsa_error(error_buffer);
         uk_utils_stacktrace_push_msg(error_buffer);
         uk_utils_safe_free(error_buffer);
         return false;
     }
     if (WSACleanup() == SOCKET_ERROR) {
-        uk_ue_get_last_wsa_error(error_buffer);
+        uk_utils_get_last_wsa_error(error_buffer);
         uk_utils_stacktrace_push_msg(error_buffer);
         uk_utils_safe_free(error_buffer);
         return false;
