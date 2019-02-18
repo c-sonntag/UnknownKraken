@@ -237,7 +237,6 @@ install(DIRECTORY "${HEADER_PATH}/" DESTINATION "include" FILES_MATCHING PATTERN
 ##
 #
 
-
 # --- SUB BUILD LINKING ---
 set(UnknownKrakenCrypto_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/${HEADER_PATH}")
 set(UnknownKrakenCrypto_DEFINITIONS)
