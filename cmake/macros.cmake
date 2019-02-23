@@ -61,6 +61,15 @@ function(file_append_from_file IN_FILE OUT_FILE)
   file(APPEND ${OUT_FILE} "${CONTENTS}")
 endfunction()
 
+#
+##
+#
+
+macro(string_append_from_file DESTINATION_STRING_NAME SOURCE_FILEPATH)
+  file(READ "${SOURCE_FILEPATH}" string_append_from_file_tmp_SOURCE)
+  string(CONCAT ${DESTINATION_STRING_NAME} ${${DESTINATION_STRING_NAME}} ${string_append_from_file_tmp_SOURCE})
+endmacro()
+
 
 
 

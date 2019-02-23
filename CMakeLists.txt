@@ -86,19 +86,30 @@ macro(make_package_config PROJECT_NAME )
   set(ConfigTemplate_DIRECTORY   "${PROJECT_SOURCE_DIR}/cmake")
   set(ConfigName_OUTPUT_FILEPATH "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}")
   #
-  configure_file("${ConfigTemplate_DIRECTORY}/config-head.tpl.cmake"   "${ConfigName_OUTPUT_FILEPATH}-head" @ONLY)
+  configure_file("${ConfigTemplate_DIRECTORY}/config-head.tpl.cmake"   "${ConfigName_OUTPUT_FILEPATH}-head"   @ONLY)
   configure_file("${ConfigTemplate_DIRECTORY}/config-footer.tpl.cmake" "${ConfigName_OUTPUT_FILEPATH}-footer" @ONLY)
   #
   if(HAVE_MULTIPLE_LIBRARIES)
-    configure_file("${ConfigTemplate_DIRECTORY}/config-multiple_libraries.tpl.cmake" "${ConfigName_OUTPUT_FILEPATH}-lib-prepare" @ONLY)
+    configure_file("${ConfigTemplate_DIRECTORY}/config-multiple_libraries.tpl.cmake" "${ConfigName_OUTPUT_FILEPATH}-lib" @ONLY)
   else()
-    configure_file("${ConfigTemplate_DIRECTORY}/config-once_library.tpl.cmake"       "${ConfigName_OUTPUT_FILEPATH}-lib-prepare" @ONLY)
+    configure_file("${ConfigTemplate_DIRECTORY}/config-once_library.tpl.cmake"       "${ConfigName_OUTPUT_FILEPATH}-lib" @ONLY)
   endif()
-  file(GENERATE OUTPUT "${ConfigName_OUTPUT_FILEPATH}-lib" INPUT "${ConfigName_OUTPUT_FILEPATH}-lib-prepare")
   #
-  file_write_from_file ("${ConfigName_OUTPUT_FILEPATH}-head"   "${ConfigName_OUTPUT_FILEPATH}")
-  file_append_from_file("${ConfigName_OUTPUT_FILEPATH}-lib"    "${ConfigName_OUTPUT_FILEPATH}")
-  file_append_from_file("${ConfigName_OUTPUT_FILEPATH}-footer" "${ConfigName_OUTPUT_FILEPATH}")
+  set(ConfigContent "")
+  string_append_from_file(ConfigContent "${ConfigName_OUTPUT_FILEPATH}-head")
+  string_append_from_file(ConfigContent "${ConfigName_OUTPUT_FILEPATH}-lib")
+  string_append_from_file(ConfigContent "${ConfigName_OUTPUT_FILEPATH}-footer")
+  #
+  file(
+    GENERATE
+      OUTPUT "${ConfigName_OUTPUT_FILEPATH}"
+      CONTENT "${ConfigContent}"
+  )
+  #
+  # #
+  # file_write_from_file ("${ConfigName_OUTPUT_FILEPATH}-head"   "${ConfigName_OUTPUT_FILEPATH}")
+  # file_append_from_file("${ConfigName_OUTPUT_FILEPATH}-lib"    "${ConfigName_OUTPUT_FILEPATH}")
+  # file_append_from_file("${ConfigName_OUTPUT_FILEPATH}-footer" "${ConfigName_OUTPUT_FILEPATH}")
 
 
   #configure_file("${PROJECT_SOURCE_DIR}/package.in.cmake" "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}")
@@ -106,9 +117,6 @@ macro(make_package_config PROJECT_NAME )
   #file(GENERATE OUTPUT "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}" INPUT "${PROJECT_SOURCE_DIR}/package.in.cmake")
 
   # --- INSTALL LIB ---
-  #install(FILES "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}" DESTINATION "lib/${PROJECT_NAME}/")
-  #install(FILES "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}" DESTINATION "lib/cmake/${PROJECT_NAME}/")
-  #install(FILES "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}" DESTINATION "lib/${PROJECT_NAME}/cmake")
   install(FILES "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}" DESTINATION "lib/")
 
   #message(STATUS "  ")
