@@ -19,6 +19,10 @@ set(PROJECT_UnknownKrakenMemorySlot_SHARED "${PROJECT_NAME}_shared")
 ##
 #
 
+# --- SET CMAKE MODULES ---
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..;${CMAKE_MODULE_PATH}")
+include("macros")
+
 # --- LIB : UnknownKrakenUtils ---
 if(TARGET UnknownKrakenUtils)
   link_libraries(UnknownKrakenUtils)
@@ -203,6 +207,7 @@ endif()
 
 # --- INSTALL INCLUDE ---
 install(DIRECTORY "${HEADER_PATH}/" DESTINATION "include" FILES_MATCHING PATTERN "*.h")
+UnknownKraken_MarkLibrary(UnknownKrakenMemorySlot)
 
 #
 ##

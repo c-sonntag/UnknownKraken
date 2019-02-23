@@ -20,6 +20,10 @@ set(PROJECT_UnknownKrakenUtils_SHARED "${PROJECT_NAME}_shared")
 ##
 #
 
+# --- SET CMAKE MODULES ---
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..;${CMAKE_MODULE_PATH}")
+include("macros")
+
 # --- LIB : Threads ---
 if (UNIX)
   find_package(Threads REQUIRED)
@@ -202,7 +206,7 @@ endif()
 
 # --- INSTALL INCLUDE ---
 install(DIRECTORY "${HEADER_PATH}/" DESTINATION "include" FILES_MATCHING PATTERN "*.h")
-
+UnknownKraken_MarkLibrary(UnknownKrakenUtils)
 
 
 #

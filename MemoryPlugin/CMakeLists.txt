@@ -19,6 +19,10 @@ set(PROJECT_UnknownKrakenMemoryPlugin_SHARED "${PROJECT_NAME}_shared")
 ##
 #
 
+# --- SET CMAKE MODULES ---
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..;${CMAKE_MODULE_PATH}")
+include("macros")
+
 # --- LIB : UnknownKrakenSharedMemoryObject ---
 if(TARGET UnknownKrakenSharedMemoryObject)
   link_libraries(UnknownKrakenSharedMemoryObject)
@@ -267,26 +271,8 @@ endif()
 
 # --- INSTALL INCLUDE ---
 install(DIRECTORY "${HEADER_PATH}/" DESTINATION "include" FILES_MATCHING PATTERN "*.h")
+UnknownKraken_MarkLibrary(UnknownKrakenMemoryPlugin)
 
-#
-##
-#
-
-# --- SUB BUILD LINKING ---
-set(UnknownKrakenMemoryPlugin_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/${HEADER_PATH}")
-set(UnknownKrakenMemoryPlugin_DEFINITIONS)
-set(UnknownKrakenMemoryPlugin_DIRECTORIES)
-if(UnknownKrakenMemoryPlugin_SHARED)
-  set(UnknownKrakenMemoryPlugin ${PROJECT_UnknownKrakenMemoryPlugin_SHARED})
-elseif(UnknownKrakenMemoryPlugin_STATIC)
-  set(UnknownKrakenMemoryPlugin ${PROJECT_UnknownKrakenMemoryPlugin_STATIC})
-endif()
-set(UnknownKrakenMemoryPlugin_INCLUDE_DIRS ${UnknownKrakenMemoryPlugin_INCLUDE_DIRS} PARENT_SCOPE)
-set(UnknownKrakenMemoryPlugin_DEFINITIONS ${UnknownKrakenMemoryPlugin_DEFINITIONS} PARENT_SCOPE)
-set(UnknownKrakenMemoryPlugin_SHARED ${PROJECT_UnknownKrakenMemoryPlugin_SHARED} PARENT_SCOPE)
-set(UnknownKrakenMemoryPlugin_STATIC ${PROJECT_UnknownKrakenMemoryPlugin_STATIC} PARENT_SCOPE)
-set(UnknownKrakenMemoryPlugin ${UnknownKrakenMemoryPlugin} PARENT_SCOPE)
-add_library(UnknownKrakenMemoryPlugin ALIAS ${UnknownKrakenMemoryPlugin})
 
 #
 ##
