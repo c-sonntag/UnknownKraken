@@ -1,0 +1,36 @@
+#
+## LIB VARS
+set( @LIB_NAME@_LIBRARY_STATIC "$<TARGET_LINKER_FILE_NAME:@TARGET_STATIC@>")
+set( @LIB_NAME@_LIBRARY_SHARED "$<TARGET_LINKER_FILE_NAME:@TARGET_SHARED@>")
+
+#
+##
+if( 
+  ( (NOT @LIB_NAME@_SHARED) AND (NOT @LIB_NAME@_STATIC) ) OR
+  ( (@LIB_NAME@_SHARED) AND (@LIB_NAME@_STATIC) ) OR
+  ( (NOT DEFINED @LIB_NAME@_SHARED) AND (NOT @LIB_NAME@_STATIC) ) OR
+  ( (NOT DEFINED @LIB_NAME@_STATIC) AND (NOT @LIB_NAME@_SHARED) )
+)
+  message(SEND_ERROR
+    "\n\n"
+    "   !! Require one of SHARED or STATIC setting for @LIB_NAME@ !! \n"
+    "   !! You can FIX IT by @LIB_NAME@_STATIC/@LIB_NAME@_SHARED variables !! \n"
+    "   !! Configure It By CMake DEFINITON !! \n"
+    "   !! Actual @LIB_NAME@_SHARED=${@LIB_NAME@_SHARED} and @LIB_NAME@_STATIC=${@LIB_NAME@_STATIC} !! \n"
+    "\n"
+  )
+  set(@LIB_NAME@_FOUND OFF)
+  return()
+endif()
+
+#
+##
+if(@LIB_NAME@_STATIC)
+  set(@LIB_NAME@_LIB_TYPE STATIC)
+  set(@LIB_NAME@_LIBRARIES "${@LIB_NAME@_ROOT_DIR}/lib/${@LIB_NAME@_LIBRARY_STATIC}")
+elseif(@LIB_NAME@_SHARED)
+  set(@LIB_NAME@_LIB_TYPE SHARED)
+  set(@LIB_NAME@_LIBRARIES "${@LIB_NAME@_ROOT_DIR}/lib/${@LIB_NAME@_LIBRARY_SHARED}")
+endif()
+set(@LIB_NAME@_LIBRARY "${@LIB_NAME@_LIBRARIES}")
+

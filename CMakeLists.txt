@@ -33,16 +33,6 @@ set(UnknownKraken_BUILD_MemoryPlugin       ON CACHE BOOL "Build MemoryPlugin (ne
 ##
 #
 
-function(message_target_var PROJECT_NAME VAR)
-  get_target_property(${VAR}_SHARED ${${PROJECT_NAME}_SHARED} ${VAR})
-  get_target_property(${VAR}_STATIC ${${PROJECT_NAME}_STATIC} ${VAR})
-  message(STATUS "${VAR} : ${${VAR}_SHARED} | ${${VAR}_STATIC}")
-endfunction()
-
-#
-##
-#
-
 macro(make_package_config PROJECT_NAME )
 
   #message(STATUS "PROJECT_NAME:  ${PROJECT_NAME}")
@@ -59,18 +49,28 @@ macro(make_package_config PROJECT_NAME )
   set(TARGET_STATIC "${${PROJECT_NAME}_STATIC}")
   set(TARGET_SHARED "${${PROJECT_NAME}_SHARED}")
   #
-  get_target_property(LIBRARY_STATIC ${${PROJECT_NAME}_STATIC} OUTPUT_NAME)
-  if(LIBRARY_STATIC)
+  set(LIBRARY_STATIC-NOT_DEFINED)
+  set(LIBRARY_SHARED-NOT_DEFINED)
+  if(TARGET ${${PROJECT_NAME}_STATIC})
+    get_target_property(LIBRARY_STATIC ${${PROJECT_NAME}_STATIC} OUTPUT_NAME)
     set(LIBRARY_STATIC "${CMAKE_STATIC_LIBRARY_PREFIX}${LIBRARY_STATIC}${CMAKE_STATIC_LIBRARY_SUFFIX}")
   endif()
-  get_target_property(LIBRARY_SHARED ${${PROJECT_NAME}_SHARED} OUTPUT_NAME)
-  if(LIBRARY_SHARED)
+  if(TARGET ${${PROJECT_NAME}_SHARED})
+    get_target_property(LIBRARY_SHARED ${${PROJECT_NAME}_SHARED} OUTPUT_NAME)
     set(LIBRARY_SHARED "${CMAKE_SHARED_LIBRARY_PREFIX}${LIBRARY_SHARED}${CMAKE_SHARED_LIBRARY_SUFFIX}")
   endif()
-
-  ## message_target_var(${PROJECT_NAME} OUTPUT_NAME)
-  message_target_var(${PROJECT_NAME} RUNTIME_OUTPUT_NAME)
-
+  if((TARGET ${${PROJECT_NAME}_STATIC}) AND (TARGET ${${PROJECT_NAME}_SHARED}))
+    set(HAVE_MULTIPLE_LIBRARIES ON)
+  else()
+    set(HAVE_MULTIPLE_LIBRARIES OFF)
+    if(TARGET ${${PROJECT_NAME}_STATIC})
+      set(LIBRARY_ONCE_TYPE STATIC)
+      set(LIBRARY_ONCE ${${PROJECT_NAME}_STATIC})
+    elseif(TARGET ${${PROJECT_NAME}_SHARED})
+      set(LIBRARY_ONCE_TYPE SHARED)
+      set(LIBRARY_ONCE ${${PROJECT_NAME}_SHARED})
+    endif()
+  endif()
 
   #add_custom_target(print${PROJECT_NAME}
   #  COMMAND ${CMAKE_COMMAND} -E echo $<TARGET_FILE:${${PROJECT_NAME}_SHARED}>
@@ -81,9 +81,29 @@ macro(make_package_config PROJECT_NAME )
   #set(LIBRARY_SHARED ${${PROJECT_NAME}_SHARED})
   #message(STATUS "LIBRARY_STATIC:  ${LIBRARY_STATIC}")
   #message(STATUS "LIBRARY_SHARED:  ${LIBRARY_SHARED}")
-  configure_file("${PROJECT_SOURCE_DIR}/package.in.cmake" "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}(wait_install)" @ONLY)
+  #configure_file("${PROJECT_SOURCE_DIR}/package.in.cmake" "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}(wait_install)" @ONLY)
+
+  set(ConfigTemplate_DIRECTORY   "${PROJECT_SOURCE_DIR}/cmake")
+  set(ConfigName_OUTPUT_FILEPATH "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}")
+  #
+  configure_file("${ConfigTemplate_DIRECTORY}/config-head.tpl.cmake"   "${ConfigName_OUTPUT_FILEPATH}-head" @ONLY)
+  configure_file("${ConfigTemplate_DIRECTORY}/config-footer.tpl.cmake" "${ConfigName_OUTPUT_FILEPATH}-footer" @ONLY)
+  #
+  if(HAVE_MULTIPLE_LIBRARIES)
+    configure_file("${ConfigTemplate_DIRECTORY}/config-multiple_libraries.tpl.cmake" "${ConfigName_OUTPUT_FILEPATH}-lib-prepare" @ONLY)
+  else()
+    configure_file("${ConfigTemplate_DIRECTORY}/config-once_library.tpl.cmake"       "${ConfigName_OUTPUT_FILEPATH}-lib-prepare" @ONLY)
+  endif()
+  file(GENERATE OUTPUT "${ConfigName_OUTPUT_FILEPATH}-lib" INPUT "${ConfigName_OUTPUT_FILEPATH}-lib-prepare")
+  #
+  file_write_from_file ("${ConfigName_OUTPUT_FILEPATH}-head"   "${ConfigName_OUTPUT_FILEPATH}")
+  file_append_from_file("${ConfigName_OUTPUT_FILEPATH}-lib"    "${ConfigName_OUTPUT_FILEPATH}")
+  file_append_from_file("${ConfigName_OUTPUT_FILEPATH}-footer" "${ConfigName_OUTPUT_FILEPATH}")
+
+
   #configure_file("${PROJECT_SOURCE_DIR}/package.in.cmake" "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}")
-  file(GENERATE OUTPUT "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}" INPUT "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}(wait_install)")
+  #file(GENERATE OUTPUT "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}" INPUT "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}(wait_file)")
+  #file(GENERATE OUTPUT "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}" INPUT "${PROJECT_SOURCE_DIR}/package.in.cmake")
 
   # --- INSTALL LIB ---
   #install(FILES "${PROJECT_BINARY_DIR}/${${PROJECT_NAME}_ConfigName}" DESTINATION "lib/${PROJECT_NAME}/")

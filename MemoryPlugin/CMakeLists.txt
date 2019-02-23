@@ -20,7 +20,7 @@ set(PROJECT_UnknownKrakenMemoryPlugin_SHARED "${PROJECT_NAME}_shared")
 #
 
 # --- SET CMAKE MODULES ---
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..;${CMAKE_MODULE_PATH}")
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../cmake;${CMAKE_MODULE_PATH}")
 include("macros")
 
 # --- LIB : UnknownKrakenSharedMemoryObject ---

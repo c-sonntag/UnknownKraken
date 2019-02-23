@@ -46,3 +46,21 @@ macro(UnknownKraken_MarkLibrary LibraryName)
 
 endmacro()
 
+
+#
+##
+#
+
+function(file_write_from_file IN_FILE OUT_FILE)
+  file(READ ${IN_FILE} CONTENTS)
+  file(WRITE ${OUT_FILE} "${CONTENTS}")
+endfunction()
+
+function(file_append_from_file IN_FILE OUT_FILE)
+  file(READ ${IN_FILE} CONTENTS)
+  file(APPEND ${OUT_FILE} "${CONTENTS}")
+endfunction()
+
+
+
+
